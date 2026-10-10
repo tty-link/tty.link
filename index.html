@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tty.link</title>
+<!-- Placeholder until the real site lands; keep it out of search results. -->
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
+<style>
+  :root { --bg: #0b0c0e; --fg: #e6e6e6; --dim: #8a8f98; --accent: #7ee787; }
+  * { box-sizing: border-box; margin: 0; }
+  body { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 16px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  main { width: 100%; max-width: 36rem; }
+  h1 { font-size: clamp(28px, 6vw, 40px); font-weight: 600; letter-spacing: -.02em; }
+  h1::before { content: "$ "; color: var(--accent); }
+  p { margin-top: 12px; color: var(--dim); }
+  .cursor { display: inline-block; width: .6em; height: 1.1em; vertical-align: text-bottom; background: var(--accent); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>tty.link</h1>
+  <p>Under construction. <span class="cursor" aria-hidden="true"></span></p>
+</main>
+</body>
+</html>

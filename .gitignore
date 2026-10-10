@@ -1,0 +1,6 @@
+# Internal notes live outside the published tree (../docs-internal/): everything in this
+# repository is public and served by GitHub Pages.
+.DS_Store
+node_modules/
+.cloudflare/
+.env
