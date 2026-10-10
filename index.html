@@ -9,7 +9,7 @@
 <meta name="color-scheme" content="light">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tty.link/">
-<meta property="og:title" content="tty.link">
+<meta property="og:title" content="tty.link :)">
 <meta property="og:description" content="Making fun to make happy :)">
 <link rel="canonical" href="https://tty.link/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffd84a'/%3E%3Ctext x='32' y='44' font-family='ui-monospace,Menlo,monospace' font-size='34' font-weight='700' text-anchor='middle' fill='%231b2b7a'%3E:)%3C/text%3E%3C/svg%3E">
@@ -18,14 +18,16 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap">
 <script>document.documentElement.classList.add('js');</script>
 <style>
-  /* First the sentence alone, typed big. Then it shrinks into the rail and a stage opens
-     beside it, where one page at a time from /pages/ plays and is swapped for another. */
+  /* The sentence is built the way font-kku builds Hangul: every Latin letter here is a few
+     stroke parts (stems, bowls, arms, dots) that fly in and lock together. Then each letter
+     flies, one after another, into the rail, and a stage opens beside it where one page at a
+     time from /pages/ plays. */
   :root {
     --sun: #ffd84a;
     --ink: #1b2b7a;
     --ink-soft: rgba(27, 43, 122, .22);
     --pad: clamp(16px, 3.4vw, 48px);
-    --latin: 'Recursive', ui-monospace, Menlo, Consolas, monospace;
+    --ui: 'Recursive', ui-monospace, Menlo, Consolas, monospace;
     --ease: cubic-bezier(.7, 0, .2, 1);
   }
   * { box-sizing: border-box; margin: 0; }
@@ -35,13 +37,30 @@
   body {
     background: var(--sun);
     color: var(--ink);
-    font-family: var(--latin);
+    font-family: var(--ui);
     font-variation-settings: 'MONO' 1, 'CASL' 0;
     -webkit-font-smoothing: antialiased;
   }
   ::selection { background: var(--ink); color: var(--sun); }
   button { font: inherit; color: inherit; }
   :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+
+  /* ---- Stroke letters ---- */
+  .w { display: inline-block; margin-right: .46em; white-space: nowrap; }
+  .w:last-child { margin-right: 0; }
+  .g { display: inline-block; width: calc((var(--w) + .24) * 1em); height: 1.9em; margin-right: .04em; vertical-align: top; transform-origin: 0 0; }
+  .g svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .part {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: var(--sw, .19);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .part.dot { fill: currentColor; stroke: none; }
+  .pre .part { opacity: 0; }
 
   .frame {
     display: grid;
@@ -54,29 +73,28 @@
   }
   .rail { display: contents; }
 
-  .mark { grid-area: mark; justify-self: start; align-self: start; font-size: 15px; font-weight: 600; color: inherit; text-decoration: none; }
+  .mark { grid-area: mark; justify-self: start; align-self: start; display: inline-block; font-size: 13px; line-height: 1.9; color: inherit; text-decoration: none; --sw: .22; }
+  .mark .w { margin-right: .5em; }
 
-  /* Two fixed lines; the longer is 16 monospace cells (0.6em each) and fills the width.
-     The break never changes, so moving the sentence into the rail is a pure scale. */
+  /* Two lines; the longer is about 16.4 units wide. Three lines on narrow screens. */
   .line {
     grid-area: line;
     align-self: end;
-    font-size: clamp(30px, calc((100vw - 2 * var(--pad)) / 9.7), 150px);
-    font-weight: 750;
-    line-height: 1.04;
+    position: relative;
+    z-index: 5;
+    font-size: min(calc((100vw - 2 * var(--pad)) / 16.6), 112px);
+    font-weight: 400;
+    line-height: 2.12;
     white-space: nowrap;
-    transform-origin: 0 100%;
-    font-variation-settings: 'MONO' 1, 'CASL' 0;
-    transition: font-variation-settings 1.1s cubic-bezier(.3, 1.4, .5, 1);
   }
-  .line.happy { font-variation-settings: 'MONO' 1, 'CASL' 1; }
-  .js .line .off { visibility: hidden; }
+  @media (min-width: 601px) { .line .br-narrow { display: none; } }
+  @media (max-width: 600px) { .line { font-size: calc((100vw - 2 * var(--pad)) / 11); } }
   .line-ko { display: none; }
 
   .now, .tools { display: none; }
   .now { grid-area: now; }
   .tools { grid-area: tools; }
-  /* While the sentence plays, the first page is already loading out of sight. */
+  /* While the sentence assembles, the first page is already loading out of sight. */
   .stage { position: fixed; inset: 0; visibility: hidden; pointer-events: none; }
 
   /* ---- Staged ---- */
@@ -86,27 +104,32 @@
     grid-template-areas: "mark stage" "line stage" "ko stage" "now stage" "tools stage";
     column-gap: var(--pad);
   }
-  .staged .line { font-size: clamp(20px, 2vw, 32px); }
+  .staged .line { font-size: calc(max(250px, 22vw) / 16.8); cursor: default; }
   .staged .stage {
     grid-area: stage;
     position: relative;
+    z-index: 1;
     inset: auto;
     visibility: visible;
     pointer-events: auto;
     overflow: hidden;
     border-radius: 18px;
     background: var(--ink);
-    animation: open-stage .9s var(--ease) both;
+    /* Opens just behind the letters as they fly over to the rail. */
+    animation: open-stage 1s var(--ease) .45s both;
   }
   @keyframes open-stage { from { clip-path: inset(0 0 0 100% round 18px); } to { clip-path: inset(0 0 0 0 round 18px); } }
 
-  .lang-ko .staged .line-ko { display: block; grid-area: ko; margin-top: 1em; font-size: clamp(16px, 1.25vw, 20px); }
+  /* The rest of the rail arrives only once the letters have landed, so nothing overlaps. */
+  .staged .now, .staged .tools { display: block; }
+  .lang-ko .staged .line-ko { display: block; grid-area: ko; margin-top: .9em; font-size: clamp(16px, 1.25vw, 20px); min-height: 1.4em; }
+  .staged .now, .staged .tools { opacity: 0; transition: opacity .5s ease; }
+  .settled .now, .settled .tools { opacity: 1; }
 
   .now { margin-top: clamp(20px, 3vh, 36px); }
   .now-title { min-height: 2.6em; font-size: 15px; font-weight: 600; line-height: 1.3; }
   .progress { height: 3px; margin-top: 10px; background: var(--ink-soft); border-radius: 2px; overflow: hidden; }
   .progress span { display: block; height: 100%; background: var(--ink); transform-origin: 0 50%; transform: scaleX(0); }
-  .staged .now, .staged .tools { display: block; }
   .tools { margin-top: 16px; }
   .tools-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .btn {
@@ -137,30 +160,31 @@
       grid-template-areas: "mark tools" "line tools" "stage stage" "now now";
       row-gap: 12px;
     }
-    .staged .line { font-size: 17px; }
+    .staged .line { font-size: 12px; }
     .lang-ko .staged .line-ko { display: none; }
     .staged .stage { border-radius: 14px; }
-    .tools { margin-top: 0; align-self: end; }
+    .tools { margin-top: 0; align-self: start; }
     .tools-row { justify-content: flex-end; max-width: 180px; gap: 6px; }
     .now { margin-top: 0; }
     .now-title { min-height: 0; font-size: 14px; }
     .btn, .langs button { min-height: 32px; font-size: 13px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .line { transition: none; }
     .staged .stage, .slot.on { animation: none; }
+    .staged .now, .staged .tools { transition: none; }
   }
 
-  html:not(.js) .line .off { visibility: visible; }
+  /* Without the script the letters cannot be built; the sentence is shown as text. */
+  html:not(.js) .line { font: 750 clamp(30px, 8vw, 110px)/1.05 var(--ui); white-space: normal; }
 </style>
-<script src="/vendor/font-kku/font-kku.js" data-fonts="sebul"></script>
+<script src="/vendor/font-kku/font-kku.js" data-fonts="sebul" data-addons="motion fx"></script>
 </head>
 <body>
 <div class="frame">
   <header class="rail">
     <a class="mark" href="/" aria-label="tty.link">tty.link :)</a>
-    <h1 class="line" lang="en" aria-label="Making fun to make happy :)">Making fun<br>to make happy :)</h1>
-    <p class="line-ko" lang="ko"><font-kku font="sebul" size="1em">재미로 세상을 한 뼘 더 행복하게</font-kku></p>
+    <h1 class="line" lang="en" aria-label="Making fun to make happy :)">Making fun to make happy :)</h1>
+    <p class="line-ko" lang="ko"></p>
     <div class="now">
       <p class="now-title" aria-live="polite"></p>
       <div class="progress" aria-hidden="true"><span></span></div>
@@ -182,7 +206,9 @@
 (() => {
   const root = document.documentElement;
   const body = document.body;
+  const mark = document.querySelector('.mark');
   const line = document.querySelector('.line');
+  const lineKo = document.querySelector('.line-ko');
   const stage = document.querySelector('.stage');
   const nowTitle = document.querySelector('.now-title');
   const bar = document.querySelector('.progress span');
@@ -190,9 +216,110 @@
   const allLink = document.querySelector('.all');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const DEFAULT_SECONDS = 16;
+  const KO_LINE = '재미로 세상을 한 뼘 더 행복하게';
 
   const read = (storage, key) => { try { return window[storage].getItem(key); } catch (e) { return null; } };
   const write = (storage, key, value) => { try { window[storage].setItem(key, value); } catch (e) { /* storage blocked */ } };
+
+  /* ---- Stroke letters ----
+     Units: x-height 1, baseline at 0, ascender -1.42, descender .42.
+     A part is an SVG path, "O cx cy r" for a ring, or "D cx cy" for a dot. */
+  const GLYPHS = {
+    M: [1.24, ['M0 0V-1.42', 'M0 -1.42L.62 -.42', 'M.62 -.42L1.24 -1.42', 'M1.24 -1.42V0']],
+    a: [1, ['O.5 -.5 .5', 'M1 -1V0']],
+    e: [1, ['M.02 -.5H.98', 'M.98 -.5A.48 .5 0 1 0 .86 -.16']],
+    f: [.72, ['M.3 0V-1.08C.3 -1.3 .44 -1.42 .62 -1.42L.72 -1.42', 'M0 -1H.66']],
+    g: [1, ['O.5 -.5 .5', 'M1 -1V.02C1 .32 .78 .42 .5 .42C.3 .42 .13 .35 .04 .24']],
+    h: [1, ['M0 -1.42V0', 'M0 -.5A.5 .5 0 0 1 1 -.5V0']],
+    i: [0, ['M0 -1V0', 'D0 -1.32']],
+    k: [.8, ['M0 -1.42V0', 'M.76 -1L.04 -.4', 'M.3 -.6L.8 0']],
+    l: [0, ['M0 -1.42V0']],
+    m: [1.6, ['M0 -1V0', 'M0 -.58A.4 .42 0 0 1 .8 -.58V0', 'M.8 -.58A.4 .42 0 0 1 1.6 -.58V0']],
+    n: [1, ['M0 -1V0', 'M0 -.5A.5 .5 0 0 1 1 -.5V0']],
+    o: [1, ['O.5 -.5 .5']],
+    p: [1, ['M0 -1V.42', 'O.5 -.5 .5']],
+    t: [.66, ['M.3 -1.32V0', 'M0 -1H.66']],
+    u: [1, ['M0 -1V-.5A.5 .5 0 0 0 1 -.5', 'M1 -1V0']],
+    y: [1, ['M0 -1L.5 -.05', 'M1 -1L.28 .42']],
+    '.': [0, ['D0 -.06']],
+    ':': [0, ['D0 -.8', 'D0 -.12']],
+    ')': [.34, ['M0 -1.3C.44 -.95 .44 -.05 0 .3']],
+  };
+  const SVG = 'http://www.w3.org/2000/svg';
+  function glyph(ch) {
+    const [w, parts] = GLYPHS[ch];
+    const box = document.createElement('span');
+    box.className = 'g';
+    box.style.setProperty('--w', w);
+    const svg = document.createElementNS(SVG, 'svg');
+    svg.setAttribute('viewBox', `-0.12 -1.5 ${w + 0.24} 1.9`);
+    svg.setAttribute('aria-hidden', 'true');
+    parts.forEach((spec) => {
+      const nums = spec.slice(1).trim().split(/\s+/).map(Number);
+      let el;
+      if (spec[0] === 'O' || spec[0] === 'D') {
+        el = document.createElementNS(SVG, 'circle');
+        el.setAttribute('cx', nums[0]);
+        el.setAttribute('cy', nums[1]);
+        el.setAttribute('r', spec[0] === 'O' ? nums[2] : .125);
+        if (spec[0] === 'D') el.classList.add('dot');
+      } else {
+        el = document.createElementNS(SVG, 'path');
+        el.setAttribute('d', spec);
+      }
+      el.classList.add('part');
+      svg.append(el);
+    });
+    box.append(svg);
+    return box;
+  }
+  // Words of glyphs; "|n" breaks the line on narrow screens only, "|" always.
+  function setWords(el, words) {
+    el.replaceChildren(...words.map((word) => {
+      if (word === '|') return document.createElement('br');
+      if (word === '|n') return Object.assign(document.createElement('br'), { className: 'br-narrow' });
+      const w = document.createElement('span');
+      w.className = 'w';
+      w.setAttribute('aria-hidden', 'true');
+      w.append(...[...word].map(glyph));
+      return w;
+    }));
+  }
+  setWords(mark, ['tty.link', ':)']);
+  setWords(line, ['Making', 'fun', '|', 'to', 'make', '|n', 'happy', ':)']);
+  const glyphs = [...line.querySelectorAll('.g')];
+  const parts = [...line.querySelectorAll('.part')];
+  const rand = (a, b) => a + Math.random() * (b - a);
+  // Where a part waits before it flies in (SVG user units: 1 = one x-height).
+  const scattered = (reach) => `translate(${rand(-1.6, 1.6) * reach}px, ${rand(-2.2, .8) * reach}px) rotate(${rand(-150, 150) * Math.min(reach, 1)}deg) scale(${rand(.5, 1.2)})`;
+
+  function assemble() {
+    line.classList.add('pre');
+    let t = 0;
+    glyphs.forEach((g, i) => {
+      g.querySelectorAll('.part').forEach((part, j) => {
+        const delay = 380 + i * 72 + j * 50;
+        part.animate([{ transform: scattered(1), opacity: 0 }, { transform: 'none', opacity: 1 }],
+          { duration: 720, delay, easing: 'cubic-bezier(.22, 1.4, .42, 1)', fill: 'backwards' });
+        t = Math.max(t, delay + 720);
+      });
+    });
+    requestAnimationFrame(() => line.classList.remove('pre'));
+    // The smile winks once it is whole.
+    const eye = line.querySelector('.w:last-child .dot');
+    if (eye) eye.animate([{ transform: 'none' }, { transform: 'scaleY(.12)' }, { transform: 'none' }], { duration: 260, delay: t + 260, easing: 'ease-in-out' });
+    return new Promise((done) => setTimeout(done, t + 1300));
+  }
+
+  // Pointing at the sentence in the rail shakes the parts loose for a moment.
+  let shaking = false;
+  line.addEventListener('pointerenter', () => {
+    if (reduce || shaking || !body.classList.contains('settled')) return;
+    shaking = true;
+    parts.forEach((part) => part.animate([{ transform: 'none' }, { transform: scattered(.45), offset: .4 }, { transform: 'none' }],
+      { duration: 760, delay: rand(0, 140), easing: 'cubic-bezier(.3, .7, .3, 1)' }));
+    setTimeout(() => { shaking = false; }, 1000);
+  });
 
   /* ---- Language: ?lang=, then the visitor's pick, then the browser ---- */
   let lang = new URLSearchParams(location.search).get('lang') || read('localStorage', 'tty.lang');
@@ -201,6 +328,17 @@
     en: { next: 'Next', all: 'All pages', stage: 'tty.link pages', langs: 'Language' },
     ko: { next: '다음', all: '전체 보기', stage: 'tty.link 페이지', langs: '언어' },
   };
+  let koScatter = null;
+  function showKo() {
+    if (lang !== 'ko' || !body.classList.contains('settled') || lineKo.firstChild) return;
+    const kku = document.createElement('font-kku');
+    kku.setAttribute('font', 'sebul');
+    kku.setAttribute('size', '1em');
+    if (!reduce) kku.setAttribute('animate', 'assemble');
+    kku.textContent = KO_LINE;
+    lineKo.append(kku);
+    if (window.FontKkuFx && !reduce) setTimeout(() => { koScatter = FontKkuFx.scatter(kku, { distance: .6 }); }, 1600);
+  }
   function applyLang() {
     root.classList.toggle('lang-ko', lang === 'ko');
     root.classList.toggle('lang-en', lang === 'en');
@@ -210,51 +348,27 @@
     stage.setAttribute('aria-label', UI[lang].stage);
     document.querySelector('.langs').setAttribute('aria-label', UI[lang].langs);
     document.querySelectorAll('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+    if (lang === 'ko') showKo();
+    else { if (koScatter) koScatter.stop(); koScatter = null; lineKo.replaceChildren(); }
   }
   applyLang();
 
-  /* ---- The sentence: one span per character, the line break kept ---- */
-  const cells = [];
-  line.replaceChildren(...[...line.childNodes].flatMap((node) => {
-    if (node.nodeType !== Node.TEXT_NODE) return [node];
-    return [...node.textContent].map((ch) => {
-      const cell = document.createElement('span');
-      cell.textContent = ch;
-      cell.className = 'off';
-      cell.setAttribute('aria-hidden', 'true');
-      cells.push(cell);
-      return cell;
-    });
-  }));
-  const showAll = () => { cells.forEach((c) => c.classList.remove('off')); line.classList.add('happy'); };
-
-  function typeLine() {
-    return new Promise((done) => {
-      let i = 0;
-      const step = () => {
-        cells[i].classList.remove('off');
-        i += 1;
-        if (i === cells.length) {
-          setTimeout(() => line.classList.add('happy'), 240);
-          return setTimeout(done, 1500);
-        }
-        setTimeout(step, (cells[i].textContent === ' ' ? 120 : 55) + Math.random() * 80);
-      };
-      setTimeout(step, 600);
-    });
-  }
-
-  // FLIP: measure the big sentence, switch the layout, then play the move back from there.
+  // FLIP each letter on its own: measure it big, switch the layout, then let the letters
+  // follow one another from the big sentence to their seats in the rail.
   function toStage(animate) {
-    const first = line.getBoundingClientRect();
+    const first = animate ? glyphs.map((g) => g.getBoundingClientRect()) : null;
     body.classList.add('staged');
-    if (!animate) return;
-    const last = line.getBoundingClientRect();
-    const scale = first.width / last.width;
-    line.animate([
-      { transform: `translate(${first.left - last.left}px, ${first.bottom - last.bottom}px) scale(${scale})` },
-      { transform: 'none' },
-    ], { duration: 950, easing: 'cubic-bezier(.7, 0, .2, 1)' });
+    const settle = () => { body.classList.add('settled'); showKo(); };
+    if (!animate) return settle();
+    glyphs.forEach((g, i) => {
+      const a = first[i];
+      const b = g.getBoundingClientRect();
+      g.animate([
+        { transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width})` },
+        { transform: 'none' },
+      ], { duration: 950, delay: i * 28, easing: 'cubic-bezier(.65, 0, .25, 1)', fill: 'backwards' });
+    });
+    setTimeout(settle, 950 + glyphs.length * 28);
   }
 
   /* ---- Pages ---- */
@@ -376,11 +490,11 @@
     })
     .catch(() => {});
 
-  // Every visit opens with the sentence; with reduced motion it is shown whole for a moment.
-  const intro = reduce ? new Promise((r) => { showAll(); setTimeout(r, 1600); }) : typeLine();
+  // Every visit opens with the sentence being built; with reduced motion it is shown whole.
+  const intro = reduce ? new Promise((r) => setTimeout(r, 1600)) : assemble();
   Promise.all([intro, manifest]).then(() => {
     toStage(!reduce);
-    if (upcoming) setTimeout(advance, reduce ? 0 : 500);
+    if (upcoming) setTimeout(advance, reduce ? 0 : 700);
   });
 })();
 </script>
