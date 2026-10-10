@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bugs Fixed While You Wait | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tilt+Neon&family=Kalam:wght@400;700&family=Gowun+Dodum&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="neon pilgi"></script>
+<style>
+  /* A repair shop's neon sign at night. One tube is broken, and the shop has decided that
+     is a feature. Tapping the sign is percussive maintenance: it works, for a while. */
+  :root {
+    --mortar: #120b19;
+    --brick: #2a1730;
+    --pink: #ff6fdf;
+    --pink-core: #ffe3f8;
+    --cyan: #6ff4ff;
+    --green: #8dffb5;
+    --glass: #4b3b52;
+    --paper: #f6efdc;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: #f4ecf6;
+    font-family: 'Gowun Dodum', system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse 55% 42% at 50% 34%, rgba(255, 79, 216, .2) 0%, transparent 70%),
+      radial-gradient(ellipse 120% 80% at 50% 0%, transparent 40%, rgba(0, 0, 0, .6) 100%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='76' height='68'%3E%3Cpath d='M0 33H76M0 67H76M1 0V33M39 34V67' stroke='%23120b19' stroke-width='3'/%3E%3Cpath d='M3 3h33v27H3zM42 37h31v27H42z' fill='%23ffffff' fill-opacity='.03'/%3E%3C/svg%3E") 0 0 / 76px 68px,
+      linear-gradient(180deg, #341d3b 0%, var(--brick) 60%, #1d1022 100%);
+  }
+  /* When the lights go off, the pink on the bricks goes with them. */
+  body::after { content: ""; position: fixed; inset: 0; pointer-events: none; background: rgba(0, 0, 0, 0); transition: background .5s ease; }
+  body.is-off::after { background: rgba(0, 0, 0, .42); }
+
+  .scene {
+    position: relative;
+    z-index: 1;
+    container-type: inline-size;
+    display: grid;
+    justify-items: center;
+    gap: 4.5cqi;
+    width: min(calc(100vw - 28px), calc((100vh - 48px) * 1.15), 960px);
+  }
+
+  /* The board: black acrylic on two wires, four screws. */
+  .sign {
+    position: relative;
+    width: 100%;
+    padding: 6.5cqi 5cqi 5.5cqi;
+    border: 0;
+    border-radius: 2.4cqi;
+    background: linear-gradient(180deg, rgba(20, 10, 26, .86), rgba(10, 5, 14, .92));
+    box-shadow: 0 3cqi 7cqi rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .06);
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+  }
+  .sign:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; }
+  .sign::before, .sign::after {
+    content: "";
+    position: absolute;
+    top: -40vh;
+    width: 1px;
+    height: 40vh;
+    background: linear-gradient(transparent, rgba(255, 255, 255, .25));
+  }
+  .sign::before { left: 18%; }
+  .sign::after { right: 18%; }
+  .screw { position: absolute; width: 1.3cqi; height: 1.3cqi; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d9d2dc, #6f6673); }
+  .screw.a { top: 1.8cqi; left: 1.8cqi; } .screw.b { top: 1.8cqi; right: 1.8cqi; }
+  .screw.c { bottom: 1.8cqi; left: 1.8cqi; } .screw.d { bottom: 1.8cqi; right: 1.8cqi; }
+
+  /* English tubes: Tilt Neon, a white-hot core and layered glow. */
+  .tube { display: block; font-family: 'Tilt Neon', sans-serif; line-height: 1; white-space: nowrap; }
+  .tube .ch { display: inline-block; }
+  .big { font-size: 15.5cqi; color: var(--pink-core); text-shadow: 0 0 .04em #fff, 0 0 .12em #ff4fd8, 0 0 .3em #ff2fb0, 0 0 .6em #b0007a; }
+  .small { margin-top: 2.6cqi; font-size: 7.4cqi; color: #e2fdff; text-shadow: 0 0 .04em #fff, 0 0 .12em #5ef2ff, 0 0 .3em #19c6ff, 0 0 .6em #0077b6; }
+
+  /* Korean tubes: font-kku neon (pink initials and finals, sky-blue vowels). */
+  .kk { display: block; line-height: 1; }
+  .kk + .kk { margin-top: 2.8cqi; }
+  .kk.small-ko [part~="jamo"] {
+    -webkit-text-stroke-color: var(--cyan);
+    text-shadow: 0 0 .04em #fff, 0 0 .12em #5ef2ff, 0 0 .3em #19c6ff, 0 0 .6em #0077b6;
+  }
+
+  /* The broken tube: the x of "fixed", and in Korean the final ㄱ of 즉. */
+  .broken,
+  .kk [part="glyph"][data-source="즉"] [part~="jongseong"] { animation: broken 5.2s steps(1, end) infinite; }
+  @keyframes broken {
+    0% { opacity: 1; }
+    6% { opacity: .1; } 7% { opacity: 1; } 8.4% { opacity: .25; } 9.6% { opacity: 1; }
+    37% { opacity: .08; } 44% { opacity: .65; } 44.8% { opacity: .08; } 46% { opacity: 1; }
+    70% { opacity: .2; } 70.8% { opacity: 1; }
+    83% { opacity: .1; } 83.6% { opacity: 1; }
+  }
+  .kicked .broken,
+  .kicked .kk [part="glyph"][data-source="즉"] [part~="jongseong"] { animation: none; opacity: 1; }
+
+  /* Lower row: the Open sign, the shop's card, the switch. */
+  .lower { display: grid; grid-template-columns: auto 1fr; gap: 4cqi; align-items: center; width: 100%; }
+  .open {
+    display: grid;
+    place-items: center;
+    padding: 2.6cqi 3.6cqi;
+    border: .5cqi solid #b9ffd3;
+    border-radius: 2cqi;
+    box-shadow: 0 0 1cqi #3dff8f, inset 0 0 1cqi #3dff8f, 0 0 3cqi rgba(18, 214, 107, .6);
+    background: rgba(8, 14, 10, .55);
+  }
+  .open .tube { font-size: 8cqi; color: #eafff1; text-shadow: 0 0 .04em #fff, 0 0 .12em #3dff8f, 0 0 .3em #12d66b, 0 0 .6em #00873f; }
+  .open .kk [part~="jamo"] {
+    -webkit-text-stroke-color: var(--green);
+    text-shadow: 0 0 .04em #fff, 0 0 .12em #3dff8f, 0 0 .3em #12d66b, 0 0 .6em #00873f;
+  }
+  /* A vowel bar above a final (the ㅜ of 중, the ㅡ of 는) is drawn clipped; a wide glow would
+     show the clip as a box, so those vowels glow close. */
+  .open .kk [part~="jungseong"] { text-shadow: 0 0 .04em #fff, 0 0 .1em #3dff8f, 0 0 .18em #12d66b; }
+  .kk.small-ko [part~="jungseong"] { text-shadow: 0 0 .04em #fff, 0 0 .1em #5ef2ff, 0 0 .18em #19c6ff; }
+
+  .card {
+    justify-self: start;
+    max-width: 52cqi;
+    padding: 2.8cqi 3.4cqi 3cqi;
+    background: linear-gradient(180deg, #fbf6e6, var(--paper));
+    color: #2a2230;
+    rotate: -2.5deg;
+    box-shadow: 0 1.6cqi 3cqi rgba(0, 0, 0, .45);
+  }
+  .card::before { content: ""; display: block; width: 12cqi; height: 3cqi; margin: -4.4cqi auto 1.4cqi; background: rgba(255, 255, 255, .5); rotate: 3deg; }
+  .card-main { font-family: 'Kalam', cursive; font-weight: 700; font-size: 4.6cqi; line-height: 1.1; }
+  .card-small { margin-top: 1.4cqi; font-family: 'Kalam', cursive; font-size: 2.9cqi; line-height: 1.3; color: #5b4f5e; }
+  .lang-ko .card-small { font-family: 'Gowun Dodum', sans-serif; font-size: 2.7cqi; line-height: 1.5; word-break: keep-all; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 3cqi; align-items: center; justify-content: center; min-height: 44px; }
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 6px 16px 6px 8px;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .4);
+    color: inherit;
+    font: inherit;
+    font-size: clamp(13px, 2.6cqi, 16px);
+    cursor: pointer;
+  }
+  .switch:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+  .track { position: relative; width: 40px; height: 22px; border-radius: 999px; background: #3a3340; transition: background .2s ease; }
+  .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: translate .2s ease; }
+  .switch[aria-checked="true"] .track { background: #22b862; box-shadow: 0 0 10px rgba(61, 255, 143, .55); }
+  .switch[aria-checked="true"] .track::after { translate: 18px 0; }
+
+  /* The shop's reply after a good knock. */
+  .bubble {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    z-index: 3;
+    translate: -50% -60%;
+    padding: 1.4cqi 2.6cqi;
+    border-radius: 999px;
+    background: var(--paper);
+    color: #2a2230;
+    font-size: clamp(12px, 2.8cqi, 17px);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 1cqi 2cqi rgba(0, 0, 0, .4);
+  }
+  .bubble.on { animation: bubble 3s ease both; }
+  @keyframes bubble { 0% { opacity: 0; translate: -50% -30%; } 10%, 85% { opacity: 1; translate: -50% -60%; } 100% { opacity: 0; translate: -50% -70%; } }
+  .sign.thump { animation: thump .38s cubic-bezier(.3, 1.6, .5, 1); }
+  @keyframes thump { 0% { rotate: 0deg; } 25% { rotate: -1.6deg; translate: 0 .6cqi; } 55% { rotate: 1.1deg; } 80% { rotate: -.4deg; } 100% { rotate: 0deg; } }
+
+  /* Off: glass tubes, no light. */
+  .is-off .big, .is-off .small, .is-off .open .tube { color: var(--glass); text-shadow: none; }
+  .is-off .kk [part~="jamo"] { -webkit-text-stroke-color: var(--glass); text-shadow: none; animation: none; }
+  .is-off .broken { animation: none; }
+  .is-off .open { border-color: var(--glass); box-shadow: none; }
+
+  /* On again: each tube sputters in, a little after the one before. */
+  .is-igniting .tube .ch, .is-igniting .kk [part~="jamo"] { animation: ignite .9s steps(1, end) backwards; }
+  .is-igniting .tube .ch { animation-delay: calc(var(--i, 0) * 70ms + var(--lag, 0ms)); }
+  .is-igniting .kk [part~="jamo"] { animation-delay: calc(var(--fy-glyph-index, 0) * 90ms + var(--lag, 0ms)); }
+  .is-igniting .kk [part~="jungseong"] { --lag: 140ms; }
+  .is-igniting .kk [part~="jongseong"] { --lag: 260ms; }
+  .is-igniting .small { --lag: 500ms; }
+  .is-igniting .small-ko { --lag: 500ms; }
+  .is-igniting .open { animation: ignite .9s steps(1, end) 1.2s backwards; }
+  @keyframes ignite { 0% { opacity: .08; } 30% { opacity: .8; } 40% { opacity: .15; } 55% { opacity: 1; } 65% { opacity: .4; } 75% { opacity: 1; } }
+
+  @container (max-width: 520px) {
+    .lower { grid-template-columns: auto 1fr; gap: 3.4cqi; }
+    .card { max-width: none; }
+    .card-main { font-size: 5.2cqi; }
+    .card-small { font-size: 3.4cqi; }
+    .lang-ko .card-small { font-size: 3.3cqi; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .broken, .kk [part="glyph"][data-source="즉"] [part~="jongseong"],
+    .is-igniting .tube .ch, .is-igniting .kk [part~="jamo"], .is-igniting .open, .sign.thump { animation: none; }
+    .bubble.on { animation: none; opacity: 1; translate: -50% -60%; }
+    body::after, .track, .track::after { transition: none; }
+  }
+</style>
+</head>
+<body class="is-off">
+<main class="scene">
+  <button class="sign" type="button" aria-describedby="card">
+    <i class="screw a"></i><i class="screw b"></i><i class="screw c"></i><i class="screw d"></i>
+    <span data-lang="en">
+      <span class="tube big" data-split>Bugs fi<span class="broken">x</span>ed</span>
+      <span class="tube small" data-split>while you wait</span>
+    </span>
+    <span data-lang="ko">
+      <span class="kk"><font-kku font="neon" size="13cqi">버그 즉석 수리</font-kku></span>
+      <span class="kk small-ko"><font-kku font="neon" size="6.6cqi">기다리시는 동안 고쳐 드려요</font-kku></span>
+    </span>
+    <span class="bubble" aria-live="polite"></span>
+  </button>
+
+  <div class="lower">
+    <div class="open" aria-label="Open">
+      <span class="tube" data-lang="en" data-split>Open</span>
+      <span class="kk" data-lang="ko"><font-kku font="neon" size="7.4cqi">영업 중</font-kku></span>
+    </div>
+    <aside class="card" id="card">
+      <p class="card-main" data-lang="en">No refunds on features.</p>
+      <p class="card-main" data-lang="ko"><font-kku font="pilgi" size="5cqi">기능은 환불되지 않습니다.</font-kku></p>
+      <p class="card-small" data-lang="en">Known issue: one tube flickers. Status: won't fix, it's a feature. Flickering anyway? Give the sign a tap.</p>
+      <p class="card-small" data-lang="ko">알려진 문제: 관 하나가 깜빡임. 처리 상태: 기능으로 분류됨. 그래도 신경 쓰이면 간판을 톡 쳐 주세요.</p>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="switch" type="button" role="switch" aria-checked="false">
+      <span class="track" aria-hidden="true"></span><span class="switch-label"></span>
+    </button>
+  </div>
+</main>
+
+<script>
+(() => {
+  const body = document.body;
+  const sign = document.querySelector('.sign');
+  const bubble = document.querySelector('.bubble');
+  const sw = document.querySelector('.switch');
+  const label = document.querySelector('.switch-label');
+  const TEXT = {
+    off: { en: 'Lights off', ko: '간판 끄기' },
+    on: { en: 'Lights on', ko: '간판 켜기' },
+    fixed: { en: 'Percussive maintenance: fixed. For now.', ko: '두드려서 고쳤습니다. 일단은요.' },
+    again: { en: 'Fixed again. Same as last time.', ko: '또 고쳤습니다. 지난번처럼요.' },
+  };
+
+  // Each English letter is its own tube, so it can sputter in on its own beat.
+  document.querySelectorAll('[data-split]').forEach((tube) => {
+    let i = 0;
+    const split = (node) => {
+      [...node.childNodes].forEach((child) => {
+        if (child.nodeType === Node.TEXT_NODE) {
+          const frag = document.createDocumentFragment();
+          [...child.textContent].forEach((c) => {
+            const s = document.createElement('span');
+            s.className = 'ch';
+            s.style.setProperty('--i', i++);
+            s.textContent = c === ' ' ? ' ' : c;
+            frag.append(s);
+          });
+          child.replaceWith(frag);
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+          child.classList.add('ch');
+          child.style.setProperty('--i', i++);
+        }
+      });
+    };
+    split(tube);
+  });
+
+  let igniting = 0;
+  function setOn(on, animate) {
+    sw.setAttribute('aria-checked', String(on));
+    label.textContent = TTY.t(on ? TEXT.off : TEXT.on);
+    body.classList.toggle('is-off', !on);
+    clearTimeout(igniting);
+    body.classList.remove('is-igniting');
+    if (on && animate && !TTY.reduce) {
+      void body.offsetWidth; // restart the sputter even if the class was just removed
+      body.classList.add('is-igniting');
+      igniting = setTimeout(() => body.classList.remove('is-igniting'), 2600);
+    }
+  }
+  label.textContent = TTY.t(TEXT.on);
+  sw.addEventListener('click', () => setOn(sw.getAttribute('aria-checked') !== 'true', true));
+
+  // Percussive maintenance: the broken tube holds steady for a few seconds.
+  let kicks = 0;
+  let mended = 0;
+  sign.addEventListener('click', () => {
+    if (body.classList.contains('is-off')) { setOn(true, true); return; }
+    kicks += 1;
+    sign.classList.remove('thump');
+    void sign.offsetWidth;
+    sign.classList.add('thump');
+    sign.classList.add('kicked');
+    bubble.textContent = TTY.t(kicks > 1 ? TEXT.again : TEXT.fixed);
+    bubble.classList.remove('on');
+    void bubble.offsetWidth;
+    bubble.classList.add('on');
+    clearTimeout(mended);
+    mended = setTimeout(() => sign.classList.remove('kicked'), 3200);
+  });
+
+  TTY.onShow(() => setTimeout(() => setOn(true, true), TTY.reduce ? 0 : 450));
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

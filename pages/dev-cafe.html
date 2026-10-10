@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dev Café | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@700&family=Patrick+Hand&family=Gaegu:wght@400;700&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="chalk dojang"></script>
+<style>
+  /* A café chalkboard for developers. The menu is written out in chalk, a stamped card names
+     today's special, and every drink you order comes with the barista's honest answer. */
+  :root {
+    --wall: #2c1f17;
+    --board: #1e2a25;
+    --chalk: #f1efe4;
+    --chalk-dim: #b9bfb5;
+    --pink: #f6a6c1;
+    --yellow: #f3df7c;
+    --blue: #a6d6f2;
+    --wood: #8a5a33;
+    --stamp: #d23a35;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 40%, #4a3526 0%, var(--wall) 70%),
+      var(--wall);
+    font-family: 'Patrick Hand', 'Gaegu', cursive;
+    color: var(--chalk);
+  }
+  .lang-ko body { font-family: 'Gaegu', 'Patrick Hand', cursive; word-break: keep-all; }
+
+  .frame {
+    position: relative;
+    container-type: inline-size;
+    width: min(calc(100vw - 20px), calc((100vh - 24px) * 1.2), 1040px);
+    padding: 2.2cqi;
+    border-radius: 1.4cqi;
+    background: linear-gradient(135deg, #a06d42, var(--wood) 40%, #6e4426);
+    box-shadow: 0 2.4cqi 5cqi rgba(0, 0, 0, .5), inset 0 0 0 .3cqi rgba(255, 255, 255, .08);
+  }
+  .board {
+    position: relative;
+    overflow: hidden;
+    padding: 4cqi 5cqi 3cqi;
+    border-radius: .6cqi;
+    background:
+      radial-gradient(ellipse 40% 30% at 22% 30%, rgba(255, 255, 255, .06), transparent 70%),
+      radial-gradient(ellipse 50% 35% at 78% 72%, rgba(255, 255, 255, .05), transparent 70%),
+      radial-gradient(ellipse 30% 20% at 60% 18%, rgba(255, 255, 255, .04), transparent 70%),
+      var(--board);
+    box-shadow: inset 0 0 4cqi rgba(0, 0, 0, .55);
+  }
+  /* Chalk: a slightly broken edge on every hand-lettered line. */
+  .chalky { filter: url(#chalk); }
+
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 3cqi; }
+  .title { font-family: 'Cabin Sketch', cursive; font-size: 7.4cqi; line-height: .95; color: var(--chalk); }
+  .lang-ko .title { line-height: 1; }
+  .sub { margin-top: 1cqi; font-size: 2.7cqi; color: var(--chalk-dim); }
+  .cup { width: 10cqi; flex: none; }
+  .cup path, .cup line { fill: none; stroke: var(--pink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+
+  .rule { height: .4cqi; margin: 1.8cqi 0 2.2cqi; background: repeating-linear-gradient(90deg, var(--chalk-dim) 0 2.2cqi, transparent 2.2cqi 3.2cqi); opacity: .6; }
+
+  .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 2cqi 6cqi; list-style: none; padding: 0; }
+  .item { position: relative; cursor: pointer; border-radius: .8cqi; outline-offset: .6cqi; }
+  .item:focus-visible { outline: 2px dashed var(--yellow); }
+  .line1 { display: flex; align-items: baseline; gap: 1.2cqi; }
+  .name { font-size: 3.3cqi; line-height: 1.05; white-space: nowrap; }
+  .dots { flex: 1; min-width: 2cqi; border-bottom: .3cqi dotted rgba(241, 239, 228, .45); translate: 0 -.5cqi; }
+  .price { font-size: 2.9cqi; color: var(--yellow); white-space: nowrap; }
+  .desc { margin-top: .4cqi; font-size: 2.4cqi; line-height: 1.2; color: var(--chalk-dim); }
+  .lang-ko .desc { font-size: 2.6cqi; }
+  .lang-ko .price { font-size: 3.1cqi; }
+  .item.wiggle { animation: wiggle .5s ease; }
+  @keyframes wiggle { 20% { rotate: -1.6deg; } 50% { rotate: 1.2deg; } 80% { rotate: -.5deg; } }
+
+  /* The barista's answer, written on the bottom of the board. */
+  .say { display: flex; align-items: baseline; gap: 1.4cqi; min-height: 6.2cqi; margin-top: 3cqi; padding-top: 1.8cqi; border-top: .3cqi solid rgba(241, 239, 228, .18); }
+  .say b { flex: none; font-weight: 400; font-size: 2.6cqi; color: var(--pink); }
+  .say p { font-size: 2.9cqi; line-height: 1.25; color: var(--chalk); }
+  .lang-ko .say p { font-size: 3.2cqi; }
+
+  /* Chalk ledge: three sticks and an eraser. */
+  .ledge { position: relative; height: 2.4cqi; margin: 1.6cqi -2.2cqi -2.2cqi; border-radius: 0 0 1.4cqi 1.4cqi; background: linear-gradient(#7b4f2c, #5a381e); }
+  .stick { position: absolute; top: -1cqi; height: 1.2cqi; border-radius: .6cqi; }
+  .stick.w { left: 12%; width: 7cqi; background: #f4f1e6; rotate: -3deg; }
+  .stick.p { left: 22%; width: 4.4cqi; background: var(--pink); rotate: 4deg; }
+  .stick.y { left: 30%; width: 5.6cqi; background: var(--yellow); }
+  .eraser { position: absolute; right: 14%; top: -2.6cqi; width: 11cqi; height: 3cqi; border-radius: .6cqi; background: linear-gradient(#cfc6b4 0 35%, #3b3b45 35%); }
+
+  /* Today's special: a kraft card taped to the board, then stamped. */
+  .special { display: grid; place-items: center; }
+  .js-play .card { opacity: 0; }
+  .card {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 2cqi;
+    width: 34cqi;
+    padding: 1.6cqi 2.2cqi;
+    background: linear-gradient(180deg, #d9bf8f, #cdb07c);
+    color: #3d2a17;
+    rotate: 3deg;
+    box-shadow: 0 1cqi 2cqi rgba(0, 0, 0, .4);
+  }
+  .card::before { content: ""; position: absolute; left: 30%; top: -1.4cqi; width: 40%; height: 2.6cqi; background: rgba(255, 255, 255, .45); rotate: -4deg; }
+  .card-label { font-size: 2.2cqi; }
+  .card-name { margin-top: .4cqi; font-size: 2.6cqi; line-height: 1.1; font-weight: 700; }
+  .seal {
+    display: grid;
+    place-items: center;
+    width: 11cqi;
+    aspect-ratio: 1;
+    border: .55cqi double var(--stamp);
+    border-radius: 50%;
+    color: var(--stamp);
+    font-family: 'Cabin Sketch', cursive;
+    font-size: 2.5cqi;
+    line-height: 1;
+    rotate: -12deg;
+    mix-blend-mode: multiply;
+    opacity: 0;
+  }
+  .lang-ko .seal { font-size: 1px; }
+  .seal .two { display: grid; justify-items: center; gap: .4cqi; }
+
+  .overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .overlay ellipse { fill: none; stroke: var(--pink); stroke-width: 2.5; stroke-linecap: round; }
+  canvas.dust { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  .write { clip-path: inset(0 100% 0 0); }
+  .written { clip-path: none; }
+
+  @container (max-width: 600px) {
+    .board { padding: 5cqi 4.6cqi 3.6cqi; }
+    .title { font-size: 10cqi; }
+    .sub { font-size: 4cqi; }
+    .cup { display: none; }
+    .menu { grid-template-columns: 1fr; gap: 2.4cqi; }
+    .name { font-size: 4.9cqi; }
+    .price { font-size: 4.3cqi; }
+    .lang-ko .price { font-size: 4.5cqi; }
+    .desc, .lang-ko .desc { font-size: 3.9cqi; }
+    .say { min-height: 11cqi; }
+    .say b { font-size: 3.8cqi; }
+    .say p, .lang-ko .say p { font-size: 4.3cqi; }
+    .head > div { max-width: 62cqi; }
+    .special { position: absolute; right: 3cqi; top: 4cqi; z-index: 2; }
+    /* No room for the whole card on a phone: just the stamped corner; the ring marks the drink. */
+    .card { display: block; width: auto; padding: 1.8cqi; rotate: 6deg; }
+    .card-text { display: none; }
+    .card-label { font-size: 3.2cqi; }
+    .card-name { font-size: 3.6cqi; }
+    .seal { width: 15cqi; font-size: 3.2cqi; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .write { clip-path: none; }
+    .seal { opacity: .9; }
+    .item.wiggle { animation: none; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="chalk" x="-5%" y="-10%" width="110%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feComposite in="d" in2="n" operator="in"/>
+    <feComponentTransfer><feFuncA type="linear" slope="1.6"/></feComponentTransfer>
+  </filter>
+</svg>
+
+<main class="frame">
+  <div class="board">
+    <canvas class="dust" aria-hidden="true"></canvas>
+    <svg class="overlay" aria-hidden="true"></svg>
+
+    <header class="head">
+      <div>
+        <h1 class="title write" data-lang="en"><span class="chalky">Dev Café</span></h1>
+        <h1 class="title write" data-lang="ko"><font-kku font="chalk" size="7cqi">개발자 카페</font-kku></h1>
+        <p class="sub write chalky" data-lang="en">Today's brews, freshly compiled</p>
+        <p class="sub write chalky" data-lang="ko">오늘의 커피, 방금 컴파일했어요</p>
+      </div>
+      <svg class="cup write" viewBox="0 0 80 70" aria-hidden="true">
+        <path d="M14 28 H58 V44 Q58 62 36 62 Q14 62 14 44 Z"/><path d="M58 32 Q72 32 70 42 Q68 50 58 48"/>
+        <path d="M26 20 Q22 14 27 9 Q31 5 28 1"/><path d="M38 20 Q34 14 39 9 Q43 5 40 1"/><line x1="8" y1="66" x2="66" y2="66"/>
+      </svg>
+    </header>
+    <div class="rule"></div>
+
+    <ul class="menu">
+      <li class="special">
+        <div class="card">
+          <div class="seal" aria-hidden="true">
+            <span data-lang="en">Chef's<br>pick</span>
+            <span class="two" data-lang="ko"><font-kku font="dojang" size="3.4cqi">강력</font-kku><font-kku font="dojang" size="3.4cqi">추천</font-kku></span>
+          </div>
+          <div class="card-text">
+            <p class="card-label" data-lang="en">Today's special</p>
+            <p class="card-label" data-lang="ko">오늘의 추천</p>
+            <p class="card-name"></p>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <div class="say" aria-live="polite">
+      <b class="write chalky" data-lang="en">Barista:</b>
+      <b class="write chalky" data-lang="ko">바리스타:</b>
+      <p class="chalky"></p>
+    </div>
+
+  </div>
+  <div class="ledge" aria-hidden="true"><i class="stick w"></i><i class="stick p"></i><i class="stick y"></i><i class="eraser"></i></div>
+</main>
+
+<script>
+(() => {
+  const ko = TTY.lang === 'ko';
+  const MENU = [
+    { en: ['Espresso (sync)', '3.00', 'Blocks until ready.'], ko: ['에스프레소 (동기)', '3,000', '다 나올 때까지 아무것도 못 해요.'],
+      say: { en: 'One espresso. Everyone behind you is now waiting too.', ko: '에스프레소 나왔습니다. 뒤에 계신 분들도 같이 기다리셨어요.' } },
+    { en: ['Async Latte', 'Promise<4.50>', 'Arrives eventually.'], ko: ['비동기 라테', 'Promise<4,500>', '언젠가는 나옵니다.'],
+      say: { en: "Order received. We'll call you back. Probably.", ko: '주문 받았어요. 나오면 불러 드릴게요. 아마도요.' } },
+    { en: ['Null Tea', 'null', "There's nothing in it."], ko: ['널 티', 'null', '컵 안에 아무것도 없어요.'],
+      say: { en: 'Here you go. (Hands you nothing, very carefully.)', ko: '여기 있습니다. (빈 컵을 아주 조심스럽게 건넨다)' } },
+    { en: ['Recursive Refill', 'n + 1', 'See: Recursive Refill.'], ko: ['재귀 리필', 'n + 1', "'재귀 리필'을 참고하세요."],
+      say: { en: 'One Recursive Refill, which comes with one Recursive Refill, which comes with…', ko: '재귀 리필 하나요, 재귀 리필 하나 추가요, 재귀 리필 하나 추가요…' } },
+    { en: ['Cold Brew Cache', '2.00', 'Served stale, twice as fast.'], ko: ['콜드브루 캐시', '2,000', '좀 오래됐지만 두 배 빨라요.'],
+      say: { en: "Brewed yesterday. Still good. Probably.", ko: '어제 내린 거예요. 아직 괜찮아요. 아마도요.' } },
+    { en: ['Merge Conflict Mocha', '4.50 | 5.00', 'Two flavours. You pick one.'], ko: ['머지 충돌 모카', '4,500 | 5,000', '두 가지 맛, 하나만 고르세요.'],
+      say: { en: 'Chocolate or vanilla? Resolving it is on you.', ko: '초코랑 바닐라 중에 직접 골라 주세요. 충돌 해결은 손님 몫이에요.' } },
+    { en: ['Hotfix Hot Chocolate', '4.00', 'No tests. Extra marshmallows.'], ko: ['핫픽스 핫초코', '4,000', '테스트 없음, 마시멜로 추가.'],
+      say: { en: 'Deployed straight to your table. Untested, but warm.', ko: '테이블로 바로 배포했습니다. 테스트는 안 했지만 따뜻해요.' } },
+  ];
+  const SPECIAL = 6;
+  const PROMPT = { en: 'Tap a drink to order.', ko: '메뉴를 눌러 주문해 보세요.' };
+
+  const menu = document.querySelector('.menu');
+  const say = document.querySelector('.say p');
+  const board = document.querySelector('.board');
+  const overlay = document.querySelector('.overlay');
+  const seal = document.querySelector('.seal');
+  document.querySelector('.card-name').textContent = MENU[SPECIAL][TTY.lang][0];
+
+  // Menu rows: Korean drink names in font-kku chalk, everything else hand-lettered.
+  const rows = MENU.map((m, i) => {
+    const [name, price, desc] = m[TTY.lang];
+    const li = document.createElement('li');
+    li.className = 'item';
+    li.tabIndex = 0;
+    li.setAttribute('role', 'button');
+    li.innerHTML = `<div class="line1"><span class="name"></span><span class="dots"></span><span class="price chalky"></span></div><p class="desc chalky"></p>`;
+    const nameBox = li.querySelector('.name');
+    if (ko) {
+      const k = document.createElement('font-kku');
+      k.setAttribute('font', 'chalk');
+      k.setAttribute('size', '1em');
+      k.textContent = name;
+      nameBox.append(k);
+    } else {
+      nameBox.classList.add('chalky');
+      nameBox.textContent = name;
+    }
+    li.querySelector('.price').textContent = price;
+    li.querySelector('.desc').textContent = desc;
+    li.setAttribute('aria-label', `${name}, ${price}. ${desc}`);
+    li.querySelectorAll('.line1, .desc').forEach((n) => n.classList.add('write'));
+    menu.append(li);
+    return li;
+  });
+  menu.append(document.querySelector('.special'));
+
+  /* ---- Chalk dust: a few specks fall from wherever the chalk is ---- */
+  const canvas = document.querySelector('canvas.dust');
+  const ctx = canvas.getContext('2d');
+  let specks = [];
+  let raf = 0;
+  function fit() {
+    const r = board.getBoundingClientRect();
+    canvas.width = r.width * devicePixelRatio;
+    canvas.height = r.height * devicePixelRatio;
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+  function puff(x, y, n) {
+    for (let i = 0; i < n; i++) specks.push({ x, y, vx: (Math.random() - .5) * .6, vy: Math.random() * .4, life: 1, size: Math.random() * 1.6 + .5 });
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+  function tick() {
+    const r = board.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
+    specks = specks.filter((s) => s.life > 0);
+    specks.forEach((s) => {
+      s.vy += .03; s.x += s.vx; s.y += s.vy; s.life -= .018;
+      ctx.fillStyle = `rgba(241, 239, 228, ${Math.max(0, s.life) * .7})`;
+      ctx.fillRect(s.x, s.y, s.size, s.size);
+    });
+    raf = specks.length ? requestAnimationFrame(tick) : 0;
+  }
+
+  /* ---- Writing: each line is revealed left to right while dust falls from the tip ---- */
+  function write(el, ms) {
+    return new Promise((done) => {
+      const box = el.getBoundingClientRect();
+      const base = board.getBoundingClientRect();
+      const t0 = performance.now();
+      el.classList.add('write');
+      const step = (now) => {
+        const p = Math.min(1, (now - t0) / ms);
+        el.style.clipPath = `inset(-20% ${(1 - p) * 100}% -20% 0)`;
+        if (Math.random() < .5) puff(box.left - base.left + box.width * p, box.top - base.top + box.height * (.3 + Math.random() * .5), 2);
+        if (p < 1) requestAnimationFrame(step);
+        else { el.style.clipPath = ''; el.classList.remove('write'); el.classList.add('written'); done(); }
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* ---- Ordering ---- */
+  let typing = 0;
+  function answer(text) {
+    clearInterval(typing);
+    say.textContent = '';
+    if (TTY.reduce) { say.textContent = text; return; }
+    let i = 0;
+    const chars = [...text];
+    typing = setInterval(() => {
+      say.textContent += chars[i++];
+      if (i >= chars.length) clearInterval(typing);
+    }, ko ? 55 : 32);
+  }
+  function order(i) {
+    const li = rows[i];
+    li.classList.remove('wiggle');
+    void li.offsetWidth;
+    li.classList.add('wiggle');
+    answer(TTY.t(MENU[i].say));
+  }
+  rows.forEach((li, i) => {
+    li.addEventListener('click', () => { touched = true; order(i); });
+    li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touched = true; order(i); } });
+  });
+
+  // A pink chalk ring around today's special.
+  function ring() {
+    const b = board.getBoundingClientRect();
+    // The row stretches to the card beside it, so ring the words, not the grid cell.
+    const a = rows[SPECIAL].querySelector('.line1').getBoundingClientRect();
+    const z = rows[SPECIAL].querySelector('.desc').getBoundingClientRect();
+    const r = { left: Math.min(a.left, z.left), top: a.top, width: Math.max(a.right, z.right) - Math.min(a.left, z.left), height: z.bottom - a.top };
+    overlay.replaceChildren();
+    const e = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+    e.setAttribute('cx', r.left - b.left + r.width / 2);
+    e.setAttribute('cy', r.top - b.top + r.height / 2);
+    e.setAttribute('rx', r.width / 2 + 14);
+    e.setAttribute('ry', r.height / 2 + 10);
+    e.setAttribute('transform', `rotate(-2 ${r.left - b.left + r.width / 2} ${r.top - b.top + r.height / 2})`);
+    e.setAttribute('pathLength', '1');
+    e.setAttribute('filter', 'url(#chalk)');
+    overlay.append(e);
+    return e;
+  }
+
+  let touched = false;
+  if (!TTY.reduce) document.documentElement.classList.add('js-play');
+  const card = document.querySelector('.card');
+
+  async function play() {
+    fit();
+    const lines = [...document.querySelectorAll('.title, .sub, .cup, .say b, .line1, .desc')];
+    if (TTY.reduce) {
+      lines.forEach((l) => { l.classList.remove('write'); l.classList.add('written'); });
+      ring();
+      say.textContent = TTY.t(PROMPT);
+      return;
+    }
+    await write(document.querySelector('.title'), 700);
+    await write(document.querySelector('.sub'), 500);
+    write(document.querySelector('.cup'), 600);
+    for (const li of rows) {
+      await write(li.querySelector('.line1'), 330);
+      await write(li.querySelector('.desc'), 260);
+    }
+    await write(document.querySelector('.say b'), 300);
+    say.textContent = TTY.t(PROMPT);
+
+    // The card is taped up, the stamp comes down on it, then the ring goes round the drink.
+    await pause(200);
+    card.animate([{ opacity: 0, translate: '0 -3cqi', rotate: '-6deg' }, { opacity: 1, translate: '0 0', rotate: '3deg' }],
+      { duration: 520, easing: 'cubic-bezier(.2, .9, .3, 1.2)', fill: 'forwards' });
+    await pause(650);
+    seal.animate([
+      { opacity: 0, transform: 'scale(2.4)', filter: 'blur(2px)' },
+      { opacity: .95, transform: 'scale(.94)', filter: 'blur(0)', offset: .7 },
+      { opacity: .9, transform: 'scale(1)' },
+    ], { duration: 420, easing: 'cubic-bezier(.5, 0, .9, .4)', fill: 'forwards' });
+    card.animate([{ scale: '1' }, { scale: '.97' }, { scale: '1' }], { duration: 260, delay: 300 });
+    await pause(700);
+    ring().animate([{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }], { duration: 900, easing: 'ease-in-out', fill: 'both' });
+
+    // If nobody orders, the regulars do.
+    await pause(2400);
+    if (!touched) order(3);
+    await pause(5200);
+    if (!touched) order(2);
+  }
+
+  addEventListener('resize', () => { fit(); if (overlay.firstChild) ring(); });
+  TTY.onShow(() => setTimeout(play, 300));
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

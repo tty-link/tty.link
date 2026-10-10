@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Good Deed Gacha | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shantell+Sans:ital,wght,BNCE,INFM@0,300..800,-100..100,0..100&family=Gowun+Dodum&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="sticker malang crayon dunggeun"></script>
+<style>
+  /* A capsule toy machine that only stocks tiny good deeds. Turn the knob, a capsule drops,
+     flies out, twists open and unrolls one idea. Nobody playing? It turns itself. */
+  :root {
+    --mint: #c6f0df;
+    --mint-dot: #a9e4cd;
+    --red: #e8413c;
+    --red-dark: #b42f2b;
+    --cream: #fff4dc;
+    --ink: #23203a;
+    --glass: rgba(255, 255, 255, .38);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    container-type: size;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 1px 1px, var(--mint-dot) 1.4px, transparent 1.6px) 0 0 / 22px 22px,
+      var(--mint);
+    color: var(--ink);
+    font-family: 'Shantell Sans', 'Gowun Dodum', system-ui, sans-serif;
+    font-variation-settings: 'INFM' 60, 'BNCE' 0;
+  }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 8px; }
+
+  .scene {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    padding: 4.5cqmin;
+    gap: 2.5cqmin 4cqmin;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "head" "machine" "out";
+  }
+  @container (orientation: landscape) {
+    .scene {
+      grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+      grid-template-rows: auto minmax(0, 1fr);
+      grid-template-areas: "machine head" "machine out";
+      padding: 6cqmin 7cqmin;
+    }
+  }
+
+  .head { grid-area: head; container-type: inline-size; }
+  .head h1 { font-weight: 800; font-size: min(11cqi, 9cqh); line-height: 1; letter-spacing: -.01em; font-variation-settings: 'INFM' 100, 'BNCE' 40; }
+  .head .ko { display: grid; justify-items: start; gap: .2em; }
+  .head p { margin-top: .6em; font-size: min(4.2cqi, 2.6cqh); font-weight: 500; opacity: .75; text-wrap: pretty; }
+  .lang-ko .head p { font-family: 'Gowun Dodum', sans-serif; word-break: keep-all; }
+  .head .ko { color: var(--ink); }
+
+  /* ---- The machine ---- */
+  /* The grid area can be any shape; the rig inside keeps the drawing's proportions so the
+     HTML pieces laid over the SVG (plate, chute, knob) stay on their marks. */
+  .machine {
+    grid-area: machine;
+    display: grid;
+    place-items: center;
+    min-height: 0;
+    container-type: size;
+  }
+  .rig {
+    position: relative;
+    height: min(100cqh, 100cqw * 380 / 240);
+    aspect-ratio: 240 / 380;
+    container-type: size;
+  }
+  .rig svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  #knob { transform-box: fill-box; transform-origin: center; }
+  .pile g { transform-box: fill-box; transform-origin: center; }
+
+  .plate {
+    position: absolute;
+    left: 24.2%; top: 57.6%; width: 51.6%; height: 10.6%;
+    display: grid; place-items: center;
+    padding-bottom: .6cqw;
+    font-weight: 800; font-size: 7.4cqw; line-height: 1;
+    color: var(--red-dark);
+    font-variation-settings: 'INFM' 100, 'BNCE' 60;
+  }
+  .price {
+    position: absolute;
+    right: -7%; top: 49%;
+    padding: 2.4cqw 3.6cqw;
+    background: #fff; border-radius: 2cqw;
+    font-size: 5cqw; font-weight: 700; line-height: 1;
+    rotate: 9deg;
+    box-shadow: 0 1cqw 0 rgba(35,32,58,.15);
+  }
+  .price::before { content: ""; position: absolute; left: -2.6cqw; top: 50%; width: 2.6cqw; height: .5cqw; background: var(--ink); opacity: .4; }
+  .chute {
+    position: absolute;
+    left: 20%; top: 84.4%; width: 25%; height: 10%;
+    overflow: hidden;
+    border-radius: 3cqw;
+  }
+  .drop {
+    position: absolute;
+    left: 50%; bottom: 4%;
+    width: 72%; aspect-ratio: 1;
+    translate: -50% 0;
+    border-radius: 50%;
+    opacity: 0;
+    background: linear-gradient(var(--c, #ffd23f) 0 50%, #fff 50%);
+    box-shadow: inset 0 0 0 1.2cqw rgba(35,32,58,.12);
+  }
+  .knob-hit {
+    position: absolute;
+    left: 50%; top: 79%;
+    width: 32%; aspect-ratio: 1;
+    translate: -50% -50%;
+    border: 0; border-radius: 50%;
+    background: transparent;
+    cursor: grab;
+  }
+  .knob-hit:active { cursor: grabbing; }
+
+  /* ---- Out tray: the big capsule and the idea ---- */
+  .out {
+    grid-area: out;
+    position: relative;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 2.4cqmin;
+    min-height: 0;
+    container-type: inline-size;
+  }
+  @container (orientation: landscape) { .out { justify-items: start; align-content: start; padding-top: 3cqmin; } }
+  .stack { position: relative; display: grid; width: min(100%, 82cqi); }
+  .stack > * { grid-area: 1 / 1; }
+
+  .slip {
+    container-type: inline-size;
+    position: relative;
+    width: 100%;
+    min-height: 26cqmin;
+    padding: 9cqi 7cqi 7cqi;
+    background: #fff;
+    border-radius: 3.4cqi;
+    box-shadow: 0 1.6cqi 0 rgba(35,32,58,.12), 0 5cqi 10cqi rgba(35,32,58,.12);
+    rotate: -1.5deg;
+    visibility: hidden;
+  }
+  .slip::before {
+    content: "";
+    position: absolute; left: 0; right: 0; top: 0;
+    height: 4.2cqi;
+    border-radius: 3.4cqi 3.4cqi 0 0;
+    background: var(--c, #ffd23f);
+  }
+  .slip::after {
+    /* the perforation where it was torn from the roll */
+    content: "";
+    position: absolute; left: 4cqi; right: 4cqi; bottom: 3cqi;
+    border-top: .5cqi dashed rgba(35,32,58,.18);
+  }
+  .idea { font-size: 8.4cqi; font-weight: 700; line-height: 1.12; text-wrap: balance; font-variation-settings: 'INFM' 100, 'BNCE' 0; }
+  .idea-ko { display: block; }
+
+  .capsule {
+    place-self: center;
+    width: 30cqi; aspect-ratio: 1;
+    position: relative;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .capsule i {
+    position: absolute; left: 0; right: 0; height: 50%;
+    border: 1.2cqi solid rgba(35,32,58,.85);
+  }
+  .capsule .lid { top: 0; border-radius: 15cqi 15cqi 0 0; border-bottom-width: .6cqi; background: radial-gradient(circle at 32% 30%, rgba(255,255,255,.75) 0 12%, transparent 13%), var(--c, #ffd23f); }
+  .capsule .cup { bottom: 0; border-radius: 0 0 15cqi 15cqi; border-top-width: .6cqi; background: #fff; }
+
+  .again {
+    min-height: 44px;
+    padding: 0 20px;
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--cream);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 0 var(--ink);
+    transition: translate .08s, box-shadow .08s;
+  }
+  .again:active { translate: 0 3px; box-shadow: 0 1px 0 var(--ink); }
+  .lang-ko .again { font-family: 'Gowun Dodum', sans-serif; }
+  @container (orientation: portrait) { .again { min-height: 38px; font-size: 14px; } }
+  @container (orientation: portrait) { .head h1 { font-size: min(9.6cqi, 6.4cqh); } }
+  @container (max-height: 600px) and (orientation: portrait) { .head p { display: none; } }
+</style>
+</head>
+<body>
+<main class="scene">
+  <header class="head">
+    <h1 data-lang="en">One turn,<br>one good deed.</h1>
+    <h1 data-lang="ko" class="ko" aria-label="한 번 돌리면, 착한 일 하나">
+      <font-kku font="malang" size="1em">한 번 돌리면</font-kku>
+      <font-kku font="malang" size="1em">착한 일 하나</font-kku>
+    </h1>
+    <p data-lang="en">Tiny ideas for a slightly happier world. Free, forever.</p>
+    <p data-lang="ko">세상을 한 뼘 더 행복하게 만드는 작은 일들. 언제나 공짜예요.</p>
+  </header>
+
+  <div class="machine"><div class="rig">
+    <svg viewBox="0 0 240 380" aria-hidden="true">
+      <defs>
+        <clipPath id="dome-clip"><circle cx="120" cy="110" r="92"/></clipPath>
+        <radialGradient id="shine" cx="35%" cy="28%" r="70%">
+          <stop offset="0" stop-color="#fff" stop-opacity=".55"/>
+          <stop offset=".5" stop-color="#fff" stop-opacity=".12"/>
+          <stop offset="1" stop-color="#fff" stop-opacity=".05"/>
+        </radialGradient>
+      </defs>
+      <!-- feet and shadow -->
+      <ellipse cx="120" cy="374" rx="104" ry="7" fill="rgba(35,32,58,.18)"/>
+      <rect x="44" y="360" width="26" height="14" rx="4" fill="#8f2522"/>
+      <rect x="170" y="360" width="26" height="14" rx="4" fill="#8f2522"/>
+      <!-- body -->
+      <rect x="28" y="206" width="184" height="160" rx="20" fill="var(--red)"/>
+      <rect x="28" y="206" width="184" height="160" rx="20" fill="none" stroke="rgba(35,32,58,.85)" stroke-width="5"/>
+      <path d="M44 222 v120" stroke="rgba(255,255,255,.35)" stroke-width="7" stroke-linecap="round"/>
+      <!-- label plate -->
+      <rect x="58" y="219" width="124" height="40" rx="9" fill="var(--cream)" stroke="rgba(35,32,58,.85)" stroke-width="4"/>
+      <!-- chute -->
+      <rect x="46" y="319" width="64" height="42" rx="11" fill="#2b1f33" stroke="rgba(35,32,58,.85)" stroke-width="4"/>
+      <path d="M50 330 h56" stroke="rgba(255,255,255,.18)" stroke-width="3"/>
+      <!-- coin slot -->
+      <rect x="160" y="324" width="34" height="30" rx="6" fill="#c93934" stroke="rgba(35,32,58,.85)" stroke-width="4"/>
+      <rect x="175" y="330" width="4" height="18" rx="2" fill="#2b1f33"/>
+      <!-- knob -->
+      <g id="knob">
+        <circle cx="120" cy="300" r="33" fill="#fff" stroke="rgba(35,32,58,.85)" stroke-width="5"/>
+        <rect x="113" y="270" width="14" height="60" rx="7" fill="var(--cream)" stroke="rgba(35,32,58,.85)" stroke-width="4"/>
+        <circle cx="120" cy="300" r="6" fill="rgba(35,32,58,.85)"/>
+      </g>
+      <!-- collar -->
+      <rect x="40" y="194" width="160" height="20" rx="8" fill="var(--red-dark)" stroke="rgba(35,32,58,.85)" stroke-width="4"/>
+      <!-- dome with capsules -->
+      <circle cx="120" cy="110" r="94" fill="var(--glass)"/>
+      <g class="pile" clip-path="url(#dome-clip)"></g>
+      <circle cx="120" cy="110" r="94" fill="url(#shine)" stroke="rgba(35,32,58,.85)" stroke-width="5"/>
+      <path d="M62 62 A 74 74 0 0 1 104 34" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".8"/>
+      <rect x="104" y="6" width="32" height="14" rx="5" fill="var(--red-dark)" stroke="rgba(35,32,58,.85)" stroke-width="4"/>
+    </svg>
+    <div class="plate">
+      <span data-lang="en">good deeds</span>
+      <font-kku data-lang="ko" font="sticker" size="7.6cqw">착한 일</font-kku>
+    </div>
+    <div class="price">
+      <span data-lang="en">free</span>
+      <font-kku data-lang="ko" font="dunggeun" size="5.6cqw">공짜</font-kku>
+    </div>
+    <div class="chute"><div class="drop"></div></div>
+    <button class="knob-hit" type="button" data-label-en="Turn the knob" data-label-ko="손잡이 돌리기"></button>
+  </div></div>
+
+  <section class="out" aria-live="polite">
+    <div class="stack">
+      <div class="slip"><p class="idea"></p></div>
+      <div class="capsule" aria-hidden="true"><i class="lid"></i><i class="cup"></i></div>
+    </div>
+    <button class="again" type="button"><span data-lang="en">Turn again</span><span data-lang="ko">한 번 더 돌리기</span></button>
+  </section>
+</main>
+
+<script>
+(() => {
+  const IDEAS = TTY.t({
+    en: [
+      'Leave a kind review for a tiny restaurant.',
+      'Tell a coworker their code was easy to read.',
+      'Thank an open-source maintainer. No reason needed.',
+      'Add alt text to your images.',
+      'Let someone else merge first.',
+      'Return a stranger’s shopping cart.',
+      'Write the docs you wished you’d had.',
+      'Name variables for the next reader.',
+      'Hold the elevator. Take the thank-you.',
+      'End a meeting ten minutes early.',
+      'Bring snacks to stand-up.',
+      'Call someone before they call you.',
+    ],
+    ko: [
+      '동네 작은 식당에 다정한 리뷰 남기기',
+      '동료에게 “코드 읽기 편했어요” 말하기',
+      '오픈소스 메인테이너에게 고맙다고 하기',
+      '이미지에 대체 텍스트 꼼꼼히 달기',
+      '내 PR보다 남의 PR 먼저 머지하기',
+      '누가 두고 간 카트 제자리에 돌려놓기',
+      '내가 처음에 읽고 싶던 문서 써 두기',
+      '다음 사람이 읽기 좋게 변수 이름 짓기',
+      '닫히는 엘리베이터 문 잡아 주기',
+      '회의 10분 일찍 끝내기',
+      '택배 기사님께 시원한 물 한 병',
+      '부모님께 먼저 전화 걸기',
+    ],
+  });
+  const KO_FONTS = ['malang', 'crayon', 'sticker'];
+  const COLORS = ['#ffd23f', '#4d9de0', '#ff7eb6', '#3bb273', '#9a6cff', '#ff8c42'];
+
+  const $ = (s) => document.querySelector(s);
+  const knob = $('#knob');
+  const pile = $('.pile');
+  const drop = $('.drop');
+  const capsule = $('.capsule');
+  const lid = $('.capsule .lid');
+  const cup = $('.capsule .cup');
+  const slip = $('.slip');
+  const idea = $('.idea');
+  const knobHit = $('.knob-hit');
+  knobHit.setAttribute('aria-label', knobHit.dataset['label' + (TTY.lang === 'ko' ? 'Ko' : 'En')]);
+
+  /* Capsules piled in the dome. */
+  const SPOTS = [[72,178],[106,182],[140,180],[172,174],[55,146],[89,150],[123,148],[157,146],[189,140],[74,114],[108,118],[142,114],[176,110],[96,84],[132,86]];
+  const NS = 'http://www.w3.org/2000/svg';
+  SPOTS.forEach(([x, y], i) => {
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('transform', `translate(${x} ${y}) rotate(${(i * 47) % 180 - 90})`);
+    g.innerHTML = `<circle r="17" fill="#fff" stroke="rgba(35,32,58,.85)" stroke-width="3.5"/>
+      <path d="M-17 0 A17 17 0 0 1 17 0 Z" fill="${COLORS[i % COLORS.length]}" stroke="rgba(35,32,58,.85)" stroke-width="3.5"/>
+      <circle cx="-6" cy="-8" r="3.2" fill="#fff" opacity=".7"/>`;
+    const wrap = document.createElementNS(NS, 'g');
+    wrap.append(g);
+    pile.append(wrap);
+  });
+  const pileCaps = [...pile.children];
+
+  let order = [];
+  const nextIdea = () => {
+    if (!order.length) order = IDEAS.map((_, i) => i).sort(() => Math.random() - .5);
+    return order.pop();
+  };
+  let shownColor = 0;
+
+  function setIdea(i) {
+    const color = COLORS[(shownColor = (shownColor + 1 + Math.floor(Math.random() * (COLORS.length - 1))) % COLORS.length)];
+    slip.style.setProperty('--c', color);
+    capsule.style.setProperty('--c', color);
+    drop.style.setProperty('--c', color);
+    if (TTY.lang === 'ko') {
+      const el = document.createElement('font-kku');
+      el.className = 'idea-ko';
+      el.setAttribute('font', KO_FONTS[i % KO_FONTS.length]);
+      el.setAttribute('size', '8.6cqi');
+      el.setAttribute('wrap-unit', 'word');
+      el.textContent = IDEAS[i];
+      idea.replaceChildren(el);
+    } else {
+      idea.textContent = IDEAS[i];
+    }
+  }
+
+  const rect = (el) => el.getBoundingClientRect();
+  let busy = false;
+  let auto = null;
+  let lastTouch = 0;
+
+  async function turn() {
+    if (busy) return;
+    busy = true;
+    clearTimeout(auto);
+    const i = nextIdea();
+
+    if (TTY.reduce) {
+      setIdea(i);
+      slip.style.visibility = 'visible';
+      busy = false;
+      return;
+    }
+
+    // The old idea is crumpled away.
+    if (slip.style.visibility === 'visible') {
+      await slip.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(10%, 18%) rotate(9deg) scale(.86)', opacity: 0 }],
+        { duration: 320, easing: 'cubic-bezier(.5, 0, .8, .4)', fill: 'forwards' }).finished;
+      slip.style.visibility = 'hidden';
+    }
+    setIdea(i);
+
+    // Knob: a full turn with a ratchety finish; the pile shuffles.
+    knob.animate([
+      { transform: 'rotate(0deg)' },
+      { transform: 'rotate(200deg)', offset: .45 },
+      { transform: 'rotate(380deg)', offset: .82 },
+      { transform: 'rotate(360deg)' },
+    ], { duration: 950, easing: 'cubic-bezier(.45, 0, .35, 1)' });
+    pileCaps.forEach((cap, n) => cap.animate([
+      { transform: 'translate(0, 0)' },
+      { transform: `translate(${(n % 3 - 1) * 3}px, -${4 + (n % 4) * 2}px)` },
+      { transform: 'translate(0, 0)' },
+    ], { duration: 380, delay: 200 + (n % 5) * 60, iterations: 2, easing: 'ease-in-out' }));
+
+    // A capsule drops into the chute and bounces.
+    await new Promise((r) => setTimeout(r, 820));
+    drop.style.opacity = 1;
+    await drop.animate([
+      { transform: 'translateY(-130%)', easing: 'cubic-bezier(.55, 0, 1, .45)' },
+      { transform: 'translateY(0)', offset: .45, easing: 'cubic-bezier(0, .55, .45, 1)' },
+      { transform: 'translateY(-34%)', offset: .65, easing: 'cubic-bezier(.55, 0, 1, .45)' },
+      { transform: 'translateY(0)', offset: .82, easing: 'cubic-bezier(0, .55, .45, 1)' },
+      { transform: 'translateY(-9%)', offset: .92 },
+      { transform: 'translateY(0)' },
+    ], { duration: 760 }).finished;
+
+    // It hops out of the machine and lands in front of us, spinning.
+    const from = rect(drop), to = rect(capsule);
+    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+    const s = from.width / to.width;
+    drop.style.opacity = 0;
+    capsule.style.visibility = 'visible';
+    lid.style.transform = cup.style.transform = '';
+    lid.style.opacity = cup.style.opacity = 1;
+    await capsule.animate([
+      { transform: `translate(${dx}px, ${dy}px) scale(${s}) rotate(0deg)` },
+      { transform: `translate(${dx * .45}px, ${dy * .45 - to.height * 1.1}px) scale(${(s + 1) / 2}) rotate(400deg)`, offset: .55 },
+      { transform: 'translate(0, 0) scale(1.08, .92) rotate(720deg)', offset: .86 },
+      { transform: 'translate(0, 0) scale(1) rotate(720deg)' },
+    ], { duration: 820, easing: 'cubic-bezier(.3, .1, .3, 1)' }).finished;
+
+    // Twist, pop, unroll.
+    await capsule.animate([
+      { transform: 'rotate(0)' }, { transform: 'rotate(-14deg)' }, { transform: 'rotate(10deg)' }, { transform: 'rotate(0)' },
+    ], { duration: 360, easing: 'ease-in-out' }).finished;
+    lid.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(-70%, -150%) rotate(-50deg)', opacity: 0 }],
+      { duration: 520, easing: 'cubic-bezier(.2, .7, .4, 1)', fill: 'forwards' });
+    cup.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(60%, 120%) rotate(35deg)', opacity: 0 }],
+      { duration: 520, easing: 'cubic-bezier(.5, 0, .9, .5)', fill: 'forwards' });
+    slip.style.visibility = 'visible';
+    slip.animate([
+      { transform: 'scale(.24) rotate(-12deg)', clipPath: 'inset(0 0 78% 0 round 4cqi)', opacity: 0 },
+      { transform: 'scale(1.04) rotate(2deg)', clipPath: 'inset(0 0 0 0 round 4cqi)', opacity: 1, offset: .6 },
+      { transform: 'scale(1) rotate(0)', clipPath: 'inset(0 0 0 0 round 4cqi)', opacity: 1 },
+    ], { duration: 640, easing: 'cubic-bezier(.2, .9, .3, 1.15)' });
+    if (TTY.lang === 'en') {
+      idea.animate([{ fontVariationSettings: "'INFM' 100, 'BNCE' 100" }, { fontVariationSettings: "'INFM' 100, 'BNCE' -60" }, { fontVariationSettings: "'INFM' 100, 'BNCE' 0" }],
+        { duration: 900, delay: 250, easing: 'ease-out' });
+    }
+    setTimeout(() => { capsule.style.visibility = 'hidden'; }, 560);
+
+    busy = false;
+    scheduleAuto();
+  }
+
+  // Nobody playing? The machine turns itself.
+  function scheduleAuto() {
+    clearTimeout(auto);
+    const quiet = Date.now() - lastTouch;
+    auto = setTimeout(turn, quiet < 8000 ? 9000 : 5200);
+  }
+
+  const play = () => { lastTouch = Date.now(); turn(); };
+  knobHit.addEventListener('click', play);
+  $('.again').addEventListener('click', play);
+
+  TTY.onShow(() => {
+    if (TTY.reduce) { turn(); return; }
+    setTimeout(turn, 600);
+  });
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

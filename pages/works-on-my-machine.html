@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Certificate of Works on My Machine | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Gochi+Hand&family=Gowun+Batang:wght@400;700&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="sebul dojang pilgi"></script>
+<style>
+  /* A certificate for the oldest excuse in software, stamped, and then answered by a sticky
+     note with the oldest reply ("then we'll ship your machine"). */
+  :root {
+    --desk: #2f5d50;
+    --paper: #fffdf6;
+    --gold: #b8892b;
+    --gold-soft: #e7cf8f;
+    --ink: #2a2622;
+    --seal: #c8322b;
+    --note: #ffe45c;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 90% at 50% 40%, #3a6f61 0%, var(--desk) 60%, #244a40 100%);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+
+  .cert {
+    position: relative;
+    container-type: inline-size;
+    width: min(88vw, 64vh);
+    aspect-ratio: 1 / 1.34;
+    padding: 9cqi 8cqi 8cqi;
+    background: var(--paper);
+    box-shadow: 0 2px 0 rgba(0,0,0,.08), 0 24px 60px rgba(0,0,0,.35);
+    text-align: center;
+  }
+  /* Guilloché-ish frame: a gold rule, a fine repeating band, an inner hairline. */
+  .cert::before, .cert::after { content: ""; position: absolute; pointer-events: none; }
+  .cert::before {
+    inset: 3cqi;
+    border: .6cqi solid var(--gold);
+    background:
+      repeating-linear-gradient(45deg, transparent 0 .9cqi, rgba(184,137,43,.18) .9cqi 1.1cqi) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) border-box, linear-gradient(#000 0 0) padding-box;
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) border-box exclude, linear-gradient(#000 0 0) padding-box;
+  }
+  .cert::after { inset: 5.4cqi; border: .25cqi solid var(--gold-soft); }
+
+  .cert > div[data-lang] { margin-top: 3cqi; }
+  .kicker { font-size: 3.6cqi; font-style: italic; letter-spacing: .02em; color: #6b5a3a; }
+  .title { margin-top: 2.5cqi; font-family: 'UnifrakturCook', serif; font-size: 12.5cqi; line-height: .95; }
+  .of { margin-top: 1.6cqi; font-size: 5.4cqi; font-weight: 700; }
+  .rule { width: 34cqi; height: .35cqi; margin: 6cqi auto; background: var(--gold); }
+  .body { font-size: 4.8cqi; line-height: 1.5; font-weight: 500; }
+  .who { display: block; margin: 2cqi 0; font-size: 8.6cqi; font-style: italic; font-weight: 700; }
+  .date { margin-top: 8cqi; font-size: 3.6cqi; font-style: italic; color: #6b5a3a; }
+  .sign { position: absolute; left: 10cqi; bottom: 10cqi; width: 34cqi; font-size: 3.2cqi; text-align: center; }
+  .sign svg { display: block; width: 100%; height: 9cqi; }
+  .sign svg path { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .sign > span { display: block; padding-top: 1cqi; border-top: .25cqi solid var(--ink); }
+
+  .seal {
+    position: absolute;
+    right: 8cqi;
+    bottom: 7cqi;
+    display: grid;
+    place-items: center;
+    width: 30cqi;
+    aspect-ratio: 1;
+    border: 1.1cqi double var(--seal);
+    border-radius: 50%;
+    color: var(--seal);
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 4cqi;
+    line-height: 1.05;
+    text-transform: uppercase;
+    rotate: -14deg;
+    mix-blend-mode: multiply;
+    opacity: .9;
+  }
+  .seal b { display: block; font-size: 8cqi; }
+
+  .note {
+    position: absolute;
+    left: -5cqi;
+    bottom: 26cqi;
+    width: 40cqi;
+    padding: 5cqi 4cqi 6cqi;
+    background: var(--note);
+    color: #2b2a26;
+    font-family: 'Gochi Hand', cursive;
+    font-size: 5.6cqi;
+    line-height: 1.12;
+    text-align: left;
+    rotate: -5deg;
+    box-shadow: 0 1.2cqi 2.4cqi rgba(0,0,0,.22);
+  }
+  .note::before { content: ""; position: absolute; left: 30%; top: -2cqi; width: 40%; height: 4cqi; background: rgba(255,255,255,.55); rotate: -3deg; }
+
+  /* Korean: font-kku draws the display lines (title, award, stamp, note); running text is
+     set in Gowun Batang, since font-kku is made for headlines rather than paragraphs. */
+  .lang-ko .cert { font-family: 'Gowun Batang', serif; word-break: keep-all; }
+  .lang-ko .title { margin-top: 3cqi; letter-spacing: 0; }
+  .seal .ko { display: grid; justify-items: center; gap: 1cqi; }
+  .lang-ko .body { font-size: 4.6cqi; line-height: 1.75; }
+  .lang-ko .seal { font-size: 1px; }
+  .lang-ko .note { font-family: inherit; }
+
+  .hidden { opacity: 0; }
+  @media (prefers-reduced-motion: reduce) { .hidden { opacity: 1; } }
+</style>
+</head>
+<body>
+<article class="cert" aria-labelledby="cert-title">
+
+  <div data-lang="en">
+    <p class="kicker step">Presented with great confidence</p>
+    <h1 class="title step" id="cert-title">Certificate</h1>
+    <p class="of step">of Works on My Machine</p>
+    <div class="rule step"></div>
+    <p class="body step">This certifies that
+      <span class="who">your code</span>
+      ran flawlessly, without a single error,<br>on my machine.</p>
+    <p class="date step" data-date></p>
+  </div>
+
+  <div data-lang="ko">
+    <p class="kicker step">제 2026-404 호</p>
+    <h1 class="title step" id="cert-title"><font-kku font="sebul" size="15cqi">상 장</font-kku></h1>
+    <p class="of step"><font-kku font="sebul" size="5.6cqi">내 컴퓨터에선 잘 됨 상</font-kku></p>
+    <div class="rule step"></div>
+    <p class="body step">위 코드는 제 컴퓨터에서<br>오류 하나 없이 완벽하게 실행되었으므로<br>이 상장을 수여합니다.</p>
+    <p class="date step" data-date></p>
+  </div>
+
+  <div class="sign step">
+    <svg viewBox="0 0 200 50" aria-hidden="true"><path pathLength="1" d="M8 34 C 22 6, 30 44, 44 24 S 66 10, 70 30 C 74 44, 92 8, 104 26 S 130 40, 140 18 C 146 8, 156 40, 170 24 L 192 20"/></svg>
+    <span data-lang="en">Lead Developer (it compiled)</span>
+    <span data-lang="ko">개발팀장 (빌드는 됨)</span>
+  </div>
+
+  <div class="seal hidden" aria-hidden="true">
+    <span data-lang="en">Works on<b>my</b>machine</span>
+    <span data-lang="ko" class="ko"><font-kku font="dojang" size="5.4cqi">내 컴에선</font-kku><font-kku font="dojang" size="9cqi">됨</font-kku></span>
+  </div>
+
+  <p class="note hidden">
+    <span data-lang="en">Great. Then we'll ship your machine.</span>
+    <span data-lang="ko"><font-kku font="pilgi" size="6cqi" wrap-unit="word">좋아요. 그럼 그 컴퓨터를 출시하죠.</font-kku></span>
+  </p>
+</article>
+
+<script>
+(() => {
+  const today = new Date();
+  const date = TTY.lang === 'ko'
+    ? `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`
+    : 'Awarded ' + today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  document.querySelectorAll('[data-date]').forEach((el) => { el.textContent = date; });
+
+  const cert = document.querySelector('.cert');
+  const steps = [...document.querySelectorAll('.step')];
+  const seal = document.querySelector('.seal');
+  const note = document.querySelector('.note');
+  const signature = document.querySelector('.sign path');
+
+  if (!TTY.reduce) steps.forEach((el) => el.classList.add('hidden'));
+
+  function play() {
+    if (TTY.reduce) { seal.classList.remove('hidden'); note.classList.remove('hidden'); return; }
+    const ease = 'cubic-bezier(.2, .8, .2, 1)';
+    cert.animate([{ transform: 'translateY(-6%) rotate(-1.5deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 700, easing: ease });
+
+    // The text is printed line by line, left to right.
+    steps.forEach((el, i) => {
+      el.animate([{ clipPath: 'inset(0 100% 0 0)', opacity: 1 }, { clipPath: 'inset(0 0 0 0)', opacity: 1 }],
+        { duration: 520, delay: 450 + i * 190, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'backwards' });
+      setTimeout(() => el.classList.remove('hidden'), 450 + i * 190);
+    });
+    const signedAt = 450 + steps.length * 190;
+    signature.animate([{ strokeDasharray: '1', strokeDashoffset: 1 }, { strokeDasharray: '1', strokeDashoffset: 0 }],
+      { duration: 900, delay: signedAt - 300, easing: 'ease-in-out', fill: 'both' });
+
+    // Stamp: lifted high, slammed down, the paper flinches.
+    const stampAt = signedAt + 900;
+    setTimeout(() => {
+      seal.classList.remove('hidden');
+      seal.animate([
+        { transform: 'scale(2.6)', opacity: 0, filter: 'blur(2px)' },
+        { transform: 'scale(.94)', opacity: .95, filter: 'blur(0)', offset: .7 },
+        { transform: 'scale(1)', opacity: .9 },
+      ], { duration: 420, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+      cert.animate([
+        { transform: 'none' }, { transform: 'translate(0, .6%) rotate(.4deg)' }, { transform: 'translate(0, -.2%)' }, { transform: 'none' },
+      ], { duration: 320, delay: 300 });
+    }, stampAt);
+
+    // And the reply arrives.
+    setTimeout(() => {
+      note.classList.remove('hidden');
+      note.animate([
+        { transform: 'translate(40%, -30%) rotate(24deg)', opacity: 0 },
+        { transform: 'translate(-2%, 2%) rotate(3deg)', opacity: 1, offset: .75 },
+        { transform: 'none', opacity: 1 },
+      ], { duration: 650, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
+    }, stampAt + 1700);
+  }
+
+  TTY.onShow(play);
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

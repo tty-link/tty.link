@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today, Merged | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Martian+Mono:wght@500;700&family=Gowun+Dodum&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="dunggeun pilgi"></script>
+<style>
+  /* A good day as a commit graph, drawn the way a metro map is: coloured lines, stations,
+     interchanges where branches merge back. A train runs the day from wake-up to the tag. */
+  :root {
+    --paper: #f5f4ef;
+    --ink: #1d1d22;
+    --muted: #6d6b72;
+    --main: #00a84d;
+    --lunch: #ef7c1c;
+    --walk: #996cac;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    container-type: size;
+    overflow: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Bricolage Grotesque', 'Gowun Dodum', system-ui, sans-serif;
+  }
+  .lang-ko body { word-break: keep-all; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 6px; }
+
+  .page {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    padding: 4.5cqmin 5cqmin 3.6cqmin;
+    gap: 2cqmin;
+  }
+  .top { display: flex; justify-content: space-between; align-items: start; gap: 3cqmin; }
+  .top h1 { font-weight: 800; font-size: clamp(26px, 6.4cqmin, 64px); line-height: .95; letter-spacing: -.02em; font-variation-settings: 'opsz' 96; }
+  .top p { margin-top: .5em; font-size: clamp(14px, 2.4cqmin, 21px); font-weight: 500; color: var(--muted); }
+  .lang-ko .top p { font-family: 'Gowun Dodum', sans-serif; }
+  /* dunggeun is drawn from a jamo sheet; a hairline shadow on both sides gives the headline weight */
+  .top .bold { color: var(--ink); filter: drop-shadow(.018em 0 0 currentColor) drop-shadow(-.018em 0 0 currentColor); }
+  .replay {
+    flex: none;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .replay:hover { background: var(--ink); color: #fff; }
+  .lang-ko .replay { font-family: 'Gowun Dodum', sans-serif; }
+
+  .map { display: grid; place-items: center; min-height: 0; container-type: size; }
+  .rig { position: relative; container-type: size; }
+  .rig svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .line { fill: none; stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; }
+  .station { fill: #fff; stroke: var(--ink); stroke-width: 5; transform-box: fill-box; transform-origin: center; }
+  .station.swap { stroke-width: 7; }
+  .train { transform-box: fill-box; transform-origin: center; }
+
+  .label {
+    position: absolute;
+    width: max-content;
+    max-width: var(--w, 15%);
+    font-size: 1.75cqw;
+    line-height: 1.22;
+  }
+  .label .time { display: block; font-family: 'Martian Mono', monospace; font-weight: 500; font-size: .74em; color: var(--muted); letter-spacing: .02em; }
+  .label .msg { display: block; font-weight: 700; }
+  .label .type { font-family: 'Martian Mono', monospace; font-weight: 700; font-size: .78em; color: var(--c, var(--main)); }
+  .label .diff { display: block; margin-top: .2em; font-family: 'Martian Mono', monospace; font-weight: 500; font-size: .7em; color: var(--muted); }
+  .label.tag .msg { display: inline-block; padding: .25em .6em; background: var(--ink); color: #fff; border-radius: .4em; }
+  .label.tag .type { color: #8ff0b6; }
+  .portrait .label { font-size: 3.7cqw; }
+  .portrait .label .time { display: inline; margin-right: .5em; }
+  .portrait .label .msg { display: inline; }
+  .portrait .label .diff { display: none; }
+  @container (max-height: 640px) {
+    .top h1 { font-size: clamp(22px, 5.6cqmin, 40px); }
+    .top p { display: none; }
+    .replay { min-height: 34px; padding: 0 12px; font-size: 13px; }
+    .page .legend { display: none; }
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: .6em 1.6em; font-family: 'Martian Mono', monospace; font-weight: 500; font-size: clamp(11px, 1.9cqmin, 15px); color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: .55em; }
+  .legend i { display: inline-block; width: 2.2em; height: .55em; border-radius: 1em; background: var(--c); }
+
+  .hidden { opacity: 0; }
+  @media (prefers-reduced-motion: reduce) { .hidden { opacity: 1; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <div>
+      <h1 data-lang="en">Today, merged.</h1>
+      <h1 data-lang="ko" aria-label="오늘, 머지 완료."><font-kku class="bold" font="dunggeun" size="clamp(22px, 6.8cqmin, 68px)">오늘, 머지 완료.</font-kku></h1>
+      <p data-lang="en">A day with zero conflicts. Well, almost.</p>
+      <p data-lang="ko">충돌 하나 없던 하루. 음, 거의요.</p>
+    </div>
+    <button class="replay" type="button"><span data-lang="en">Replay the day</span><span data-lang="ko">하루 다시 보기</span></button>
+  </header>
+
+  <div class="map"><div class="rig">
+    <svg aria-hidden="true">
+      <g class="lines"></g>
+      <g class="stations"></g>
+      <g class="train"><rect x="-17" y="-11" width="34" height="22" rx="11" fill="var(--ink)"/><rect x="2" y="-5" width="9" height="10" rx="2" fill="#fff"/></g>
+    </svg>
+  </div></div>
+
+  <footer class="legend" aria-hidden="true">
+    <span style="--c: var(--main)"><i></i>main</span>
+    <span style="--c: var(--lunch)"><i></i>lunch-with-friends</span>
+    <span style="--c: var(--walk)"><i></i>go-outside</span>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const $ = (s) => document.querySelector(s);
+  const ko = TTY.lang === 'ko';
+
+  // The day, in commit order. type + message + what changed.
+  const COMMITS = [
+    { id: 'wake', line: 'main', time: '07:00', type: 'feat:', en: 'wake up without an alarm', ko: '알람 없이 기상', diff: ['+8h sleep', '+수면 8시간'] },
+    { id: 'coffee', line: 'main', time: '07:40', type: 'fix:', en: 'coffee temperature regression', ko: '커피 온도 회귀 버그', diff: ['+3°C, −1 sigh', '+3°C, −한숨 1'] },
+    { id: 'plants', line: 'main', time: '09:10', type: 'chore:', en: 'water the plants', ko: '화분에 물 주기', diff: ['+500 ml', '+물 500ml'] },
+    { id: 'lunch', line: 'lunch', time: '12:00', type: 'feat:', en: 'lunch with friends', ko: '친구들이랑 점심', diff: ['+3 friends', '+친구 3명'] },
+    { id: 'dessert', line: 'lunch', time: '12:40', type: 'feat:', en: 'extra dessert (not in spec)', ko: '디저트 추가 (기획에 없음)', diff: ['+1 cake, 0 tests', '+케이크 1, 테스트 0'] },
+    { id: 'merge-lunch', line: 'main', swap: 'lunch', time: '13:10', type: 'merge:', en: 'lunch with friends (no conflicts)', ko: '점심 머지 (충돌 없음)', diff: ['0 conflicts', '충돌 0건'] },
+    { id: 'walk', line: 'walk', time: '15:00', type: 'refactor:', en: 'replace doomscrolling with a walk', ko: '둠스크롤링을 산책으로 교체', diff: ['−47 min feed, +6,214 steps', '−피드 47분, +6,214걸음'] },
+    { id: 'merge-walk', line: 'main', swap: 'walk', time: '15:40', type: 'merge:', en: 'go-outside', ko: '바깥 공기 머지', diff: ['+1 good mood', '+기분 1'] },
+    { id: 'docs', line: 'main', time: '17:20', type: 'docs:', en: 'tell someone they did great', ko: '동료에게 잘했다고 말하기', diff: ['+1 compliment', '+칭찬 1'] },
+    { id: 'revert', line: 'main', time: '19:30', type: 'revert:', en: '“skip dinner”', ko: '“저녁 거르기”', diff: ['+1 proper dinner', '+제대로 된 저녁 1끼'] },
+    { id: 'tag', line: 'main', tag: true, time: '22:30', type: 'v1.0', en: 'a good day', ko: '좋은 하루', diff: ['shipped', '배포 완료'] },
+  ];
+
+  // Two maps of the same day: a looped line for wide screens, a straight one for tall ones.
+  const LAYOUTS = {
+    landscape: {
+      w: 1000, h: 660,
+      lines: {
+        main: 'M70 200 H870 Q940 200 940 270 V380 Q940 450 870 450 H120',
+        lunch: 'M470 200 L560 110 H700 L790 200',
+        walk: 'M860 450 L770 540 H650 L560 450',
+      },
+      at: {
+        wake: [110, 200, 'below'], coffee: [260, 200, 'below'], plants: [410, 200, 'below'],
+        lunch: [580, 110, 'above-end'], dessert: [680, 110, 'above-start'],
+        'merge-lunch': [800, 200, 'below'],
+        walk: [710, 540, 'below'],
+        'merge-walk': [560, 450, 'above'], docs: [420, 450, 'above'], revert: [280, 450, 'above'], tag: [120, 450, 'above'],
+      },
+    },
+    portrait: {
+      w: 600, h: 760,
+      lines: {
+        main: 'M70 20 V712',
+        lunch: 'M70 174 L150 226 V306 L70 352',
+        walk: 'M70 394 L150 440 V474 L70 520',
+      },
+      at: {
+        wake: [70, 36], coffee: [70, 94], plants: [70, 152],
+        lunch: [150, 242], dessert: [150, 296],
+        'merge-lunch': [70, 370],
+        walk: [150, 457],
+        'merge-walk': [70, 538], docs: [70, 596], revert: [70, 654], tag: [70, 712],
+      },
+    },
+  };
+
+  const rig = $('.rig');
+  const svgEl = $('.rig svg');
+  const linesG = $('.lines');
+  const stationsG = $('.stations');
+  const train = $('.train');
+  const COLORS = { main: 'var(--main)', lunch: 'var(--lunch)', walk: 'var(--walk)' };
+
+  let built = null;
+
+  function build() {
+    const portrait = innerHeight > innerWidth * 1.05;
+    const L = LAYOUTS[portrait ? 'portrait' : 'landscape'];
+    if (built && built.L === L) return built;
+
+    rig.classList.toggle('portrait', portrait);
+    rig.style.aspectRatio = `${L.w} / ${L.h}`;
+    rig.style.height = `min(100cqh, 100cqw * ${L.h} / ${L.w})`;
+    svgEl.setAttribute('viewBox', `0 0 ${L.w} ${L.h}`);
+    linesG.replaceChildren();
+    stationsG.replaceChildren();
+    rig.querySelectorAll('.label').forEach((el) => el.remove());
+
+    const paths = {};
+    // Branches under main, so the interchanges sit on top of the main line.
+    ['lunch', 'walk', 'main'].forEach((name) => {
+      const p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', L.lines[name]);
+      p.setAttribute('class', 'line');
+      p.setAttribute('stroke', COLORS[name]);
+      linesG.append(p);
+      paths[name] = p;
+    });
+
+    const items = COMMITS.map((c) => {
+      const [x, y, side] = L.at[c.id];
+      const st = document.createElementNS(NS, 'circle');
+      st.setAttribute('cx', x);
+      st.setAttribute('cy', y);
+      st.setAttribute('r', c.tag ? 17 : c.swap ? 14 : 10);
+      st.setAttribute('class', 'station' + (c.swap ? ' swap' : ''));
+      if (c.tag) { st.style.fill = 'var(--main)'; st.style.stroke = 'var(--ink)'; }
+      stationsG.append(st);
+
+      const label = document.createElement('div');
+      label.className = 'label' + (c.tag ? ' tag' : '');
+      label.style.setProperty('--c', COLORS[c.line === 'main' && c.swap ? c.swap : c.line]);
+      label.innerHTML = `<span class="time">${c.time}</span><span class="msg"><span class="type">${c.type}</span> <span class="text"></span></span><span class="diff">${c.diff[ko ? 1 : 0]}</span>`;
+      const text = label.querySelector('.text');
+      if (ko) {
+        const k = document.createElement('font-kku');
+        k.setAttribute('font', c.tag ? 'pilgi' : 'dunggeun');
+        if (c.tag) k.style.color = '#fff';
+        k.setAttribute('size', '1em');
+        k.setAttribute('wrap-unit', 'word');
+        k.textContent = c[TTY.lang];
+        text.append(k);
+      } else {
+        text.textContent = c.en;
+      }
+      const px = (x / L.w) * 100, py = (y / L.h) * 100;
+      if (portrait) {
+        label.style.left = (190 / L.w * 100) + '%';
+        label.style.top = py + '%';
+        label.style.transform = 'translateY(-50%)';
+        label.style.setProperty('--w', '68%');
+      } else {
+        const gap = (c.tag ? 32 : 26) / L.h * 100;
+        label.style.left = px + '%';
+        if (side === 'below') { label.style.top = (py + gap) + '%'; label.style.transform = 'translateX(-50%)'; label.style.textAlign = 'center'; }
+        if (side === 'above') { label.style.top = (py - gap) + '%'; label.style.transform = 'translate(-50%, -100%)'; label.style.textAlign = 'center'; }
+        if (side === 'above-end') { label.style.top = (py - gap) + '%'; label.style.transform = 'translate(-88%, -100%)'; label.style.textAlign = 'right'; }
+        if (side === 'above-start') { label.style.top = (py - gap) + '%'; label.style.transform = 'translate(-12%, -100%)'; }
+      }
+      rig.append(label);
+      return { c, st, label, x, y };
+    });
+
+    // Where along its own line each station sits, so the train reaches them in time.
+    const lenAt = (path, x, y) => {
+      const total = path.getTotalLength();
+      let best = 0, bestD = Infinity;
+      for (let i = 0; i <= 400; i++) {
+        const l = (total * i) / 400, p = path.getPointAtLength(l);
+        const d = (p.x - x) ** 2 + (p.y - y) ** 2;
+        if (d < bestD) { bestD = d; best = l; }
+      }
+      return best;
+    };
+    const mainLen = paths.main.getTotalLength();
+    const forkAt = (name) => {
+      const p = paths[name].getPointAtLength(0);
+      return lenAt(paths.main, p.x, p.y) / mainLen;
+    };
+    items.forEach((it) => {
+      const own = paths[it.c.line];
+      it.on = it.c.line === 'main' ? lenAt(own, it.x, it.y) / mainLen : null;
+      if (it.c.line !== 'main') it.branchFrac = lenAt(own, it.x, it.y) / own.getTotalLength();
+    });
+    built = { L, paths, items, mainLen, forks: { lunch: forkAt('lunch'), walk: forkAt('walk') } };
+    return built;
+  }
+
+  let run = 0;
+  function play() {
+    const b = build();
+    const me = ++run;
+    const all = [b.paths.main, b.paths.lunch, b.paths.walk];
+    if (TTY.reduce) {
+      all.forEach((p) => { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; });
+      b.items.forEach((it) => { it.st.classList.remove('hidden'); it.label.classList.remove('hidden'); });
+      train.style.display = 'none';
+      return;
+    }
+
+    all.forEach((p) => { const l = p.getTotalLength(); p.style.strokeDasharray = `${l} ${l}`; p.style.strokeDashoffset = l; });
+    b.items.forEach((it) => { it.st.classList.add('hidden'); it.label.classList.add('hidden'); it.shown = false; });
+    train.getAnimations().forEach((a) => a.cancel());
+    const branchStart = { lunch: null, walk: null };
+
+    const DURATION = 7600;
+    const t0 = performance.now() + 300;
+    const pop = (it) => {
+      if (it.shown) return;
+      it.shown = true;
+      it.st.classList.remove('hidden');
+      it.st.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.5)', offset: .6 }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(.2, .9, .3, 1.3)' });
+      it.label.classList.remove('hidden');
+      it.label.animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 480, easing: 'cubic-bezier(.6, 0, .3, 1)' });
+    };
+    const BRANCH_MS = 1150;
+
+    const frame = (now) => {
+      if (me !== run) return;
+      const k = Math.min(1, Math.max(0, (now - t0) / DURATION));
+      // ease the whole day: a slow morning, a steady afternoon, a gentle stop
+      const e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      const len = e * b.mainLen;
+      b.paths.main.style.strokeDashoffset = b.mainLen - len;
+      const p = b.paths.main.getPointAtLength(len);
+      const q = b.paths.main.getPointAtLength(Math.min(b.mainLen, len + 1));
+      const angle = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
+      train.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${len >= b.mainLen - 1 ? 0 : angle})`);
+
+      b.items.forEach((it) => { if (it.on !== null && e >= it.on - .002) pop(it); });
+      ['lunch', 'walk'].forEach((name) => {
+        if (branchStart[name] === null && e >= b.forks[name]) branchStart[name] = now;
+        if (branchStart[name] !== null) {
+          const f = Math.min(1, (now - branchStart[name]) / BRANCH_MS);
+          const path = b.paths[name], l = path.getTotalLength();
+          path.style.strokeDashoffset = l * (1 - f);
+          b.items.forEach((it) => { if (it.c.line === name && f >= it.branchFrac) pop(it); });
+        }
+      });
+      if (k < 1 || ['lunch', 'walk'].some((n) => branchStart[n] !== null && now - branchStart[n] < BRANCH_MS)) requestAnimationFrame(frame);
+      else {
+        // the train pulls in and leaves the terminus to its sign
+        train.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' });
+        const tag = b.items[b.items.length - 1];
+        tag.label.animate([{ transform: tag.label.style.transform + ' rotate(0)' }, { transform: tag.label.style.transform + ' rotate(-4deg) scale(1.08)' }, { transform: tag.label.style.transform }],
+          { duration: 500, easing: 'cubic-bezier(.2, .9, .3, 1.3)' });
+      }
+    };
+    requestAnimationFrame(frame);
+  }
+
+  $('.replay').addEventListener('click', play);
+  let resizeTimer;
+  addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const before = built && built.L;
+      build();
+      if (built.L !== before) play();
+    }, 150);
+  });
+
+  build();
+  if (!TTY.reduce) {
+    built.items.forEach((it) => { it.st.classList.add('hidden'); it.label.classList.add('hidden'); });
+    Object.values(built.paths).forEach((p) => { const l = p.getTotalLength(); p.style.strokeDasharray = `${l} ${l}`; p.style.strokeDashoffset = l; });
+    const s = built.paths.main.getPointAtLength(0);
+    train.setAttribute('transform', `translate(${s.x} ${s.y})`);
+  }
+  TTY.onShow(play);
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

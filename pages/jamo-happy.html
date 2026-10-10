@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Happiness, Assembly Instructions | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;700&family=Gowun+Dodum&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="malang sebul"></script>
+<style>
+  /* Flat-pack instructions for happiness: an exploded view of the word, parts lettered and
+     listed, then the parts click together. In Korean the parts are jamo, which is exactly
+     how Hangul is built. */
+  :root {
+    --paper: #fbfaf7;
+    --ink: #1c1c1f;
+    --soft: #8b8a86;
+    --line: #d9d6cf;
+    --blue: #2f5bff;
+    --sun: #ffd84a;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    overflow: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Jost', system-ui, sans-serif;
+  }
+  .lang-ko body { font-family: 'Gowun Dodum', 'Jost', sans-serif; word-break: keep-all; }
+
+  .sheet {
+    container-type: size;
+    height: 100%;
+    padding: clamp(14px, 4cqmin, 40px);
+  }
+  .layout {
+    display: grid;
+    height: 100%;
+    grid-template-columns: minmax(0, 30cqi) 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: "head head" "parts diagram" "steps steps";
+    gap: 3cqmin 4cqi;
+  }
+
+  /* Header: product name and the promise. */
+  .head { grid-area: head; display: flex; flex-wrap: wrap; align-items: baseline; gap: .4em 1.2em; border-bottom: 2px solid var(--ink); padding-bottom: 2cqmin; }
+  .product { font-size: clamp(26px, 7cqmin, 64px); font-weight: 700; letter-spacing: .02em; line-height: 1; }
+  .lang-ko .product { line-height: 1; }
+  .promise { font-size: clamp(14px, 2.6cqmin, 22px); color: #4a4945; }
+
+  /* Parts list. */
+  .parts { grid-area: parts; align-self: center; display: grid; gap: 1.6cqmin; font-size: clamp(13px, 2.3cqmin, 19px); }
+  .parts-title { font-weight: 700; font-size: 1.05em; }
+  .part { display: grid; grid-template-columns: 2.2em 3.2em 1fr; align-items: center; gap: .6em; }
+  .tag {
+    display: grid;
+    place-items: center;
+    width: 1.9em;
+    height: 1.9em;
+    border: 2px solid var(--blue);
+    border-radius: 50%;
+    color: var(--blue);
+    font-family: 'Jost', sans-serif;
+    font-weight: 700;
+    font-size: .85em;
+  }
+  .icon { display: grid; place-items: center; height: 2.4em; }
+  .icon svg { width: 2.6em; height: 2.2em; overflow: visible; }
+  .icon svg * { fill: none; stroke: var(--ink); stroke-width: 6; stroke-linecap: round; }
+  .part .count { font-variant-numeric: tabular-nums; }
+  .part .count b { font-weight: 700; }
+  .aside { margin-top: .6cqmin; padding-top: 1.4cqmin; border-top: 1px dashed var(--line); color: #5b5a56; font-size: .92em; line-height: 1.45; }
+
+  /* The diagram. */
+  .diagram { grid-area: diagram; position: relative; display: grid; grid-template-rows: 1fr auto; min-height: 0; cursor: pointer; }
+  .word { position: relative; display: grid; place-items: center; min-height: 0; }
+  .word svg.letters { width: min(100%, 120cqmin); height: auto; max-height: 100%; overflow: visible; }
+  .letters .dot { fill: var(--ink); stroke: none; }
+  .letters .p:not(.dot) { fill: none; stroke: var(--ink); stroke-width: 24; stroke-linecap: round; stroke-linejoin: round; transform-box: fill-box; transform-origin: center; }
+  .word font-kku, .icon font-kku { color: var(--ink); }
+  .overlay { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .overlay .guide { stroke: var(--blue); stroke-width: 1.5; stroke-dasharray: 5 5; fill: none; }
+  .overlay .lead { stroke: var(--blue); stroke-width: 1.5; fill: none; }
+  .overlay .callout circle { fill: var(--paper); stroke: var(--blue); stroke-width: 2; }
+  .overlay .callout text { fill: var(--blue); font: 700 14px 'Jost', sans-serif; text-anchor: middle; dominant-baseline: central; }
+  .overlay .tick { stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; }
+  .swash { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+
+  /* Step 3: what each part is for. */
+  .captions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15em), 1fr)); gap: 1.2cqmin 3cqi; padding-top: 1.6cqmin; font-size: clamp(12px, 2.1cqmin, 18px); }
+  .cap { display: grid; grid-template-columns: auto 1fr; gap: .6em; align-items: center; line-height: 1.3; opacity: 0; }
+  .cap .tag { width: 1.7em; height: 1.7em; }
+  .lang-ko .captions { grid-template-columns: repeat(auto-fit, minmax(min(100%, 11em), 1fr)); }
+
+  /* Steps along the bottom: a real sequence, so numbered. */
+  .steps { grid-area: steps; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2cqi; font-size: clamp(12px, 2.2cqmin, 18px); }
+  .step { display: flex; align-items: center; gap: .6em; color: var(--soft); transition: color .3s ease; }
+  .step b { display: grid; place-items: center; flex: none; width: 2em; height: 2em; border: 2px solid currentColor; border-radius: 50%; font-family: 'Jost', sans-serif; transition: background .3s ease, color .3s ease, border-color .3s ease; }
+  .step.on { color: var(--ink); }
+  .step.on b { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .step.done b { background: var(--sun); border-color: var(--ink); color: var(--ink); }
+
+  @container (max-width: 620px) {
+    .layout {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr auto auto;
+      grid-template-areas: "head" "diagram" "parts" "steps";
+      gap: 2.4cqmin;
+    }
+    .parts { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 1cqmin 3cqi; font-size: 12px; }
+    .part .count { white-space: nowrap; }
+    .parts-title, .aside { grid-column: 1 / -1; }
+    .aside { display: none; }
+    .part { grid-template-columns: auto auto 1fr; justify-items: start; gap: .35em; }
+    .icon { height: 1.8em; }
+    .icon svg { width: 1.9em; height: 1.7em; }
+    .steps { font-size: 11px; gap: 1.6cqi; }
+    .step span { line-height: 1.15; }
+    .captions { grid-template-columns: 1fr 1fr; font-size: 11.5px; gap: 1cqmin 3cqi; }
+  }
+  @media (prefers-reduced-motion: reduce) { .cap { opacity: 1; } }
+</style>
+</head>
+<body>
+<main class="sheet">
+  <div class="layout">
+    <header class="head">
+      <h1 class="product" data-lang="en">HÄPPY</h1>
+      <h1 class="product" data-lang="ko"><font-kku font="sebul" size="1em">행복 조립 설명서</font-kku></h1>
+      <p class="promise" data-lang="en">Happiness is assembled from small parts.</p>
+      <p class="promise" data-lang="ko">행복은 작은 조각들로 조립됩니다.</p>
+    </header>
+
+    <section class="parts" aria-label="Parts">
+      <p class="parts-title" data-lang="en">Parts</p>
+      <p class="parts-title" data-lang="ko">부품</p>
+      <!-- English parts: four shapes make every letter of the word. -->
+      <div class="part" data-lang="en"><span class="tag">a</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="20" y1="4" x2="20" y2="36"/></svg></span><span class="count">Upright <b>×5</b></span></div>
+      <div class="part" data-lang="en"><span class="tag">b</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="6" y1="20" x2="34" y2="20"/></svg></span><span class="count">Crossbar <b>×2</b></span></div>
+      <div class="part" data-lang="en"><span class="tag">c</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="10" y1="36" x2="30" y2="4"/></svg></span><span class="count">Slant <b>×4</b></span></div>
+      <div class="part" data-lang="en"><span class="tag">d</span><span class="icon"><svg viewBox="0 0 40 40"><path d="M8 6 H18 A14 14 0 0 1 18 34 H8"/></svg></span><span class="count">Bowl <b>×2</b></span></div>
+      <div class="part" data-lang="en"><span class="tag">e</span><span class="icon"><svg viewBox="0 0 40 40"><circle cx="12" cy="20" r="4" style="fill:var(--ink);stroke:none"/><circle cx="28" cy="20" r="4" style="fill:var(--ink);stroke:none"/></svg></span><span class="count">Dot <b>×2</b></span></div>
+      <!-- Korean parts: the six jamo of 행복. -->
+      <div class="part" data-lang="ko"><span class="tag">a</span><span class="icon"><font-kku font="malang" size="1.5em">ㅎ</font-kku></span><span class="count">초성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko"><span class="tag">b</span><span class="icon"><font-kku font="malang" size="1.5em">ㅐ</font-kku></span><span class="count">중성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko"><span class="tag">c</span><span class="icon"><font-kku font="malang" size="1.5em">ㅇ</font-kku></span><span class="count">종성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko"><span class="tag">d</span><span class="icon"><font-kku font="malang" size="1.5em">ㅂ</font-kku></span><span class="count">초성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko"><span class="tag">e</span><span class="icon"><font-kku font="malang" size="1.5em">ㅗ</font-kku></span><span class="count">중성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko"><span class="tag">f</span><span class="icon"><font-kku font="malang" size="1.5em">ㄱ</font-kku></span><span class="count">종성 <b>×1</b></span></div>
+      <p class="aside" data-lang="en">Screws: 0. We checked twice.<br>Tools: none. A friend helps.</p>
+      <p class="aside" data-lang="ko">나사: 0개. 두 번 확인했어요.<br>공구: 필요 없음. 친구가 있으면 좋아요.</p>
+    </section>
+
+    <section class="diagram" aria-label="Exploded view">
+      <div class="word">
+        <svg class="letters" data-lang="en" viewBox="-6 -26 592 206" role="img" aria-label="HAPPY">
+          <!-- H -->
+          <line class="p" data-type="a" x1="26" y1="32" x2="26" y2="148" data-x="-26" data-y="-24" data-r="-6"/>
+          <line class="p" data-type="a" x1="102" y1="32" x2="102" y2="148" data-x="10" data-y="-34" data-r="5"/>
+          <line class="p" data-type="b" x1="26" y1="90" x2="102" y2="90" data-x="-8" data-y="54" data-r="-4"/>
+          <!-- A -->
+          <line class="p" data-type="c" x1="140" y1="148" x2="187" y2="32" data-x="-18" data-y="-30" data-r="-10"/>
+          <line class="p" data-type="c" x1="187" y1="32" x2="234" y2="148" data-x="16" data-y="-38" data-r="9"/>
+          <line class="p" data-type="b" x1="160" y1="110" x2="214" y2="110" data-x="4" data-y="52" data-r="6"/>
+          <!-- P -->
+          <line class="p" data-type="a" x1="274" y1="32" x2="274" y2="148" data-x="-14" data-y="30" data-r="-4"/>
+          <path class="p" data-type="d" d="M274 32 H302 A30 30 0 0 1 302 92 H274" data-x="18" data-y="-40" data-r="8"/>
+          <!-- P -->
+          <line class="p" data-type="a" x1="372" y1="32" x2="372" y2="148" data-x="-8" data-y="36" data-r="5"/>
+          <path class="p" data-type="d" d="M372 32 H400 A30 30 0 0 1 400 92 H372" data-x="26" data-y="-34" data-r="-7"/>
+          <!-- Y -->
+          <line class="p" data-type="c" x1="466" y1="32" x2="510" y2="92" data-x="-20" data-y="-34" data-r="-9"/>
+          <line class="p" data-type="c" x1="554" y1="32" x2="510" y2="92" data-x="22" data-y="-30" data-r="10"/>
+          <line class="p" data-type="a" x1="510" y1="96" x2="510" y2="148" data-x="12" data-y="40" data-r="6"/>
+          <!-- Two dots, last out of the box: they go on the A. -->
+          <circle class="p dot" data-type="e" cx="170" cy="-6" r="11" data-x="-60" data-y="40" data-r="0"/>
+          <circle class="p dot" data-type="e" cx="204" cy="-6" r="11" data-x="70" data-y="56" data-r="0"/>
+        </svg>
+        <font-kku class="hb" data-lang="ko" font="malang" size="1em">행복</font-kku>
+        <svg class="overlay" aria-hidden="true"></svg>
+      </div>
+      <div class="captions">
+        <p class="cap" data-lang="en"><span class="tag">a</span><span>Upright: stand by someone.</span></p>
+        <p class="cap" data-lang="en"><span class="tag">b</span><span>Crossbar: a hand on a shoulder.</span></p>
+        <p class="cap" data-lang="en"><span class="tag">c</span><span>Slant: lean in, look again.</span></p>
+        <p class="cap" data-lang="en"><span class="tag">d</span><span>Bowl: room for a big smile.</span></p>
+        <p class="cap" data-lang="en"><span class="tag">e</span><span>Dots: eyes, wide open.</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">a</span><span>ㅎ: 하하 웃을 때의 ㅎ</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">b</span><span>ㅐ: 해처럼 환하게</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">c</span><span>ㅇ: 동그랗게 웃는 입</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">d</span><span>ㅂ: 밥은 먹었어? 의 ㅂ</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">e</span><span>ㅗ: 오! 하고 반가운 소리</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">f</span><span>ㄱ: 괜찮아의 ㄱ</span></p>
+      </div>
+    </section>
+
+    <ol class="steps" aria-label="Steps">
+      <li class="step"><b>1</b><span data-lang="en">Check the parts</span><span data-lang="ko">부품 확인</span></li>
+      <li class="step"><b>2</b><span data-lang="en">Put them together</span><span data-lang="ko">조립하기</span></li>
+      <li class="step"><b>3</b><span data-lang="en">Enjoy. Nothing left over.</span><span data-lang="ko">즐기기. 남는 부품 없음.</span></li>
+    </ol>
+  </div>
+</main>
+
+<script>
+(() => {
+  const ko = TTY.lang === 'ko';
+  const word = document.querySelector('.word');
+  const overlay = document.querySelector('.overlay');
+  const steps = [...document.querySelectorAll('.step')];
+  const caps = [...document.querySelectorAll('.cap')];
+  const NS = 'http://www.w3.org/2000/svg';
+  const host = document.querySelector('.hb');
+
+  /* ---- Parts: where each one sits when assembled, and how far it flies out ----
+     English parts are SVG strokes (offsets in viewBox units). Korean parts are the jamo nodes
+     font-kku draws for 행복; their boxes are the whole glyph cell, so each carries the spot
+     where its ink sits (fractions of the glyph box) and an offset in em. */
+  const KO_PARTS = [
+    { glyph: 0, role: 'choseong', ink: [.32, .27], move: [-.3, -.34], turn: -8, tag: 'a' },
+    { glyph: 0, role: 'jungseong', ink: [.7, .3], move: [.34, -.16], turn: 7, tag: 'b' },
+    { glyph: 0, role: 'jongseong', ink: [.44, .72], move: [-.06, .42], turn: -5, tag: 'c' },
+    { glyph: 1, role: 'choseong', ink: [.5, .2], move: [.04, -.42], turn: 6, tag: 'd' },
+    { glyph: 1, role: 'jungseong', ink: [.5, .4], move: [.42, .06], turn: -6, tag: 'e' },
+    { glyph: 1, role: 'jongseong', ink: [.56, .72], move: [.12, .44], turn: 5, tag: 'f' },
+  ];
+
+  let parts = [];
+  function collect() {
+    if (!ko) {
+      const svg = document.querySelector('.letters');
+      const width = svg.getBoundingClientRect().width;
+      const unit = width / svg.viewBox.baseVal.width;
+      const spread = width < 560 ? .8 : 1.4; // narrow screens have no room to fling parts far
+      parts = [...svg.querySelectorAll('.p')].map((el) => ({
+        el, type: el.dataset.type, tag: el.dataset.type,
+        dx: +el.dataset.x * unit * spread, dy: +el.dataset.y * unit * spread, turn: +el.dataset.r,
+      }));
+      return parts.length > 0;
+    }
+    const glyphs = [...host.querySelectorAll('[part="glyph"]')];
+    if (glyphs.length < 2) return false;
+    const em = parseFloat(getComputedStyle(host).fontSize);
+    parts = KO_PARTS.map((p) => ({
+      ...p,
+      el: glyphs[p.glyph].querySelector(`[part~="${p.role}"]`),
+      box: glyphs[p.glyph],
+      dx: p.move[0] * em, dy: p.move[1] * em,
+    })).filter((p) => p.el);
+    return parts.length === KO_PARTS.length;
+  }
+
+  // Assembled centre of a part, in overlay pixels.
+  function home(p) {
+    const base = overlay.getBoundingClientRect();
+    if (!ko) {
+      const prev = p.el.style.transform;
+      p.el.style.transform = 'none';
+      const r = p.el.getBoundingClientRect();
+      p.el.style.transform = prev;
+      return [r.left + r.width / 2 - base.left, r.top + r.height / 2 - base.top];
+    }
+    const r = p.box.getBoundingClientRect();
+    return [r.left + r.width * p.ink[0] - base.left, r.top + r.height * p.ink[1] - base.top];
+  }
+
+  function place(p, t) {
+    // t = 1 exploded, 0 assembled
+    if (!ko) p.el.style.transform = t ? `translate(${p.dx}px, ${p.dy}px) rotate(${p.turn}deg)` : 'none';
+    else { p.el.style.translate = t ? `${p.dx}px ${p.dy}px` : ''; p.el.style.rotate = t ? `${p.turn}deg` : ''; }
+  }
+  const frames = (p) => (ko
+    ? [{ translate: `${p.dx}px ${p.dy}px`, rotate: `${p.turn}deg` }, { translate: '0px 0px', rotate: '0deg' }]
+    : [{ transform: `translate(${p.dx}px, ${p.dy}px) rotate(${p.turn}deg)` }, { transform: 'translate(0px, 0px) rotate(0deg)' }]);
+
+  /* ---- Overlay: dashed alignment guides and lettered callouts ---- */
+  const el = (name, attrs, parent) => {
+    const n = document.createElementNS(NS, name);
+    Object.entries(attrs).forEach(([k, v]) => n.setAttribute(k, v));
+    (parent || overlay).append(n);
+    return n;
+  };
+  function drawGuides() {
+    overlay.replaceChildren();
+    const seen = new Set();
+    const groups = [];
+    parts.forEach((p) => {
+      const [hx, hy] = home(p);
+      const ex = hx + p.dx, ey = hy + p.dy;
+      const g = el('g', { class: 'guides' });
+      el('line', { class: 'guide', x1: hx, y1: hy, x2: ex, y2: ey }, g);
+      // One callout per kind of part (every part in Korean).
+      if (!seen.has(p.tag)) {
+        seen.add(p.tag);
+        const len = Math.hypot(p.dx, p.dy) || 1;
+        const ux = p.dx / len, uy = p.dy / len;
+        const reach = Math.max(26, Math.min(48, len * .45));
+        const box = overlay.getBoundingClientRect();
+        const cx = Math.min(box.width - 13, Math.max(13, ex + ux * reach));
+        const cy = Math.min(box.height - 13, Math.max(13, ey + uy * reach));
+        el('line', { class: 'lead', x1: ex + ux * 8, y1: ey + uy * 8, x2: cx - ux * 11, y2: cy - uy * 11 }, g);
+        const c = el('g', { class: 'callout' }, g);
+        el('circle', { cx, cy, r: 11 }, c);
+        el('text', { x: cx, y: cy }, c).textContent = p.tag;
+      }
+      groups.push(g);
+    });
+    return groups;
+  }
+
+  function ticks(p) {
+    if (TTY.reduce) return;
+    const [hx, hy] = home(p);
+    const g = el('g', {});
+    [0, 1, 2].forEach((i) => {
+      const a = (-90 + (i - 1) * 40) * Math.PI / 180 + (p.dy > 0 ? Math.PI : 0);
+      el('line', { class: 'tick', x1: hx + Math.cos(a) * 14, y1: hy + Math.sin(a) * 14, x2: hx + Math.cos(a) * 24, y2: hy + Math.sin(a) * 24 }, g);
+    });
+    g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 420, easing: 'ease-out' }).finished.then(() => g.remove());
+  }
+
+  /* ---- Sizing the Korean word to its box ---- */
+  function sizeWord() {
+    if (!ko) return;
+    const r = word.getBoundingClientRect();
+    host.style.fontSize = Math.max(60, Math.min(r.height * .62, r.width * .34)) + 'px';
+  }
+
+  /* ---- The sequence ---- */
+  let timers = [];
+  let running = null;
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+  const setStep = (n) => steps.forEach((s, i) => { s.classList.toggle('on', i === n); s.classList.toggle('done', i < n); });
+
+  function play() {
+    timers.forEach(clearTimeout);
+    timers = [];
+    if (running) running.forEach((a) => a.cancel());
+    running = [];
+    sizeWord();
+    if (!collect()) return setTimeout(play, 120);
+
+    caps.forEach((c) => { c.getAnimations().forEach((a) => a.cancel()); c.style.opacity = TTY.reduce ? 1 : 0; });
+    if (TTY.reduce) { parts.forEach((p) => place(p, 0)); overlay.replaceChildren(); setStep(2); return; }
+
+    // 1. Lay out: the parts appear apart, the guides draw in, callouts pop.
+    setStep(0);
+    parts.forEach((p) => place(p, 1));
+    const groups = drawGuides();
+    parts.forEach((p, i) => {
+      if (!ko && !p.el.classList.contains('dot')) {
+        p.el.setAttribute('pathLength', '1');
+        running.push(p.el.animate([{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }],
+          { duration: 700, delay: i * 70, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'backwards' }));
+      } else {
+        running.push(p.el.animate([{ opacity: 0, scale: '.6' }, { opacity: 1, scale: '1' }],
+          { duration: 420, delay: i * 110, easing: 'cubic-bezier(.3, 1.5, .5, 1)', fill: 'backwards' }));
+      }
+    });
+    groups.forEach((g, i) => running.push(g.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 500 + i * 60, fill: 'backwards' })));
+
+    // 2. Put together: guides go, each part slides home with a little click.
+    later(() => {
+      setStep(1);
+      groups.forEach((g) => g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: 'forwards' }));
+      parts.forEach((p, i) => {
+        const a = p.el.animate(frames(p), { duration: 620, delay: 220 + i * 110, easing: 'cubic-bezier(.5, 0, .25, 1.25)', fill: 'backwards' });
+        running.push(a);
+        later(() => place(p, 0), 220 + i * 110);
+        later(() => ticks(p), 220 + i * 110 + 560);
+      });
+    }, 2900);
+
+    // 3. Enjoy: what each part is for.
+    const doneAt = 2900 + 220 + parts.length * 110 + 700;
+    later(() => {
+      overlay.replaceChildren();
+      setStep(2);
+      word.animate([{ scale: '1' }, { scale: '1.04' }, { scale: '1' }], { duration: 420, easing: 'ease-out' });
+      caps.forEach((c, i) => c.animate([{ opacity: 0, translate: '0 .4em' }, { opacity: 1, translate: '0 0' }],
+        { duration: 380, delay: i * 140, easing: 'cubic-bezier(.3, 1.4, .5, 1)', fill: 'forwards' }));
+    }, doneAt);
+  }
+
+  document.querySelector('.diagram').addEventListener('click', play);
+  let resized;
+  new ResizeObserver(() => {
+    clearTimeout(resized);
+    resized = setTimeout(() => {
+      sizeWord();
+      if (steps[0].classList.contains('on')) { collect(); parts.forEach((p) => place(p, 1)); drawGuides(); }
+    }, 150);
+  }).observe(word);
+
+  sizeWord();
+  TTY.onShow(() => {
+    // Wait until font-kku has drawn the Korean word before taking it apart.
+    const go = () => setTimeout(play, 250);
+    if (!ko || host.querySelector('[part="glyph"]')) go();
+    else host.addEventListener('font-kku:render', go, { once: true });
+  });
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "pages": [
+    {"id": "works-on-my-machine", "file": "works-on-my-machine.html", "seconds": 15,
+      "title": {"en": "Certificate of Works on My Machine", "ko": "내 컴퓨터에선 잘 됨 상"} },
+    {"id": "idea-gacha", "file": "idea-gacha.html", "seconds": 18,
+      "title": {"en": "One Turn, One Good Deed", "ko": "착한 일 뽑기"} },
+    {"id": "happiness-forecast", "file": "happiness-forecast.html", "seconds": 15,
+      "title": {"en": "The Happiness Forecast", "ko": "오늘의 행복 예보"} },
+    {"id": "good-day-git", "file": "good-day-git.html", "seconds": 18,
+      "title": {"en": "Today, Merged", "ko": "오늘, 머지 완료"} },
+    {"id": "neon-bugs", "file": "neon-bugs.html", "seconds": 16,
+      "title": {"en": "Bugs Fixed While You Wait", "ko": "버그 즉석 수리"} },
+    {"id": "jamo-happy", "file": "jamo-happy.html", "seconds": 16,
+      "title": {"en": "Happiness, Assembly Instructions", "ko": "행복 조립 설명서"} },
+    {"id": "dev-cafe", "file": "dev-cafe.html", "seconds": 18,
+      "title": {"en": "Dev Café", "ko": "개발자 카페"} },
+    {"id": "wild-bug", "file": "wild-bug.html", "seconds": 24,
+      "title": {"en": "A Wild Bug Appeared", "ko": "야생의 버그가 나타났다"} },
+    {"id": "deploy-friday", "file": "deploy-friday.html", "seconds": 17,
+      "title": {"en": "Friday, 4:59 PM: Deploy", "ko": "금요일 오후 4시 59분, 배포"} },
+    {"id": "status-codes", "file": "status-codes.html", "seconds": 27,
+      "title": {"en": "Today's Status Board", "ko": "오늘의 상태 안내"} }
+  ]
+}

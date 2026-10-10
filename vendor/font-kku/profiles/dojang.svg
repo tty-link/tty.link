@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2688" height="768" viewBox="0 0 2100 600">
+<!-- 폰꾸 그림 자소판 · dojang · 칸 100×100, 21열 × 6행
+     행 0 초성(세로 모음 옆) · 행 1 중성 · 행 2 받침 · 행 3 겹받침 · 행 4 초성(가로 모음 위) · 행 5 합자 모음(키 큰 초성 옆)
+     열: 자음 ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ · 모음 ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ · 겹받침 ㄳㄵㄶㄺㄻㄼㄽㄾㄿㅀㅄ
+     scripts/build_jamo_svg.js가 spec/sprite-layout.json의 자리 상자에 획을 그려 만든다.
+     칸 <g id="r<행>-<자모>">의 좌표는 칸 기준 0–100이다. MIT License. -->
+<style>path,ellipse{fill:none;stroke:#c41e28;stroke-width:7.6;stroke-linecap:butt;stroke-linejoin:miter}</style>
+<defs><filter id="inju" filterUnits="userSpaceOnUse" x="0" y="0" width="2100" height="600" color-interpolation-filters="sRGB">
+<feGaussianBlur in="SourceAlpha" stdDeviation="0.6" result="soft"/>
+<feComponentTransfer in="soft" result="ink"><feFuncA type="linear" slope="1.5" intercept="-0.15"/></feComponentTransfer>
+<feTurbulence type="fractalNoise" baseFrequency="0.21" numOctaves="2" seed="11" result="grain"/>
+<feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4.2 0 0 0 -2.35" result="starve"/>
+<feComponentTransfer in="starve" result="starveA"><feFuncA type="linear" slope="-0.75" intercept="1"/></feComponentTransfer>
+<feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="4" result="press"/>
+<feColorMatrix in="press" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0" result="pressR"/>
+<feComponentTransfer in="pressR" result="pressA"><feFuncA type="table" tableValues="0.7 0.74 0.86 1 1"/></feComponentTransfer>
+<feComposite in="ink" in2="starveA" operator="arithmetic" k1="1" result="m1"/>
+<feComposite in="m1" in2="pressA" operator="arithmetic" k1="1" result="mask"/>
+<feFlood flood-color="#c41e28"/>
+<feComposite in2="mask" operator="in"/>
+</filter></defs>
+<g filter="url(#inju)">
+<!-- 행 0: 초성(세로 모음 옆) -->
+<g id="r0-ㄱ" transform="translate(0 0)"><path d="M4.7 12.4L44.6 12.4L44.6 28.18Q44.6 53.43 11.39 65"/></g>
+<g id="r0-ㄲ" transform="translate(100 0)"><path d="M2 12.4L25.1 12.4L25.1 27.46Q25.1 51.56 7.34 62.6"/><path d="M25.8 12.4L48.5 12.4L48.5 29.11Q48.5 55.85 31.11 68.1"/></g>
+<g id="r0-ㄴ" transform="translate(200 0)"><path d="M10.8 7.8L10.8 60.3L57 60.3"/></g>
+<g id="r0-ㄷ" transform="translate(300 0)"><path d="M49.16 12.4L10.8 12.4L10.8 61L57.8 61"/></g>
+<g id="r0-ㄸ" transform="translate(400 0)"><path d="M27.16 12.4L10 12.4L10 59.5L30.5 59.5"/><path d="M56.8 12.4L36.6 12.4L36.6 59.5L60.9 59.5"/></g>
+<g id="r0-ㄹ" transform="translate(500 0)"><path d="M7 10.8L41.58 10.8L41.58 36.3L10.8 36.3L10.8 61.8L56.2 61.8"/></g>
+<g id="r0-ㅁ" transform="translate(600 0)"><path d="M10 12.4L43.9 12.4L43.9 61L10 61Z"/></g>
+<g id="r0-ㅂ" transform="translate(700 0)"><path d="M10.8 7L10.8 61L43.9 61L43.9 7"/><path d="M10.8 33.89L43.9 33.89"/></g>
+<g id="r0-ㅃ" transform="translate(800 0)"><path d="M10.8 7.8L10.8 61L25.1 61L25.1 7.8"/><path d="M10.8 34.32L25.1 34.32"/><path d="M39 7.8L39 61L54 61L54 7.8"/><path d="M39 34.32L54 34.32"/></g>
+<g id="r0-ㅅ" transform="translate(900 0)"><path d="M29.25 8.7L5.8 63.4"/><path d="M20.68 28.68L50.9 63.4"/></g>
+<g id="r0-ㅆ" transform="translate(1000 0)"><path d="M17.51 9.38L5.8 60.3"/><path d="M13.19 28.16L28.2 60.3"/><path d="M43.55 8.6L28 65.7"/><path d="M37.87 29.47L57.9 65.7"/></g>
+<g id="r0-ㅇ" transform="translate(1100 0)"><ellipse cx="27.35" cy="36.7" rx="18.05" ry="26.7"/></g>
+<g id="r0-ㅈ" transform="translate(1200 0)"><path d="M2.3 12.4L55.5 12.4"/><path d="M29.82 10.31L6.1 64.2"/><path d="M21.15 30.01L51.7 64.2"/></g>
+<g id="r0-ㅉ" transform="translate(1300 0)"><path d="M2 12.4L32 12.4"/><path d="M17.52 10.18L5.8 60.3"/><path d="M13.19 28.69L28.2 60.3"/><path d="M23.4 12.4L61.7 12.4"/><path d="M43.18 10.21L27.2 65.7"/><path d="M37.33 30.52L57.9 65.7"/></g>
+<g id="r0-ㅊ" transform="translate(1400 0)"><path d="M15.07 8.5L42.73 8.5"/><path d="M2.3 24.16L55.5 24.16"/><path d="M28.9 24.16L6.1 66.5"/><path d="M21.15 38.54L51.7 66.5"/></g>
+<g id="r0-ㅋ" transform="translate(1500 0)"><path d="M4.7 12.4L45.4 12.4L45.4 28.39Q45.4 53.97 11.45 65.7"/><path d="M4.7 34.79L45.4 34.79"/></g>
+<g id="r0-ㅌ" transform="translate(1600 0)"><path d="M48.71 10.8L10.8 10.8L10.8 61.8L56.2 61.8"/><path d="M10.8 35.28L47.05 35.28"/></g>
+<g id="r0-ㅍ" transform="translate(1700 0)"><path d="M5.02 12.4L52.85 12.4"/><path d="M3.1 61L58.6 61"/><path d="M19.83 12.4L19.83 61"/><path d="M39.47 12.4L39.47 61"/></g>
+<g id="r0-ㅎ" transform="translate(1800 0)"><path d="M16.3 9.3L41.5 9.3"/><path d="M3.1 24.12L54.7 24.12"/><ellipse cx="28.9" cy="48.28" rx="17.6" ry="15.92"/></g>
+<!-- 행 1: 중성 -->
+<g id="r1-ㅏ" transform="translate(0 100)"><path d="M67.1 2L67.1 86.7"/><path d="M67.1 38.95L85.2 38.95"/></g>
+<g id="r1-ㅐ" transform="translate(100 100)"><path d="M56.1 2L56.1 86.7"/><path d="M73.5 2L73.5 86.7"/><path d="M56.1 41.27L73.5 41.27"/></g>
+<g id="r1-ㅑ" transform="translate(200 100)"><path d="M66.3 2L66.3 86.7"/><path d="M66.3 28.16L85.2 28.16"/><path d="M66.3 51.29L85.2 51.29"/></g>
+<g id="r1-ㅒ" transform="translate(300 100)"><path d="M55.4 2L55.4 86.7"/><path d="M73.5 2L73.5 86.7"/><path d="M55.4 28.93L73.5 28.93"/><path d="M55.4 50.52L73.5 50.52"/></g>
+<g id="r1-ㅓ" transform="translate(400 100)"><path d="M49.2 38.18L71.2 38.18"/><path d="M71.2 2L71.2 86.7"/></g>
+<g id="r1-ㅔ" transform="translate(500 100)"><path d="M43.8 36.21L56.4 36.21"/><path d="M56.4 2L56.4 82"/><path d="M73.8 2L73.8 86.7"/></g>
+<g id="r1-ㅕ" transform="translate(600 100)"><path d="M50 26.62L72 26.62"/><path d="M50 50.52L72 50.52"/><path d="M72 2L72 86.7"/></g>
+<g id="r1-ㅖ" transform="translate(700 100)"><path d="M45.94 25.35L56.4 25.35"/><path d="M45.94 47.79L56.4 47.79"/><path d="M56.4 2L56.4 82"/><path d="M73.8 2L73.8 86.7"/></g>
+<g id="r1-ㅗ" transform="translate(800 100)"><path d="M39.07 35.9L39.07 70.4"/><path d="M3.9 70.4L82.8 70.4"/></g>
+<g id="r1-ㅘ" transform="translate(900 100)"><path d="M28.02 33.6L28.02 63.4"/><path d="M2.3 63.4L58.6 63.4"/><path d="M67.9 2L67.9 86.7"/><path d="M67.9 38.95L85.9 38.95"/></g>
+<g id="r1-ㅙ" transform="translate(1000 100)"><path d="M23.42 35.2L23.42 62.6"/><path d="M2.3 62.6L48.4 62.6"/><path d="M56.1 2L56.1 86.7"/><path d="M74.3 2L74.3 86.7"/><path d="M56.1 41.27L74.3 41.27"/></g>
+<g id="r1-ㅚ" transform="translate(1100 100)"><path d="M30.29 35.2L30.29 64.2"/><path d="M3.9 64.2L61.7 64.2"/><path d="M71.9 2L71.9 86.7"/></g>
+<g id="r1-ㅛ" transform="translate(1200 100)"><path d="M29.09 37.5L29.09 69.6"/><path d="M49.05 37.5L49.05 69.6"/><path d="M3.9 69.6L82.8 69.6"/></g>
+<g id="r1-ㅜ" transform="translate(1300 100)"><path d="M3.9 48.3L82.8 48.3"/><path d="M43.35 48.3L43.35 86.7"/></g>
+<g id="r1-ㅝ" transform="translate(1400 100)"><path d="M2.3 44.4L60.9 44.4"/><path d="M30.58 44.4L30.58 82"/><path d="M48.4 50.52L72 50.52"/><path d="M72 2L72 86.7"/></g>
+<g id="r1-ㅞ" transform="translate(1500 100)"><path d="M2.3 43.6L49.2 43.6"/><path d="M24.96 43.6L24.96 79.7"/><path d="M38.3 47.79L57.1 47.79"/><path d="M57.1 2L57.1 82"/><path d="M74.2 2L74.2 86.7"/></g>
+<g id="r1-ㅟ" transform="translate(1600 100)"><path d="M3.1 46.8L62.5 46.8"/><path d="M31.76 46.8L31.76 83.6"/><path d="M71.9 2L71.9 86.7"/></g>
+<g id="r1-ㅠ" transform="translate(1700 100)"><path d="M3.9 47.6L82.8 47.6"/><path d="M29.09 47.6L29.09 86.7"/><path d="M56.9 47.6L56.9 86.7"/></g>
+<g id="r1-ㅡ" transform="translate(1800 100)"><path d="M3.9 70.3L82.8 70.3"/></g>
+<g id="r1-ㅢ" transform="translate(1900 100)"><path d="M3.9 60.9L61.7 60.9"/><path d="M71.9 2L71.9 86.7"/></g>
+<g id="r1-ㅣ" transform="translate(2000 100)"><path d="M71.9 2L71.9 86.7"/></g>
+<!-- 행 2: 받침 -->
+<g id="r2-ㄱ" transform="translate(0 200)"><path d="M13.3 61.6L68.9 61.6L68.9 86.7"/></g>
+<g id="r2-ㄲ" transform="translate(100 200)"><path d="M12.5 60L36.8 60L36.8 86.7"/><path d="M45.3 60L69.6 60L69.6 86.7"/></g>
+<g id="r2-ㄴ" transform="translate(200 200)"><path d="M17.9 58.6L17.9 79.8L73.4 79.8"/></g>
+<g id="r2-ㄷ" transform="translate(300 200)"><path d="M72.7 59.3L19.4 59.3L19.4 81.4L72.7 81.4"/></g>
+<g id="r2-ㄹ" transform="translate(500 200)"><path d="M13.3 55.4L72 55.4L72 68.75L17.1 68.75L17.1 82.1L75.8 82.1"/></g>
+<g id="r2-ㅁ" transform="translate(600 200)"><path d="M17.1 60.8L68.9 60.8L68.9 81.4L17.1 81.4Z"/></g>
+<g id="r2-ㅂ" transform="translate(700 200)"><path d="M17.9 52.3L17.9 81.4L68.9 81.4L68.9 52.3"/><path d="M17.9 67.74L68.9 67.74"/></g>
+<g id="r2-ㅅ" transform="translate(900 200)"><path d="M45.54 57.08L14 82.1"/><path d="M33.64 66.52L73.5 82.1"/></g>
+<g id="r2-ㅆ" transform="translate(1000 200)"><path d="M27.4 58.9L11.6 82.9"/><path d="M21.2 68.31L40.7 82.9"/><path d="M61.82 58.14L43.6 83.7"/><path d="M54.75 68.06L77.4 83.7"/></g>
+<g id="r2-ㅇ" transform="translate(1100 200)"><ellipse cx="43.35" cy="69.9" rx="27.05" ry="12.2"/></g>
+<g id="r2-ㅈ" transform="translate(1200 200)"><path d="M9.4 58.5L76.6 58.5"/><path d="M44.76 57.06L13.2 82.9"/><path d="M32.87 66.8L72.8 82.9"/></g>
+<g id="r2-ㅊ" transform="translate(1400 200)"><path d="M26.44 53L59.56 53"/><path d="M10.2 61.29L75.8 61.29"/><path d="M43 61.29L14 83.7"/><path d="M33.14 68.9L72 83.7"/></g>
+<g id="r2-ㅋ" transform="translate(1500 200)"><path d="M11.7 60L68.9 60L68.9 86.7"/><path d="M11.7 70.99L68.9 70.99"/></g>
+<g id="r2-ㅌ" transform="translate(1600 200)"><path d="M72.7 57.7L17.9 57.7L17.9 82.1L72.7 82.1"/><path d="M17.9 69.9L69.64 69.9"/></g>
+<g id="r2-ㅍ" transform="translate(1700 200)"><path d="M11.7 58.5L74.2 58.5"/><path d="M11.7 81.4L74.2 81.4"/><path d="M30.32 58.5L30.32 81.4"/><path d="M55.58 58.5L55.58 81.4"/></g>
+<g id="r2-ㅎ" transform="translate(1800 200)"><path d="M28.41 50.7L58.29 50.7"/><path d="M11.7 59.39L75 59.39"/><ellipse cx="43.35" cy="73.56" rx="22.28" ry="9.34"/></g>
+<!-- 행 3: 겹받침 -->
+<g id="r3-ㄳ" transform="translate(0 300)"><path d="M13.3 60.8L36.8 60.8L36.8 86.7"/><path d="M64.2 58.93L47.6 82.9"/><path d="M57.7 68.31L78.2 82.9"/></g>
+<g id="r3-ㄵ" transform="translate(100 300)"><path d="M15.5 55.5L15.5 82.1L39.1 82.1"/><path d="M37.5 58.5L77.3 58.5"/><path d="M58.6 56.56L41.3 84.5"/><path d="M51.93 67.34L73.5 84.5"/></g>
+<g id="r3-ㄶ" transform="translate(200 300)"><path d="M17.9 56.2L17.9 82.1L39.8 82.1"/><path d="M49 56.1L69.8 56.1"/><path d="M39.1 63.34L79.7 63.34"/><ellipse cx="59.4" cy="75.13" rx="13.2" ry="7.77"/></g>
+<g id="r3-ㄺ" transform="translate(300 300)"><path d="M11.7 55.4L44.6 55.4L44.6 68.75L15.5 68.75L15.5 82.1L48.4 82.1"/><path d="M46.1 55.4L69.6 55.4L69.6 86.7"/></g>
+<g id="r3-ㄻ" transform="translate(400 300)"><path d="M11.7 55.4L38.4 55.4L38.4 68.75L15.5 68.75L15.5 82.1L42.2 82.1"/><path d="M49.9 55.4L69.6 55.4L69.6 82.1L49.9 82.1Z"/></g>
+<g id="r3-ㄼ" transform="translate(500 300)"><path d="M11.7 55.4L37.6 55.4L37.6 68.75L15.5 68.75L15.5 82.1L41.4 82.1"/><path d="M49.1 50.8L49.1 82.1L69.6 82.1L69.6 50.8"/><path d="M49.1 67.25L69.6 67.25"/></g>
+<g id="r3-ㄽ" transform="translate(600 300)"><path d="M11.7 55.4L38.4 55.4L38.4 68.75L15.5 68.75L15.5 82.1L42.2 82.1"/><path d="M62.42 53.38L46.8 82.9"/><path d="M56.4 64.75L75.9 82.9"/></g>
+<g id="r3-ㄾ" transform="translate(700 300)"><path d="M11.7 55.4L38.4 55.4L38.4 68.75L15.5 68.75L15.5 82.1L42.2 82.1"/><path d="M74.2 55.4L49.9 55.4L49.9 82.1L74.2 82.1"/><path d="M49.9 68.75L72.97 68.75"/></g>
+<g id="r3-ㄿ" transform="translate(800 300)"><path d="M11.7 56.1L36.8 56.1L36.8 69.1L15.5 69.1L15.5 82.1L40.6 82.1"/><path d="M43 56.1L76.6 56.1"/><path d="M43 82.1L76.6 82.1"/><path d="M53.82 56.1L53.82 82.1"/><path d="M65.78 56.1L65.78 82.1"/></g>
+<g id="r3-ㅀ" transform="translate(900 300)"><path d="M11.7 56.9L39.2 56.9L39.2 69.5L15.5 69.5L15.5 82.1L43 82.1"/><path d="M51.25 53L69.85 53"/><path d="M43 61.29L78.1 61.29"/><ellipse cx="60.55" cy="74.8" rx="11" ry="8.9"/></g>
+<g id="r3-ㅄ" transform="translate(1000 300)"><path d="M17.1 51.6L17.1 82.1L38.4 82.1L38.4 51.6"/><path d="M17.1 67.68L38.4 67.68"/><path d="M63.59 52.6L47.6 82.1"/><path d="M57.43 63.95L77.4 82.1"/></g>
+<!-- 행 4: 초성(가로 모음 위) -->
+<g id="r4-ㄱ" transform="translate(0 400)"><path d="M11.7 13.2L67.3 13.2L67.3 60.2"/></g>
+<g id="r4-ㄲ" transform="translate(100 400)"><path d="M10.2 13.2L34.5 13.2L34.5 57.8"/><path d="M45.3 13.2L69.6 13.2L69.6 57.8"/></g>
+<g id="r4-ㄴ" transform="translate(200 400)"><path d="M17.9 7L17.9 39.2L73.4 39.2"/></g>
+<g id="r4-ㄷ" transform="translate(300 400)"><path d="M73.4 11.6L17.9 11.6L17.9 45.4L73.4 45.4"/></g>
+<g id="r4-ㄸ" transform="translate(400 400)"><path d="M41.4 13.2L14.7 13.2L14.7 45.4L41.4 45.4"/><path d="M77.3 13.2L49.1 13.2L49.1 44.6L77.3 44.6"/></g>
+<g id="r4-ㄹ" transform="translate(500 400)"><path d="M13.3 10L71.2 10L71.2 29.65L17.1 29.65L17.1 49.3L75 49.3"/></g>
+<g id="r4-ㅁ" transform="translate(600 400)"><path d="M17.9 11.6L68.9 11.6L68.9 44.6L17.9 44.6Z"/></g>
+<g id="r4-ㅂ" transform="translate(700 400)"><path d="M17.1 7L17.1 47L68.9 47L68.9 7"/><path d="M17.1 27.45L68.9 27.45"/></g>
+<g id="r4-ㅃ" transform="translate(800 400)"><path d="M14.7 7L14.7 46.2L36 46.2L36 7"/><path d="M14.7 27.08L36 27.08"/><path d="M50.7 7L50.7 46.2L72 46.2L72 7"/><path d="M50.7 27.08L72 27.08"/></g>
+<g id="r4-ㅅ" transform="translate(900 400)"><path d="M44.87 8.3L10.8 46.2"/><path d="M32.28 22.31L75.9 46.2"/></g>
+<g id="r4-ㅆ" transform="translate(1000 400)"><path d="M24.7 9.48L9.3 47.8"/><path d="M18.9 23.91L38.4 47.8"/><path d="M61.83 8.72L44.4 47.8"/><path d="M55.29 23.38L77.4 47.8"/></g>
+<g id="r4-ㅇ" transform="translate(1100 400)"><ellipse cx="43.35" cy="28.9" rx="27.85" ry="18.1"/></g>
+<g id="r4-ㅈ" transform="translate(1200 400)"><path d="M7 13.2L79.7 13.2"/><path d="M44.88 11.51L10.8 49.3"/><path d="M32.28 25.47L75.9 49.3"/></g>
+<g id="r4-ㅉ" transform="translate(1300 400)"><path d="M3.9 12.4L43 12.4"/><path d="M24.38 10.32L7.7 47.8"/><path d="M18.1 24.44L39.2 47.8"/><path d="M41.4 12.4L82.8 12.4"/><path d="M63.08 10.34L45.2 47.8"/><path d="M56.35 24.44L79 47.8"/></g>
+<g id="r4-ㅊ" transform="translate(1400 400)"><path d="M25.58 6.9L61.12 6.9"/><path d="M7.8 19L78.9 19"/><path d="M43.35 19L11.6 51.7"/><path d="M32.56 30.11L75.1 51.7"/></g>
+<g id="r4-ㅋ" transform="translate(1500 400)"><path d="M10.9 12.4L68.9 12.4L68.9 62.5"/><path d="M10.9 34.62L68.9 34.62"/></g>
+<g id="r4-ㅌ" transform="translate(1600 400)"><path d="M73.4 11.6L17.1 11.6L17.1 49.3L73.4 49.3"/><path d="M17.1 30.45L70.25 30.45"/></g>
+<g id="r4-ㅍ" transform="translate(1700 400)"><path d="M10.9 12.4L75 12.4"/><path d="M10.9 47.8L75 47.8"/><path d="M29.96 12.4L29.96 47.8"/><path d="M55.94 12.4L55.94 47.8"/></g>
+<g id="r4-ㅎ" transform="translate(1800 400)"><path d="M26.93 7.7L58.97 7.7"/><path d="M8.6 20.42L77.3 20.42"/><ellipse cx="42.95" cy="41.14" rx="24.44" ry="13.66"/></g>
+<!-- 행 5: 합자 모음(키 큰 초성 옆) -->
+<g id="r5-ㅘ" transform="translate(900 500)"><path d="M28.02 46.9L28.02 64.2"/><path d="M2.3 64.2L58.6 64.2"/><path d="M67.1 2L67.1 86.7"/><path d="M67.1 38.95L85.2 38.95"/></g>
+<g id="r5-ㅙ" transform="translate(1000 500)"><path d="M23.79 44.5L23.79 61.8"/><path d="M2.3 61.8L49.2 61.8"/><path d="M56.1 2L56.1 86.7"/><path d="M74.3 2L74.3 86.7"/><path d="M56.1 41.27L74.3 41.27"/></g>
+<g id="r5-ㅚ" transform="translate(1100 500)"><path d="M30.65 46.9L30.65 64.2"/><path d="M3.9 64.2L62.5 64.2"/><path d="M71.9 2L71.9 86.7"/></g>
+<g id="r5-ㅝ" transform="translate(1400 500)"><path d="M3.1 48.3L62.5 48.3"/><path d="M31.76 48.3L31.76 83.6"/><path d="M48.4 50.52L72 50.52"/><path d="M72 2L72 86.7"/></g>
+<g id="r5-ㅞ" transform="translate(1500 500)"><path d="M2.3 48.3L49.2 48.3"/><path d="M24.96 48.3L24.96 79.7"/><path d="M38.3 47.79L57.1 47.79"/><path d="M57.1 2L57.1 82"/><path d="M74.2 2L74.2 86.7"/></g>
+<g id="r5-ㅟ" transform="translate(1600 500)"><path d="M3.1 49.9L63.3 49.9"/><path d="M32.15 49.9L32.15 83.6"/><path d="M72.3 2L72.3 86.7"/></g>
+<g id="r5-ㅢ" transform="translate(1900 500)"><path d="M3.9 62.9L62.5 62.9"/><path d="M71.9 2L71.9 86.7"/></g>
+</g>
+</svg>
