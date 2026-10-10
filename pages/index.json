@@ -57,7 +57,7 @@
     {"id": "office-findings", "file": "office-findings.html", "seconds": 19,
       "title": {"en": "Find the Vulnerabilities", "ko": "취약점 찾기"},
       "summary": {"en": "A cozy office, audited. Cozy. Also critical.", "ko": "아늑한 사무실 점검 결과: 아늑함. 그리고 치명적."} },
-    {"id": "iot-house", "file": "iot-house.html", "seconds": 20,
+    {"id": "iot-house", "file": "iot-house.html", "seconds": 16,
       "title": {"en": "Home, Sweet Attack Surface", "ko": "즐거운 나의 공격 표면"},
       "summary": {"en": "The fridge wants 2FA. The toaster joined a botnet.", "ko": "냉장고는 2단계 인증을, 토스터는 봇넷 가입을."} },
     {"id": "fortune-cookie", "file": "fortune-cookie.html", "seconds": 18,
