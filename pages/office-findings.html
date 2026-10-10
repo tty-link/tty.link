@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find the Vulnerabilities | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;800&family=Shadows+Into+Light&family=Nanum+Pen+Script&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="dojang pilgi sebul"></script>
+<style>
+  /* A cozy office, walked through by a penetration tester with a red marker. Findings are
+     circled one by one and written up beside the picture; a click circles the next one. */
+  :root {
+    --paper: #fbf8f1;
+    --ink: #22262b;
+    --soft: #6a6f75;
+    --marker: #e0322b;
+    --crit: #b3121c;
+    --high: #e0592a;
+    --med: #d99a12;
+    --low: #4f7aa6;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    container-type: size;
+    overflow: hidden;
+    background: #ece6d8;
+    color: var(--ink);
+    font-family: 'Schibsted Grotesk', 'IBM Plex Sans KR', system-ui, sans-serif;
+  }
+  .lang-ko body { font-family: 'IBM Plex Sans KR', 'Schibsted Grotesk', sans-serif; word-break: keep-all; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 6px; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 3cqmin;
+    height: 100%;
+    padding: 4cqmin;
+  }
+  .scene {
+    position: relative;
+    align-self: center;
+    border-radius: 2cqmin;
+    overflow: hidden;
+    background: #e6eedb;
+    box-shadow: 0 .6cqmin 0 rgba(0,0,0,.08), 0 2cqmin 5cqmin rgba(60, 50, 30, .18);
+    cursor: pointer;
+  }
+  .scene svg { display: block; width: 100%; height: auto; }
+  .hand { font-family: 'Shadows Into Light', 'Nanum Pen Script', cursive; }
+  .lang-ko .hand { font-family: 'Nanum Pen Script', 'Shadows Into Light', cursive; }
+  .ring { fill: none; stroke: var(--marker); stroke-width: 4; stroke-linecap: round; }
+  .ring-num { fill: var(--marker); font-size: 30px; }
+  .blink { animation: blink 1.4s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+
+  /* ---- The write-up ---- */
+  .report {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+    padding: 5cqi 5.4cqi;
+    border-radius: 2cqmin;
+    background: var(--paper);
+    box-shadow: 0 2cqmin 5cqmin rgba(60, 50, 30, .14);
+  }
+  .report h1 { font-size: 9cqi; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+  .report .sub { margin-top: 2cqi; font-size: 4cqi; color: var(--soft); }
+  .list { min-height: 0; margin-top: 4cqi; padding: 0; list-style: none; overflow: hidden; }
+  .item { display: grid; grid-template-columns: auto 1fr; gap: 1cqi 3cqi; align-items: start; padding: 2.6cqi 0; border-top: .3cqi solid #e6e0d2; }
+  .num { font-family: 'Shadows Into Light', cursive; font-size: 7cqi; line-height: .9; color: var(--marker); }
+  .lang-ko .num { font-family: 'Nanum Pen Script', cursive; }
+  .item h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 1.4cqi 2.4cqi; font-size: 4.8cqi; font-weight: 600; line-height: 1.25; }
+  .chip { padding: .5cqi 2cqi; border-radius: 99px; border: .35cqi solid var(--sev); color: var(--sev); font-size: 3cqi; font-weight: 600; white-space: nowrap; }
+  .chip > font-kku { color: var(--sev); }
+  .note { grid-column: 2; font-size: 4.2cqi; line-height: 1.45; color: var(--soft); }
+  .note > font-kku { color: #4a4f55; }
+  .item:not(.latest) .note { display: none; }
+  .verdict {
+    display: none;
+    position: relative;
+    margin-top: 3cqi;
+    padding: 4cqi 4cqi 4.4cqi;
+    border: .5cqi dashed var(--marker);
+    border-radius: 2.4cqi;
+  }
+  .verdict.on { display: block; }
+  .verdict small { display: block; font-size: 3.4cqi; color: var(--soft); }
+  .verdict strong { display: block; margin-top: 1cqi; font-size: 7.4cqi; font-weight: 800; line-height: 1.1; }
+  .verdict .stamp { position: absolute; right: 3cqi; top: -3cqi; rotate: 10deg; padding: 1cqi 2.2cqi; border: .6cqi double var(--marker); border-radius: 2cqi; background: var(--paper); color: var(--marker); font-weight: 800; font-size: 3.4cqi; }
+  .verdict .stamp > font-kku, .verdict strong > font-kku { color: var(--ink); }
+  .hint { margin-top: 3cqi; font-size: 3.2cqi; color: var(--soft); }
+
+  /* Narrow stage: picture on top, the latest finding underneath. */
+  @container (max-aspect-ratio: 1/1) {
+    .layout { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; gap: 2.4cqmin; padding: 3cqmin; }
+    .scene { align-self: start; }
+    .report { padding: 4cqi 5cqi; }
+    .report h1 { font-size: 7cqi; }
+    .report .sub { font-size: 3.4cqi; margin-top: 1.2cqi; }
+    .list { margin-top: 2cqi; }
+    .item:not(.latest) { display: none; }
+    .item { border-top: 0; padding: 1.4cqi 0; }
+    .verdict { margin-top: 1.4cqi; }
+    .verdict.on ~ .hint, .verdict.on { }
+  }
+  .layout.done .list .item { display: none; }
+  @container (min-aspect-ratio: 1/1) { .layout.done .list .item { display: grid; } .layout.done .list .item .note { display: none; } }
+
+  @media (prefers-reduced-motion: reduce) { .blink { animation: none; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="scene" role="button" tabindex="0" aria-label="Circle the next finding">
+    <svg viewBox="0 0 800 500" aria-hidden="true">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd3f5"/><stop offset="1" stop-color="#d9f0ff"/></linearGradient>
+        <pattern id="planks" width="120" height="40" patternUnits="userSpaceOnUse"><rect width="120" height="40" fill="#d4a373"/><path d="M0 39.5 H120 M60 0 V40" stroke="#bf8c5d" stroke-width="2"/></pattern>
+      </defs>
+      <!-- room -->
+      <rect width="800" height="340" fill="#e6eedb"/>
+      <rect y="340" width="800" height="160" fill="url(#planks)"/>
+      <rect y="334" width="800" height="8" fill="#cbd7bd"/>
+      <ellipse cx="430" cy="440" rx="250" ry="38" fill="#e9c46a" opacity=".55"/>
+      <!-- lamp -->
+      <path d="M430 0 V44" stroke="#3a3f44" stroke-width="2"/>
+      <path d="M402 70 L414 44 H446 L458 70 Z" fill="#f4a261"/>
+      <!-- window + plant -->
+      <rect x="40" y="50" width="150" height="150" rx="6" fill="#fff"/>
+      <rect x="50" y="60" width="130" height="130" fill="url(#sky)"/>
+      <path d="M115 60 V190 M50 125 H180" stroke="#fff" stroke-width="6"/>
+      <ellipse cx="80" cy="96" rx="16" ry="7" fill="#fff" opacity=".85"/>
+      <rect x="36" y="198" width="158" height="8" rx="3" fill="#cfd8c2"/>
+      <path d="M92 196 h36 l-5 -28 h-26 z" fill="#c8553d"/>
+      <path d="M110 170 C 96 150, 92 136, 100 122 M110 170 C 118 148, 128 140, 134 128 M110 170 C 108 150, 112 138, 110 120" stroke="#3a7d44" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- whiteboard -->
+      <rect x="222" y="36" width="216" height="138" rx="5" fill="#fdfdfd" stroke="#a9b2b8" stroke-width="4"/>
+      <rect x="240" y="174" width="180" height="6" rx="2" fill="#a9b2b8"/>
+      <text class="hand" x="240" y="66" font-size="22" fill="#2c6fb6" data-text-en="Q4 plan" data-text-ko="4분기 계획">Q4 plan</text>
+      <path d="M244 82 h40 v22 h-40 z M302 82 h40 v22 h-40 z M284 93 h18 M360 82 h56 v22 h-56 z M342 93 h18" stroke="#2c6fb6" stroke-width="2" fill="none"/>
+      <text class="hand" x="244" y="146" font-size="23" fill="#1f4e86" data-text-en="Wi-Fi: hunter2" data-text-ko="와이파이: hunter2">Wi-Fi: hunter2</text>
+      <text class="hand" x="252" y="126" font-size="17" fill="#d1495b" data-text-en="(do not share)" data-text-ko="(공유 금지)">(do not share)</text>
+      <!-- bookshelf -->
+      <rect x="462" y="58" width="134" height="118" fill="#a47148"/>
+      <rect x="470" y="66" width="118" height="46" fill="#7f5539"/><rect x="470" y="120" width="118" height="48" fill="#7f5539"/>
+      <g><rect x="474" y="72" width="10" height="40" fill="#e76f51"/><rect x="486" y="76" width="9" height="36" fill="#2a9d8f"/><rect x="497" y="70" width="12" height="42" fill="#e9c46a"/><rect x="512" y="78" width="8" height="34" fill="#264653"/><rect x="524" y="74" width="30" height="8" fill="#f4a261" transform="rotate(-8 524 74)"/><rect x="560" y="72" width="10" height="40" fill="#8ab17d"/><rect x="572" y="80" width="11" height="32" fill="#c8553d"/>
+      <rect x="476" y="128" width="12" height="40" fill="#577590"/><rect x="490" y="132" width="9" height="36" fill="#f28482"/><rect x="530" y="140" width="28" height="28" rx="14" fill="#90be6d"/><rect x="566" y="126" width="10" height="42" fill="#f6bd60"/></g>
+      <!-- door to the server room, propped open -->
+      <rect x="626" y="74" width="140" height="266" fill="#5c4033"/>
+      <rect x="636" y="84" width="120" height="256" fill="#26323a"/>
+      <g><rect x="652" y="110" width="40" height="200" rx="3" fill="#3d4b55"/><circle class="blink" cx="662" cy="124" r="3" fill="#7bd389"/><circle cx="672" cy="124" r="3" fill="#7bd389"/><circle class="blink" cx="662" cy="150" r="3" fill="#ffb703" style="animation-delay:-.7s"/><circle cx="662" cy="176" r="3" fill="#7bd389"/><circle class="blink" cx="672" cy="202" r="3" fill="#7bd389" style="animation-delay:-.3s"/>
+      <path d="M658 140 h28 M658 166 h28 M658 192 h28 M658 218 h28 M658 244 h28" stroke="#53636e" stroke-width="2"/></g>
+      <path d="M756 84 L712 98 L712 330 L756 340 Z" fill="#c9a27e" stroke="#5c4033" stroke-width="3"/>
+      <circle cx="720" cy="220" r="4" fill="#5c4033"/>
+      <rect x="650" y="52" width="92" height="18" rx="3" fill="#264653"/>
+      <text x="696" y="65" font-size="11" fill="#fff" text-anchor="middle" font-family="Schibsted Grotesk, IBM Plex Sans KR, sans-serif" data-text-en="Server room" data-text-ko="서버실">Server room</text>
+      <g transform="translate(694 284)"><rect x="0" y="10" width="18" height="46" rx="8" fill="#d62828"/><rect x="5" y="2" width="8" height="10" fill="#3a3f44"/><path d="M13 6 C 26 6, 26 26, 20 34" stroke="#3a3f44" stroke-width="3" fill="none"/><rect x="2" y="24" width="14" height="9" fill="#fff" opacity=".8"/></g>
+      <!-- tall plant -->
+      <path d="M190 336 h44 l-6 -40 h-32 z" fill="#457b9d"/>
+      <path d="M212 296 C 190 260, 180 230, 196 200 M212 296 C 226 262, 244 240, 236 206 M212 296 C 208 258, 214 236, 212 214" stroke="#2d6a4f" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <!-- desk -->
+      <rect x="250" y="268" width="368" height="16" rx="3" fill="#b07d4f"/>
+      <rect x="262" y="284" width="12" height="96" fill="#8a5a3b"/><rect x="594" y="284" width="12" height="96" fill="#8a5a3b"/>
+      <rect x="500" y="284" width="94" height="52" fill="#9c6b43"/><rect x="536" y="306" width="22" height="5" rx="2" fill="#6e4329"/>
+      <!-- phone with a #firstday post -->
+      <rect x="282" y="214" width="32" height="54" rx="6" fill="#22262b"/>
+      <rect x="285" y="220" width="26" height="40" rx="3" fill="#fff"/>
+      <rect x="289" y="226" width="18" height="24" rx="2" fill="#9ad1d4"/><circle cx="298" cy="234" r="4" fill="#fff"/><rect x="292" y="241" width="12" height="2" fill="#fff"/><rect x="292" y="245" width="12" height="2" fill="#22262b"/>
+      <path d="M292 255 l2 -2 a1.6 1.6 0 0 1 2 2 l-2 2 -2 -2 z" fill="#e63946"/>
+      <!-- monitor, unlocked, with a sticky note -->
+      <rect x="410" y="244" width="22" height="24" fill="#3a3f44"/><rect x="392" y="264" width="58" height="6" rx="2" fill="#3a3f44"/>
+      <rect x="344" y="150" width="154" height="100" rx="7" fill="#2b2d42"/>
+      <rect x="352" y="157" width="138" height="85" rx="2" fill="#eaf4ff"/>
+      <rect x="352" y="157" width="138" height="12" fill="#5390d9"/>
+      <rect x="358" y="176" width="36" height="60" rx="2" fill="#d7e7fb"/>
+      <rect x="400" y="177" width="82" height="7" rx="2" fill="#2b2d42" opacity=".6"/><rect x="400" y="190" width="70" height="5" rx="2" fill="#2b2d42" opacity=".35"/><rect x="400" y="200" width="76" height="5" rx="2" fill="#2b2d42" opacity=".35"/><rect x="400" y="210" width="60" height="5" rx="2" fill="#2b2d42" opacity=".35"/><rect x="400" y="224" width="40" height="10" rx="3" fill="#5390d9"/>
+      <g transform="rotate(9 486 176)"><rect x="468" y="158" width="38" height="36" fill="#ffd166"/><text class="hand" x="472" y="173" font-size="12" fill="#3a3f44">pw:</text><text class="hand" x="471" y="187" font-size="10.5" fill="#3a3f44">Summer26!</text></g>
+      <rect x="378" y="262" width="82" height="6" rx="2" fill="#adb5bd"/>
+      <!-- coffee left behind? no: the owner took the coffee; the cup ring stays -->
+      <ellipse cx="326" cy="266" rx="10" ry="3" fill="none" stroke="#8a5a3b" stroke-width="2" opacity=".5"/>
+      <!-- laptop with a USB stick from the parking lot -->
+      <path d="M512 226 h70 l-6 40 h-58 z" fill="#ced4da" stroke="#868e96" stroke-width="2"/>
+      <rect x="500" y="264" width="94" height="6" rx="2" fill="#adb5bd"/>
+      <rect x="594" y="258" width="20" height="9" rx="2" fill="#343a40"/><rect x="588" y="260" width="7" height="5" fill="#ced4da"/>
+      <path d="M612 266 l10 18" stroke="#868e96" stroke-width="1.4"/>
+      <g transform="rotate(14 620 284)"><rect x="604" y="282" width="40" height="16" rx="2" fill="#fff8e1" stroke="#c9a227" stroke-width="1.4"/><text x="624" y="293.5" font-size="6.4" text-anchor="middle" fill="#3a3f44" font-family="Schibsted Grotesk, IBM Plex Sans KR, sans-serif" data-text-en="Salaries 2026" data-text-ko="2026 연봉">Salaries 2026</text></g>
+      <!-- empty chair, pushed back -->
+      <path d="M404 296 h64 l-4 40 h-56 z" fill="#577590"/>
+      <rect x="400" y="334" width="72" height="12" rx="5" fill="#43597a"/>
+      <path d="M436 346 V392 M412 400 L436 392 L460 400" stroke="#343a40" stroke-width="5" stroke-linecap="round" fill="none"/>
+      <g transform="rotate(-4 438 314)"><rect x="410" y="300" width="56" height="30" rx="2" fill="#fff"/><text class="hand" x="438" y="313" font-size="10.5" fill="#3a3f44" text-anchor="middle" data-text-en="back in 5" data-text-ko="5분만">back in 5</text><text class="hand" x="438" y="325" font-size="8.5" fill="#d1495b" text-anchor="middle" data-text-en="(14 min ago)" data-text-ko="(14분 전)">(14 min ago)</text></g>
+      <g class="rings"></g>
+    </svg>
+  </div>
+
+  <section class="report" aria-live="polite">
+    <h1 data-lang="en">Find the vulnerabilities</h1>
+    <h1 data-lang="ko"><font-kku font="sebul" size="10cqi">취약점 찾기</font-kku></h1>
+    <p class="sub" data-lang="en">A cozy office, walked through with a red marker.</p>
+    <p class="sub" data-lang="ko">아늑한 사무실을 빨간 펜 들고 한 바퀴.</p>
+    <ol class="list"></ol>
+    <div class="verdict">
+      <span class="stamp"></span>
+      <small data-lang="en">Overall rating</small>
+      <small data-lang="ko">총평</small>
+      <strong data-lang="en">Cozy. Also critical.</strong>
+      <strong data-lang="ko"><font-kku font="sebul" size="8cqi">아늑함. 그리고 치명적.</font-kku></strong>
+    </div>
+    <p class="hint">
+      <span data-lang="en">Click the picture to circle the next one.</span>
+      <span data-lang="ko">그림을 누르면 다음 취약점에 동그라미를 쳐요.</span>
+    </p>
+  </section>
+</div>
+
+<script>
+(() => {
+  const ko = TTY.lang === 'ko';
+  const layout = document.querySelector('.layout');
+  const scene = document.querySelector('.scene');
+  const rings = document.querySelector('.rings');
+  const list = document.querySelector('.list');
+  const verdict = document.querySelector('.verdict');
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // The picture's own handwriting follows the language.
+  document.querySelectorAll('[data-text-en]').forEach((t) => { t.textContent = t.getAttribute('data-text-' + TTY.lang); });
+  scene.setAttribute('aria-label', TTY.t({ en: 'Circle the next finding', ko: '다음 취약점에 동그라미' }));
+
+  const SEV = {
+    crit: { color: 'var(--crit)', en: 'Critical', ko: '긴급' },
+    high: { color: 'var(--high)', en: 'High', ko: '높음' },
+    med: { color: 'var(--med)', en: 'Medium', ko: '중간' },
+    low: { color: 'var(--low)', en: 'Low', ko: '낮음' },
+  };
+  const FINDINGS = [
+    { at: [487, 177, 30, 27], sev: 'high',
+      en: ['Password on a sticky note', 'Stuck to the monitor. Convenient for everyone.'],
+      ko: ['포스트잇 비밀번호', '모니터에 붙어 있음. 모두에게 편리합니다.'] },
+    { at: [421, 202, 86, 58], sev: 'med',
+      en: ['Unlocked screen', 'Owner went for coffee 14 minutes ago. The coffee is fine.'],
+      ko: ['잠기지 않은 화면', '주인은 14분째 커피 타는 중. 커피는 무사합니다.'] },
+    { at: [318, 138, 92, 26], sev: 'med',
+      en: ['Wi-Fi password on the whiteboard', 'Written right under “do not share”.'],
+      ko: ['화이트보드에 와이파이 비번', '바로 위에 ‘공유 금지’라고 적혀 있음.'] },
+    { at: [612, 276, 40, 30], sev: 'crit',
+      en: ['A USB stick from the parking lot', 'Labelled “Salaries 2026”. Already plugged in.'],
+      ko: ['주차장에서 주운 USB', '‘2026 연봉’이라고 적혀 있음. 이미 꽂혀 있음.'] },
+    { at: [716, 290, 44, 58], sev: 'high',
+      en: ['Server room door, propped open', 'With the fire extinguisher. Two findings for the price of one.'],
+      ko: ['열어 둔 서버실 문', '소화기로 괴어 둠. 지적 사항 1+1.'] },
+    { at: [298, 240, 30, 38], sev: 'low',
+      en: ['Badge photo on social media', '#firstday. The barcode reads fine at 400%.'],
+      ko: ['SNS에 올린 사원증 사진', '#첫출근. 400%로 확대하면 바코드도 읽힘.'] },
+  ];
+
+  function kku(font, size, text) {
+    const el = document.createElement('font-kku');
+    el.setAttribute('font', font);
+    el.setAttribute('size', size);
+    el.setAttribute('wrap-unit', 'word');
+    el.textContent = text;
+    return el;
+  }
+
+  // A marker ring that doesn't quite close, like a real one.
+  function ring([cx, cy, rx, ry], n) {
+    const g = document.createElementNS(NS, 'g');
+    const p = document.createElementNS(NS, 'path');
+    const tilt = (n % 2 ? -1 : 1) * 6;
+    const a = cx - rx, b = cx + rx;
+    p.setAttribute('d', `M${cx + rx * .2} ${cy - ry} C ${b + rx * .25} ${cy - ry}, ${b + rx * .1} ${cy + ry * 1.05}, ${cx} ${cy + ry} S ${a - rx * .2} ${cy - ry * .6}, ${cx - rx * .05} ${cy - ry * 1.08} L ${cx + rx * .45} ${cy - ry * .92}`);
+    p.setAttribute('class', 'ring');
+    p.setAttribute('transform', `rotate(${tilt} ${cx} ${cy})`);
+    p.setAttribute('pathLength', '1');
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('class', 'hand ring-num');
+    t.setAttribute('x', cx + rx * .78);
+    t.setAttribute('y', cy - ry * .9);
+    t.textContent = n;
+    g.append(p, t);
+    rings.append(g);
+    if (!TTY.reduce) {
+      p.animate([{ strokeDasharray: '1', strokeDashoffset: 1 }, { strokeDasharray: '1', strokeDashoffset: 0 }], { duration: 650, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'both' });
+      t.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 550, fill: 'both' });
+    }
+  }
+
+  function writeUp(f, n) {
+    list.querySelectorAll('.latest').forEach((el) => el.classList.remove('latest'));
+    const sev = SEV[f.sev];
+    const [title, note] = f[TTY.lang];
+    const li = document.createElement('li');
+    li.className = 'item latest';
+    li.style.setProperty('--sev', sev.color);
+    const num = document.createElement('span');
+    num.className = 'num';
+    num.textContent = n;
+    const h = document.createElement('h2');
+    const name = document.createElement('span');
+    name.textContent = title;
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    if (ko) chip.append(kku('dojang', '3.4cqi', sev.ko)); else chip.textContent = sev.en;
+    h.append(name, chip);
+    const p = document.createElement('p');
+    p.className = 'note';
+    if (ko) p.append(kku('pilgi', '3.9cqi', note)); else p.textContent = note;
+    li.append(num, h, p);
+    list.append(li);
+    if (!TTY.reduce) li.animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 420, easing: 'cubic-bezier(.6,0,.3,1)' });
+    // Keep the newest finding in view when the list is longer than the column.
+    while (list.scrollHeight > list.clientHeight + 2 && list.children.length > 1) list.firstElementChild.remove();
+  }
+
+  function rate() {
+    layout.classList.add('done');
+    verdict.classList.add('on');
+    const stamp = verdict.querySelector('.stamp');
+    stamp.replaceChildren(ko ? kku('dojang', '4cqi', '재점검') : document.createTextNode('Retest'));
+    if (!TTY.reduce) {
+      verdict.animate([{ transform: 'scale(.92)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+      stamp.animate([{ transform: 'scale(2.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 300, delay: 420, easing: 'cubic-bezier(.5,0,.9,.4)', fill: 'backwards' });
+    }
+  }
+
+  let shown = 0;
+  let timer = null;
+  function reset() {
+    shown = 0;
+    rings.replaceChildren();
+    list.replaceChildren();
+    verdict.classList.remove('on');
+    layout.classList.remove('done');
+  }
+  function next() {
+    clearTimeout(timer);
+    if (shown === FINDINGS.length) { reset(); }
+    else {
+      const f = FINDINGS[shown];
+      shown += 1;
+      ring(f.at, shown);
+      writeUp(f, shown);
+      if (shown === FINDINGS.length) setTimeout(rate, TTY.reduce ? 0 : 900);
+    }
+    if (!TTY.reduce) timer = setTimeout(next, shown === FINDINGS.length ? 7000 : 2300);
+  }
+  scene.addEventListener('click', next);
+  scene.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } });
+
+  if (TTY.reduce) {
+    FINDINGS.forEach((f, i) => { ring(f.at, i + 1); writeUp(f, i + 1); });
+    shown = FINDINGS.length;
+    rate();
+  }
+  TTY.onShow(() => { if (!TTY.reduce) timer = setTimeout(next, 900); });
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

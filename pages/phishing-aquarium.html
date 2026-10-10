@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Please Don't Feed the Phish | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:wght@400;700&family=DotGothic16&family=Gowun+Dodum&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="sticker pixel"></script>
+<style>
+  /* An aquarium of phishing messages that swim like fish and circle a hook baited with a key.
+     Tap one to report it: it gets tagged, blushes and leaves. The cat on the lid is on duty,
+     in its own way. */
+  :root {
+    --wall: #dcebe7;
+    --wall-2: #c9e0da;
+    --water-top: #7fd3dd;
+    --water-bot: #2b7ea6;
+    --sand: #f0d29a;
+    --wood: #8a5a3b;
+    --wood-2: #6e4329;
+    --brass: #caa24b;
+    --brass-ink: #3c2a0c;
+    --ink: #1e2a33;
+    --report: #e2453c;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    container-type: size;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 6cqmin, rgba(255,255,255,.18) 6cqmin 6.3cqmin),
+      linear-gradient(var(--wall), var(--wall-2));
+    color: var(--ink);
+    font-family: 'Atkinson Hyperlegible', 'Gowun Dodum', system-ui, sans-serif;
+  }
+  .lang-ko body { font-family: 'Gowun Dodum', 'Atkinson Hyperlegible', sans-serif; word-break: keep-all; }
+
+  /* Sized so the tank, stand and plaque always fit the height as well as the width. */
+  .room {
+    display: grid;
+    justify-items: center;
+    width: min(94cqw, calc((94cqh - 30cqmin) / .66));
+  }
+
+  /* ---- The tank ---- */
+  .tank-wrap { position: relative; width: 100%; }
+  .topper { position: relative; aspect-ratio: 100 / 9; }
+  .tank {
+    position: relative;
+    container-type: size;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1.2cqmin solid #f4fbfa;
+    border-radius: 1.6cqmin;
+    overflow: hidden;
+    background: linear-gradient(var(--water-top), var(--water-bot));
+    box-shadow: inset 0 0 0 .4cqmin rgba(255,255,255,.35), 0 2cqmin 4cqmin rgba(30, 60, 70, .25);
+    cursor: default;
+  }
+  .lid {
+    position: relative;
+    z-index: 1;
+    width: 102.4%;
+    margin: -.4cqmin 0 -.8cqmin -1.2%;
+    height: 2.2cqmin;
+    border-radius: 1cqmin;
+    background: #2f3d45;
+  }
+  .rays { position: absolute; inset: -20% -10%; background: repeating-linear-gradient(100deg, rgba(255,255,255,.16) 0 3%, transparent 3% 9%); animation: rays 12s linear infinite alternate; pointer-events: none; }
+  @keyframes rays { to { transform: translateX(6%); } }
+  .scenery { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .bubbles i {
+    position: absolute;
+    bottom: -4%;
+    left: var(--x);
+    width: var(--s);
+    aspect-ratio: 1;
+    border: .3cqh solid rgba(255,255,255,.7);
+    border-radius: 50%;
+    animation: rise var(--t) linear infinite;
+    animation-delay: var(--d);
+  }
+  @keyframes rise {
+    0% { transform: translate(0, 0); opacity: 0; }
+    10% { opacity: 1; }
+    50% { transform: translate(1.4cqw, -55cqh); }
+    100% { transform: translate(-.8cqw, -112cqh); opacity: .4; }
+  }
+
+  .hook { position: absolute; left: 63%; top: 0; width: 6cqw; height: 46%; transform-origin: 50% 0; animation: sway 4.5s ease-in-out infinite alternate; pointer-events: none; }
+  @keyframes sway { from { rotate: -3deg; } to { rotate: 3deg; } }
+  .hook svg { width: 100%; height: 100%; overflow: visible; }
+
+  /* ---- Fish: a message with fins ---- */
+  .school { position: absolute; inset: 0; }
+  .fish {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    width: 30cqw;
+    cursor: pointer;
+    will-change: transform;
+  }
+  .fish.left { flex-direction: row-reverse; }
+  .fish .body {
+    position: relative;
+    flex: 1;
+    padding: 1.3cqw 4.2cqw 1.3cqw 2.4cqw;
+    border-radius: 3.2cqw 4.2cqw 4.2cqw 3.2cqw;
+    background: var(--fc);
+    color: #1a2228;
+    font-size: 1.95cqw;
+    font-weight: 700;
+    line-height: 1.2;
+    box-shadow: inset -.6cqw -.5cqw 0 rgba(0,0,0,.08);
+  }
+  .fish.left .body { border-radius: 4.2cqw 3.2cqw 3.2cqw 4.2cqw; padding: 1.3cqw 2.4cqw 1.3cqw 4.2cqw; }
+  .fish .body small { display: block; margin-bottom: .3cqw; font-size: 1.45cqw; font-weight: 400; opacity: .7; }
+  .fish .eye { position: absolute; top: 34%; right: 1.6cqw; width: 1.4cqw; aspect-ratio: 1; border-radius: 50%; background: #1a2228; box-shadow: inset .35cqw .35cqw 0 #fff; }
+  .fish.left .eye { right: auto; left: 1.6cqw; }
+  .fish .cheek { position: absolute; top: 56%; right: 1.2cqw; width: 2.2cqw; height: 1cqw; border-radius: 50%; background: #ff7d9b; opacity: 0; transition: opacity .3s; }
+  .fish.left .cheek { right: auto; left: 1.2cqw; }
+  .fish.reported .cheek { opacity: .85; }
+  .fish .tail { width: 4.6cqw; height: 6cqw; background: var(--fc); clip-path: polygon(100% 50%, 0 0, 22% 50%, 0 100%); animation: wag .5s ease-in-out infinite alternate; transform-origin: 100% 50%; }
+  .fish.left .tail { clip-path: polygon(0 50%, 100% 0, 78% 50%, 100% 100%); transform-origin: 0 50%; }
+  @keyframes wag { from { transform: scaleY(.8) skewY(-8deg); } to { transform: scaleY(1) skewY(8deg); } }
+  .fish .fin { position: absolute; left: 40%; top: -1.3cqw; width: 4cqw; height: 1.8cqw; background: var(--fc); border-radius: 60% 60% 0 0; filter: brightness(.92); }
+  .tag {
+    position: absolute;
+    left: 50%;
+    top: -2.6cqw;
+    padding: .4cqw 1cqw;
+    border: .35cqw solid var(--report);
+    border-radius: .8cqw;
+    background: #fff;
+    color: var(--report);
+    font-family: 'DotGothic16', monospace;
+    font-size: 1.7cqw;
+    rotate: -8deg;
+    translate: -50% 0;
+    white-space: nowrap;
+  }
+  .tag > font-kku { color: var(--report); }
+
+  /* ---- The cat on the lid ---- */
+  .cat { position: absolute; left: 12%; bottom: -1%; width: 22%; pointer-events: none; }
+  .cat svg { display: block; width: 100%; overflow: visible; }
+  .cat .tail { transform-origin: 8px 6px; animation: tail 3.2s ease-in-out infinite alternate; }
+  @keyframes tail { from { rotate: 6deg; } to { rotate: -14deg; } }
+  .cat .open { display: none; }
+  .cat.peek .open { display: inline; }
+  .cat.peek .shut { display: none; }
+  .zz { position: absolute; left: 76%; top: -10%; font-family: 'Young Serif', serif; font-size: 2.2cqmin; color: rgba(30,42,51,.55); animation: zz 3s ease-in-out infinite; }
+  .zz:nth-child(2) { left: 84%; top: -22%; font-size: 1.6cqmin; animation-delay: -1.5s; }
+  @keyframes zz { 0%, 100% { opacity: 0; translate: 0 1cqmin; } 50% { opacity: 1; translate: .6cqmin -.6cqmin; } }
+
+  /* ---- Stand, counter, plaque ---- */
+  .stand {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 104%;
+    margin-top: -.2cqmin;
+    padding: 1.4cqmin 3cqmin;
+    border-radius: .8cqmin;
+    background: linear-gradient(var(--wood), var(--wood-2));
+  }
+  .counter {
+    display: flex;
+    align-items: center;
+    gap: 1.2cqmin;
+    padding: .7cqmin 1.6cqmin;
+    border-radius: .6cqmin;
+    background: #c4dfa6;
+    box-shadow: inset 0 0 0 .3cqmin #556b3e;
+    color: #1d2b17;
+    font-family: 'DotGothic16', monospace;
+    font-size: max(12px, 2.3cqmin);
+  }
+  .counter > font-kku { color: #1d2b17; }
+  .counter b { font-weight: 400; display: inline-block; }
+
+  .plaque {
+    container-type: inline-size;
+    width: min(100%, 76cqmin);
+    margin-top: 3cqmin;
+    padding: 2.4cqmin 3.4cqmin;
+    border-radius: 1.2cqmin;
+    background: linear-gradient(135deg, #e6c56e, var(--brass) 55%, #a9832f);
+    box-shadow: inset 0 0 0 .4cqmin rgba(60, 42, 12, .35), 0 .8cqmin 1.6cqmin rgba(30,40,40,.2);
+    color: var(--brass-ink);
+    text-align: center;
+  }
+  .plaque h1 { font-family: 'Young Serif', serif; font-weight: 400; font-size: 5.6cqi; line-height: 1.1; }
+  .plaque .sci { margin-top: .8cqi; font-family: 'Young Serif', serif; font-style: italic; font-size: 3.2cqi; }
+  .plaque .facts { margin-top: 1.2cqi; font-size: max(11px, 2.9cqi); line-height: 1.4; }
+  .plaque h1 > font-kku { color: var(--brass-ink); }
+  .hint { margin-top: 1.6cqmin; font-size: max(12px, 2.2cqmin); color: rgba(30,42,51,.6); }
+
+  @container (max-width: 520px) {
+    .fish { width: 44cqw; }
+    .fish .body { font-size: 3cqw; }
+    .fish .body small { font-size: 2.4cqw; }
+    .tag { font-size: 2.4cqw; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rays, .bubbles i, .hook, .fish .tail, .cat .tail, .zz { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="room">
+  <div class="tank-wrap">
+    <div class="topper">
+    <div class="cat" aria-hidden="true">
+      <svg viewBox="0 0 120 60">
+        <g class="tail" transform="translate(98 44)"><path d="M8 6 C 22 10, 26 24, 18 34 C 14 38, 20 42, 24 40" fill="none" stroke="#e59a52" stroke-width="7" stroke-linecap="round"/></g>
+        <path d="M14 50 C 12 30, 34 22, 60 23 C 88 24, 106 32, 104 50 Z" fill="#f1ad62" stroke="#7a4a22" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M44 28 l4 8 M58 25 l1 9 M72 26 l-2 8" stroke="#d68637" stroke-width="3" stroke-linecap="round"/>
+        <g>
+          <path d="M10 34 L13 14 L24 26 Z M34 24 L41 10 L45 27 Z" fill="#f1ad62" stroke="#7a4a22" stroke-width="2.4" stroke-linejoin="round"/>
+          <ellipse cx="28" cy="37" rx="20" ry="15" fill="#f1ad62" stroke="#7a4a22" stroke-width="2.4"/>
+          <g class="shut"><path d="M18 36 q4 3 8 0 M31 36 q4 3 8 0" fill="none" stroke="#3b2410" stroke-width="2.2" stroke-linecap="round"/></g>
+          <g class="open"><path d="M18 36 q4 3 8 0" fill="none" stroke="#3b2410" stroke-width="2.2" stroke-linecap="round"/><circle cx="35" cy="35.5" r="3.4" fill="#3b2410"/><circle cx="36" cy="34.5" r="1" fill="#fff"/></g>
+          <path d="M26 42 l2 1.6 2 -1.6" fill="none" stroke="#3b2410" stroke-width="1.8" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <span class="zz">z</span><span class="zz">z</span>
+    </div>
+    </div>
+    <div class="lid" aria-hidden="true"></div>
+    <div class="tank">
+      <div class="rays" aria-hidden="true"></div>
+      <svg class="scenery" viewBox="0 0 160 90" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 78 C 30 72, 52 80, 80 76 S 130 72, 160 77 L160 90 L0 90 Z" fill="#f0d29a"/>
+        <path d="M0 82 C 40 79, 70 85, 100 82 S 140 80, 160 83 L160 90 L0 90 Z" fill="#e2bd7c"/>
+        <path d="M14 80 C 10 66, 18 58, 12 46 M14 80 C 20 70, 16 62, 22 54 M140 80 C 136 64, 146 58, 140 44 M144 80 C 150 70, 148 64, 154 58" stroke="#3f9a6a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <ellipse cx="104" cy="78" rx="8" ry="4.6" fill="#9aa7ad"/><ellipse cx="114" cy="80" rx="5" ry="3" fill="#7f8b92"/>
+      </svg>
+      <div class="bubbles" aria-hidden="true"></div>
+      <div class="hook" aria-hidden="true">
+        <svg viewBox="0 0 20 100" preserveAspectRatio="xMidYMin meet">
+          <path d="M10 0 V82" stroke="rgba(255,255,255,.75)" stroke-width=".8"/>
+          <path d="M10 80 V90 a5 5 0 1 1 -8 -4" fill="none" stroke="#5d6a72" stroke-width="1.8" stroke-linecap="round"/>
+          <g transform="translate(5 86) rotate(-20)"><circle r="3.2" fill="none" stroke="#e8b730" stroke-width="1.6"/><path d="M3 0 h7 M7 0 v2.6 M9.4 0 v2" stroke="#e8b730" stroke-width="1.6" stroke-linecap="round"/></g>
+        </svg>
+      </div>
+      <div class="school"></div>
+    </div>
+  </div>
+  <div class="stand">
+    <div class="counter" aria-live="polite"></div>
+  </div>
+  <div class="plaque">
+    <div data-lang="en">
+      <h1>Please don't feed the phish.</h1>
+      <p class="sci">Phishus credentialis</p>
+      <p class="facts">Habitat: inboxes and text messages. Diet: passwords, codes, gift cards. Report on sight.</p>
+    </div>
+    <div data-lang="ko">
+      <h1><font-kku font="sticker" size="6.4cqi">피싱에게 먹이를 주지 마세요</font-kku></h1>
+      <p class="sci">학명: 낚시꾼속 개인정보과</p>
+      <p class="facts">서식지: 문자함, 메일함. 먹이: 비밀번호, 인증번호, 상품권. 보이면 바로 신고해 주세요.</p>
+    </div>
+  </div>
+  <p class="hint">
+    <span data-lang="en">Tap a phish to report it.</span>
+    <span data-lang="ko">피싱을 누르면 신고돼요.</span>
+  </p>
+</div>
+
+<script>
+(() => {
+  const ko = TTY.lang === 'ko';
+  const school = document.querySelector('.school');
+  const tank = document.querySelector('.tank');
+  const cat = document.querySelector('.cat');
+  const counter = document.querySelector('.counter');
+
+  const MESSAGES = TTY.t({
+    en: [
+      ['Security team', 'Your account is suspended'],
+      ['The CEO (real)', 'Need gift cards. Quietly.'],
+      ['Lucky Draw', 'You won a prize!!'],
+      ['Parcel Service', 'Parcel held. Pay $1.99'],
+      ['accounting', 'Invoice_FINAL_final.pdf.exe'],
+      ['IT Helpdesk', 'Password expires in 1 hour'],
+      ['Mom (new number)', 'Hi, my phone broke. Send money'],
+      ['Sign-in alert', 'Unusual login. Verify here'],
+    ],
+    ko: [
+      ['[택배]', '주소 불일치로 배송 보류'],
+      ['엄마', '나 폰 액정 깨졌어. 이 번호로 연락해'],
+      ['서울중앙지검', '수사관입니다. 사건 관련 확인 바랍니다'],
+      ['[국외발신]', '해외결제 980,000원 승인'],
+      ['정부지원', '저금리 대출 승인 대상자입니다'],
+      ['부고', '삼가 고인의 명복을… 장례식장 링크'],
+      ['[Web발신]', '계정이 일시 정지되었습니다'],
+      ['건강보험', '건강검진 결과를 확인하세요'],
+    ],
+  });
+  const COLORS = ['#ffe9a8', '#ffd0dc', '#d6f5c9', '#ffe1c2', '#e2dcff', '#c9f0ff'];
+
+  let reported = 0;
+  function renderCounter(bump) {
+    if (ko) {
+      const el = document.createElement('font-kku');
+      el.setAttribute('font', 'pixel');
+      el.setAttribute('size', 'max(12px, 2.4cqmin)');
+      el.textContent = `오늘 신고 ${reported}건`;
+      counter.replaceChildren(el);
+    } else {
+      counter.innerHTML = `Reported today: <b>${reported}</b>`;
+    }
+    if (bump && !TTY.reduce) counter.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], { duration: 380, easing: 'ease-out' });
+  }
+  renderCounter(false);
+
+  // Bubbles rising from the sand.
+  const bubbles = document.querySelector('.bubbles');
+  for (let i = 0; i < 16; i++) {
+    const b = document.createElement('i');
+    b.style.cssText = `--x:${4 + Math.random() * 92}%;--s:${.8 + Math.random() * 1.6}cqw;--t:${5 + Math.random() * 6}s;--d:${-Math.random() * 10}s`;
+    bubbles.append(b);
+  }
+
+  /* ---- The school ---- */
+  let W = 0, H = 0;
+  const measure = () => { W = tank.clientWidth; H = tank.clientHeight; };
+  measure();
+  addEventListener('resize', measure);
+
+  let msgOrder = [];
+  const nextMessage = () => {
+    if (!msgOrder.length) msgOrder = MESSAGES.map((_, i) => i).sort(() => Math.random() - .5);
+    return MESSAGES[msgOrder.pop()];
+  };
+  const fish = [];
+
+  // Each fish keeps to its own lane so messages never pile up on each other.
+  const laneCount = () => 3;
+  const laneY = (i) => 0.04 + i * 0.27;
+  const freeLane = () => {
+    const taken = new Set(fish.filter((f) => f.state === 'swim').map((f) => f.lane));
+    for (let i = 0; i < laneCount(); i++) if (!taken.has(i)) return i;
+    return Math.floor(Math.random() * laneCount());
+  };
+
+  function spawn(fromEdge, lane = freeLane()) {
+    const [from, subject] = nextMessage();
+    const el = document.createElement('div');
+    el.className = 'fish';
+    el.innerHTML = `<div class="body"><small></small><span class="subject"></span><i class="eye"></i><i class="cheek"></i><i class="fin"></i></div><div class="tail"></div>`;
+    el.querySelector('small').textContent = from;
+    el.querySelector('.subject').textContent = subject;
+    el.style.setProperty('--fc', COLORS[Math.floor(Math.random() * COLORS.length)]);
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', TTY.t({ en: 'Report: ', ko: '신고: ' }) + from + ' ' + subject);
+    school.append(el);
+    const dir = Math.random() < .5 ? 1 : -1;
+    const f = {
+      el, dir, lane,
+      x: fromEdge ? (dir > 0 ? -0.5 : 1.05) : 0.05 + Math.random() * 0.5,
+      y: laneY(lane),
+      speed: 0.035 + Math.random() * 0.03,
+      phase: Math.random() * 6,
+      state: 'swim',
+      curious: 0,
+    };
+    el.classList.toggle('left', dir < 0);
+    el.addEventListener('pointerdown', (e) => { e.stopPropagation(); report(f); });
+    fish.push(f);
+    return f;
+  }
+
+  function report(f) {
+    if (f.state !== 'swim') return;
+    f.state = 'leaving';
+    reported += 1;
+    renderCounter(true);
+    f.el.classList.add('reported');
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    if (ko) {
+      const k = document.createElement('font-kku');
+      k.setAttribute('font', 'pixel');
+      k.setAttribute('size', '1em');
+      k.textContent = '신고 완료';
+      tag.append(k);
+    } else {
+      tag.textContent = 'Reported';
+    }
+    f.el.querySelector('.body').append(tag);
+    if (!TTY.reduce) tag.animate([{ transform: 'scale(2.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.5,0,.9,.4)' });
+    // Embarrassed: turn around, then dart off.
+    setTimeout(() => {
+      f.dir = f.x > 0.45 ? 1 : -1;
+      f.el.classList.toggle('left', f.dir < 0);
+      f.speed = 0.32;
+    }, 650);
+    cat.classList.add('peek');
+    setTimeout(() => cat.classList.remove('peek'), 1300);
+  }
+
+  // Now and then the fish in the hook's lane gets curious about the key.
+  const HOOK = { x: 0.63, y: 0.4 };
+  const hookLane = () => 1;
+  setInterval(() => {
+    const f = fish.find((g) => g.state === 'swim' && !g.curious && g.lane === hookLane());
+    if (f) f.curious = 1;
+  }, 2600);
+
+  let last = 0;
+  function frame(t) {
+    const dt = Math.min(0.05, (t - (last || t)) / 1000);
+    last = t;
+    const fw = fish[0] ? fish[0].el.offsetWidth / W : 0.3;
+    fish.forEach((f) => {
+      if (f.curious && f.state === 'swim') {
+        // Swim toward the hook with the mouth (the leading edge) at the key, then nibble.
+        const tx = f.dir > 0 ? HOOK.x - fw - 0.01 : HOOK.x + 0.03;
+        f.x += (tx - f.x) * Math.min(1, dt * 1.4);
+        if (Math.abs(tx - f.x) < 0.01) f.curious += dt;
+        if (f.curious > 3.4) f.curious = 0;
+      } else {
+        f.x += f.dir * f.speed * dt;
+        if (f.state === 'swim' && ((f.dir > 0 && f.x > 0.985 - fw) || (f.dir < 0 && f.x < 0.015))) {
+          f.dir *= -1;
+          f.el.classList.toggle('left', f.dir < 0);
+        }
+      }
+      const bob = Math.sin(t / 700 + f.phase) * 0.018 + (f.curious > 1 ? Math.sin(t / 90) * 0.006 : 0);
+      f.el.style.transform = `translate(${f.x * W}px, ${(f.y + bob) * H}px)`;
+    });
+    // Reported fish that have left are replaced by new arrivals.
+    for (let i = fish.length - 1; i >= 0; i--) {
+      const f = fish[i];
+      if (f.state === 'leaving' && (f.x > 1.2 || f.x < -0.6)) {
+        f.el.remove();
+        fish.splice(i, 1);
+        setTimeout(() => spawn(true, f.lane), 900);
+      }
+    }
+    if (running) requestAnimationFrame(frame);
+  }
+
+  // If nobody reports anything, the cat does (eventually).
+  let idleUntil = 0;
+  addEventListener('pointerdown', () => { idleUntil = performance.now() + 9000; });
+  function autoReport() {
+    if (performance.now() > idleUntil) {
+      const swimmers = fish.filter((f) => f.state === 'swim');
+      const near = swimmers.sort((a, b) => Math.hypot(a.x - HOOK.x, a.y - HOOK.y) - Math.hypot(b.x - HOOK.x, b.y - HOOK.y))[0];
+      if (near) report(near);
+    }
+    setTimeout(autoReport, 4200);
+  }
+
+  let running = false;
+  for (let i = 0; i < laneCount(); i++) spawn(false, i);
+  // Place the first school before anything moves.
+  fish.forEach((f, i) => { f.x = [0.04, 0.5, 0.16, 0.56][i]; f.el.style.transform = `translate(${f.x * W}px, ${f.y * H}px)`; });
+
+  if (TTY.reduce) {
+    reported = 1;
+    renderCounter(false);
+  }
+  TTY.onShow(() => {
+    if (TTY.reduce) return;
+    running = true;
+    requestAnimationFrame(frame);
+    setTimeout(autoReport, 3600);
+  });
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(() => { measure(); TTY.ready(); });
+})();
+</script>
+</body>
+</html>

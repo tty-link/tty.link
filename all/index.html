@@ -126,21 +126,30 @@
 
   let pages = [];
 
-  // Previews load when their card comes near the screen, then are told they are showing.
+  // Only the previews on screen are alive. A card that stays in view for a moment gets its
+  // page (so a fast scroll does not load everything it passes); a card that leaves the
+  // screen has its page removed again. However long the list grows, only a screenful runs.
+  const timers = new WeakMap();
   const loader = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      loader.unobserve(entry.target);
-      const frame = document.createElement('iframe');
-      frame.src = entry.target.dataset.src;
-      frame.tabIndex = -1;
-      frame.setAttribute('aria-hidden', 'true');
-      frame.addEventListener('load', () => setTimeout(() => {
-        frame.contentWindow.postMessage({ source: 'tty-home', type: 'show' }, location.origin);
-      }, 300), { once: true });
-      entry.target.append(frame);
+    entries.forEach(({ target, isIntersecting }) => {
+      clearTimeout(timers.get(target));
+      const frame = target.querySelector('iframe');
+      if (isIntersecting && !frame) {
+        timers.set(target, setTimeout(() => {
+          const next = document.createElement('iframe');
+          next.src = target.dataset.src;
+          next.tabIndex = -1;
+          next.setAttribute('aria-hidden', 'true');
+          next.addEventListener('load', () => setTimeout(() => {
+            if (next.contentWindow) next.contentWindow.postMessage({ source: 'tty-home', type: 'show' }, location.origin);
+          }, 300), { once: true });
+          target.append(next);
+        }, 250));
+      } else if (!isIntersecting && frame) {
+        timers.set(target, setTimeout(() => frame.remove(), 1200));
+      }
     });
-  }, { rootMargin: '200px 0px' });
+  }, { rootMargin: '80px 0px' });
   const scaler = new ResizeObserver((entries) => {
     entries.forEach((entry) => entry.target.style.setProperty('--s', entry.contentRect.width / 1000));
   });

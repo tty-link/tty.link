@@ -47,6 +47,18 @@
       "summary": {"en": "We cut your words into pieces and bill per piece. Korean gets the fine cut.", "ko": "말을 조각내 조각마다 청구합니다. 한국어는 자모까지 잘게."} },
     {"id": "hallucination-museum", "file": "hallucination-museum.html", "seconds": 21,
       "title": {"en": "The Museum of Confident Answers", "ko": "자신만만한 답변 박물관"},
-      "summary": {"en": "Every exhibit is 100% certain. None of them happened.", "ko": "모든 전시물 확신도 100%. 일어난 적은 없음."} }
+      "summary": {"en": "Every exhibit is 100% certain. None of them happened.", "ko": "모든 전시물 확신도 100%. 일어난 적은 없음."} },
+    {"id": "password-feelings", "file": "password-feelings.html", "seconds": 22,
+      "title": {"en": "A Password Meter With Feelings", "ko": "감정 있는 비밀번호 측정기"},
+      "summary": {"en": "Weak password, strong person.", "ko": "비밀번호는 약한데, 효심이 강하네요."} },
+    {"id": "phishing-aquarium", "file": "phishing-aquarium.html", "seconds": 18,
+      "title": {"en": "Please Don't Feed the Phish", "ko": "피싱에게 먹이를 주지 마세요"},
+      "summary": {"en": "An aquarium of scam messages. Tap one to report it.", "ko": "택배 문자부터 검찰 사칭까지, 보이면 신고하는 수족관."} },
+    {"id": "office-findings", "file": "office-findings.html", "seconds": 22,
+      "title": {"en": "Find the Vulnerabilities", "ko": "취약점 찾기"},
+      "summary": {"en": "A cozy office, audited. Cozy. Also critical.", "ko": "아늑한 사무실 점검 결과: 아늑함. 그리고 치명적."} },
+    {"id": "iot-house", "file": "iot-house.html", "seconds": 20,
+      "title": {"en": "Home, Sweet Attack Surface", "ko": "즐거운 나의 공격 표면"},
+      "summary": {"en": "The fridge wants 2FA. The toaster joined a botnet.", "ko": "냉장고는 2단계 인증을, 토스터는 봇넷 가입을."} }
   ]
 }
