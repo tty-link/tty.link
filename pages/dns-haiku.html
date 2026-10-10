@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNS Haiku | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Boku&family=Shippori+Mincho+B1:wght@800&family=Gowun+Batang:wght@400;700&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="butgeul dojang"></script>
+<script src="/vendor/font-kku/font-kku-fx.js"></script>
+<style>
+  /* The sysadmin's haiku, hung where it belongs: on a scroll, brushed line by line,
+     sealed in red. Every outage review ends here eventually. */
+  :root {
+    --wall: #22252d;
+    --mist: #343844;
+    --silk: #5f7b7c;
+    --silk-deep: #48605f;
+    --paper: #f3eee2;
+    --ink: #1a1613;
+    --seal: #c4302b;
+    --rod: #4a2f22;
+    --petal: #f2b5c3;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(60% 40% at 20% 25%, rgba(70, 76, 92, .55), transparent 70%),
+      radial-gradient(50% 45% at 85% 75%, rgba(60, 66, 80, .5), transparent 70%),
+      radial-gradient(120% 100% at 50% 50%, var(--mist), var(--wall));
+    color: var(--ink);
+    font-family: 'Gowun Batang', serif;
+  }
+  .petals { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  /* The scroll: hanger, top rod, mounted paper, bottom rod. */
+  .scroll {
+    position: relative;
+    container-type: inline-size;
+    width: min(88vw, calc(90vh * .72));
+    width: min(88vw, calc(90svh * .72));
+    filter: drop-shadow(0 18px 30px rgba(0, 0, 0, .45));
+  }
+  .hanger { position: absolute; left: 50%; top: -9cqi; width: 36cqi; height: 10cqi; translate: -50% 0; }
+  .rod {
+    position: relative;
+    z-index: 2;
+    height: 4.2cqi;
+    margin: 0 -3cqi;
+    border-radius: 2cqi;
+    background: linear-gradient(#6b4632, var(--rod) 55%, #2e1c14);
+  }
+  .rod::before, .rod::after {
+    content: "";
+    position: absolute;
+    top: -1cqi;
+    width: 4.6cqi;
+    height: 6.2cqi;
+    border-radius: 1.4cqi;
+    background: linear-gradient(90deg, #2a1a12, #5c3a29 50%, #2a1a12);
+  }
+  .rod::before { left: -3.4cqi; }
+  .rod::after { right: -3.4cqi; }
+  .rod.bottom { height: 5.2cqi; }
+
+  .roll { position: relative; }
+  .sheet {
+    position: relative;
+    padding: 7cqi 7cqi 8cqi;
+    background:
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, .05) 0 .6cqi, transparent .6cqi 1.6cqi),
+      linear-gradient(var(--silk), var(--silk-deep));
+  }
+  .paper {
+    position: relative;
+    aspect-ratio: 1 / 1.22;
+    padding: 9cqi 6cqi 26cqi;
+    justify-content: center;
+    background:
+      radial-gradient(90% 70% at 30% 20%, rgba(255, 255, 255, .5), transparent 70%),
+      radial-gradient(70% 60% at 80% 90%, rgba(196, 178, 140, .18), transparent 70%),
+      var(--paper);
+    box-shadow: inset 0 0 0 .4cqi rgba(160, 140, 100, .25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .lines { display: flex; flex-direction: column; align-items: center; gap: 5.6cqi; filter: url(#bleed); }
+  .line { display: flex; align-items: baseline; justify-content: center; min-height: 1.3em; color: var(--ink); white-space: nowrap; }
+  .lang-en .line { font-family: 'Yuji Boku', serif; font-size: 6.3cqi; }
+  .lang-ko .line { font-size: 8.2cqi; }
+  .line .lat { font-family: 'Yuji Boku', serif; font-size: .82em; margin: 0 .12em; }
+  .lang-en .line .lat { font-size: 1em; margin: 0; }
+  .line .ch { display: inline-block; }
+  .line > font-kku { color: var(--ink); filter: drop-shadow(0 0 .5px var(--ink)) drop-shadow(0 0 .5px var(--ink)); }
+  .js-hide { visibility: hidden; }
+
+  .sign { position: absolute; left: 8cqi; bottom: 7cqi; font-size: 3cqi; color: #5a5045; }
+  .lang-en .sign { font-family: 'Yuji Boku', serif; }
+
+  .seal {
+    position: absolute;
+    right: 8cqi;
+    bottom: 6.5cqi;
+    display: grid;
+    place-items: center;
+    width: 13cqi;
+    aspect-ratio: 1 / 1.24;
+    padding: 1cqi 0;
+    border: 0;
+    border-radius: 1.2cqi .8cqi 1.4cqi .9cqi;
+    color: var(--paper);
+    rotate: -4deg;
+    cursor: pointer;
+    background:
+      radial-gradient(40% 30% at 30% 25%, rgba(255, 255, 255, .14), transparent 70%),
+      radial-gradient(35% 30% at 75% 80%, rgba(90, 10, 10, .22), transparent 70%),
+      var(--seal);
+    box-shadow: inset 0 0 0 .5cqi rgba(255, 240, 230, .18);
+    font: inherit;
+    opacity: .94;
+  }
+  .seal-en { display: grid; line-height: .95; font-family: 'Shippori Mincho B1', serif; font-weight: 800; font-size: 4.6cqi; color: var(--paper); text-align: center; }
+  .seal-ko { display: grid; justify-items: center; line-height: 1; }
+  .seal-ko > font-kku { color: var(--seal); }
+  /* The dojang face carries its own red ink, so the Korean seal is the outlined kind. */
+  .lang-ko .seal { background: rgba(243, 238, 226, .4); border: .6cqi solid var(--seal); box-shadow: none; mix-blend-mode: multiply; }
+  .seal:focus-visible { outline: .5cqi solid var(--seal); outline-offset: 1cqi; }
+  .foot {
+    position: absolute;
+    right: 5cqi;
+    bottom: 26cqi;
+    padding: 1.2cqi 2cqi;
+    border-radius: .8cqi;
+    background: #fffaf0;
+    box-shadow: 0 .6cqi 1.6cqi rgba(0, 0, 0, .18);
+    font-size: max(11px, 3.2cqi);
+    color: #4a3f36;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s, translate .25s;
+    translate: 0 1cqi;
+  }
+  .lang-en .foot { font-family: 'Yuji Boku', serif; }
+  .foot.show { opacity: 1; translate: 0 0; }
+
+  html:not(.embedded) body { padding-bottom: 40px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- Ink soaks a little into the paper; the seal is uneven where the paste was thin. -->
+  <filter id="bleed"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="1.4"/></filter>
+</svg>
+<canvas class="petals" aria-hidden="true"></canvas>
+
+<main class="scroll">
+  <svg class="hanger" viewBox="0 0 100 30" aria-hidden="true">
+    <path d="M6 30 L50 3 L94 30" fill="none" stroke="#b9a37a" stroke-width="1.6"/>
+    <circle cx="50" cy="3" r="2.6" fill="#8b8f99"/>
+  </svg>
+  <div class="rod"></div>
+  <div class="roll">
+    <div class="sheet">
+      <article class="paper">
+        <h1 class="lines" data-lang="en" aria-label="It's not DNS. There's no way it's DNS. It was DNS.">
+          <span class="line" data-seg='[["lat","It&#39;s not DNS"]]'></span>
+          <span class="line" data-seg='[["lat","There&#39;s no way it&#39;s DNS"]]'></span>
+          <span class="line" data-seg='[["lat","It was DNS"]]'></span>
+        </h1>
+        <h1 class="lines" data-lang="ko" aria-label="DNS일 리 없다. 절대 DNS일 리 없다. DNS였다.">
+          <span class="line" data-seg='[["lat","DNS"],["kku","일 리 없다"]]'></span>
+          <span class="line" data-seg='[["kku","절대"],["lat"," DNS"],["kku","일 리 없다"]]'></span>
+          <span class="line" data-seg='[["lat","DNS"],["kku","였다"]]'></span>
+        </h1>
+        <p class="sign" data-lang="en">a sysadmin, 3 a.m.</p>
+        <p class="sign" data-lang="ko">새벽 세 시, 어느 시스템 관리자</p>
+        <p class="foot" data-lang="en">(It's always DNS.)</p>
+        <p class="foot" data-lang="ko">(언제나 DNS다.)</p>
+        <button class="seal" type="button">
+          <span class="seal-en" data-lang="en" aria-label="Seal: DNS">D<br>N<br>S</span>
+          <span class="seal-ko" data-lang="ko" aria-label="낙관: 또 너냐">
+            <font-kku font="dojang" size="5cqi">또</font-kku><font-kku font="dojang" size="5cqi">너</font-kku><font-kku font="dojang" size="5cqi">냐</font-kku>
+          </span>
+        </button>
+      </article>
+    </div>
+    <div class="rod bottom"></div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const roll = document.querySelector('.roll');
+  const sheet = document.querySelector('.sheet');
+  const bottomRod = document.querySelector('.rod.bottom');
+  const lines = [...document.querySelectorAll(`.lines[data-lang="${TTY.lang}"] .line`)];
+  const seal = document.querySelector('.seal');
+  const foot = document.querySelector(`.foot[data-lang="${TTY.lang}"]`);
+  const sign = document.querySelector(`.sign[data-lang="${TTY.lang}"]`);
+
+  /* ---- Build each line: Latin letters as spans, Hangul as font-kku hosts ---- */
+  const steps = []; // [{line, run(): Promise}]
+  const shown = new WeakMap();
+  lines.forEach((line) => {
+    const segs = JSON.parse(line.dataset.seg);
+    const parts = segs.map(([kind, text]) => {
+      if (kind === 'lat') {
+        const box = document.createElement('span');
+        box.className = 'lat';
+        const chars = [...text].map((c) => {
+          const ch = document.createElement('span');
+          ch.className = 'ch';
+          ch.textContent = c === ' ' ? ' ' : c;
+          box.append(ch);
+          return ch;
+        });
+        line.append(box);
+        return { kind, text, chars };
+      }
+      const host = document.createElement('font-kku');
+      host.setAttribute('font', 'butgeul');
+      host.setAttribute('size', '1em');
+      line.append(host);
+      return { kind, text, host };
+    });
+    line._parts = parts;
+  });
+
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  function setHost(host, text) {
+    if ((shown.get(host) ?? null) === text) return;
+    shown.set(host, text);
+    host.textContent = text;
+  }
+
+  // Before the brush starts, everything is blank; the reduced-motion path writes it all at once.
+  function blank() {
+    lines.forEach((line) => line._parts.forEach((p) => {
+      if (p.kind === 'lat') p.chars.forEach((c) => c.classList.add('js-hide'));
+      else setHost(p.host, '');
+    }));
+  }
+  function full() {
+    lines.forEach((line) => line._parts.forEach((p) => {
+      if (p.kind === 'lat') p.chars.forEach((c) => c.classList.remove('js-hide'));
+      else setHost(p.host, p.text);
+    }));
+  }
+
+  async function brushLatin(p) {
+    for (const c of p.chars) {
+      c.classList.remove('js-hide');
+      c.animate([
+        { opacity: 0, filter: 'blur(3px)', transform: 'scale(1.18) translateY(-.04em)' },
+        { opacity: 1, filter: 'blur(0)', transform: 'none' },
+      ], { duration: 260, easing: 'cubic-bezier(.2,.7,.2,1)' });
+      await wait(c.textContent === ' ' ? 90 : 75);
+    }
+  }
+  async function brushHangul(p) {
+    // Jamo by jamo, the way a hand would write it.
+    const frames = window.FontKkuFx ? FontKkuFx.typingFrames(p.text) : [p.text];
+    for (const f of frames) {
+      setHost(p.host, f);
+      await wait(f.endsWith(' ') ? 120 : 95);
+    }
+    setHost(p.host, p.text);
+  }
+
+  /* ---- Petals ---- */
+  const canvas = document.querySelector('.petals');
+  const ctx = canvas.getContext('2d');
+  let petals = [];
+  let raf = 0;
+  function fit() {
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function spawn(initial) {
+    return {
+      x: Math.random() * innerWidth * .9 - innerWidth * .15,
+      y: initial ? Math.random() * innerHeight : -20 - Math.random() * 60,
+      s: 5 + Math.random() * 6,
+      vx: .25 + Math.random() * .45,
+      vy: .35 + Math.random() * .5,
+      r: Math.random() * 6.28,
+      vr: (Math.random() - .5) * .03,
+      w: Math.random() * 6.28,
+    };
+  }
+  function petalsOn() {
+    fit();
+    petals = Array.from({ length: Math.round(Math.min(9, innerWidth / 110)) }, () => spawn(true));
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+  function tick() {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    petals.forEach((p, i) => {
+      p.w += .02; p.x += p.vx + Math.sin(p.w) * .35; p.y += p.vy; p.r += p.vr;
+      if (p.y > innerHeight + 20 || p.x > innerWidth + 20) petals[i] = spawn(false);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.r);
+      ctx.scale(1, .55 + Math.abs(Math.sin(p.w)) * .45);
+      ctx.fillStyle = 'rgba(242, 181, 195, .85)';
+      ctx.beginPath();
+      ctx.moveTo(0, -p.s);
+      ctx.quadraticCurveTo(p.s * .9, -p.s * .2, 0, p.s);
+      ctx.quadraticCurveTo(-p.s * .9, -p.s * .2, 0, -p.s);
+      ctx.fill();
+      ctx.restore();
+    });
+    raf = requestAnimationFrame(tick);
+  }
+  addEventListener('resize', fit);
+
+  /* ---- Seal and its footnote ---- */
+  let footTimer;
+  const showFoot = (ms) => { foot.classList.add('show'); clearTimeout(footTimer); if (ms) footTimer = setTimeout(() => foot.classList.remove('show'), ms); };
+  seal.addEventListener('pointerenter', () => showFoot(0));
+  seal.addEventListener('pointerleave', () => { foot.classList.remove('show'); });
+  seal.addEventListener('focus', () => showFoot(0));
+  seal.addEventListener('blur', () => foot.classList.remove('show'));
+  seal.addEventListener('click', () => showFoot(2600));
+
+  /* ---- The whole piece ---- */
+  async function play() {
+    if (TTY.reduce) { full(); return; }
+    blank();
+    seal.style.opacity = 0;
+    sign.style.opacity = 0;
+    const h = sheet.offsetHeight;
+    // Unroll: the paper is revealed from the top while the bottom rod drops.
+    const ease = 'cubic-bezier(.45, .05, .2, 1)';
+    sheet.animate([{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 1300, easing: ease, fill: 'both' });
+    bottomRod.animate([{ transform: `translateY(${-h}px)` }, { transform: 'none' }], { duration: 1300, easing: ease, fill: 'both' });
+    await Promise.all([wait(1500), document.fonts.ready]);
+    petalsOn();
+    for (const line of lines) {
+      for (const p of line._parts) await (p.kind === 'lat' ? brushLatin(p) : brushHangul(p));
+      await wait(420);
+    }
+    sign.style.opacity = 1;
+    sign.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
+    await wait(500);
+    seal.style.opacity = 1;
+    seal.animate([
+      { transform: 'scale(1.9) rotate(-8deg)', opacity: 0 },
+      { transform: 'scale(.95)', opacity: 1, offset: .7 },
+      { transform: 'scale(1)', opacity: 1 },
+    ], { duration: 380, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+    roll.animate([{ transform: 'none' }, { transform: 'translateY(.4%)' }, { transform: 'none' }], { duration: 240, delay: 290 });
+    await wait(1600);
+    showFoot(3000);
+  }
+
+  if (TTY.reduce) full(); else blank();
+  TTY.onShow(() => { play(); if (TTY.reduce) { fit(); } });
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

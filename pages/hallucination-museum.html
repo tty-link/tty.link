@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Museum of Confident Answers | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Work+Sans:wght@400;500;600&family=Permanent+Marker&family=Gowun+Batang:wght@400;700&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="geumbak dunggeun pilgi"></script>
+<style>
+  /* A gallery of famous things that never happened, each labelled with total confidence.
+     A night guard walks the wall with a fact-checking torch; every placard he lights gets a
+     "citation needed" sticker, and every confidence meter stays at 100%. */
+  :root {
+    --wall: #5a1f2a;
+    --wall-deep: #45161f;
+    --molding: #7a3240;
+    --gold: #d6b05a;
+    --gold-deep: #9c7a2c;
+    --mat: #efe9dc;
+    --card: #fbf8f1;
+    --ink: #221a17;
+    --muted: #6d625b;
+    --floor: #6a4a32;
+    --floor-2: #5a3e2a;
+    --sticker: #ffe14d;
+    --uniform: #22304f;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body { overflow: hidden; background: var(--wall-deep); color: var(--ink); font-family: 'Work Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .lang-ko body { font-family: 'Gowun Batang', 'Work Sans', serif; word-break: keep-all; }
+
+  .museum {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+    container-type: size;
+    background: var(--wall);
+  }
+  /* Sizes hang off --slot, one exhibit's width. It is set below the container so the
+     portrait query can change it. */
+  .wall, .track, .sign { --slot: min(31cqw, 41cqh); }
+  .wall {
+    --line: 72cqh;
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(transparent 0 var(--line), var(--wall-deep) var(--line) calc(var(--line) + 2cqh), transparent 0),
+      repeating-linear-gradient(90deg, transparent 0 calc(var(--slot) - 2px), rgba(0, 0, 0, .08) calc(var(--slot) - 2px) var(--slot)),
+      linear-gradient(var(--molding) 0 1.2cqh, var(--wall) 1.2cqh 100%);
+  }
+  .floor {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 26cqh;
+    background:
+      repeating-linear-gradient(90deg, rgba(0, 0, 0, .12) 0 2px, transparent 2px 9cqh),
+      linear-gradient(var(--floor), var(--floor-2));
+    box-shadow: inset 0 6px 14px rgba(0, 0, 0, .35);
+  }
+  .dim { position: absolute; inset: 0; background: #0d0507; pointer-events: none; opacity: 0; z-index: 9; }
+
+  .sign { position: absolute; left: 5cqw; top: 4.5cqh; z-index: 2; max-width: 90cqw; color: var(--gold); }
+  .sign h1 { font-family: 'Bodoni Moda', Georgia, serif; font-size: min(3.7cqw, 5.4cqh); font-weight: 700; line-height: 1; letter-spacing: .01em; }
+  .sign h1 i { font-weight: 500; }
+  .sign p { margin-top: .8cqh; color: #e9cfa0; font-size: min(1.6cqw, 2.2cqh); }
+
+  .track { position: absolute; left: 0; top: 0; height: 100%; display: flex; padding-left: 4cqw; will-change: transform; }
+  .exhibit { position: relative; width: var(--slot); flex: none; }
+
+  .lamp { position: absolute; left: 50%; top: 17cqh; width: calc(var(--slot) * .26); height: calc(var(--slot) * .05); translate: -50% 0; border-radius: 0 0 40% 40%; background: linear-gradient(#a8853a, #6f5622); }
+  .cone { position: absolute; left: 50%; top: calc(17cqh + var(--slot) * .05); width: calc(var(--slot) * .95); height: calc(var(--slot) * .72); translate: -50% 0; clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); background: linear-gradient(rgba(255, 238, 190, .32), rgba(255, 238, 190, 0)); pointer-events: none; }
+
+  .frame {
+    position: absolute;
+    left: 50%;
+    top: calc(21cqh + var(--slot) * .02);
+    width: calc(var(--slot) * .78);
+    aspect-ratio: 4 / 3;
+    translate: -50% 0;
+    padding: calc(var(--slot) * .035);
+    background: linear-gradient(135deg, #f3d98d, var(--gold) 30%, var(--gold-deep) 70%, #e8c870);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .45), inset 0 0 0 2px rgba(0, 0, 0, .25);
+  }
+  .frame .mat { width: 100%; height: 100%; padding: calc(var(--slot) * .03); background: var(--mat); box-shadow: inset 0 2px 6px rgba(0, 0, 0, .25); }
+  .frame svg { display: block; width: 100%; height: 100%; }
+
+  .placard {
+    position: absolute;
+    left: 50%;
+    top: calc(21cqh + var(--slot) * .02 + var(--slot) * .78 * .75 + var(--slot) * .06);
+    width: calc(var(--slot) * .8);
+    translate: -50% 0;
+    padding: calc(var(--slot) * .035) calc(var(--slot) * .045);
+    background: var(--card);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, .35);
+    font-size: calc(var(--slot) * .04);
+    line-height: 1.35;
+    cursor: pointer;
+  }
+  .p-title { font-family: 'Bodoni Moda', Georgia, serif; font-size: 1.32em; font-weight: 700; line-height: 1.12; }
+  .p-title > font-kku { color: var(--ink); }
+  .lang-ko .p-title { line-height: 1.25; }
+  .p-meta { margin-top: .35em; color: var(--muted); font-size: .9em; font-style: italic; }
+  .lang-ko .p-meta { font-style: normal; }
+  .p-desc { margin-top: .45em; }
+  .conf { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .5em; margin-top: .7em; font-size: .82em; font-weight: 600; color: #3d3430; }
+  .conf .bar { height: .5em; border-radius: 999px; background: #e4dccb; overflow: hidden; }
+  .conf .bar i { display: block; height: 100%; width: 100%; border-radius: inherit; background: linear-gradient(90deg, #4e9a52, #7cc36a); transform-origin: 0 50%; }
+
+  .sticker {
+    position: absolute;
+    right: -6%;
+    top: -18%;
+    padding: .3em .6em;
+    background: var(--sticker);
+    color: #2a2a2a;
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.05em;
+    line-height: 1.1;
+    rotate: 7deg;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, .3);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .sticker > font-kku { color: #2a2a2a; }
+
+  /* The guard */
+  .guard { position: absolute; left: 0; bottom: 5cqh; width: calc(var(--slot) * .3); z-index: 4; transform-origin: 50% 100%; }
+  .guard svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .guard.walk .body-bob { animation: bob .5s ease-in-out infinite; }
+  .guard.walk .leg-a { animation: step .5s ease-in-out infinite; }
+  .guard.walk .leg-b { animation: step .5s ease-in-out infinite reverse; }
+  @keyframes bob { 50% { transform: translateY(-2px); } }
+  @keyframes step { 0%, 100% { transform: rotate(14deg); } 50% { transform: rotate(-14deg); } }
+  .leg-a, .leg-b { transform-box: fill-box; transform-origin: 50% 0; }
+  .beam {
+    position: absolute;
+    left: 0; top: 0;
+    height: 2px;
+    transform-origin: 0 50%;
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0;
+  }
+  .beam::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 50%;
+    width: 100%;
+    height: var(--spread, 120px);
+    translate: 0 -50%;
+    clip-path: polygon(0 47%, 100% 0, 100% 100%, 0 53%);
+    background: linear-gradient(90deg, rgba(255, 246, 200, .55), rgba(255, 246, 200, .18));
+  }
+  .bubble {
+    position: absolute;
+    bottom: calc(5cqh + var(--slot) * .62);
+    padding: .5em .8em;
+    border-radius: .8em;
+    background: #fff;
+    color: var(--ink);
+    font-size: calc(var(--slot) * .045);
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+    opacity: 0;
+    z-index: 5;
+  }
+  .bubble::after { content: ""; position: absolute; left: 1.2em; bottom: -.45em; width: .9em; height: .9em; background: #fff; rotate: 45deg; }
+  .bubble > font-kku { color: var(--ink); }
+
+  @container (orientation: portrait) {
+    .wall, .track, .sign { --slot: 76cqw; }
+    .wall { --line: 84cqh; }
+    .floor { height: 14cqh; }
+    .sign { top: 3.5cqh; max-width: 90cqw; }
+    .sign h1 { font-size: 6.6cqw; }
+    .sign p { font-size: 3.2cqw; }
+    .lamp { top: 16cqh; }
+    .cone { top: calc(16cqh + var(--slot) * .05); }
+    .frame { top: 19.5cqh; }
+    .placard { top: calc(19.5cqh + var(--slot) * .78 * .75 + var(--slot) * .07); }
+    .guard { width: calc(var(--slot) * .2); bottom: 2.5cqh; }
+    .bubble { bottom: calc(2.5cqh + var(--slot) * .42); }
+  }
+</style>
+</head>
+<body>
+<main class="museum">
+  <div class="wall" aria-hidden="true"></div>
+  <div class="floor" aria-hidden="true"></div>
+  <header class="sign">
+    <h1 data-lang="en">The Museum of <i>Confident</i> Answers</h1>
+    <h1 data-lang="ko"><font-kku font="geumbak" size="min(4.6cqw, 6.4cqh)">자신만만한 답변 박물관</font-kku></h1>
+    <p data-lang="en">Every exhibit is 100% certain. None of them happened.</p>
+    <p data-lang="ko">모든 전시물은 100% 확실합니다. 일어난 적이 없을 뿐.</p>
+  </header>
+  <div class="track"></div>
+  <div class="dim" aria-hidden="true"></div>
+</main>
+
+<script>
+(() => {
+  /* ---- Exhibits: the artwork is drawn in a 120×90 box ---- */
+  const ART = {
+    phone: `<rect width="120" height="90" fill="#d9c49a"/><rect x="0" y="0" width="120" height="90" fill="url(#sepia)" opacity=".35"/>
+      <rect x="44" y="26" width="32" height="58" rx="6" fill="#2c2420"/><rect x="47" y="31" width="26" height="46" rx="2" fill="#efe3c4"/>
+      <circle cx="60" cy="80.5" r="1.8" fill="#6b5a4c"/><rect x="45" y="20" width="30" height="5" rx="1.5" fill="#1a1412"/>
+      <rect x="49" y="2" width="22" height="19" rx="1.5" fill="#1a1412"/><rect x="49" y="15" width="22" height="3" fill="#5b4636"/>
+      <path d="M52 44 h16 M52 50 h12 M52 56 h15 M52 62 h9" stroke="#8a7458" stroke-width="2" stroke-linecap="round"/>`,
+    macbook: `<rect width="120" height="90" fill="#efe1c2"/>
+      <path d="M0 90 C 6 66, 20 56, 34 58 L 40 66 C 30 70, 22 78, 20 90 Z" fill="#b8282f"/><circle cx="24" cy="76" r="5" fill="#e0b54a"/>
+      <g transform="translate(70 38) rotate(-24)"><rect x="-26" y="-17" width="52" height="34" rx="3" fill="#b9bfc4"/><rect x="-23" y="-14" width="46" height="26" rx="1.5" fill="#38414a"/><rect x="-30" y="17" width="60" height="5" rx="2" fill="#9ca3a9"/></g>
+      <path d="M30 40 l 14 -3 M28 50 l 15 -1 M32 30 l 12 -5" stroke="#8a6b3a" stroke-width="2.4" stroke-linecap="round"/>`,
+    paper: `<rect width="120" height="90" fill="#ece6d6"/><rect x="30" y="6" width="60" height="80" fill="#fffdf7" stroke="#cfc6b2"/>
+      <rect x="38" y="13" width="44" height="4" fill="#3a3330"/><rect x="44" y="20" width="32" height="2.4" fill="#8a8178"/>
+      <path d="M38 30 h44 M38 35 h44 M38 40 h40 M38 45 h44 M38 50 h36 M38 58 h44 M38 63 h42 M38 68 h30" stroke="#b3aa9a" stroke-width="1.6"/>
+      <circle cx="78" cy="74" r="9" fill="none" stroke="#c0392b" stroke-width="1.8"/><text x="78" y="77" text-anchor="middle" font-size="7" font-family="Georgia" fill="#c0392b">2031</text>`,
+    moon: `<rect width="120" height="90" fill="#0f1426"/><circle cx="18" cy="14" r=".8" fill="#fff"/><circle cx="100" cy="22" r=".8" fill="#fff"/><circle cx="84" cy="70" r=".7" fill="#fff"/><circle cx="30" cy="62" r=".6" fill="#fff"/>
+      <path d="M0 90 C 30 74, 90 74, 120 90 Z" fill="#9b9a96"/><circle cx="34" cy="84" r="4" fill="#85847f"/><circle cx="88" cy="83" r="3" fill="#85847f"/>
+      <circle cx="68" cy="36" r="7" fill="#3c7dd9"/><path d="M64 33 q3 -2 5 1 q2 3 -1 5 q-3 0 -4 -6Z" fill="#5fb36b"/>
+      <path d="M40 22 L 61 33" stroke="#f3e7b5" stroke-width="1.4" marker-end="url(#arrow)"/><text x="16" y="20" font-size="8" font-family="Georgia" font-style="italic" fill="#f3e7b5">it's there</text>`,
+    pizza: `<rect width="120" height="90" fill="#f4ead6"/><circle cx="50" cy="48" r="32" fill="#d9952f"/><circle cx="50" cy="48" r="27" fill="#f2c94c"/>
+      <circle cx="40" cy="40" r="4.5" fill="#c0392b"/><circle cx="58" cy="36" r="4.5" fill="#c0392b"/><circle cx="52" cy="56" r="4.5" fill="#c0392b"/><circle cx="38" cy="58" r="4" fill="#c0392b"/>
+      <path d="M72 62 q2 8 0 14 q-2 3 -4 0 q-1 -6 4 -14Z" fill="#f2c94c"/>
+      <g transform="translate(96 44)"><rect x="-9" y="-6" width="18" height="34" rx="3" fill="#fff" stroke="#c9c2b2"/><rect x="-4" y="-14" width="8" height="9" rx="2" fill="#ff8a1e"/><rect x="-9" y="6" width="18" height="10" fill="#4a90d9"/></g>`,
+    calendar: `<rect width="120" height="90" fill="#fdfbf6"/><rect x="6" y="8" width="108" height="12" fill="#c0392b"/>
+      ${Array.from({ length: 14 }, (_, i) => `<rect x="${6 + i * 7.714}" y="22" width="7" height="6" fill="${i % 7 === 0 ? '#f4d4cf' : '#ece6d6'}"/>`).join('')}
+      ${Array.from({ length: 42 }, (_, i) => `<rect x="${6 + (i % 14) * 7.714 + .5}" y="${31 + Math.floor(i / 14) * 18}" width="6" height="15" fill="none" stroke="#d8d0bf" stroke-width=".8"/>`).join('')}
+      <text x="60" y="17.5" text-anchor="middle" font-size="7" font-family="Georgia" fill="#fff">14</text>`,
+  };
+
+  const EX = {
+    en: [
+      { art: 'phone', title: "Abraham Lincoln's iPhone", meta: '1863. Aluminium, glass, top hat.', desc: 'Used to send the Gettysburg Address as a group text.' },
+      { art: 'paper', title: '“Citations Need Not Exist”', meta: 'Smith et al., 2031. Published 1998.', desc: 'Cited four thousand times, mostly by itself.' },
+      { art: 'moon', title: 'The Great Wall, Seen from the Moon', meta: 'Map, actual size. Ink on certainty.', desc: 'Clearly visible. Please take our word for it.' },
+      { art: 'pizza', title: 'Pizza, Structurally Sound', meta: 'Recipe card. Cheese, glue (non-toxic).', desc: 'Keeps the cheese on. Do not try this at home, or anywhere.' },
+      { art: 'calendar', title: 'The Fourteen Days of the Week', meta: 'Calendar. Two of every Monday.', desc: 'Finally explains why the week felt so long.' },
+    ],
+    ko: [
+      { art: 'macbook', title: '세종대왕의 맥북프로 던짐 사건', meta: '15세기, 실록에 기록되어 있다고 함', desc: '훈민정음 초고를 쓰다가 담당자에게 맥북프로를 던진 것으로 전해집니다.' },
+      { art: 'paper', title: '논문 「인용은 없어도 된다」', meta: '김 외, 2031년 작, 1998년 발표', desc: '4,000회 인용됨. 대부분 스스로를 인용함.' },
+      { art: 'moon', title: '달에서 본 만리장성 지도', meta: '실제 크기, 확신 위에 잉크', desc: '아주 선명하게 보입니다. 저희를 믿어 주세요.' },
+      { art: 'pizza', title: '치즈가 안 흘러내리는 피자', meta: '레시피 카드, 치즈와 풀(무독성)', desc: '치즈를 꽉 잡아 줍니다. 집에서도, 어디서도 따라 하지 마세요.' },
+      { art: 'calendar', title: '일주일의 열네 요일', meta: '달력, 월요일이 두 번씩', desc: '일주일이 유독 길었던 이유가 드디어 밝혀졌습니다.' },
+    ],
+  };
+  const L = TTY.lang === 'ko'
+    ? { conf: '확신도', sticker: '<font-kku font="pilgi" size="1.1em">출처 필요</font-kku>', bubble: '<font-kku font="dunggeun" size="1.05em">확인 완료. 여전히 100%.</font-kku>' }
+    : { conf: 'Confidence', sticker: 'citation needed', bubble: 'Checked. Still 100%.' };
+  const list = EX[TTY.lang] || EX.en;
+
+  const museum = document.querySelector('.museum');
+  const track = document.querySelector('.track');
+  const defs = `<defs><linearGradient id="sepia" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#7a5a32"/></linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#f3e7b5"/></marker></defs>`;
+  track.innerHTML = list.map((e, i) => `
+    <section class="exhibit" data-i="${i}">
+      <span class="lamp" aria-hidden="true"></span><span class="cone" aria-hidden="true"></span>
+      <figure class="frame" aria-hidden="true"><div class="mat"><svg viewBox="0 0 120 90">${defs}${ART[e.art]}</svg></div></figure>
+      <div class="placard" role="button" tabindex="0">
+        <h2 class="p-title">${TTY.lang === 'ko' ? `<font-kku font="dunggeun" size="1em" wrap-unit="word">${e.title}</font-kku>` : e.title}</h2>
+        <p class="p-meta">${e.meta}</p>
+        <p class="p-desc">${e.desc}</p>
+        <div class="conf"><span>${L.conf}</span><span class="bar"><i></i></span><span>100%</span></div>
+        <span class="sticker">${L.sticker}</span>
+      </div>
+    </section>`).join('') + `
+    <div class="beam" aria-hidden="true"></div>
+    <div class="guard" aria-hidden="true"><svg viewBox="0 0 60 120">
+      <g class="body-bob">
+        <rect class="leg-a" x="22" y="78" width="8" height="34" rx="3" fill="#1a2440"/>
+        <rect class="leg-b" x="31" y="78" width="8" height="34" rx="3" fill="#1a2440"/>
+        <path d="M17 44 q13 -6 26 0 l3 36 h-32 z" fill="var(--uniform)"/>
+        <rect x="27" y="48" width="6" height="7" rx="1" fill="#d6b05a"/>
+        <path d="M43 50 q9 6 12 14" stroke="var(--uniform)" stroke-width="7" stroke-linecap="round" fill="none"/>
+        <rect x="51" y="60" width="9" height="5" rx="1.5" fill="#3a3a3a" transform="rotate(-30 55 62)"/>
+        <circle cx="30" cy="32" r="10" fill="#f0c8a0"/>
+        <path d="M18 26 q12 -12 24 0 v2 h-24z" fill="#1a2440"/><rect x="16" y="26" width="28" height="3.5" rx="1.5" fill="#101830"/>
+        <circle cx="34" cy="32" r="1.4" fill="#2a1d14"/><path d="M33 37 q2 1 4 0" stroke="#2a1d14" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      </g>
+      <ellipse cx="30" cy="114" rx="16" ry="3" fill="rgba(0,0,0,.3)"/>
+    </svg></div>
+    <p class="bubble">${L.bubble}</p>`;
+
+  const exhibits = [...track.querySelectorAll('.exhibit')];
+  const guard = track.querySelector('.guard');
+  const beam = track.querySelector('.beam');
+  const bubble = track.querySelector('.bubble');
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* ---- Positions in the track's own coordinates ---- */
+  const tRect = () => track.getBoundingClientRect();
+  const local = (el) => { const t = tRect(); const r = el.getBoundingClientRect(); return { x: r.left - t.left, y: r.top - t.top, w: r.width, h: r.height }; };
+  let guardX = 0;
+  function setGuard(x) { guardX = x; guard.style.transform = `translateX(${x}px)`; }
+  function standFor(i) { const p = local(exhibits[i].querySelector('.placard')); return p.x - guard.offsetWidth * .9; }
+
+  // The camera centres the exhibit being checked (as far as the wall allows).
+  let camX = 0;
+  const centreOf = (i) => { const e = local(exhibits[i]); return e.x + e.w / 2; };
+  function camera(x, ms) {
+    const view = museum.clientWidth;
+    const max = Math.max(0, track.scrollWidth + 40 - view);
+    const goal = Math.max(0, Math.min(max, x - view * .5));
+    if (!ms) { camX = goal; track.style.transform = `translateX(${-goal}px)`; return Promise.resolve(); }
+    const from = camX; camX = goal;
+    const a = track.animate([{ transform: `translateX(${-from}px)` }, { transform: `translateX(${-goal}px)` }], { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
+    return a.finished.then(() => { track.style.transform = `translateX(${-goal}px)`; a.cancel(); });
+  }
+
+  async function walkTo(x, i) {
+    const from = guardX;
+    const ms = Math.max(500, Math.abs(x - from) * 3.2);
+    guard.classList.add('walk');
+    guard.style.scale = x < from ? '-1 1' : '1 1';
+    const a = guard.animate([{ transform: `translateX(${from}px)` }, { transform: `translateX(${x}px)` }], { duration: ms, easing: 'linear', fill: 'forwards' });
+    const c = camera(centreOf(i), ms);
+    await Promise.all([a.finished, c]);
+    setGuard(x); a.cancel();
+    guard.classList.remove('walk');
+    guard.style.scale = '1 1';
+  }
+
+  function aim(i) {
+    const p = local(exhibits[i].querySelector('.placard'));
+    const g = local(guard);
+    const hx = g.x + g.w * .95, hy = g.y + g.h * .5;
+    const tx = p.x + p.w * .5, ty = p.y + p.h * .45;
+    const len = Math.hypot(tx - hx, ty - hy);
+    beam.style.left = hx + 'px'; beam.style.top = hy + 'px';
+    beam.style.width = len + 'px';
+    beam.style.setProperty('--spread', Math.max(p.h * 1.1, 60) + 'px');
+    beam.style.transform = `rotate(${Math.atan2(ty - hy, tx - hx)}rad)`;
+  }
+
+  function stick(i, quick) {
+    const placard = exhibits[i].querySelector('.placard');
+    const sticker = placard.querySelector('.sticker');
+    if (sticker.dataset.on) {
+      if (!TTY.reduce) placard.querySelector('.conf .bar i').animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(.96)' }, { transform: 'scaleX(1)' }], { duration: 300 });
+      return;
+    }
+    sticker.dataset.on = '1';
+    sticker.style.opacity = '1';
+    if (TTY.reduce || quick === 'still') return;
+    sticker.animate([{ transform: 'translate(30%, -60%) rotate(25deg) scale(1.3)', opacity: 0 }, { transform: 'translate(0, 4%) rotate(-3deg) scale(.96)', opacity: 1, offset: .7 }, { transform: 'none', opacity: 1 }], { duration: 480, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
+    // The meter flinches, then insists.
+    placard.querySelector('.conf .bar i').animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(.9)' }, { transform: 'scaleX(1.02)' }, { transform: 'scaleX(1)' }], { duration: 700, delay: 350, easing: 'ease-out' });
+  }
+
+  exhibits.forEach((ex, i) => {
+    const placard = ex.querySelector('.placard');
+    const tap = () => stick(i);
+    placard.addEventListener('click', tap);
+    placard.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); } });
+  });
+
+  async function tour() {
+    const dim = document.querySelector('.dim');
+    dim.style.opacity = '1';
+    await sleep(200);
+    dim.animate([{ opacity: 1 }, { opacity: .85, offset: .2 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 900, fill: 'forwards' });
+    setGuard(-guard.offsetWidth - 20);
+    camera(0, 0);
+    await sleep(700);
+    for (let i = 0; i < exhibits.length; i++) {
+      await walkTo(standFor(i), i);
+      aim(i);
+      beam.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, fill: 'forwards' });
+      await sleep(550);
+      stick(i);
+      await sleep(1100);
+      beam.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' });
+    }
+    // He turns to us, satisfied.
+    const g = local(guard);
+    bubble.style.left = (g.x + g.w * .55) + 'px';
+    bubble.animate([{ transform: 'translateY(10px) scale(.8)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.2, 1.3, .4, 1)', fill: 'forwards' });
+  }
+
+  function still() {
+    exhibits.forEach((_, i) => stick(i, 'still'));
+    setGuard(standFor(exhibits.length - 1));
+    camera(centreOf(exhibits.length - 1), 0);
+    const g = local(guard);
+    bubble.style.left = (g.x + g.w * .55) + 'px';
+    bubble.style.opacity = '1';
+  }
+
+  TTY.onShow(() => (TTY.reduce ? still() : tour()));
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

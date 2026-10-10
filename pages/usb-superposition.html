@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>USB Superposition | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gabarito:wght@500;700;900&family=STIX+Two+Text:ital,wght@1,500&family=IBM+Plex+Sans+KR:wght@500;600&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="sticker dunggeun"></script>
+<style>
+  /* A textbook figure for a law of nature: a USB-A plug only goes in after it has been
+     flipped three times. Cutaway drawing, quantum annotations, one tired cable. */
+  :root {
+    --paper: #f4f6fb;
+    --grid: #dfe5f3;
+    --ink: #151824;
+    --soft: #5a6177;
+    --psi: #2c5cff;
+    --bonk: #ff5a36;
+    --steel-a: #f1f4f8;
+    --steel-b: #a9b2c0;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    overflow: hidden;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 28px 28px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 28px 28px,
+      var(--paper);
+    color: var(--ink);
+    font-family: 'Gabarito', system-ui, sans-serif;
+  }
+  .lang-ko body { font-family: 'IBM Plex Sans KR', system-ui, sans-serif; word-break: keep-all; }
+
+  .lab {
+    container-type: size;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: "title count" "scene scene" "notes action";
+    gap: 2cqh 4cqw;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    padding: clamp(16px, 4.4cqmin, 44px);
+  }
+
+  .title { grid-area: title; align-self: start; }
+  .title h1 { font-size: clamp(26px, 5.6cqmin, 54px); font-weight: 900; line-height: 1.02; letter-spacing: -.02em; }
+  .title .usb { font-family: 'Gabarito', sans-serif; font-weight: 900; }
+  .title .kk { display: inline-flex; align-items: baseline; gap: .1em; flex-wrap: wrap; }
+
+  .count { grid-area: count; text-align: right; }
+  .count .label { font-size: clamp(12px, 1.9cqmin, 15px); font-weight: 700; color: var(--soft); }
+  .count .label > font-kku { color: var(--soft); }
+  .count .num { display: block; font-size: clamp(54px, 13cqmin, 120px); font-weight: 900; line-height: .9; color: var(--psi); font-variant-numeric: tabular-nums; }
+  .count .verdict { max-width: 15em; margin-top: 4px; font-size: clamp(13px, 2cqmin, 17px); font-weight: 700; min-height: 2.6em; }
+
+  .scene { grid-area: scene; position: relative; display: grid; place-items: center; min-height: 0; }
+  .scene svg { width: 100%; max-height: 100%; overflow: hidden; }
+  .note {
+    position: absolute;
+    left: 4%;
+    top: 2%;
+    max-width: 22em;
+    padding: 10px 14px;
+    border: 1.5px solid var(--psi);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .85);
+    color: var(--psi);
+    font-size: clamp(13px, 2.1cqmin, 17px);
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  .note > font-kku { color: var(--psi); }
+  .eq { display: block; margin-top: 4px; font-family: 'STIX Two Text', serif; font-style: italic; font-weight: 500; font-size: 1.15em; color: var(--ink); }
+
+  .notes { grid-area: notes; align-self: end; font-size: clamp(12px, 1.9cqmin, 15px); color: var(--soft); }
+  .notes b { color: var(--ink); }
+
+  .action { grid-area: action; align-self: end; justify-self: end; }
+  .again {
+    min-height: 44px;
+    padding: 0 20px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink);
+    font: 700 clamp(14px, 2cqmin, 16px)/1 inherit;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--ink);
+  }
+  .again:active { translate: 0 3px; box-shadow: 0 0 0 var(--ink); }
+  .again:focus-visible { outline: 3px solid var(--psi); outline-offset: 3px; }
+
+  .bonk-word { opacity: 0; }
+  .toast { opacity: 0; }
+  #flipper, .burst { transform-box: fill-box; transform-origin: center; }
+  #wave { transform-box: view-box; transform-origin: 0 210px; }
+
+  @media (max-aspect-ratio: 4/5) {
+    .lab {
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto 1fr auto;
+      grid-template-areas: "title title" "count count" "scene scene" "notes action";
+      gap: 10px 12px;
+    }
+    .count { display: flex; align-items: baseline; gap: 10px; text-align: left; }
+    .count .num { font-size: 44px; }
+    .count .verdict { min-height: 0; margin: 0; }
+    .scene { display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+    .scene svg { flex: none; }
+    .note { position: static; max-width: none; }
+    .toast { display: none; }
+  }
+  html:not(.embedded) .lab { padding-bottom: max(clamp(16px, 4.4cqmin, 44px), 52px); }
+</style>
+</head>
+<body>
+<main class="lab">
+  <header class="title">
+    <h1 data-lang="en">USB goes in on the third flip.</h1>
+    <h1 data-lang="ko" class="kk"><span class="usb">USB</span><font-kku font="sticker" size="clamp(26px, 5.8cqmin, 56px)">는 세 번 뒤집어야 꽂힌다</font-kku></h1>
+  </header>
+
+  <aside class="count" aria-live="polite">
+    <span class="label" data-lang="en">Flips</span>
+    <span class="label" data-lang="ko"><font-kku font="dunggeun" size="clamp(13px, 2cqmin, 16px)">뒤집은 횟수</font-kku></span>
+    <span class="num">0</span>
+    <p class="verdict"></p>
+  </aside>
+
+  <section class="scene">
+    <svg viewBox="0 0 1000 420" aria-hidden="true">
+      <defs>
+        <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--steel-a)"/><stop offset=".55" stop-color="#cfd5de"/><stop offset="1" stop-color="var(--steel-b)"/>
+        </linearGradient>
+        <linearGradient id="alu" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#d9dde4"/><stop offset="1" stop-color="#c2c8d1"/>
+        </linearGradient>
+        <clipPath id="waveclip"><rect x="196" y="100" width="290" height="220"/></clipPath>
+        <g id="plugart">
+          <!-- overmold with strain relief -->
+          <path d="M150 196 L200 172 H316 a8 8 0 0 1 8 8 V240 a8 8 0 0 1 -8 8 H200 L150 224 Z" fill="#20232c"/>
+          <!-- trident on the overmold side: shows which way up the plug is -->
+          <g transform="translate(258 210)" stroke="#e8ecf3" stroke-width="3" fill="none" stroke-linecap="round">
+            <path d="M-22 0 H24"/><path d="M-6 0 L6 -12 H14"/><path d="M2 0 L12 12 H18"/>
+            <circle cx="-24" cy="0" r="4" fill="#e8ecf3" stroke="none"/><rect x="14" y="-16" width="8" height="8" fill="#e8ecf3" stroke="none"/><circle cx="20" cy="12" r="4" fill="#e8ecf3" stroke="none"/>
+          </g>
+          <!-- metal shell, cut away to show the tongue -->
+          <rect x="324" y="180" width="150" height="60" rx="3" fill="url(#steel)" stroke="#7c8594" stroke-width="2"/>
+          <rect x="330" y="186" width="138" height="48" fill="#3a3f4b" opacity=".15"/>
+          <rect x="332" y="187" width="134" height="22" rx="2" fill="#2a62ff"/>
+          <rect x="352" y="205" width="100" height="4" fill="#d9ae4f"/>
+        </g>
+      </defs>
+
+      <!-- laptop side, in section, with its port -->
+      <g>
+        <path d="M640 70 H1000 V350 H640 a26 26 0 0 1 -26 -26 V96 a26 26 0 0 1 26 -26 Z" fill="url(#alu)"/>
+        <rect x="614" y="176" width="190" height="68" fill="#15171d"/>
+        <rect x="660" y="184" width="144" height="24" rx="2" fill="#2a62ff"/>
+        <rect x="676" y="208" width="112" height="4" fill="#d9ae4f"/>
+        <path d="M614 176 H804 M614 244 H804" stroke="#9aa3b1" stroke-width="3"/>
+        <g fill="#b3bac5"><rect x="860" y="110" width="90" height="8" rx="4"/><rect x="860" y="126" width="90" height="8" rx="4"/><rect x="860" y="142" width="90" height="8" rx="4"/></g>
+        <circle id="led" cx="660" cy="292" r="7" fill="#9aa3b1"/>
+        <g class="toast">
+          <rect x="676" y="276" width="300" height="52" rx="12" fill="#fff" stroke="#c9cfda" stroke-width="2"/>
+          <circle cx="702" cy="302" r="10" fill="var(--psi)"/>
+          <path d="M697 302 l4 4 l7 -8" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <text id="toast-text" x="722" y="308" font-family="Gabarito, IBM Plex Sans KR, sans-serif" font-size="19" font-weight="700" fill="#151824"></text>
+        </g>
+      </g>
+
+      <!-- the plug: cable, art, its superposed twin, and the wave -->
+      <g id="plug">
+        <path d="M-700 210 C -400 160, -200 250, 0 205 S 120 205, 150 210" fill="none" stroke="#2b303b" stroke-width="22" stroke-linecap="round"/>
+        <g id="wave" clip-path="url(#waveclip)" fill="none" stroke="var(--psi)" stroke-width="3" stroke-linecap="round" opacity=".85">
+          <g class="travel">
+            <path d="M120 150 q20 -16 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0"/>
+            <path d="M120 270 q20 16 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0"/>
+          </g>
+        </g>
+        <g id="flipper">
+          <use href="#plugart"/>
+          <use id="ghost" href="#plugart" transform="translate(0 420) scale(1 -1)" opacity=".28" style="filter: hue-rotate(0deg)"/>
+        </g>
+      </g>
+
+      <!-- bonk -->
+      <g class="burst" stroke="var(--bonk)" stroke-width="5" stroke-linecap="round" opacity="0">
+        <line x1="606" y1="164" x2="590" y2="140"/><line x1="600" y1="210" x2="572" y2="210"/><line x1="606" y1="256" x2="590" y2="280"/>
+        <line x1="620" y1="152" x2="620" y2="126"/><line x1="620" y1="268" x2="620" y2="294"/>
+      </g>
+      <g class="bonk-word">
+        <text id="bonk-text" x="540" y="120" font-family="Gabarito, sans-serif" font-size="44" font-weight="900" fill="var(--bonk)" transform="rotate(-10 540 120)"></text>
+      </g>
+    </svg>
+
+    <p class="note">
+      <span data-lang="en">Until observed, a USB plug is in a superposition of both orientations.</span>
+      <span data-lang="ko"><font-kku font="dunggeun" size="clamp(14px, 2.2cqmin, 18px)" wrap-unit="word">관측하기 전까지 USB는 앞면과 뒷면이 겹쳐 있는 상태입니다.</font-kku></span>
+      <span class="eq">|ψ⟩ = ( |up⟩ + |down⟩ ) / √2</span>
+    </p>
+  </section>
+
+  <p class="notes">
+    <span data-lang="en"><b>Fig. 1.</b> Insertion, eventually.</span>
+    <span data-lang="ko"><b>그림 1.</b> 결국엔 꽂힘.</span>
+  </p>
+  <div class="action">
+    <button class="again" type="button" data-lang="en">Unplug and try again</button>
+    <button class="again" type="button" data-lang="ko">뽑았다가 다시 꽂기</button>
+  </div>
+</main>
+
+<script>
+(() => {
+  const T = {
+    bonk: { en: 'bonk', ko: '툭' },
+    toast: { en: 'USB device connected', ko: 'USB 장치가 연결되었습니다' },
+    verdict3: { en: 'Flips: 3. As tradition requires.', ko: '3번 뒤집음. 전통을 지켰습니다.' },
+    verdict5: { en: 'Flips: 5. Above and beyond tradition.', ko: '5번 뒤집음. 전통보다 정성껏.' },
+  };
+  const plug = document.getElementById('plug');
+  const flipper = document.getElementById('flipper');
+  const ghost = document.getElementById('ghost');
+  const wave = document.getElementById('wave');
+  const travel = wave.querySelector('.travel');
+  const burst = document.querySelector('.burst');
+  const bonkWord = document.querySelector('.bonk-word');
+  const toast = document.querySelector('.toast');
+  const led = document.getElementById('led');
+  const num = document.querySelector('.count .num');
+  const verdict = document.querySelector('.count .verdict');
+  document.getElementById('bonk-text').textContent = TTY.t(T.bonk);
+  document.getElementById('toast-text').textContent = TTY.t(T.toast);
+  if (TTY.lang === 'ko') document.getElementById('bonk-text').setAttribute('font-family', 'IBM Plex Sans KR, sans-serif');
+
+  // Plug positions along x (user units): parked, touching the port mouth, fully in.
+  const PARK = 30, MOUTH = 136, IN = 286;
+  let run = 0;
+  let loops = [];
+  let flips = 0;
+  let down = false;            // the plug's tongue must be down to fit this port
+  const anim = (el, frames, opts) => el.animate(frames, Object.assign({ fill: 'forwards' }, opts)).finished;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const at = (x) => `translateX(${x}px)`;
+  const flipT = () => (down ? 'scaleY(-1)' : 'scaleY(1)');
+
+  function setCount(n, bump) {
+    flips = n;
+    num.textContent = n;
+    if (bump && !TTY.reduce) num.animate([{ transform: 'scale(1.35)', color: 'var(--bonk)' }, { transform: 'scale(1)' }], { duration: 320, easing: 'cubic-bezier(.3,1.6,.5,1)' });
+  }
+
+  function superposed(on) {
+    loops.forEach((a) => a.cancel());
+    loops = [];
+    if (!on) return;
+    loops.push(travel.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-80px)' }], { duration: 1100, iterations: Infinity }));
+    loops.push(ghost.animate([{ opacity: .12 }, { opacity: .38 }], { duration: 140, iterations: Infinity, direction: 'alternate', easing: 'steps(2)' }));
+  }
+
+  async function bonk(id) {
+    burst.setAttribute('opacity', '1');
+    burst.animate([{ transform: 'scale(.4)', opacity: 1 }, { transform: 'scale(1.1)', opacity: 0 }], { duration: 380, easing: 'ease-out', fill: 'forwards' });
+    bonkWord.animate([
+      { opacity: 0, transform: 'translateY(10px) scale(.6)' },
+      { opacity: 1, transform: 'translateY(0) scale(1.08)', offset: .35 },
+      { opacity: 1, transform: 'scale(1)', offset: .75 },
+      { opacity: 0, transform: 'translateY(-12px)' },
+    ], { duration: 700, fill: 'forwards' });
+    await anim(plug, [{ transform: at(MOUTH) }, { transform: at(MOUTH - 16) }, { transform: at(MOUTH - 8) }], { duration: 220, easing: 'ease-out' });
+    if (id !== run) return;
+    await anim(plug, [{ transform: at(MOUTH - 8) }, { transform: at(PARK + 20) }], { duration: 280, easing: 'cubic-bezier(.3,0,.2,1)' });
+  }
+
+  async function flip(id) {
+    const from = flipT();
+    down = !down;
+    setCount(flips + 1, true);
+    await anim(flipper, [{ transform: from }, { transform: down ? 'scaleY(-1)' : 'scaleY(1)' }], { duration: 420, easing: 'cubic-bezier(.6,0,.3,1)' });
+  }
+
+  async function play() {
+    const id = ++run;
+    const target = [3, 3, 3, 5][Math.floor(Math.random() * 4)];
+    down = false;
+    setCount(0);
+    verdict.textContent = '';
+    toast.style.opacity = 0;
+    led.setAttribute('fill', '#9aa3b1');
+    led.style.filter = '';
+    plug.getAnimations().forEach((a) => a.cancel());
+    flipper.getAnimations().forEach((a) => a.cancel());
+    wave.getAnimations().forEach((a) => a.cancel());
+    plug.style.transform = at(PARK);
+    flipper.style.transform = flipT();
+    wave.style.opacity = '';
+
+    if (TTY.reduce) return finish(target, false);
+    superposed(true);
+    await wait(700);
+    while (id === run) {
+      await anim(plug, [{ transform: at(PARK + 20) }, { transform: at(MOUTH) }], { duration: 420, easing: 'cubic-bezier(.55,0,.9,.6)' });
+      if (id !== run) return;
+      if (flips >= target && down) {
+        // Contact: the superposition collapses and the plug simply goes in.
+        superposed(false);
+        wave.animate([{ transform: 'scaleY(1)', opacity: .85 }, { transform: 'scaleY(0)', opacity: 0 }], { duration: 260, fill: 'forwards' });
+        ghost.animate([{ opacity: .4 }, { opacity: 0 }], { duration: 200, fill: 'forwards' });
+        await anim(plug, [{ transform: at(MOUTH) }, { transform: at(IN) }], { duration: 300, easing: 'cubic-bezier(.2,.9,.3,1)' });
+        if (id !== run) return;
+        return finish(target, true);
+      }
+      await bonk(id);
+      if (id !== run) return;
+      await wait(140);
+      await flip(id);
+      if (id !== run) return;
+      await wait(160);
+    }
+  }
+
+  function finish(target, animate) {
+    if (!animate) {
+      superposed(false);
+      down = true;
+      plug.style.transform = at(IN);
+      flipper.style.transform = 'scaleY(-1)';
+      ghost.style.opacity = 0;
+      wave.style.opacity = 0;
+      setCount(target);
+    }
+    led.setAttribute('fill', '#2c5cff');
+    led.style.filter = 'drop-shadow(0 0 6px #2c5cff)';
+    verdict.textContent = TTY.t(target === 3 ? T.verdict3 : T.verdict5);
+    toast.style.opacity = 1;
+    if (animate) {
+      toast.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'ease-out' });
+      verdict.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
+    }
+  }
+
+  // Plays again on its own a while after each success; a newer start cancels older ones.
+  // Portrait screens crop the figure to the plug's metal end and the port mouth.
+  const svg = document.querySelector('.scene svg');
+  const portrait = matchMedia('(max-aspect-ratio: 4/5)');
+  const frame = () => svg.setAttribute('viewBox', portrait.matches ? '250 100 620 230' : '0 0 1000 420');
+  portrait.addEventListener('change', frame);
+  frame();
+
+  let idle;
+  let starts = 0;
+  function start() {
+    clearTimeout(idle);
+    const mine = ++starts;
+    play().then(() => { if (mine === starts) idle = setTimeout(start, 7000); });
+  }
+  document.querySelectorAll('.again').forEach((b) => b.addEventListener('click', start));
+  plug.addEventListener('click', start);
+
+  TTY.onShow(start);
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>
