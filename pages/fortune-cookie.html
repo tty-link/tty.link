@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Review Fortunes | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Mali:ital,wght@0,500;1,500&family=Gowun+Dodum&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="malang pilgi"></script>
+<style>
+  /* A fortune cookie for before you open a pull request. Tap it, it cracks, crumbs fly,
+     a slip slides out. Leave it alone and the next cookie arrives by itself. */
+  :root {
+    --cloth: #0f4c5c;
+    --cloth-weave: rgba(255, 255, 255, .045);
+    --plate: #fbf4e6;
+    --plate-rim: #e3d6bd;
+    --gold: #eab04f;
+    --gold-deep: #c27f22;
+    --paper: #fffdf6;
+    --ink: #2a2622;
+    --red: #cf3e4f;
+    --light: #f3efe2;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    container-type: size;
+    overflow: hidden;
+    color: var(--light);
+    font-family: 'Fredoka', system-ui, sans-serif;
+    background:
+      radial-gradient(70% 60% at 42% 52%, rgba(255, 236, 196, .16), transparent 70%),
+      repeating-linear-gradient(0deg, var(--cloth-weave) 0 2px, transparent 2px 6px),
+      repeating-linear-gradient(90deg, var(--cloth-weave) 0 2px, transparent 2px 6px),
+      var(--cloth);
+  }
+  .lang-ko body { font-family: 'Gowun Dodum', 'Fredoka', sans-serif; }
+
+  .room {
+    display: grid;
+    height: 100%;
+    padding: 5cqmin 6cqmin;
+    grid-template-rows: auto 1fr auto;
+    gap: 2cqmin;
+  }
+  .head { container-type: inline-size; }
+  .head h1 { font-size: min(7cqi, 7.4cqh); font-weight: 700; line-height: 1.05; letter-spacing: -.01em; }
+  .head h1 > font-kku { color: var(--light); }
+  .sub { margin-top: 1.4cqmin; font-size: max(13px, 2.3cqmin); opacity: .82; }
+
+  .scene {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    align-items: center;
+    gap: 4cqw;
+    min-height: 0;
+  }
+  @container (orientation: portrait) {
+    .scene { grid-template-columns: 1fr; grid-template-rows: auto auto; align-content: center; gap: 4cqh; }
+  }
+
+  /* The plate is the button. */
+  .plate {
+    position: relative;
+    justify-self: center;
+    display: grid;
+    place-items: center;
+    width: min(46cqmin, 100%);
+    aspect-ratio: 1.45;
+    border: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(closest-side, var(--plate) 72%, var(--plate-rim) 73%, var(--plate) 86%, #d9caad 100%);
+    box-shadow: 0 2.4cqmin 4cqmin rgba(0, 0, 0, .35);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .plate:focus-visible { outline: 3px solid var(--gold); outline-offset: 6px; }
+  .cookie { width: 78%; margin-top: -9%; overflow: visible; }
+  .half { transform-box: fill-box; }
+  .half.left { transform-origin: 100% 85%; }
+  .half.right { transform-origin: 0% 85%; }
+  .crease { transform-box: fill-box; transform-origin: 50% 100%; }
+
+  .slip {
+    position: relative;
+    justify-self: center;
+    width: min(100%, 64cqmin);
+    padding: 4.2cqmin 4.6cqmin 3.6cqmin;
+    color: var(--ink);
+    background:
+      linear-gradient(transparent 0 calc(100% - 1px), rgba(0, 0, 0, .04) 0) 0 0 / 100% 1.6em,
+      var(--paper);
+    border-radius: 3px;
+    box-shadow: 0 1.6cqmin 3.6cqmin rgba(0, 0, 0, .28);
+    rotate: -1.5deg;
+    visibility: hidden;
+  }
+  @container (orientation: portrait) { .slip { width: min(100%, 84cqw); } }
+  .slip::before, .slip::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: radial-gradient(circle at 0 50%, transparent 3px, var(--paper) 3.5px) 0 0 / 8px 9px;
+  }
+  .slip::before { left: -7px; transform: scaleX(-1); }
+  .slip::after { right: -7px; }
+  .fortune { min-height: 2.6em; font-family: 'Mali', cursive; font-size: max(17px, 3.9cqmin); font-weight: 500; line-height: 1.32; }
+  .fortune > font-kku { color: #2b2a6b; }
+  .lucky, .learn { font-size: max(12px, 2.1cqmin); line-height: 1.4; }
+  .lucky { margin-top: 2.6cqmin; color: var(--red); font-weight: 600; letter-spacing: .02em; }
+  .learn { margin-top: .6cqmin; color: #6b6253; }
+  .lang-ko .lucky, .lang-ko .learn { word-break: keep-all; }
+  .lang-ko .lucky { font-weight: 400; }
+
+  .foot { display: flex; justify-content: space-between; gap: 2cqmin; font-size: max(12px, 2cqmin); opacity: .78; }
+  .hint { text-align: right; }
+
+  .crumbs { position: fixed; inset: 0; pointer-events: none; }
+  .crumb { position: absolute; width: var(--s); height: calc(var(--s) * .8); border-radius: 40% 55% 45% 50%; background: var(--gold); box-shadow: inset -1px -1px 0 var(--gold-deep); }
+</style>
+</head>
+<body>
+<main class="room">
+  <header class="head">
+    <h1 data-lang="en">Code Review Fortunes</h1>
+    <h1 data-lang="ko"><font-kku font="malang" size="1em">코드 리뷰 포춘쿠키</font-kku></h1>
+    <p class="sub" data-lang="en">Crack one before you open a pull request.</p>
+    <p class="sub" data-lang="ko">PR 올리기 전에 하나 깨 보세요.</p>
+  </header>
+
+  <div class="scene">
+    <button class="plate" type="button">
+      <svg class="cookie" viewBox="0 0 200 140" aria-hidden="true">
+        <defs>
+          <radialGradient id="bake" cx="45%" cy="35%" r="75%">
+            <stop offset="0" stop-color="#f7d18a"/>
+            <stop offset=".55" stop-color="#eab04f"/>
+            <stop offset="1" stop-color="#c27f22"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="100" cy="126" rx="70" ry="9" fill="rgba(0,0,0,.12)"/>
+        <g class="half left">
+          <path d="M100 34 L93 44 L101 55 L93 66 L100 77 L95 88 C 90 104, 76 115, 58 114 C 32 112, 16 94, 19 68 C 22 42, 50 22, 76 24 C 88 25, 96 29, 100 34 Z" fill="url(#bake)" stroke="#b9761d" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M46 62 C 52 52, 62 46, 74 44" stroke="#fff3cf" stroke-width="4" stroke-linecap="round" fill="none" opacity=".55"/>
+          <path d="M26 86 C 40 101, 66 106, 90 96" stroke="#b9761d" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".7"/>
+          <circle cx="54" cy="88" r="1.8" fill="#c27f22"/><circle cx="66" cy="98" r="1.4" fill="#c27f22"/><circle cx="44" cy="76" r="1.3" fill="#c27f22"/>
+        </g>
+        <g class="half right">
+          <path d="M100 34 L93 44 L101 55 L93 66 L100 77 L95 88 C 102 104, 120 115, 142 114 C 168 112, 184 94, 181 68 C 178 42, 150 22, 124 24 C 112 25, 104 29, 100 34 Z" fill="url(#bake)" stroke="#b9761d" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M174 86 C 160 101, 134 106, 108 98" stroke="#b9761d" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".7"/>
+          <circle cx="146" cy="80" r="1.8" fill="#c27f22"/><circle cx="134" cy="99" r="1.4" fill="#c27f22"/><circle cx="158" cy="74" r="1.3" fill="#c27f22"/>
+        </g>
+        <rect class="tail" x="94" y="84" width="38" height="9" rx="1.5" fill="#fffdf6" stroke="#d9cfbb" stroke-width="1" transform="rotate(24 94 88)"/>
+        <path class="crease" d="M100 34 L93 44 L101 55 L93 66 L100 77 L95 88" stroke="#a8661a" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <article class="slip" aria-live="polite">
+      <p class="fortune"></p>
+      <p class="lucky"></p>
+      <p class="learn"></p>
+    </article>
+  </div>
+
+  <footer class="foot">
+    <p class="count"></p>
+    <p class="hint" data-lang="en">Tap the cookie for another.</p>
+    <p class="hint" data-lang="ko">쿠키를 누르면 하나 더 나와요.</p>
+  </footer>
+</main>
+<div class="crumbs" aria-hidden="true"></div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const plate = $('.plate');
+  const cookie = $('.cookie');
+  const left = $('.half.left');
+  const right = $('.half.right');
+  const crease = $('.crease');
+  const tail = $('.tail');
+  const slip = $('.slip');
+  const fortune = $('.fortune');
+  const lucky = $('.lucky');
+  const learn = $('.learn');
+  const count = $('.count');
+  const crumbs = $('.crumbs');
+
+  const FORTUNES = TTY.t({
+    en: [
+      'Your next PR will be approved on the first try.',
+      'A senior will say “nice” and mean it.',
+      'The bug you fear is a typo. A small one.',
+      'Today, git push will just work.',
+      'Your tests will pass, and you will know why.',
+      'Someone will read your README. All of it.',
+      'A reviewer will leave one comment, and it will be a compliment.',
+      'You will delete more code than you write, and it will feel great.',
+      'The flaky test is taking the day off.',
+      'That meeting could have been an email. Today, it will be.',
+      'Your variable names will make a stranger smile.',
+      'Production will be boring today. Enjoy it.',
+    ],
+    ko: [
+      '다음 PR은 한 번에 승인됩니다.',
+      '리뷰어가 LGTM 대신 “멋져요”라고 씁니다.',
+      '걱정하던 버그는 오타입니다. 아주 작은 오타.',
+      '오늘은 머지 충돌이 비켜 갑니다.',
+      '테스트가 통과하고, 왜 통과했는지도 압니다.',
+      '누군가 당신의 README를 끝까지 읽습니다.',
+      '리뷰 댓글이 딱 하나 달리는데, 칭찬입니다.',
+      '쓴 코드보다 지운 코드가 많은 날입니다. 기분 최고.',
+      '들쭉날쭉하던 테스트가 오늘은 쉬는 날입니다.',
+      '그 회의, 오늘은 정말 메일로 끝납니다.',
+      '당신이 지은 변수 이름이 누군가를 웃게 합니다.',
+      '오늘 운영 서버는 지루합니다. 마음껏 즐기세요.',
+    ],
+  });
+  // The back of the slip teaches a word, as fortune slips do.
+  const WORDS = TTY.t({
+    en: [
+      'Learn Korean: 칼퇴, leaving exactly on time.',
+      'Learn Korean: 머지, merge.',
+      'Learn Korean: 배포, deploy.',
+      'Learn Korean: 수고하셨습니다, thank you for your hard work.',
+      'Learn Korean: 커밋, commit. Easy one.',
+    ],
+    ko: [
+      '오늘의 영어: LGTM, 좋아 보여요.',
+      '오늘의 영어: WIP, 아직 만드는 중.',
+      '오늘의 영어: nit, 아주 사소한 의견.',
+      '오늘의 영어: PTAL, 한 번 더 봐 주세요.',
+      '오늘의 영어: TL;DR, 길어서 요약.',
+    ],
+  });
+  const CODES = [200, 201, 202, 204, 304];
+  const luckyLabel = TTY.t({ en: 'Lucky numbers: ', ko: '행운의 숫자: ' });
+  const countText = (n) => TTY.t({ en: `Cookies opened: ${n}. Calories: 0.`, ko: `깨 본 쿠키 ${n}개. 칼로리 0.` });
+  plate.setAttribute('aria-label', TTY.t({ en: 'Crack a fortune cookie', ko: '포춘쿠키 깨기' }));
+
+  let order = [];
+  const nextIndex = () => {
+    if (!order.length) order = FORTUNES.map((_, i) => i).sort(() => Math.random() - .5);
+    return order.pop();
+  };
+  let opened = 0;
+
+  function write(i) {
+    if (TTY.lang === 'ko') {
+      const el = document.createElement('font-kku');
+      el.setAttribute('font', 'pilgi');
+      el.setAttribute('size', 'max(19px, 4.4cqmin)');
+      el.setAttribute('wrap-unit', 'word');
+      el.textContent = FORTUNES[i];
+      fortune.replaceChildren(el);
+    } else {
+      fortune.textContent = FORTUNES[i];
+    }
+    const nums = CODES.slice().sort(() => Math.random() - .5).slice(0, 3).sort((a, b) => a - b);
+    lucky.textContent = luckyLabel + nums.join(', ');
+    learn.textContent = WORDS[i % WORDS.length];
+    opened += 1;
+    count.textContent = countText(opened);
+  }
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+  function burst() {
+    const box = cookie.getBoundingClientRect();
+    const x = box.left + box.width * .5;
+    const y = box.top + box.height * .45;
+    const floor = box.top + box.height * .95;
+    for (let n = 0; n < 18; n++) {
+      const c = document.createElement('i');
+      c.className = 'crumb';
+      c.style.setProperty('--s', `${rand(4, 10)}px`);
+      c.style.left = `${x}px`;
+      c.style.top = `${y}px`;
+      crumbs.append(c);
+      const dx = rand(-1, 1) * box.width * .55;
+      const up = rand(.15, .5) * box.height;
+      const r = rand(-360, 360);
+      c.animate([
+        { transform: 'translate(0, 0) rotate(0)', opacity: 1 },
+        { transform: `translate(${dx * .5}px, ${-up}px) rotate(${r / 2}deg)`, opacity: 1, offset: .35 },
+        { transform: `translate(${dx}px, ${floor - y}px) rotate(${r}deg)`, opacity: 1, offset: .8 },
+        { transform: `translate(${dx * 1.06}px, ${floor - y - 3}px) rotate(${r}deg)`, opacity: 0 },
+      ], { duration: rand(850, 1250), easing: 'cubic-bezier(.25, .6, .45, 1)' }).finished.then(() => c.remove());
+    }
+  }
+
+  const ease = 'cubic-bezier(.2, .9, .3, 1.2)';
+  let busy = false;
+  let cracked = false;
+  let auto = null;
+  let lastTouch = 0;
+
+  function settleCracked() {
+    left.style.transform = 'translate(-17%, 4%) rotate(-17deg)';
+    right.style.transform = 'translate(17%, 4%) rotate(17deg)';
+    crease.style.opacity = '0';
+    tail.style.opacity = '0';
+  }
+
+  async function crack() {
+    if (busy) return;
+    busy = true;
+    clearTimeout(auto);
+    const i = nextIndex();
+
+    if (TTY.reduce) {
+      write(i);
+      settleCracked();
+      slip.style.visibility = 'visible';
+      busy = false;
+      return;
+    }
+
+    // Clear the table: the old slip is tucked away and a fresh cookie drops on the plate.
+    if (cracked) {
+      await slip.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(14%, -22%) rotate(10deg) scale(.8)', opacity: 0 }],
+        { duration: 340, easing: 'cubic-bezier(.5, 0, .8, .4)', fill: 'forwards' }).finished;
+      slip.style.visibility = 'hidden';
+      slip.getAnimations().forEach((a) => a.cancel());
+      await cookie.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(12%) scale(.92)', opacity: 0 }],
+        { duration: 260, easing: 'ease-in', fill: 'forwards' }).finished;
+      // Forward-filled animations would win over anything newer once that ends; clear them.
+      [cookie, left, right, crease, tail].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
+      await cookie.animate([
+        { transform: 'translateY(-140%) rotate(-8deg)', opacity: 1, easing: 'cubic-bezier(.55, 0, 1, .45)' },
+        { transform: 'translateY(0) rotate(0)', opacity: 1, offset: .55, easing: 'cubic-bezier(0, .55, .45, 1)' },
+        { transform: 'translateY(-12%) rotate(2deg)', opacity: 1, offset: .75, easing: 'cubic-bezier(.55, 0, 1, .45)' },
+        { transform: 'translateY(0) rotate(0)', opacity: 1 },
+      ], { duration: 720, fill: 'forwards' }).finished;
+    }
+    write(i);
+
+    // A little nervous wiggle, then the snap.
+    await cookie.animate([
+      { transform: 'rotate(0)' }, { transform: 'rotate(-3deg)' }, { transform: 'rotate(3deg)' }, { transform: 'rotate(-2deg)' }, { transform: 'rotate(0)' },
+    ], { duration: 320, easing: 'ease-in-out' }).finished;
+    cookie.animate([{ transform: 'scale(1)' }, { transform: 'scale(.96, 1.04)' }, { transform: 'scale(1)' }], { duration: 180 });
+    crease.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: 'forwards' });
+    tail.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' });
+    left.animate([{ transform: 'none' }, { transform: 'translate(-17%, 4%) rotate(-17deg)' }], { duration: 520, easing: ease, fill: 'forwards' });
+    right.animate([{ transform: 'none' }, { transform: 'translate(17%, 4%) rotate(17deg)' }], { duration: 520, easing: ease, fill: 'forwards' });
+    burst();
+
+    // The slip is pulled out of the crease and lands on the table.
+    slip.style.visibility = 'visible';
+    const from = cookie.getBoundingClientRect();
+    const to = slip.getBoundingClientRect();
+    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+    const dy = from.top + from.height * .45 - (to.top + to.height / 2);
+    await slip.animate([
+      { transform: `translate(${dx}px, ${dy}px) scale(.12, .08) rotate(-20deg)`, clipPath: 'inset(0 86% 0 0)' },
+      { transform: `translate(${dx * .4}px, ${dy * .4 - to.height * .25}px) scale(.55, .4) rotate(-8deg)`, clipPath: 'inset(0 40% 0 0)', offset: .45 },
+      { transform: 'none', clipPath: 'inset(0 0 0 0)' },
+    ], { duration: 820, easing: 'cubic-bezier(.25, .8, .3, 1.08)' }).finished;
+
+    cracked = true;
+    busy = false;
+    scheduleAuto();
+  }
+
+  function scheduleAuto() {
+    clearTimeout(auto);
+    const quiet = Date.now() - lastTouch;
+    auto = setTimeout(crack, quiet < 8000 ? 9000 : 5200);
+  }
+  plate.addEventListener('click', () => { lastTouch = Date.now(); crack(); });
+
+  count.textContent = countText(0);
+  TTY.onShow(() => {
+    if (TTY.reduce) { crack(); return; }
+    setTimeout(crack, 700);
+  });
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

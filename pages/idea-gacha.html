@@ -385,9 +385,12 @@
 
     // The old idea is crumpled away.
     if (slip.style.visibility === 'visible') {
-      await slip.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(10%, 18%) rotate(9deg) scale(.86)', opacity: 0 }],
-        { duration: 320, easing: 'cubic-bezier(.5, 0, .8, .4)', fill: 'forwards' }).finished;
+      const crumple = slip.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(10%, 18%) rotate(9deg) scale(.86)', opacity: 0 }],
+        { duration: 320, easing: 'cubic-bezier(.5, 0, .8, .4)', fill: 'forwards' });
+      await crumple.finished;
       slip.style.visibility = 'hidden';
+      // A forwards-filled animation would win again over the next unroll; drop it.
+      crumple.cancel();
     }
     setIdea(i);
 
@@ -423,6 +426,8 @@
     const s = from.width / to.width;
     drop.style.opacity = 0;
     capsule.style.visibility = 'visible';
+    // The last capsule's lid and cup flew off with forwards-filled animations; clear them.
+    [lid, cup].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
     lid.style.transform = cup.style.transform = '';
     lid.style.opacity = cup.style.opacity = 1;
     await capsule.animate([

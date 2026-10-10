@@ -145,7 +145,13 @@
     cursor: pointer;
   }
   a.btn { display: inline-flex; align-items: center; color: inherit; text-decoration: none; }
-  .btn:hover { background: var(--ink); color: var(--sun); }
+  .btn:hover, .btn[aria-pressed="true"] { background: var(--ink); color: var(--sun); }
+  .paused .progress span { opacity: .45; }
+  .pause { display: inline-flex; align-items: center; gap: 7px; }
+  .ico { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .ico-play { display: none; }
+  .paused .ico-play { display: inline; }
+  .paused .ico-pause { display: none; }
   .langs { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; }
   .langs button { min-height: 33px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; }
   .langs button[aria-pressed="true"] { background: var(--ink); color: var(--sun); }
@@ -170,6 +176,9 @@
     .now { margin-top: 0; }
     .now-title { min-height: 0; font-size: 14px; }
     .btn, .langs button { min-height: 32px; font-size: 13px; }
+    /* On phones the pause button is just its icon; the label stays for screen readers. */
+    .pause { padding: 0 10px; }
+    .pause-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   }
   @media (prefers-reduced-motion: reduce) {
     .staged .stage, .slot.on { animation: none; }
@@ -193,6 +202,7 @@
     </div>
     <div class="tools">
       <div class="tools-row">
+        <button class="btn pause" type="button" aria-pressed="false"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="ico-pause" d="M5 3.5v9M11 3.5v9"/><path class="ico-play" d="M5 3v10l8-5z"/></svg><span class="pause-label">Pause</span></button>
         <button class="btn next" type="button">Next</button>
         <a class="btn all" href="/all/">All pages</a>
         <div class="langs" role="group" aria-label="Language">
@@ -215,6 +225,8 @@
   const nowTitle = document.querySelector('.now-title');
   const bar = document.querySelector('.progress span');
   const nextButton = document.querySelector('.next');
+  const pauseButton = document.querySelector('.pause');
+  const pauseLabel = document.querySelector('.pause-label');
   const allLink = document.querySelector('.all');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const DEFAULT_SECONDS = 16;
@@ -328,10 +340,11 @@
   let lang = new URLSearchParams(location.search).get('lang') || read('localStorage', 'tty.lang');
   if (lang !== 'en' && lang !== 'ko') lang = (navigator.languages || [navigator.language || '']).some((l) => /^ko\b/i.test(l)) ? 'ko' : 'en';
   const UI = {
-    en: { next: 'Next', all: 'All pages', stage: 'tty.link pages', langs: 'Language' },
-    ko: { next: '다음', all: '전체 보기', stage: 'tty.link 페이지', langs: '언어' },
+    en: { next: 'Next', all: 'All pages', pause: 'Pause', play: 'Play', stage: 'tty.link pages', langs: 'Language' },
+    ko: { next: '다음', all: '전체 보기', pause: '일시정지', play: '재생', stage: 'tty.link 페이지', langs: '언어' },
   };
   let koScatter = null;
+  let userPaused = false;
   function showKo() {
     if (lang !== 'ko' || !body.classList.contains('settled') || lineKo.firstChild) return;
     const kku = document.createElement('font-kku');
@@ -346,6 +359,7 @@
     root.classList.toggle('lang-ko', lang === 'ko');
     root.classList.toggle('lang-en', lang === 'en');
     nextButton.textContent = UI[lang].next;
+    pauseLabel.textContent = userPaused ? UI[lang].play : UI[lang].pause;
     allLink.textContent = UI[lang].all;
     allLink.href = '/all/?lang=' + lang;
     stage.setAttribute('aria-label', UI[lang].stage);
@@ -430,7 +444,7 @@
 
     if (clock) clock.cancel();
     clock = bar.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: secondsOf(entry.page), fill: 'forwards' });
-    if (hovering || document.hidden) clock.pause();
+    syncClock();
     const mine = clock;
     clock.finished.then(() => { if (clock === mine) advance(); }, () => {});
   }
@@ -461,12 +475,22 @@
     }
   });
 
-  stage.addEventListener('mouseenter', () => { hovering = true; if (clock) clock.pause(); });
-  stage.addEventListener('mouseleave', () => { hovering = false; if (clock && !document.hidden) clock.play(); });
-  document.addEventListener('visibilitychange', () => {
+  // The clock runs only when nobody has paused it, the pointer is not on the stage and
+  // the tab is visible. The visitor's pause wins over everything else.
+  function syncClock() {
     if (!clock) return;
-    if (document.hidden) clock.pause();
-    else if (!hovering) clock.play();
+    if (userPaused || hovering || document.hidden) clock.pause();
+    else clock.play();
+  }
+  stage.addEventListener('mouseenter', () => { hovering = true; syncClock(); });
+  stage.addEventListener('mouseleave', () => { hovering = false; syncClock(); });
+  document.addEventListener('visibilitychange', syncClock);
+  pauseButton.addEventListener('click', () => {
+    userPaused = !userPaused;
+    pauseButton.setAttribute('aria-pressed', String(userPaused));
+    pauseLabel.textContent = userPaused ? UI[lang].play : UI[lang].pause;
+    body.classList.toggle('paused', userPaused);
+    syncClock();
   });
   nextButton.addEventListener('click', () => { if (current) advance(); });
   addEventListener('keydown', (event) => {

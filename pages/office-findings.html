@@ -334,7 +334,9 @@
 
   let shown = 0;
   let timer = null;
+  let rating = null;
   function reset() {
+    clearTimeout(rating);
     shown = 0;
     rings.replaceChildren();
     list.replaceChildren();
@@ -349,7 +351,7 @@
       shown += 1;
       ring(f.at, shown);
       writeUp(f, shown);
-      if (shown === FINDINGS.length) setTimeout(rate, TTY.reduce ? 0 : 900);
+      if (shown === FINDINGS.length) rating = setTimeout(rate, TTY.reduce ? 0 : 900);
     }
     if (!TTY.reduce) timer = setTimeout(next, shown === FINDINGS.length ? 7000 : 2300);
   }

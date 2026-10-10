@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cable Entropy | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans+Condensed:wght@500;700;900&family=Red+Hat+Mono:wght@500;700&family=IBM+Plex+Sans+KR:wght@500;700&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="dunggeun pixel pilgi"></script>
+<style>
+  /* One rack, one year. Day 1 is the photo for the wiki; by day 365 the cables have
+     become load-bearing spaghetti. A time-lapse slider scrubs through it. */
+  :root {
+    --wall: #e6e3dc;
+    --ink: #1f2228;
+    --soft: #6b6f78;
+    --rack: #2b2f37;
+    --rack-2: #3a3f49;
+    --port: #14161a;
+    --accent: #ff6b35;
+    --tag: #fbfaf6;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    overflow: hidden;
+    background:
+      linear-gradient(90deg, rgba(0, 0, 0, .035) 1px, transparent 1px) 0 0 / 64px 64px,
+      linear-gradient(rgba(0, 0, 0, .035) 1px, transparent 1px) 0 0 / 64px 64px,
+      var(--wall);
+    color: var(--ink);
+    font-family: 'Sofia Sans Condensed', 'Arial Narrow', sans-serif;
+  }
+  .lang-ko body { font-family: 'IBM Plex Sans KR', sans-serif; word-break: keep-all; }
+
+  .room {
+    container-type: size;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "title day" "rack rack" "caption caption" "slider slider";
+    gap: 1.8cqh 3cqw;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    padding: clamp(14px, 3.8cqmin, 38px);
+  }
+  .title h1 { font-size: clamp(26px, 5.4cqmin, 52px); font-weight: 900; line-height: .95; letter-spacing: -.01em; }
+  .title h1 > font-kku { color: var(--ink); }
+  .title .sub { margin-top: .4em; font-size: clamp(13px, 2cqmin, 17px); font-weight: 700; color: var(--soft); }
+  .day { grid-area: day; text-align: right; line-height: .9; }
+  .day .n { display: block; font-size: clamp(42px, 10cqmin, 96px); font-weight: 900; font-variant-numeric: tabular-nums; }
+  .day .n > font-kku { color: var(--ink); }
+  .day small { font-size: clamp(12px, 1.8cqmin, 15px); font-weight: 700; color: var(--soft); }
+
+  .rack { grid-area: rack; position: relative; min-height: 0; }
+  .rack svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .cable { fill: none; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+  .cable-shadow { fill: none; stroke: rgba(0, 0, 0, .28); stroke-width: 9; stroke-linecap: round; }
+  .label rect { fill: var(--tag); stroke: #c9c4b8; stroke-width: 1.2; }
+  .label text { font: 700 11px 'Red Hat Mono', monospace; fill: var(--ink); text-anchor: middle; }
+  .warn rect { fill: #ffd60a; stroke: #1f2228; stroke-width: 2; }
+  .warn text { font: 700 12px 'Red Hat Mono', monospace; fill: #1f2228; }
+  .lang-ko .warn text { font-family: 'IBM Plex Sans KR', sans-serif; font-size: 13px; }
+
+  .caption { grid-area: caption; min-height: 2.6em; font-size: clamp(15px, 2.5cqmin, 22px); font-weight: 700; line-height: 1.25; }
+  .caption b { color: var(--accent); }
+
+  .slider { grid-area: slider; display: grid; gap: 6px; }
+  .slider input { width: 100%; height: 34px; accent-color: var(--accent); cursor: pointer; }
+  /* Ticks sit where their day falls on the year, not evenly spaced. */
+  .ticks { position: relative; height: 1.3em; font: 700 clamp(11px, 1.7cqmin, 14px) 'Red Hat Mono', monospace; color: var(--soft); }
+  .ticks span { position: absolute; top: 0; translate: -50% 0; }
+  .ticks span:first-child { translate: 0 0; }
+  .ticks span:last-child { translate: -100% 0; }
+  .slider input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  .note { position: absolute; z-index: 2; right: 3%; top: 8%; width: clamp(110px, 20cqmin, 170px); padding: .6em .7em .8em; background: #fff59d; rotate: 6deg; box-shadow: 0 4px 8px rgba(0, 0, 0, .18); font-size: clamp(15px, 2.6cqmin, 22px); opacity: 0; pointer-events: none; }
+  .note > font-kku { color: #2f2a1f; }
+  .lang-en .note { font-family: 'Red Hat Mono', monospace; font-weight: 700; font-size: clamp(13px, 2.1cqmin, 18px); }
+
+  @media (max-aspect-ratio: 4/5) {
+    .room { grid-template-columns: 1fr; grid-template-areas: "title" "day" "rack" "caption" "slider"; grid-template-rows: auto auto minmax(0, 1fr) auto auto; }
+    .day { text-align: left; display: flex; align-items: baseline; gap: .5em; }
+    .day .n { display: inline; }
+  }
+</style>
+</head>
+<body>
+<main class="room">
+  <header class="title">
+    <h1 data-lang="en">Cable Entropy</h1>
+    <h1 data-lang="ko"><font-kku font="dunggeun" size="5.4cqmin">선 정리의 엔트로피</font-kku></h1>
+    <p class="sub" data-lang="en">One rack, one year, one law of thermodynamics.</p>
+    <p class="sub" data-lang="ko">랙 하나, 일 년, 열역학 제2법칙 하나.</p>
+  </header>
+  <p class="day" aria-live="off">
+    <span class="n" data-lang="en">Day 1</span>
+    <span class="n" data-lang="ko"><font-kku font="pixel" size="8.6cqmin">1일차</font-kku></span>
+  </p>
+
+  <section class="rack" aria-hidden="true">
+    <svg viewBox="0 0 800 520" preserveAspectRatio="xMidYMid meet">
+      <!-- rack frame -->
+      <rect x="50" y="20" width="700" height="480" rx="10" fill="#2b2f37"/>
+      <rect x="66" y="34" width="668" height="452" rx="4" fill="#20232a"/>
+      <g fill="#555b67"><circle cx="58" cy="60" r="4"/><circle cx="58" cy="460" r="4"/><circle cx="742" cy="60" r="4"/><circle cx="742" cy="460" r="4"/></g>
+      <!-- patch panel -->
+      <rect x="90" y="60" width="620" height="70" rx="6" fill="#3a3f49"/>
+      <g class="panel-ports"></g>
+      <!-- switch -->
+      <rect x="90" y="388" width="620" height="78" rx="6" fill="#3a3f49"/>
+      <g class="switch-leds"></g>
+      <g class="switch-ports"></g>
+      <g class="cables"></g>
+      <g class="ties"></g>
+      <g class="labels"></g>
+      <g class="mystery-label"></g>
+      <g class="parcel" opacity="0">
+        <rect x="608" y="476" width="96" height="46" rx="5" fill="#c79a5b" stroke="#7d5a2e" stroke-width="2.5"/>
+        <path d="M608 492 H704 M656 476 V522" stroke="#7d5a2e" stroke-width="2.5"/>
+        <text x="656" y="512" text-anchor="middle" style="font: 700 11px 'Red Hat Mono', monospace" fill="#3d2a12">×100</text>
+      </g>
+    </svg>
+    <p class="note" data-lang="en">Who did this?</p>
+    <p class="note" data-lang="ko"><font-kku font="pilgi" size="4.2cqmin">이거 누가 그랬어</font-kku></p>
+  </section>
+
+  <p class="caption" aria-live="polite"></p>
+
+  <div class="slider">
+    <input type="range" min="1" max="366" value="1" step="1">
+    <div class="ticks"><span style="left: 0%">1</span><span style="left: 7.9%">30</span><span style="left: 24.4%">90</span><span style="left: 49%">180</span><span style="left: 100%">365</span></div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.querySelector('.rack svg');
+  const range = document.querySelector('.slider input');
+  const caption = document.querySelector('.caption');
+  const dayEn = document.querySelector('.day [data-lang="en"]');
+  const dayKo = document.querySelector('.day [data-lang="ko"] font-kku');
+  const note = document.querySelector(`.note[data-lang="${TTY.lang}"]`);
+  const parcel = svg.querySelector('.parcel');
+
+  range.setAttribute('aria-label', TTY.t({ en: 'Day', ko: '날짜' }));
+
+  const el = (tag, attrs, parent) => {
+    const e = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+    if (parent) parent.append(e);
+    return e;
+  };
+
+  const COLORS = ['#e63946', '#f4a261', '#e9c46a', '#2a9d8f', '#4f8fd9', '#8e7dbe', '#ff70a6', '#6a994e'];
+  const NAMES = TTY.t({
+    en: ['WEB-01', 'WEB-02', 'DB', 'CACHE', 'MAIL', 'VPN', 'PRINTER', 'NAS'],
+    ko: ['WEB-01', 'WEB-02', 'DB', 'CACHE', 'MAIL', 'VPN', '프린터', 'NAS'],
+  });
+  const portX = (i) => 136 + i * 76;
+  const TOP = 110, BOTTOM = 418;
+
+  // Ports and switch lights.
+  for (let i = 0; i < 8; i++) {
+    el('rect', { x: portX(i) - 14, y: 88, width: 28, height: 24, rx: 3, fill: '#14161a' }, svg.querySelector('.panel-ports'));
+    el('rect', { x: portX(i) - 14, y: 410, width: 28, height: 24, rx: 3, fill: '#14161a' }, svg.querySelector('.switch-ports'));
+    el('circle', { class: 'led', cx: portX(i) - 8, cy: 448, r: 3.2, fill: '#3ddc84' }, svg.querySelector('.switch-leds'));
+  }
+  const leds = [...svg.querySelectorAll('.led')];
+
+  // A tiny seeded noise so the mess is the same mess every time.
+  const rnd = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+  // Where cable i plugs into the switch: on day 1 straight down, later some get re-patched.
+  const REPATCH = [0, 1, 5, 3, 7, 2, 6, 4];
+
+  function points(i, t) {
+    // the neat day-1 route: down from the panel, into the bundle, out to the switch
+    const bx = 400 + (i - 3.5) * 9;
+    const endX = portX(i) + (portX(REPATCH[i]) - portX(i)) * Math.min(1, Math.max(0, (t - .3) / .4));
+    const base = [
+      [portX(i), TOP],
+      [portX(i), TOP + 40],
+      [bx, 220],
+      [bx, 260],
+      [bx, 300],
+      [endX, BOTTOM - 40],
+      [endX, BOTTOM],
+    ];
+    const amp = 190 * Math.pow(t, 1.35);
+    return base.map(([x, y], k) => {
+      if (k === 0 || k === base.length - 1) return [x, y];
+      const loop = Math.pow(t, 2) * 70 * Math.sin(i * 1.7 + k * 2.3);
+      return [
+        x + (rnd(i * 13 + k) - .5) * amp + loop,
+        y + (rnd(i * 29 + k * 7) - .5) * amp * .7 + Math.pow(t, 2) * 50 * Math.cos(i + k),
+      ];
+    });
+  }
+  // A smooth line through the points (Catmull-Rom as cubic Béziers).
+  function smooth(p) {
+    let d = `M${p[0][0].toFixed(1)} ${p[0][1].toFixed(1)}`;
+    for (let k = 0; k < p.length - 1; k++) {
+      const a = p[k - 1] || p[k], b = p[k], c = p[k + 1], e = p[k + 2] || c;
+      const c1 = [b[0] + (c[0] - a[0]) / 6, b[1] + (c[1] - a[1]) / 6];
+      const c2 = [c[0] - (e[0] - b[0]) / 6, c[1] - (e[1] - b[1]) / 6];
+      d += ` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${c[0].toFixed(1)} ${c[1].toFixed(1)}`;
+    }
+    return d;
+  }
+
+  const cablesG = svg.querySelector('.cables');
+  const cables = COLORS.map((c) => ({ shadow: el('path', { class: 'cable-shadow' }, cablesG), line: el('path', { class: 'cable', stroke: c }, cablesG) }));
+  const mysteryShadow = el('path', { class: 'cable-shadow' }, cablesG);
+  const mystery = el('path', { class: 'cable', stroke: '#9aa0a6', 'stroke-dasharray': '1', pathLength: 1 }, cablesG);
+
+  // Zip ties around the bundle.
+  const tiesG = svg.querySelector('.ties');
+  const ties = [232, 292].map((y) => {
+    const g = el('g', {}, tiesG);
+    const left = el('rect', { x: 360, y: y - 5, width: 40, height: 10, rx: 3, fill: '#f1f1f1', stroke: '#9a9a9a', 'stroke-width': 1.2 }, g);
+    const right = el('rect', { x: 400, y: y - 5, width: 40, height: 10, rx: 3, fill: '#f1f1f1', stroke: '#9a9a9a', 'stroke-width': 1.2 }, g);
+    el('rect', { x: 432, y: y - 7, width: 10, height: 14, rx: 2, fill: '#dedede', stroke: '#9a9a9a', 'stroke-width': 1.2 }, g);
+    return { g, left, right, y };
+  });
+
+  // Labels: little flags on each cable, which peel and fall over the year.
+  const labelsG = svg.querySelector('.labels');
+  const labels = NAMES.map((name, i) => {
+    const g = el('g', { class: 'label' }, labelsG);
+    el('rect', { x: -26, y: -9, width: 52, height: 18, rx: 3 }, g);
+    const t = el('text', { y: 4 }, g);
+    t.textContent = name;
+    return g;
+  });
+
+  // The mystery cable and its warning.
+  const warnG = el('g', { class: 'warn', opacity: 0 }, svg.querySelector('.mystery-label'));
+  const WARN = TTY.t({
+    en: ['UNKNOWN CABLE', 'Do not unplug.', 'It might be load-bearing.'],
+    ko: ['정체불명 케이블', '뽑지 마세요.', '뭔가 받치고 있을지도.'],
+  });
+  el('rect', { x: 0, y: 0, width: 196, height: 62, rx: 6 }, warnG);
+  WARN.forEach((line, k) => {
+    const t = el('text', { x: 12, y: 20 + k * 17, style: k === 0 ? 'font-weight: 900' : '' }, warnG);
+    t.textContent = line;
+  });
+
+  const STAGES = TTY.t({
+    en: [
+      [1, '<b>Day 1.</b> Cable management complete. Photo taken for the wiki.'],
+      [30, '<b>Day 30.</b> One temporary cable. Just for today.'],
+      [90, '<b>Day 90.</b> A zip tie gave up. Nobody noticed.'],
+      [180, '<b>Day 180.</b> Nobody remembers what the purple one does.'],
+      [300, '<b>Day 300.</b> A grey cable arrives from somewhere. It works, so it stays.'],
+      [365, '<b>Day 365.</b> Spaghetti. Load-bearing spaghetti.'],
+      [366, '<b>Day 366.</b> New zip ties ordered. Hope is renewable.'],
+    ],
+    ko: [
+      [1, '<b>1일차.</b> 선 정리 완료. 위키에 올릴 사진도 찍었어요.'],
+      [30, '<b>30일차.</b> 임시 케이블 하나. 오늘만 쓸게요.'],
+      [90, '<b>90일차.</b> 케이블 타이 하나가 포기했어요. 아무도 몰랐고요.'],
+      [180, '<b>180일차.</b> 보라색 선이 뭐 하는 건지 아무도 몰라요.'],
+      [300, '<b>300일차.</b> 회색 선이 어디선가 들어왔어요. 되니까 그냥 둡니다.'],
+      [365, '<b>365일차.</b> 스파게티. 그것도 뭔가 받치고 있는 스파게티.'],
+      [366, '<b>366일차.</b> 새 케이블 타이 주문 완료. 희망은 재생 에너지니까요.'],
+    ],
+  });
+
+  let shownCaption = -1;
+  let shownDayKo = '';
+  function render(day) {
+    const t = Math.min(1, (day - 1) / 364);
+    cables.forEach((c, i) => {
+      const d = smooth(points(i, t));
+      c.line.setAttribute('d', d);
+      c.shadow.setAttribute('d', d);
+      c.shadow.setAttribute('transform', 'translate(2 4)');
+    });
+
+    // Labels hang just under the panel and peel off one by one.
+    labels.forEach((g, i) => {
+      const [x, y] = points(i, t)[1];
+      const peel = Math.max(0, t * 1.6 - rnd(i * 5) * .9);
+      const drop = peel > .75 ? (peel - .75) * 420 : 0;
+      g.setAttribute('transform', `translate(${x.toFixed(1)} ${(y + 4 + drop).toFixed(1)}) rotate(${(peel * 70 * (i % 2 ? 1 : -1)).toFixed(1)} -26 -9)`);
+      g.setAttribute('opacity', drop > 120 ? 0 : 1);
+    });
+
+    // The lower zip tie snaps around day 90; the upper one slides down later.
+    const snap = t > .24;
+    const fall = snap ? Math.min(1, (t - .24) / .2) : 0;
+    ties[1].left.setAttribute('transform', `translate(${-fall * 30} ${fall * 150}) rotate(${-fall * 80} 380 ${ties[1].y})`);
+    ties[1].right.setAttribute('transform', `translate(${fall * 26} ${fall * 160}) rotate(${fall * 95} 420 ${ties[1].y})`);
+    ties[1].g.setAttribute('opacity', 1 - Math.max(0, (t - .4) * 4));
+    const slide = Math.max(0, (t - .55) / .45);
+    ties[0].g.setAttribute('transform', `translate(${slide * 40} ${slide * 90}) rotate(${slide * 25} 400 232)`);
+
+    // The mystery cable creeps in from outside the rack.
+    const m = Math.max(0, Math.min(1, (t - .78) / .14));
+    const md = smooth([[-40, 300], [30, 250], [120, 340], [240, 180], [330, 330], [portX(4) - 30, 300], [portX(5), BOTTOM]].map(([x, y], k) => [x + Math.sin(k * 2) * t * 20, y]));
+    mystery.setAttribute('d', md);
+    mysteryShadow.setAttribute('d', md);
+    mysteryShadow.setAttribute('transform', 'translate(2 4)');
+    mystery.style.strokeDashoffset = 1 - m;
+    mysteryShadow.setAttribute('opacity', m > .98 ? 1 : 0);
+    warnG.setAttribute('opacity', m > .98 ? 1 : 0);
+    warnG.setAttribute('transform', 'translate(118 176) rotate(-4)');
+
+    // Lights: on day 1 all green; by day 365 one blinks amber and nobody asks why.
+    leds.forEach((l, i) => l.setAttribute('fill', t > .6 && i === 5 ? '#ffb703' : '#3ddc84'));
+
+    note.style.opacity = t > .88 ? 1 : 0;
+    parcel.setAttribute('opacity', day >= 366 ? 1 : 0);
+
+    let stage = 0;
+    STAGES.forEach(([d], k) => { if (day >= d) stage = k; });
+    if (stage !== shownCaption) { shownCaption = stage; caption.innerHTML = STAGES[stage][1]; }
+    const shown = Math.min(day, 365);
+    if (dayEn) dayEn.textContent = day >= 366 ? 'Day 366' : `Day ${shown}`;
+    const ko = `${day >= 366 ? 366 : shown}일차`;
+    if (dayKo && ko !== shownDayKo) { shownDayKo = ko; dayKo.textContent = ko; }
+    if (Number(range.value) !== day) range.value = day;
+  }
+
+  // ---- time-lapse ----
+  let playing = null;
+  let touched = 0;
+  // Keyframes of the auto play: [day, time ms]; it lingers on the milestones.
+  const PLAY = [[1, 0], [1, 1200], [30, 2400], [30, 3600], [90, 4900], [90, 6100], [180, 7300], [180, 8400], [300, 9600], [300, 10700], [365, 12000], [365, 13800], [366, 14200]];
+  function dayAt(ms) {
+    for (let k = 1; k < PLAY.length; k++) {
+      const [d0, t0] = PLAY[k - 1], [d1, t1] = PLAY[k];
+      if (ms <= t1) {
+        const p = (ms - t0) / (t1 - t0 || 1);
+        const e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+        return Math.round(d0 + (d1 - d0) * e);
+      }
+    }
+    return 366;
+  }
+  function play() {
+    cancelAnimationFrame(playing);
+    let start = 0, offset = 0;
+    const tick = (now) => {
+      playing = requestAnimationFrame(tick);
+      if (performance.now() - touched < 3500) { start = 0; return; }
+      if (!start) { start = now; offset = PLAY.find(([d]) => d >= Number(range.value))?.[1] ?? 0; }
+      const ms = now - start + offset;
+      render(dayAt(ms));
+      if (ms > PLAY[PLAY.length - 1][1]) cancelAnimationFrame(playing);
+    };
+    playing = requestAnimationFrame(tick);
+  }
+
+  range.addEventListener('input', () => { touched = performance.now(); render(Number(range.value)); if (!playing) play(); });
+
+  render(TTY.reduce ? 366 : 1);
+  TTY.onShow(() => { if (!TTY.reduce) play(); });
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

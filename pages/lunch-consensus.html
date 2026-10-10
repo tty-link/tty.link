@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunch, by Consensus | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;800&family=DM+Mono:wght@500&family=Gowun+Dodum&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="dunggeun sebul"></script>
+<style>
+  /* Five teammates run a Raft-style election to decide lunch. A network partition splits
+     the cluster into a black-bean side and a spicy side; when it heals, the only merge
+     without a conflict is committed everywhere: the half-and-half bowl. */
+  :root {
+    --bg: #fff1e2;
+    --card: #fffaf3;
+    --ink: #2b1d14;
+    --soft: #8a6f5c;
+    --line: #e7cdb4;
+    --jjajang: #3d2a1e;
+    --jjamppong: #e0412a;
+    --lead: #f4b400;
+    --cand: #ff8a3d;
+    --cut: #6c5ce7;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(138, 111, 92, .16) 1px, transparent 1.5px) 0 0 / 22px 22px,
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  }
+  .lang-ko body { font-family: 'Gowun Dodum', system-ui, sans-serif; word-break: keep-all; }
+
+  .room {
+    container-type: size;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "head head" "scene log";
+    gap: 2.4cqh 3.4cqw;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    padding: clamp(16px, 4cqmin, 40px);
+  }
+
+  .head { grid-area: head; display: flex; justify-content: space-between; align-items: end; gap: 16px; }
+  .head h1 { font-size: clamp(26px, 5.2cqmin, 50px); font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+  .head h1 > font-kku { color: var(--ink); }
+  .head .sub { margin-top: 8px; font-size: clamp(13px, 2cqmin, 17px); color: var(--soft); font-weight: 600; }
+  .again {
+    flex: none;
+    min-height: 38px;
+    padding: 0 16px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: clamp(13px, 1.9cqmin, 15px);
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--ink);
+  }
+  .again:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+  .again:focus-visible { outline: 3px solid var(--cut); outline-offset: 3px; }
+
+  /* ---- the cluster ---- */
+  .scene { grid-area: scene; position: relative; min-height: 0; container-type: size; }
+  .scene svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .link { stroke: var(--line); stroke-width: 2.5; stroke-linecap: round; transition: stroke .4s, opacity .4s; }
+  .link.cut { stroke: #cbb8a8; stroke-dasharray: 3 9; opacity: .55; }
+  .crack { fill: none; stroke: var(--cut); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .node { cursor: pointer; }
+  .node .body { stroke: var(--ink); stroke-width: 3; }
+  .node .ring { fill: none; stroke: transparent; stroke-width: 6; transition: stroke .3s; }
+  .node.candidate .ring { stroke: var(--cand); stroke-dasharray: 12 9; animation: spin 2.4s linear infinite; transform-box: fill-box; transform-origin: center; }
+  .node.leader .ring { stroke: var(--lead); }
+  .node .badge { opacity: 0; transition: opacity .3s; }
+  .node.leader .badge { opacity: 1; }
+  .node .zzz { opacity: 0; font: 800 22px 'Hanken Grotesk', sans-serif; fill: var(--soft); }
+  .node.napping .zzz { opacity: 1; }
+  .node.napping .body { fill: #d8cbc0 !important; }
+  .node .timer { fill: none; stroke: var(--cand); stroke-width: 6; stroke-linecap: round; opacity: 0; }
+  .node .name { font: 700 19px 'Hanken Grotesk', sans-serif; fill: var(--ink); text-anchor: middle; }
+  .lang-ko .node .name { font-family: 'Gowun Dodum', sans-serif; font-size: 21px; }
+  .node:focus, .node:focus-visible { outline: none; }
+  .node:focus-visible .body { stroke: var(--cut); stroke-width: 5; }
+  @keyframes spin { to { rotate: 1turn; } }
+  .bowl-top.half-a { fill: var(--jjajang); }
+  .bowl-top.half-b { fill: var(--jjamppong); }
+  .chip { transition: opacity .3s; }
+
+  /* The consensus lands in the middle of the ring. */
+  .verdict {
+    position: absolute;
+    left: 50%;
+    top: 49.6%;
+    width: 40cqmin;
+    padding: 3cqmin 0 3.4cqmin;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, var(--bg) 72%, rgba(255, 241, 226, 0));
+    translate: -50% -50%;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .verdict svg { position: static; display: block; width: 19cqmin; height: auto; margin: 0 auto; }
+  .verdict .dish { display: block; margin-top: .8cqmin; font-size: 6cqmin; font-weight: 800; line-height: 1.05; letter-spacing: -.02em; }
+  .verdict .dish > font-kku { color: var(--ink); }
+  .verdict .done { display: inline-block; margin-top: 1.2cqmin; padding: .25em .8em; border-radius: 999px; background: var(--ink); color: var(--card); font-size: 2.5cqmin; font-weight: 700; white-space: nowrap; }
+
+  /* ---- the event log ---- */
+  .log { grid-area: log; display: flex; flex-direction: column; min-height: 0; padding: clamp(14px, 2.6cqmin, 22px); border: 2px solid var(--ink); border-radius: 18px; background: var(--card); box-shadow: 0 5px 0 var(--ink); }
+  .log h2 { font-size: clamp(14px, 2.1cqmin, 18px); font-weight: 800; }
+  .log h2 .term { float: right; font-family: 'DM Mono', monospace; font-size: .85em; color: var(--soft); }
+  .events { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; margin-top: 12px; padding: 0; list-style: none; overflow: hidden; }
+  .events li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; padding: 8px 10px; border-radius: 10px; font-size: clamp(13px, 1.9cqmin, 15.5px); line-height: 1.35; background: #f7ece0; transition: background .6s; }
+  .events li.fresh { background: #ffe1a6; }
+  .events .t { font-family: 'DM Mono', monospace; font-size: .82em; color: var(--soft); padding-top: .1em; }
+  .events li.alert { background: #ece8ff; }
+  .events li.win { background: var(--ink); color: var(--card); }
+  .events li.win .t { color: #d7c4b2; }
+  .aside { margin-top: 10px; font-size: clamp(12px, 1.7cqmin, 14px); color: var(--soft); }
+
+  /* Portrait stages: the cluster on top, the latest two log lines under it. */
+  @media (max-aspect-ratio: 4/5) {
+    .room { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "head" "scene" "log"; }
+    .log { max-height: 30cqh; }
+    .aside { display: none; }
+    .events li:not(:nth-last-child(-n + 2)) { display: none; }
+    .head { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<main class="room">
+  <header class="head">
+    <div>
+      <h1 data-lang="en">Lunch, by Consensus</h1>
+      <h1 data-lang="ko"><font-kku font="dunggeun" size="5.4cqmin">점심 메뉴 합의 알고리즘</font-kku></h1>
+      <p class="sub" data-lang="en">Five nodes. Two noodles. One commit.</p>
+      <p class="sub" data-lang="ko">노드 다섯, 면 두 종류, 커밋 하나.</p>
+    </div>
+    <button class="again" type="button" data-lang="en">Order again</button>
+    <button class="again" type="button" data-lang="ko">다시 주문하기</button>
+  </header>
+
+  <section class="scene" aria-label="cluster">
+    <svg viewBox="0 0 560 540" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs>
+        <clipPath id="left-half"><rect x="-40" y="-40" width="40" height="80"/></clipPath>
+        <clipPath id="right-half"><rect x="0" y="-40" width="40" height="80"/></clipPath>
+        <g id="bowl">
+          <path d="M-26 -2 Q-26 22 0 24 Q26 22 26 -2 Z" fill="#fff" stroke="#2b1d14" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M-12 25 h24" stroke="#2b1d14" stroke-width="3" stroke-linecap="round"/>
+        </g>
+      </defs>
+      <g class="links"></g>
+      <path class="crack" pathLength="1" d="M206 18 L224 92 L196 150 L236 228 L210 300 L250 372 L226 440 L266 520"/>
+      <g class="packets"></g>
+      <g class="nodes"></g>
+    </svg>
+    <div class="verdict">
+      <svg viewBox="-40 -34 80 70" aria-hidden="true">
+        <use href="#bowl" transform="scale(1.3)"/>
+        <g transform="translate(0 -3) scale(1.3)">
+          <ellipse class="bowl-top half-a" cx="0" cy="-2" rx="24" ry="7" clip-path="url(#left-half)"/>
+          <ellipse class="bowl-top half-b" cx="0" cy="-2" rx="24" ry="7" clip-path="url(#right-half)"/>
+          <path d="M0 -9 V5" stroke="#fff" stroke-width="2.4"/>
+        </g>
+      </svg>
+      <span class="dish" data-lang="en">Half &amp; half</span>
+      <span class="dish" data-lang="ko"><font-kku font="sebul" size="8cqmin">짬짜면</font-kku></span>
+      <span class="done" data-lang="en">Committed on 5 of 5</span>
+      <span class="done" data-lang="ko">다섯 노드 모두 커밋</span>
+    </div>
+  </section>
+
+  <aside class="log">
+    <h2><span data-lang="en">Event log</span><span data-lang="ko">사건 기록</span> <span class="term">term 0</span></h2>
+    <ol class="events" aria-live="polite"></ol>
+    <p class="aside" data-lang="en">Black-bean noodles or spicy seafood noodles? Korean restaurants solved this years ago: one bowl, split down the middle.</p>
+    <p class="aside" data-lang="ko">다수결이 아니라 반반결입니다.</p>
+  </aside>
+</main>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.querySelector('.scene svg');
+  const linksG = svg.querySelector('.links');
+  const nodesG = svg.querySelector('.nodes');
+  const packetsG = svg.querySelector('.packets');
+  const crack = svg.querySelector('.crack');
+  const verdict = document.querySelector('.verdict');
+  const events = document.querySelector('.events');
+  const termEl = document.querySelector('.term');
+
+  const NAMES = TTY.t({ en: ['Minji', 'Junho', 'Seoyeon', 'Jihoon', 'Haeun'], ko: ['민지', '준호', '서연', '지훈', '하은'] });
+  const COLORS = ['#ffcf5c', '#8fd3ff', '#ffb3c7', '#b8e986', '#c9b6ff'];
+  const C = { x: 280, y: 268 }, R = 190;
+  const POS = [-90, -18, 54, 126, 198].map((deg) => {
+    const a = (deg * Math.PI) / 180;
+    return { x: Math.round(C.x + R * Math.cos(a)), y: Math.round(C.y + R * Math.sin(a)) };
+  });
+  const LEFT = [3, 4]; // the side the partition cuts off
+
+  const DISH = {
+    jjajang: { en: 'black-bean', ko: '짜장' },
+    jjamppong: { en: 'spicy', ko: '짬뽕' },
+    half: { en: 'half & half', ko: '짬짜면' },
+  };
+
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+    if (parent) parent.append(e);
+    return e;
+  };
+
+  // Links between every pair, the faint mesh the packets travel on.
+  const links = [];
+  for (let a = 0; a < 5; a++) for (let b = a + 1; b < 5; b++) {
+    links.push({ a, b, line: el('line', { class: 'link', x1: POS[a].x, y1: POS[a].y, x2: POS[b].x, y2: POS[b].y }, linksG) });
+  }
+
+  // Nodes: an avatar, a status ring, an election timer, a badge, a name, and the dish in its log.
+  const nodes = POS.map((p, i) => {
+    const g = el('g', { class: 'node', transform: `translate(${p.x} ${p.y})`, tabindex: '0', role: 'button' }, nodesG);
+    g.setAttribute('aria-label', TTY.t({ en: `${NAMES[i]}: tap to let them nap`, ko: `${NAMES[i]}: 누르면 잠깐 졸아요` }));
+    el('circle', { class: 'ring', r: 52 }, g);
+    const timer = el('circle', { class: 'timer', r: 52, pathLength: 1, 'stroke-dasharray': '1', transform: 'rotate(-90)' }, g);
+    el('circle', { class: 'body', r: 42, fill: COLORS[i] }, g);
+    el('circle', { cx: -14, cy: -6, r: 4.5, fill: '#2b1d14' }, g);
+    el('circle', { cx: 14, cy: -6, r: 4.5, fill: '#2b1d14' }, g);
+    el('path', { d: 'M-12 10 Q0 21 12 10', fill: 'none', stroke: '#2b1d14', 'stroke-width': 3.5, 'stroke-linecap': 'round' }, g);
+    const badge = el('g', { class: 'badge', transform: 'translate(34 -36)' }, g);
+    el('circle', { r: 15, fill: '#f4b400', stroke: '#2b1d14', 'stroke-width': 3 }, badge);
+    el('path', { d: 'M0 -8 L2.4 -2.4 L8.4 -2.4 L3.6 1.4 L5.2 7.6 L0 4 L-5.2 7.6 L-3.6 1.4 L-8.4 -2.4 L-2.4 -2.4 Z', fill: '#fff' }, badge);
+    const zzz = el('text', { class: 'zzz', x: 30, y: -40 }, g);
+    zzz.textContent = 'z z';
+    const name = el('text', { class: 'name', x: 0, y: 76 }, g);
+    name.textContent = NAMES[i];
+    // the dish this node has in its log
+    const chip = el('g', { class: 'chip', transform: `translate(${p.x < C.x - 20 ? -70 : p.x > C.x + 20 ? 70 : 82} ${p.y < C.y ? -8 : 18}) scale(.72)`, opacity: 0 }, g);
+    el('use', { href: '#bowl' }, chip);
+    const topA = el('ellipse', { class: 'bowl-top', cx: 0, cy: -2, rx: 24, ry: 7, 'clip-path': 'url(#left-half)' }, chip);
+    const topB = el('ellipse', { class: 'bowl-top', cx: 0, cy: -2, rx: 24, ry: 7, 'clip-path': 'url(#right-half)' }, chip);
+    const chipLabel = el('text', { y: 50, 'text-anchor': 'middle', style: `font: 700 ${TTY.lang === 'ko' ? 21 : 18}px ${TTY.lang === 'ko' ? "'Gowun Dodum'" : "'Hanken Grotesk'"}, sans-serif; fill: #8a6f5c` }, chip);
+    return { g, timer, chip, topA, topB, chipLabel, napping: false, dish: null };
+  });
+
+  function setDish(i, dish) {
+    const n = nodes[i];
+    n.dish = dish;
+    n.chip.setAttribute('opacity', dish ? 1 : 0);
+    if (!dish) return;
+    const a = dish === 'jjamppong' ? '#e0412a' : '#3d2a1e';
+    const b = dish === 'jjajang' ? '#3d2a1e' : '#e0412a';
+    n.topA.setAttribute('fill', a);
+    n.topB.setAttribute('fill', b);
+    n.chipLabel.textContent = DISH[dish][TTY.lang];
+  }
+  const setRole = (i, role) => {
+    nodes[i].g.classList.remove('follower', 'candidate', 'leader');
+    nodes[i].g.classList.add(role);
+  };
+
+  // A packet: a small dish-coloured dot that travels from one node to another.
+  function packet(from, to, color, ms = 620) {
+    const dot = el('circle', { r: 8, fill: color, stroke: '#fff', 'stroke-width': 2.5 }, packetsG);
+    const a = POS[from], b = POS[to];
+    const anim = dot.animate([
+      { transform: `translate(${a.x}px, ${a.y}px)` },
+      { transform: `translate(${b.x}px, ${b.y}px)` },
+    ], { duration: TTY.reduce ? 1 : ms, easing: 'cubic-bezier(.45, 0, .25, 1)', fill: 'forwards' });
+    return anim.finished.then(() => dot.remove(), () => dot.remove());
+  }
+  const others = (i, pool = [0, 1, 2, 3, 4]) => pool.filter((j) => j !== i && !nodes[j].napping);
+
+  // The log on the right.
+  let tick = 0;
+  function log(text, kind = '') {
+    tick += 1;
+    const li = document.createElement('li');
+    li.className = 'fresh ' + kind;
+    const t = document.createElement('span');
+    t.className = 't';
+    t.textContent = `#${String(tick).padStart(2, '0')}`;
+    const body = document.createElement('span');
+    body.textContent = text;
+    li.append(t, body);
+    events.append(li);
+    while (events.children.length > 7) events.firstElementChild.remove();
+    setTimeout(() => li.classList.remove('fresh'), 1400);
+  }
+  const term = (n) => { termEl.textContent = 'term ' + n; };
+
+  // 서연 → 서연이가, 준호 → 준호가
+  const subject = (name) => {
+    const code = name.charCodeAt(name.length - 1) - 0xac00;
+    return name + (code >= 0 && code % 28 ? '이가' : '가');
+  };
+
+  // ---- the story ----
+  const L = TTY.t({
+    en: {
+      timeout: 'Minji\'s election timer runs out first. She asks everyone for a vote.',
+      leader: 'Minji is leader with 4 votes. She proposes black-bean noodles.',
+      partition: 'Network partition. Jihoon and Haeun can\'t hear the others.',
+      other: 'On the far side, Jihoon times out and starts term 2: spicy seafood noodles.',
+      split: 'Split brain: 3 nodes want black-bean, 2 want spicy. Nobody eats.',
+      heal: 'Partition healed. The logs disagree.',
+      merge: 'Conflict resolved with the only merge that has no conflicts.',
+      commit: 'Committed on all 5 nodes: the half-and-half bowl.',
+      nap: (n) => `${n} is napping. Quorum still holds.`,
+      wake: (n) => `${n} is back and catches up on the log.`,
+    },
+    ko: {
+      timeout: '민지의 선거 타이머가 먼저 끝났어요. 다들 한 표씩 부탁합니다.',
+      leader: '민지가 4표로 리더가 됐어요. 제안: 짜장면.',
+      partition: '네트워크 분할! 지훈이랑 하은이한테 소식이 안 닿아요.',
+      other: '건너편에선 지훈이가 2기를 엽니다. 제안: 짬뽕.',
+      split: '스플릿 브레인. 짜장 셋, 짬뽕 둘. 아무도 못 먹는 중.',
+      heal: '분할 복구. 로그가 서로 다릅니다.',
+      merge: '충돌 없는 유일한 병합으로 해결합니다.',
+      commit: '다섯 노드 모두 커밋: 짬짜면.',
+      nap: (n) => `${subject(n)} 조는 중. 그래도 정족수는 채웠어요.`,
+      wake: (n) => `${subject(n)} 깨서 밀린 로그를 따라잡아요.`,
+    },
+  });
+
+  let run = 0;
+  const wait = (ms, id) => new Promise((go, stop) => setTimeout(() => (id === run ? go() : stop('stale')), TTY.reduce ? 0 : ms));
+
+  function reset() {
+    events.replaceChildren();
+    tick = 0;
+    term(0);
+    nodes.forEach((n, i) => { setRole(i, 'follower'); setDish(i, null); n.napping = false; n.g.classList.remove('napping'); n.timer.style.opacity = 0; });
+    links.forEach((l) => l.line.classList.remove('cut'));
+    crack.getAnimations().forEach((a) => a.cancel());
+    crack.style.strokeDashoffset = 1;
+    verdict.getAnimations().forEach((a) => a.cancel());
+    verdict.style.opacity = 0;
+    packetsG.replaceChildren();
+  }
+
+  function showVerdict() {
+    verdict.style.opacity = 1;
+    if (!TTY.reduce) verdict.animate([{ opacity: 0, scale: .6 }, { opacity: 1, scale: 1.06, offset: .7 }, { opacity: 1, scale: 1 }], { duration: 700, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
+  }
+
+  async function story() {
+    const id = ++run;
+    reset();
+    if (TTY.reduce) {
+      [L.timeout, L.leader, L.partition, L.split, L.heal, L.commit].forEach((t, i) => log(t, i === 2 || i === 3 ? 'alert' : i === 5 ? 'win' : ''));
+      [...events.children].forEach((li) => li.classList.remove('fresh'));
+      nodes.forEach((n, i) => { setRole(i, i === 0 ? 'leader' : 'follower'); setDish(i, 'half'); });
+      term(3);
+      showVerdict();
+      return;
+    }
+    try {
+      await wait(500, id);
+      // Term 1: Minji's timer runs out first.
+      nodes[0].timer.style.opacity = 1;
+      await nodes[0].timer.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: 1 }], { duration: 1400, easing: 'linear', fill: 'forwards' }).finished;
+      if (id !== run) return;
+      nodes[0].timer.style.opacity = 0;
+      setRole(0, 'candidate');
+      term(1);
+      log(L.timeout);
+      await Promise.all(others(0).map((j) => packet(0, j, '#ff8a3d')));
+      await wait(150, id);
+      await Promise.all(others(0).map((j) => packet(j, 0, '#2ec27e')));
+      setRole(0, 'leader');
+      log(L.leader);
+      await wait(400, id);
+      await Promise.all(others(0).map((j) => packet(0, j, '#3d2a1e', 700)));
+      [0, ...others(0)].forEach((j) => setDish(j, 'jjajang'));
+      await wait(900, id);
+
+      // The partition: a crack runs through the cluster.
+      crack.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 650, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'forwards' });
+      svg.animate([{ transform: 'translate(0, 0)' }, { transform: 'translate(-5px, 2px)' }, { transform: 'translate(4px, -2px)' }, { transform: 'none' }], { duration: 360, delay: 380 });
+      await wait(420, id);
+      links.forEach((l) => { if (LEFT.includes(l.a) !== LEFT.includes(l.b)) l.line.classList.add('cut'); });
+      log(L.partition, 'alert');
+      await wait(900, id);
+
+      // The far side elects its own leader and its own lunch.
+      nodes[3].timer.style.opacity = 1;
+      await nodes[3].timer.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: 1 }], { duration: 900, fill: 'forwards' }).finished;
+      if (id !== run) return;
+      nodes[3].timer.style.opacity = 0;
+      setRole(3, 'candidate');
+      term(2);
+      await packet(3, 4, '#ff8a3d');
+      await packet(4, 3, '#2ec27e');
+      setRole(3, 'leader');
+      log(L.other);
+      await packet(3, 4, '#e0412a', 650);
+      setDish(3, 'jjamppong');
+      setDish(4, 'jjamppong');
+      await wait(500, id);
+      log(L.split, 'alert');
+      // Both leaders keep shouting their dish at the gap.
+      await Promise.all([packet(0, 4, '#3d2a1e', 500).catch(() => {}), packet(3, 2, '#e0412a', 500)]);
+      await wait(700, id);
+
+      // Heal: the crack closes, logs collide, the bowl is split.
+      crack.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: -1 }], { duration: 600, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'forwards' });
+      links.forEach((l) => l.line.classList.remove('cut'));
+      log(L.heal);
+      await Promise.all([packet(0, 3, '#3d2a1e'), packet(3, 0, '#e0412a'), packet(1, 4, '#3d2a1e'), packet(4, 2, '#e0412a')]);
+      setRole(3, 'follower');
+      term(3);
+      log(L.merge);
+      await wait(400, id);
+      await Promise.all(others(0).map((j) => packet(0, j, '#7a3a25', 700)));
+      [0, 1, 2, 3, 4].forEach((j) => setDish(j, 'half'));
+      log(L.commit, 'win');
+      showVerdict();
+    } catch (e) { /* replaced by a newer run */ }
+  }
+
+  // Tapping a node lets it nap for a while; the cluster carries on.
+  nodes.forEach((n, i) => {
+    const nap = () => {
+      if (n.napping || i === 0) return;
+      n.napping = true;
+      n.g.classList.add('napping');
+      log(L.nap(NAMES[i]));
+      setTimeout(() => {
+        n.napping = false;
+        n.g.classList.remove('napping');
+        log(L.wake(NAMES[i]));
+      }, 3500);
+    };
+    n.g.addEventListener('click', nap);
+    n.g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nap(); } });
+  });
+
+  document.querySelectorAll('.again').forEach((b) => b.addEventListener('click', story));
+
+  // Before the story starts every node is a quiet follower.
+  nodes.forEach((n, i) => setRole(i, 'follower'));
+  TTY.onShow(story);
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>

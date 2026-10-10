@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Cron Garden | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Petrona:ital,wght@0,500;0,700;1,500&family=Azeret+Mono:wght@500;600&family=Gowun+Dodum&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="sebul dunggeun"></script>
+<style>
+  /* Healthy habits written as cron jobs, one plant per job. A day runs past in fifteen
+     seconds; whenever a job fires, its line lights up and its plant grows. */
+  :root {
+    --sky: #ffe1c2;
+    --sky-low: #ffd0a6;
+    --text: #23412f;
+    --paper: #f8f4e4;
+    --rule: rgba(35, 65, 47, .14);
+    --green: #3f8f4e;
+    --leaf: #6cbf5f;
+    --soil: #5b3a24;
+    --wood: #a8743f;
+    --glow: #ffe58a;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    container-type: size;
+    overflow: hidden;
+    color: var(--text);
+    background: linear-gradient(180deg, var(--sky) 0%, var(--sky-low) 100%);
+    font-family: 'Petrona', Georgia, serif;
+  }
+  .lang-ko body { font-family: 'Gowun Dodum', 'Petrona', sans-serif; }
+  .mono { font-family: 'Azeret Mono', ui-monospace, monospace; }
+
+  .wrap {
+    display: grid;
+    height: 100%;
+    padding: 4.4cqmin 5cqmin;
+    gap: 2cqmin 4cqmin;
+    grid-template-columns: 1.15fr 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "head card" "garden card";
+  }
+  @container (orientation: portrait) {
+    .wrap { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "head" "garden" "card"; gap: 1.6cqmin; }
+  }
+
+  .head { grid-area: head; color: var(--head, var(--text)); }
+  .head h1 { font-size: max(26px, 5.6cqmin); font-weight: 700; line-height: 1.05; letter-spacing: -.01em; }
+  .head h1 > font-kku { color: var(--head, var(--text)); }
+  .clock { margin-top: 1.2cqmin; font-size: max(14px, 2.6cqmin); font-weight: 600; letter-spacing: .02em; }
+
+  .garden { grid-area: garden; min-height: 0; display: grid; }
+  .garden svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+  .card {
+    grid-area: card;
+    align-self: center;
+    padding: 3.4cqmin 3.6cqmin 3cqmin;
+    background: repeating-linear-gradient(transparent 0 calc(2.9em - 1px), var(--rule) calc(2.9em - 1px) 2.9em), var(--paper);
+    border-radius: 6px;
+    box-shadow: 0 1.4cqmin 3.6cqmin rgba(40, 30, 10, .22);
+    font-size: max(12px, 1.9cqmin);
+  }
+  .card h2 { font-size: 1.35em; font-weight: 700; margin-bottom: .5em; }
+  .jobs { list-style: none; padding: 0; }
+  .job {
+    display: grid;
+    grid-template-columns: 1.4em 8.6em 1fr;
+    align-items: baseline;
+    gap: .2em .7em;
+    padding: .55em .4em;
+    border-radius: 4px;
+  }
+  .job .n { color: rgba(35, 65, 47, .5); }
+  .job .expr { font-size: .92em; white-space: nowrap; }
+  .job .what { line-height: 1.3; }
+  .lang-ko .job .what { word-break: keep-all; }
+  .job .st { grid-column: 3; font-size: .86em; color: rgba(35, 65, 47, .55); white-space: nowrap; }
+  .job.done .st { color: var(--green); font-weight: 600; }
+  .note { margin-top: .9em; font-size: .86em; line-height: 1.45; color: rgba(35, 65, 47, .7); }
+  .lang-ko .note { word-break: keep-all; }
+  .final { min-height: 1.4em; margin-top: .7em; font-size: 1.5em; font-weight: 700; color: var(--green); visibility: hidden; }
+  .final.on { visibility: visible; }
+  .final > font-kku { color: var(--green); }
+  @container (orientation: portrait) {
+    .card { padding: 2.6cqmin 3.4cqmin; font-size: 12px; }
+    .card h2 { display: none; }
+    .job { padding: .3em .2em; grid-template-columns: 1.2em 7.6em 1fr auto; }
+    .job .st { grid-column: 4; grid-row: 1; text-align: right; }
+    .note { display: none; }
+    .final { margin-top: .3em; font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <h1 data-lang="en">The Cron Garden</h1>
+    <h1 data-lang="ko"><font-kku font="sebul" size="1em">크론 정원</font-kku></h1>
+    <p class="clock mono" aria-live="off"></p>
+  </header>
+
+  <div class="garden">
+    <svg viewBox="0 0 600 360" preserveAspectRatio="xMidYMax meet" role="img">
+      <title data-lang="en">A raised garden bed with five plants, one for each scheduled habit</title>
+      <title data-lang="ko">습관 하나에 식물 하나, 다섯 식물이 자라는 화단</title>
+      <defs><radialGradient id="moonglow"><stop offset="0" stop-color="#fff6c4" stop-opacity=".95"/><stop offset=".55" stop-color="#fff6c4" stop-opacity=".35"/><stop offset="1" stop-color="#fff6c4" stop-opacity="0"/></radialGradient></defs>
+      <g class="sky"><circle class="sun" r="20" fill="#ffd166"/><circle class="moon" r="14" fill="#f4f1de" opacity="0"/></g>
+      <g class="plants"></g>
+      <g class="bed">
+        <rect x="10" y="286" width="580" height="22" rx="4" fill="#4a2f1d"/>
+        <rect x="10" y="304" width="580" height="50" rx="6" fill="var(--wood)"/>
+        <path d="M10 322 H590 M10 338 H590" stroke="#8c5e31" stroke-width="2"/>
+      </g>
+      <g class="stakes"></g>
+      <g class="fx"></g>
+    </svg>
+  </div>
+
+  <section class="card">
+    <h2 data-lang="en">Today’s crontab</h2>
+    <h2 data-lang="ko">오늘의 크론탭</h2>
+    <ol class="jobs"></ol>
+    <p class="note" data-lang="en">Fun fact: */50 fires at :00 and :50 of every hour, not every 50 minutes. So you stretch twice an hour. Cron knows best.</p>
+    <p class="note" data-lang="ko">참고로 */50은 50분마다가 아니라 매시 0분과 50분에 돌아요. 그래서 한 시간에 두 번 스트레칭. 크론이 다 알아서 해요.</p>
+    <p class="final" aria-live="polite"></p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const SVG = 'http://www.w3.org/2000/svg';
+  const $ = (s) => document.querySelector(s);
+  const svg = $('.garden svg');
+  const plantsG = $('.plants'), stakesG = $('.stakes'), fx = $('.fx');
+  const sun = $('.sun'), moon = $('.moon');
+  const clock = $('.clock'), jobsEl = $('.jobs'), finalEl = $('.final');
+  const el = (tag, attrs, parent) => {
+    const n = document.createElementNS(SVG, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.append(n);
+    return n;
+  };
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const still = TTY.reduce;
+
+  const START = 6 * 60, END = 24 * 60, DAY_MS = 14000;
+  const JOBS = [
+    { expr: '0 8 * * *', x: 70, at: [8 * 60] },
+    { expr: '*/50 * * * *', x: 185, at: [] },
+    { expr: '30 12 * * *', x: 300, at: [12 * 60 + 30] },
+    { expr: '0 22 * * *', x: 415, at: [22 * 60] },
+    { expr: '@weekly', x: 530, at: [END] },
+  ];
+  for (let m = START; m < END; m += 10) if (m % 60 === 0 || m % 60 === 50) JOBS[1].at.push(m);
+  const WHAT = TTY.t({
+    en: ['drink water', 'stand up and stretch', 'eat lunch away from the desk', 'phone down', 'call someone you like'],
+    ko: ['물 한 잔 마시기', '일어나서 기지개 켜기', '자리 떠나서 점심 먹기', '휴대폰 내려놓기', '좋아하는 사람에게 전화하기'],
+  });
+  const DAYS = TTY.t({ en: ['Saturday', 'Sunday'], ko: ['토요일', '일요일'] });
+  const ST = TTY.t({
+    en: { next: (t) => `next ${t}`, ran: (t) => `ran ${t}`, times: (n) => `ran ×${n}` },
+    ko: { next: (t) => `다음 ${t}`, ran: (t) => `${t} 완료`, times: (n) => `${n}번 완료` },
+  });
+  const FINAL = TTY.t({ en: 'All jobs succeeded. You did, too.', ko: '모든 작업 성공. 당신도요.' });
+  const hhmm = (m) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+
+  /* ---- Crontab rows ---- */
+  const rows = JOBS.map((job, i) => {
+    const li = document.createElement('li');
+    li.className = 'job';
+    li.innerHTML = `<span class="n mono">${i + 1}</span><span class="expr mono"></span><span class="what"></span><span class="st mono"></span>`;
+    li.querySelector('.expr').textContent = job.expr;
+    li.querySelector('.what').textContent = WHAT[i];
+    jobsEl.append(li);
+    return li;
+  });
+
+  /* ---- Stakes ---- */
+  JOBS.forEach((job, i) => {
+    el('rect', { x: job.x + 26, y: 262, width: 5, height: 30, fill: '#8c5e31' }, stakesG);
+    el('rect', { x: job.x + 16, y: 250, width: 25, height: 18, rx: 3, fill: '#e9d5a7', stroke: '#8c5e31', 'stroke-width': 1.5 }, stakesG);
+    const t = el('text', { x: job.x + 28.5, y: 263.5, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 600, fill: '#5b3a24', class: 'mono' }, stakesG);
+    t.textContent = String(i + 1);
+  });
+
+  /* ---- Plants ---- */
+  const grow = (node, ms, delay = 0) => {
+    if (still) return;
+    const len = node.getTotalLength();
+    node.style.strokeDasharray = `${len}`;
+    node.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: ms, delay, easing: 'cubic-bezier(.3, .7, .3, 1)', fill: 'backwards' });
+  };
+  const pop = (node, ms = 420, delay = 0) => {
+    if (still) return;
+    node.style.transformBox = 'fill-box';
+    node.style.transformOrigin = node.dataset.origin || 'center';
+    node.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.15)', offset: .7 }, { transform: 'scale(1)' }],
+      { duration: ms, delay, easing: 'cubic-bezier(.3, 1.4, .5, 1)', fill: 'backwards' });
+  };
+  // A rotated shape lives inside its own group; the group takes the pop animation. (CSS
+  // transform-origin would otherwise also apply to the shape's own rotate(a cx cy).)
+  const leaf = (g, x, y, angle, size, color = 'var(--leaf)') => {
+    const wrap = el('g', {}, g);
+    el('ellipse', { cx: x, cy: y, rx: size, ry: size * .45, fill: color, transform: `rotate(${angle} ${x} ${y})` }, wrap);
+    return wrap;
+  };
+  const seedling = (g, x) => {
+    const s = el('g', { class: 'seedling' }, g);
+    el('path', { d: `M${x} 288 v-14`, stroke: 'var(--green)', 'stroke-width': 3, 'stroke-linecap': 'round' }, s);
+    leaf(s, x - 6, 272, -30, 7); leaf(s, x + 6, 272, 30, 7);
+    return s;
+  };
+
+  const plants = JOBS.map((job, i) => {
+    const g = el('g', { class: `plant p${i}` }, plantsG);
+    return { g, sprout: seedling(g, job.x), count: 0 };
+  });
+
+  // 1. A fern that unfurls after a drink.
+  function fireWater(p) {
+    const x = JOBS[0].x;
+    if (!still) for (let k = 0; k < 3; k++) {
+      const d = el('path', { d: 'M0 -6 C 4 0, 4 4, 0 5 C -4 4, -4 0, 0 -6 Z', fill: '#69b7ff', transform: `translate(${x - 14 + k * 14} 150)` }, fx);
+      d.animate([{ transform: `translate(${x - 14 + k * 14}px, 150px)`, opacity: 1 }, { transform: `translate(${x - 14 + k * 14}px, 270px)`, opacity: .2 }],
+        { duration: 600, delay: k * 120, easing: 'cubic-bezier(.5, 0, 1, .6)' }).finished.then(() => d.remove());
+    }
+    p.sprout.remove();
+    const fronds = [[-62, 150], [-28, 112], [0, 96], [30, 112], [64, 152]];
+    fronds.forEach(([dx, h], k) => {
+      const tip = { x: x + dx, y: 288 - h };
+      const path = el('path', { d: `M${x} 288 Q${x + dx * .2} ${288 - h * .9} ${tip.x} ${tip.y}`, fill: 'none', stroke: 'var(--green)', 'stroke-width': 3.2, 'stroke-linecap': 'round' }, p.g);
+      grow(path, 900, 700 + k * 90);
+      const len = path.getTotalLength();
+      for (let j = 1; j <= 6; j++) {
+        const pt = path.getPointAtLength(len * (j / 7));
+        const l = leaf(p.g, pt.x + (dx < 0 ? -5 : 5), pt.y, dx < 0 ? -35 : 35, 7 - j * .5);
+        pop(l, 360, 900 + k * 90 + j * 70);
+      }
+    });
+  }
+
+  // 2. A vine that adds a pair of leaves at every stretch.
+  const VINE_MAX = 13;
+  let vine = null;
+  function fireStretch(p) {
+    const x = JOBS[1].x;
+    if (!vine) {
+      p.sprout.remove();
+      vine = el('path', { d: `M${x} 288 L${x} 288`, fill: 'none', stroke: 'var(--green)', 'stroke-width': 3.4, 'stroke-linecap': 'round' }, p.g);
+    }
+    p.count += 1;
+    const n = Math.min(p.count, VINE_MAX);
+    if (p.count <= VINE_MAX) {
+      const y = 288 - n * 15;
+      const sway = (k) => x + Math.sin(k * .9) * 7;
+      let d = `M${x} 288`;
+      for (let k = 1; k <= n; k++) d += ` L${sway(k).toFixed(1)} ${288 - k * 15}`;
+      vine.setAttribute('d', d);
+      const lx = sway(n);
+      const a = leaf(p.g, lx - 9, y, -25, 9);
+      const b = leaf(p.g, lx + 9, y + 3, 25, 9);
+      pop(a, 300); pop(b, 300, 60);
+    } else if (!still) {
+      p.g.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(1.6deg)' }, { transform: 'rotate(-1.2deg)' }, { transform: 'rotate(0)' }],
+        { duration: 500, easing: 'ease-in-out' });
+      p.g.style.transformBox = 'fill-box'; p.g.style.transformOrigin = '50% 100%';
+    }
+  }
+
+  // 3. A tomato plant that fruits at lunch.
+  function fireLunch(p) {
+    const x = JOBS[2].x;
+    p.sprout.remove();
+    const stems = [`M${x} 288 C ${x} 250, ${x - 4} 220, ${x} 168`, `M${x} 240 C ${x - 22} 230, ${x - 36} 214, ${x - 42} 196`, `M${x} 214 C ${x + 22} 204, ${x + 34} 190, ${x + 40} 176`];
+    stems.forEach((d, k) => grow(el('path', { d, fill: 'none', stroke: 'var(--green)', 'stroke-width': k ? 2.6 : 3.6, 'stroke-linecap': 'round' }, p.g), 700, k * 160));
+    [[x - 14, 252, -40], [x + 14, 232, 40], [x - 10, 200, -35], [x + 10, 186, 35], [x - 6, 172, -20]].forEach(([lx, ly, a], k) => pop(leaf(p.g, lx, ly, a, 11), 380, 500 + k * 70));
+    [[x - 44, 206, 13], [x + 42, 188, 12], [x - 6, 226, 14], [x + 14, 162, 10]].forEach(([cx, cy, r], k) => {
+      const t = el('g', {}, p.g);
+      el('circle', { cx, cy, r, fill: '#e2483a' }, t);
+      el('circle', { cx: cx - r * .35, cy: cy - r * .35, r: r * .28, fill: '#ff8c78' }, t);
+      el('path', { d: `M${cx - 5} ${cy - r + 1} l5 3 l5 -3 M${cx} ${cy - r + 4} v-6`, stroke: '#2f7a3c', 'stroke-width': 2, fill: 'none', 'stroke-linecap': 'round' }, t);
+      pop(t, 480, 950 + k * 140);
+    });
+  }
+
+  // 4. A moonflower that opens when the phone goes down.
+  function firePhone(p) {
+    const x = JOBS[3].x;
+    p.sprout.remove();
+    const stem = el('path', { d: `M${x} 288 C ${x + 6} 250, ${x - 8} 214, ${x} 178`, fill: 'none', stroke: 'var(--green)', 'stroke-width': 3.2, 'stroke-linecap': 'round' }, p.g);
+    grow(stem, 600);
+    pop(leaf(p.g, x - 12, 246, -30, 12), 360, 300); pop(leaf(p.g, x + 12, 222, 30, 11), 360, 380);
+    const glow = el('circle', { cx: x, cy: 170, r: 46, fill: 'url(#moonglow)' }, p.g);
+    pop(glow, 900, 600);
+    const flower = el('g', {}, p.g);
+    for (let k = 0; k < 5; k++) {
+      const petal = el('g', {}, flower);
+      el('ellipse', { cx: x, cy: 154, rx: 9, ry: 17, fill: '#fbfaf2', stroke: '#e6e2c9', 'stroke-width': 1, transform: `rotate(${k * 72} ${x} 170)` }, petal);
+      pop(petal, 520, 700 + k * 80);
+    }
+    pop(el('circle', { cx: x, cy: 170, r: 6, fill: '#f4d35e' }, flower), 300, 1150);
+  }
+
+  // 5. Once a week: the call. It blooms at midnight, as the day closes.
+  function fireWeekly(p) {
+    const x = JOBS[4].x;
+    p.sprout.remove();
+    grow(el('path', { d: `M${x} 288 C ${x - 4} 252, ${x + 6} 226, ${x} 196`, fill: 'none', stroke: 'var(--green)', 'stroke-width': 3.2, 'stroke-linecap': 'round' }, p.g), 600);
+    pop(leaf(p.g, x - 13, 252, -35, 13), 360, 250); pop(leaf(p.g, x + 13, 236, 35, 12), 360, 320);
+    const bloom = el('g', {}, p.g);
+    [[-12, 0, -18], [12, 0, 18], [0, -6, 0]].forEach(([dx, dy, a]) => el('ellipse', { cx: x + dx, cy: 180 + dy, rx: 11, ry: 19, fill: '#ff7aa8', transform: `rotate(${a} ${x + dx} ${200 + dy})` }, bloom));
+    el('path', { d: `M${x} 186 C ${x - 9} 178, ${x - 9} 170, ${x - 3} 170 C ${x} 170, ${x} 173, ${x} 175 C ${x} 173, ${x} 170, ${x + 3} 170 C ${x + 9} 170, ${x + 9} 178, ${x} 186 Z`, fill: '#fff' }, bloom);
+    bloom.dataset.origin = '50% 100%';
+    pop(bloom, 640, 600);
+    if (!still) for (let k = 0; k < 7; k++) {
+      const h = el('path', { d: 'M0 3 C -5 -1, -4 -6, 0 -3 C 4 -6, 5 -1, 0 3 Z', fill: '#ff7aa8' }, fx);
+      const dx = rand(-60, 60), dy = rand(-110, -50);
+      h.animate([{ transform: `translate(${x}px, 176px) scale(.6)`, opacity: 1 }, { transform: `translate(${x + dx}px, ${176 + dy}px) scale(1.2)`, opacity: 0 }],
+        { duration: rand(900, 1400), delay: 800 + k * 60, easing: 'cubic-bezier(.2, .7, .4, 1)', fill: 'backwards' }).finished.then(() => h.remove());
+    }
+  }
+  const FIRE = [fireWater, fireStretch, fireLunch, firePhone, fireWeekly];
+
+  /* ---- Sky and time ---- */
+  const SKY = [
+    [360, '#ffd9b8', '#ffc9a0', '#23412f'],
+    [600, '#bfe6ff', '#e3f4ff', '#23412f'],
+    [960, '#a9dcff', '#fff0c8', '#23412f'],
+    [1140, '#ffb38a', '#c58fd8', '#2b2340'],
+    [1260, '#3a3f86', '#6b5aa8', '#f3f0ff'],
+    [1440, '#141a3d', '#2a2f66', '#f3f0ff'],
+  ];
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const mix = (a, b, t) => `rgb(${hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * t)).join(',')})`;
+  function paintSky(m) {
+    m = Math.floor(m);
+    lastMinute = m;
+    let k = SKY.findIndex((s) => s[0] > m);
+    if (k <= 0) k = k === 0 ? 1 : SKY.length - 1;
+    const [a, b] = [SKY[k - 1], SKY[k]];
+    const t = Math.min(1, Math.max(0, (m - a[0]) / (b[0] - a[0])));
+    document.body.style.setProperty('--sky', mix(a[1], b[1], t));
+    document.body.style.setProperty('--sky-low', mix(a[2], b[2], t));
+    document.body.style.setProperty('--head', mix(a[3], b[3], t));
+    // Sun from 06:00 to 19:00, moon after 19:30; on wide screens there is more sky to cross.
+    const top = tall ? 330 : 120;
+    const sunT = (m - 360) / (1140 - 360);
+    sun.setAttribute('cx', 40 + sunT * 520);
+    sun.setAttribute('cy', 150 - Math.sin(Math.min(1, Math.max(0, sunT)) * Math.PI) * top);
+    sun.setAttribute('opacity', m < 1170 ? 1 : 0);
+    const moonT = Math.min(1, Math.max(0, (m - 1170) / 270));
+    moon.setAttribute('cx', 80 + moonT * 380);
+    moon.setAttribute('cy', 120 - Math.sin(moonT * Math.PI * .8) * (tall ? 260 : 80));
+    moon.setAttribute('opacity', m >= 1170 ? .95 : 0);
+    const day = m >= END ? DAYS[1] : DAYS[0];
+    clock.textContent = `${day} ${hhmm(m)}`;
+  }
+
+  /* ---- The day ---- */
+  let run = 0;
+  function fire(i, m) {
+    const p = plants[i];
+    FIRE[i](p);
+    const row = rows[i];
+    row.classList.add('done');
+    row.querySelector('.st').textContent = i === 1 ? ST.times(p.count) : ST.ran(i === 4 ? `${DAYS[1].slice(0, 3)} 00:00` : hhmm(m));
+    if (!still) row.animate([{ background: 'rgba(255, 229, 138, .95)' }, { background: 'rgba(255, 229, 138, 0)' }], { duration: 900, easing: 'ease-out' });
+  }
+  function reset() {
+    plantsG.replaceChildren(); fx.replaceChildren();
+    vine = null;
+    JOBS.forEach((job, i) => { plants[i] = { g: el('g', { class: `plant p${i}` }, plantsG), sprout: null, count: 0 }; plants[i].sprout = seedling(plants[i].g, job.x); });
+    rows.forEach((r, i) => { r.classList.remove('done'); r.querySelector('.st').textContent = ST.next(i === 4 ? `${DAYS[1].slice(0, 3)} 00:00` : hhmm(JOBS[i].at[0])); });
+    finalEl.classList.remove('on');
+    finalEl.replaceChildren();
+  }
+  function finish() {
+    if (TTY.lang === 'ko') {
+      const k = document.createElement('font-kku');
+      k.setAttribute('font', 'dunggeun');
+      k.setAttribute('size', '1em');
+      k.textContent = FINAL;
+      finalEl.replaceChildren(k);
+    } else {
+      finalEl.textContent = FINAL;
+    }
+    finalEl.classList.add('on');
+    if (!still) finalEl.animate([{ transform: 'translateY(30%)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 500, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
+  }
+
+  function day() {
+    const mine = ++run;
+    reset();
+    if (still) {
+      JOBS.forEach((job, i) => job.at.forEach((m) => fire(i, m)));
+      paintSky(END);
+      finish();
+      return;
+    }
+    const next = JOBS.map(() => 0);
+    const t0 = performance.now();
+    const tick = (now) => {
+      if (mine !== run) return;
+      const m = Math.min(END, START + ((now - t0) / DAY_MS) * (END - START));
+      paintSky(m);
+      JOBS.forEach((job, i) => { while (next[i] < job.at.length && job.at[next[i]] <= m) fire(i, job.at[next[i]++]); });
+      if (m < END) requestAnimationFrame(tick);
+      else {
+        setTimeout(() => { if (mine === run) finish(); }, 1200);
+        setTimeout(() => { if (mine === run) day(); }, 12000);
+      }
+    };
+    requestAnimationFrame(tick);
+  }
+
+  // Tap the garden to water everything once more: every plant gives a little wiggle.
+  svg.addEventListener('click', () => {
+    if (still) return;
+    plants.forEach((p, i) => {
+      p.g.style.transformBox = 'fill-box'; p.g.style.transformOrigin = '50% 100%';
+      p.g.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(2.4deg)' }, { transform: 'rotate(-2deg)' }, { transform: 'rotate(0)' }], { duration: 700, delay: i * 70, easing: 'ease-in-out' });
+    });
+  });
+
+  // Landscape screens get a taller sky above the bed so the garden fills its column.
+  let tall = false;
+  let lastMinute = START;
+  const fit = () => {
+    tall = innerWidth > innerHeight;
+    svg.setAttribute('viewBox', tall ? '0 -220 600 580' : '0 0 600 360');
+    paintSky(lastMinute);
+  };
+  addEventListener('resize', fit);
+  fit();
+  reset();
+  TTY.onShow(() => setTimeout(day, still ? 0 : 500));
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>
