@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Friday Deploys | tty.link</title>
+<title>Friday, 4:59 PM: Deploy | tty.link</title>
 <script src="/pages/_kit.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -400,6 +400,7 @@
     clips.append(b);
   });
   const head = document.querySelector('.head');
+  document.title = TTY.t({ en: 'Friday, 4:59 PM: Deploy', ko: '금요일 오후 4시 59분, 배포' }) + ' | tty.link';
   const cues = document.querySelector('.cues');
   let at = 0;
   SCENES.forEach((s, i) => {
@@ -431,12 +432,12 @@
     clearTimeout(timer);
     show(i);
     if (TTY.reduce) return;
-    // The playhead runs from this clip's start to its end.
+    // The playhead runs from this clip's start to its end. It moves in percent of the
+    // strip, so it stays on the right clip when the window is resized.
     const before = SCENES.slice(0, i).reduce((a, s) => a + s.ms, 0);
-    const width = clips.getBoundingClientRect().width;
-    const at = (ms) => (ms / TOTAL) * width;
+    const at = (ms) => (ms / TOTAL) * 100;
     if (headAnim) headAnim.cancel();
-    headAnim = head.animate([{ transform: `translateX(${at(before)}px)` }, { transform: `translateX(${at(before + SCENES[i].ms)}px)` }],
+    headAnim = head.animate([{ left: `${at(before)}%` }, { left: `${at(before + SCENES[i].ms)}%` }],
       { duration: SCENES[i].ms, fill: 'forwards' });
     timer = setTimeout(() => go((i + 1) % SCENES.length), SCENES[i].ms);
   }

@@ -78,8 +78,10 @@
   .num { font-family: 'Shadows Into Light', cursive; font-size: 7cqi; line-height: .9; color: var(--marker); }
   .lang-ko .num { font-family: 'Nanum Pen Script', cursive; }
   .item h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 1.4cqi 2.4cqi; font-size: 4.8cqi; font-weight: 600; line-height: 1.25; }
-  .chip { padding: .5cqi 2cqi; border-radius: 99px; border: .35cqi solid var(--sev); color: var(--sev); font-size: 3cqi; font-weight: 600; white-space: nowrap; }
-  .chip > font-kku { color: var(--sev); }
+  /* Severity chips are plain text in the severity colour, at a size that stays legible;
+     dojang (which paints its own red ink) is kept for the big Retest stamp only. */
+  .chip { padding: .5cqi 2cqi; border-radius: 99px; border: max(1px, .35cqi) solid var(--sev); color: var(--sev); font-size: max(11px, 3.2cqi); font-weight: 600; line-height: 1.3; white-space: nowrap; }
+  .lang-ko .chip { font-family: 'IBM Plex Sans KR', sans-serif; font-weight: 600; }
   .note { grid-column: 2; font-size: 4.2cqi; line-height: 1.45; color: var(--soft); }
   .note > font-kku { color: #4a4f55; }
   .item:not(.latest) .note { display: none; }
@@ -309,7 +311,7 @@
     name.textContent = title;
     const chip = document.createElement('span');
     chip.className = 'chip';
-    if (ko) chip.append(kku('dojang', '3.4cqi', sev.ko)); else chip.textContent = sev.en;
+    chip.textContent = ko ? sev.ko : sev.en;
     h.append(name, chip);
     const p = document.createElement('p');
     p.className = 'note';

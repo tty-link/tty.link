@@ -76,15 +76,19 @@
     transition: left .9s cubic-bezier(.3, 1.3, .5, 1), top .9s cubic-bezier(.3, 1.3, .5, 1);
   }
   .icon svg { width: clamp(30px, 6.6cqmin, 58px); height: clamp(30px, 6.6cqmin, 58px); filter: drop-shadow(0 2px 2px rgba(0,0,0,.15)); }
+  /* Labels never go below 11px and wrap within the spacing of the smile, so neighbours
+     never touch: 8% of the width apart on wide stages (the cap is 7.8%), about 14% on tall ones. */
   .icon span {
-    max-width: 100%;
+    width: max-content;
+    max-width: min(100%, 7.8cqw);
+    min-width: min-content;
     padding: .1em .4em;
     border-radius: 4px;
-    font-size: clamp(9px, 1.55cqmin, 12.5px);
+    font-size: clamp(11px, 1.55cqmin, 12.5px);
     font-weight: 600;
     line-height: 1.2;
     text-align: center;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
     color: #fff;
     text-shadow: 0 1px 2px rgba(0,0,0,.45);
   }
@@ -183,6 +187,14 @@
   .dialog button:hover { filter: brightness(.95); }
 
   .cursor { position: absolute; left: 0; top: 0; z-index: 20; width: clamp(18px, 3.2cqmin, 28px); pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+
+  /* On a phone the message to Mom is a one-line banner over the status bar, like a real
+     notification, so it never covers the title. */
+  @media (max-aspect-ratio: 9/10) { .icon span { max-width: min(100%, 13.5cqw); } }
+  @media (max-width: 560px) {
+    .toast { top: 3px; left: 6px; right: 6px; width: auto; padding: .5em .8em; border-radius: 12px; font-size: 11px; line-height: 1.3; }
+    .toast b { display: inline; margin: 0 .6em 0 0; }
+  }
 
   @media (prefers-reduced-motion: reduce) { .icon { transition: none; } }
 </style>
@@ -330,13 +342,18 @@
     const el = document.createElement('div');
     el.className = 'icon';
     el.innerHTML = `<svg viewBox="0 0 64 64">${SHAPES[d.kind]}</svg><span></span>`;
-    el.querySelector('span').textContent = d.name;
+    // Let long file names wrap after a dot or underscore rather than mid-word.
+    el.querySelector('span').textContent = d.name.replace(/([._])/g, '$1\u200b');
     desk.append(el);
     return Object.assign(d, { el });
   });
   // On tall screens the smile is drawn wider so the icons do not sit on each other.
   const place = (icon, [x, y], smile) => {
-    if (smile && innerWidth < innerHeight * .9) { x = 50 + (x - 50) * 1.75; y = 22 + (y - 30) * 1.05; }
+    if (smile && innerWidth < innerHeight * .9) { x = 50 + (x - 50) * 1.75; y = 29 + (y - 30) * .95; }
+    // Keep the whole label on screen (labels can be wider than the icon near the edges).
+    const W = desk.clientWidth || innerWidth;
+    const half = Math.max(icon.el.offsetWidth, icon.el.querySelector('span').offsetWidth) / 2 + 6;
+    x = Math.min(Math.max(x / 100 * W, half), W - half) / W * 100;
     icon.el.style.left = x + '%'; icon.el.style.top = y + '%';
   };
   const temp = icons.find((i) => i.id === 'temp');

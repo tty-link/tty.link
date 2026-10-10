@@ -79,6 +79,9 @@
   .meter { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .6em; margin-top: 1.2cqmin; font-size: .72em; font-weight: 700; }
   .bar { height: max(8px, 1.9cqmin); padding: calc(var(--px) * .6); background: var(--navy); }
   .bar i { display: block; height: 100%; width: var(--v, 100%); background: var(--hp-hi); transition: width 1.1s steps(18), background-color .2s steps(1); }
+  @media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+  /* Fallback for screens too coarse for pixel Hangul (see sharpenPixelText). */
+  font-kku[font="dunggeun"] { color: var(--navy); }
   .bar.mid i { background: var(--hp-mid); }
   .bar.low i { background: var(--hp-lo); }
   .bar.coffee i { background: var(--coffee); }
@@ -179,7 +182,7 @@
   <div class="box info foe-info">
     <div class="info-head">
       <span data-lang="en">BUG</span>
-      <span data-lang="ko"><font-kku font="pixel" size="clamp(15px, 3.4cqmin, 28px)">버그</font-kku></span>
+      <span data-lang="ko"><font-kku font="pixel" size="clamp(16px, 3.4cqmin, 28px)">버그</font-kku></span>
       <span class="lv">Lv.404</span>
     </div>
     <div class="meter"><span>HP</span><div class="bar hp-bug"><i></i></div></div>
@@ -188,12 +191,12 @@
   <div class="box info me-info">
     <div class="info-head">
       <span data-lang="en">DEV</span>
-      <span data-lang="ko"><font-kku font="pixel" size="clamp(15px, 3.4cqmin, 28px)">개발자</font-kku></span>
+      <span data-lang="ko"><font-kku font="pixel" size="clamp(16px, 3.4cqmin, 28px)">개발자</font-kku></span>
       <span class="lv">Lv.3</span>
     </div>
     <div class="meter">
       <span data-lang="en">Coffee</span>
-      <span data-lang="ko"><font-kku font="pixel" size="clamp(11px, 2.4cqmin, 20px)">커피</font-kku></span>
+      <span data-lang="ko"><font-kku font="pixel" size="clamp(16px, 2.4cqmin, 20px)">커피</font-kku></span>
       <div class="bar coffee"><i style="--v: 38%"></i></div>
     </div>
   </div>
@@ -201,7 +204,7 @@
   <div class="box dialog">
     <div class="say" role="status">
       <p class="say-text" data-lang="en"></p>
-      <font-kku class="say-text" data-lang="ko" font="pixel" size="clamp(15px, 3.5cqmin, 30px)"> </font-kku>
+      <font-kku class="say-text" data-lang="ko" font="pixel" size="clamp(16px, 3.5cqmin, 30px)"> </font-kku>
       <span class="more" aria-hidden="true"></span>
     </div>
     <div class="menu" role="group"></div>
@@ -369,7 +372,7 @@
     if (KO && /[가-힣]/.test(label)) {
       const host = document.createElement('font-kku');
       host.setAttribute('font', 'pixel');
-      host.setAttribute('size', 'clamp(14px, 3.2cqmin, 27px)');
+      host.setAttribute('size', 'clamp(16px, 3.2cqmin, 27px)');
       host.textContent = label;
       b.append(host);
     } else {
@@ -424,7 +427,7 @@
     if (KO && /[가-힣]/.test(label)) {
       const host = document.createElement('font-kku');
       host.setAttribute('font', 'pixel');
-      host.setAttribute('size', 'clamp(12px, 2.8cqmin, 24px)');
+      host.setAttribute('size', 'clamp(16px, 2.8cqmin, 24px)');
       host.textContent = label;
       el.append(host);
     } else el.textContent = label;
@@ -538,6 +541,7 @@
   async function battle() {
     reset();
     document.querySelectorAll('.wipe i').forEach((bar, i) => {
+      if (TTY.reduce) { bar.style.transform = 'scaleX(0)'; return; }
       bar.animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }],
         { duration: 520, delay: 120 + i * 45, easing: 'steps(6)', fill: 'both' });
       bar.style.transformOrigin = i % 2 ? '100% 50%' : '0 50%';
@@ -556,23 +560,43 @@
       await sleep(400);
     }
     say.classList.add('waiting');
+    // With reduced motion the battle is played once (still playable) and rests on the win.
+    if (TTY.reduce) return;
     await sleep(7000);
     battle();
   }
 
-  function finalState() {
-    document.querySelectorAll('.wipe i').forEach((bar) => { bar.style.transform = 'scaleX(0)'; });
-    setHp(0);
-    bug.style.opacity = 0;
-    duck.style.opacity = 1;
-    put(L.duck[4]);
-  }
-
-  if (TTY.reduce) finalState();
-  else TTY.onShow(battle);
+  // Reduced motion still gets the whole battle and the move menu, just without movement.
+  TTY.onShow(battle);
 
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
-  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+  /* pixel draws each jamo from a 20-dot grid, so it needs about 22 device pixels per
+     letter to stay legible (measured: clean from 22px at 1x; 16px garbles at 1x but is
+     crisp on a 2x or 3x phone). Where a pixel line would be too coarse, it is drawn in
+     dunggeun instead. */
+  let fallbackLoaded = null;
+  function sharpenPixelText(root = document) {
+    const dpr = window.devicePixelRatio || 1;
+    root.querySelectorAll('font-kku[font="pixel"], font-kku[data-was-pixel]').forEach((host) => {
+      const px = parseFloat(getComputedStyle(host).fontSize) || 0;
+      const coarse = px * dpr < 22;
+      const now = host.getAttribute('font');
+      if (coarse && now === 'pixel') {
+        if (!fallbackLoaded && window.FontKku && FontKku.loadFont) fallbackLoaded = FontKku.loadFont('/vendor/font-kku/profiles/dunggeun.css').catch(() => {});
+        host.setAttribute('data-was-pixel', '');
+        host.setAttribute('font', 'dunggeun');
+      } else if (!coarse && now === 'dunggeun' && host.hasAttribute('data-was-pixel')) {
+        host.setAttribute('font', 'pixel');
+      }
+    });
+  }
+  sharpenPixelText();
+  new MutationObserver((records) => records.forEach((r) => r.addedNodes.forEach((n) => { if (n.nodeType === 1) sharpenPixelText(n.parentNode || document); }))).observe(document.body, { childList: true, subtree: true });
+  let sizing;
+  addEventListener('resize', () => { clearTimeout(sizing); sizing = setTimeout(() => sharpenPixelText(), 150); });
+
+  // font-kku's own stylesheet sets the sizes, so check again once everything has loaded.
+  Promise.all([loaded, document.fonts.ready]).then(() => { sharpenPixelText(); TTY.ready(); });
 })();
 </script>
 </body>

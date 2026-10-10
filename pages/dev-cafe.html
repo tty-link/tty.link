@@ -155,13 +155,16 @@
     .say b { font-size: 3.8cqi; }
     .say p, .lang-ko .say p { font-size: 4.3cqi; }
     .head > div { max-width: 62cqi; }
-    .special { position: absolute; right: 3cqi; top: 4cqi; z-index: 2; }
+    .special { position: absolute; right: 2.4cqi; top: 1.2cqi; z-index: 2; }
     /* No room for the whole card on a phone: just the stamped corner; the ring marks the drink. */
     .card { display: block; width: auto; padding: 1.8cqi; rotate: 6deg; }
     .card-text { display: none; }
     .card-label { font-size: 3.2cqi; }
     .card-name { font-size: 3.6cqi; }
-    .seal { width: 15cqi; font-size: 3.2cqi; }
+    /* The stamp is all the card shows on a phone, so it is drawn large enough to read
+       (dojang needs real size; at 12px it smudges). */
+    .seal { width: 18cqi; font-size: 4cqi; }
+    .seal .two > font-kku { font-size: 5cqi; }
   }
   @media (prefers-reduced-motion: reduce) {
     .write { clip-path: none; }

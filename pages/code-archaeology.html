@@ -152,10 +152,12 @@
     .card .spec { display: block; font: 600 11px 'IBM Plex Mono', monospace; color: var(--soft); }
     .card .name { display: block; font-weight: 700; }
     .era .label { display: none; }
-    /* On a phone the finale takes the middle of the dig, seal over note. */
-    .stamp { right: auto; left: 50%; top: 46%; translate: -50% -50%; flex-direction: column; gap: 10px; }
-    .stamp .seal { font-size: 20px; }
-    .stamp .field { max-width: 15em; font-size: 13px; text-align: center; }
+    /* On a phone the finale sits in the 2023 topsoil, which holds no fossils, seal beside
+       note, so it never covers a find. */
+    .stamp { left: 62px; right: 8px; top: 8.5%; translate: 0 -50%; flex-direction: row; justify-content: flex-end; gap: 8px; }
+    .stamp .seal { font-size: 17px; line-height: 1.05; text-align: center; }
+    .lang-en .stamp .seal { white-space: normal; max-width: 6.6em; }
+    .stamp .field { min-width: 0; max-width: 13em; font-size: 12px; text-align: left; }
     .flags { width: 34cqw; }
   }
 </style>
