@@ -82,6 +82,16 @@
       if (el.getAttribute('data-lang') !== lang) el.remove();
     });
 
+    // Visits are counted (Cloudflare Web Analytics) only when a page is opened on its own;
+    // inside the home stage or the all-pages previews the host page has already been counted.
+    if (!embedded) {
+      const beacon = document.createElement('script');
+      beacon.type = 'module';
+      beacon.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+      beacon.setAttribute('data-cf-beacon', JSON.stringify({ token: '838288248cb7432382fa48f87d722c3f' }));
+      document.head.append(beacon);
+    }
+
     // Opened on its own (a shared link, or from the all-pages list), a page gets a quiet
     // way back to the home page and to the list. On narrow screens it folds into a small
     // ":)" button so it does not cover the page; tapping it shows the two links.
