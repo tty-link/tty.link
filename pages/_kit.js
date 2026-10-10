@@ -71,18 +71,25 @@
       if (el.getAttribute('data-lang') !== lang) el.remove();
     });
 
-    // Opened on its own (a shared link), a page gets a quiet way back to the home page.
+    // Opened on its own (a shared link, or from the all-pages list), a page gets a quiet
+    // way back to the home page and to the list.
     if (!embedded) {
-      const home = document.createElement('a');
-      home.href = '/';
-      home.textContent = 'tty.link';
-      home.setAttribute('style', [
-        'position:fixed', 'right:12px', 'bottom:12px', 'z-index:2147483647',
-        'padding:6px 10px', 'border-radius:999px', 'background:#ffd84a', 'color:#1b2b7a',
-        'font:600 13px/1 ui-monospace,Menlo,Consolas,monospace', 'text-decoration:none',
-        'box-shadow:0 0 0 1px rgba(27,43,122,.25)',
-      ].join(';'));
-      document.body.append(home);
+      const bar = document.createElement('nav');
+      bar.setAttribute('aria-label', 'tty.link');
+      bar.setAttribute('style', 'position:fixed;right:12px;bottom:12px;z-index:2147483647;display:flex;gap:6px');
+      const pill = (href, text) => {
+        const a = document.createElement('a');
+        a.href = href;
+        a.textContent = text;
+        a.setAttribute('style', [
+          'padding:6px 10px', 'border-radius:999px', 'background:#ffd84a', 'color:#1b2b7a',
+          'font:600 13px/1 ui-monospace,Menlo,Consolas,monospace', 'text-decoration:none',
+          'box-shadow:0 0 0 1px rgba(27,43,122,.25)',
+        ].join(';'));
+        return a;
+      };
+      bar.append(pill('/all/?lang=' + lang, lang === 'ko' ? '전체 보기' : 'All pages'), pill('/', 'tty.link :)'));
+      document.body.append(bar);
     }
   });
 })();

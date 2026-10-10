@@ -119,6 +119,7 @@
     font-weight: 600;
     cursor: pointer;
   }
+  a.btn { display: inline-flex; align-items: center; color: inherit; text-decoration: none; }
   .btn:hover { background: var(--ink); color: var(--sun); }
   .langs { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; }
   .langs button { min-height: 33px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; }
@@ -140,7 +141,7 @@
     .lang-ko .staged .line-ko { display: none; }
     .staged .stage { border-radius: 14px; }
     .tools { margin-top: 0; align-self: end; }
-    .tools-row { flex-direction: column; align-items: flex-end; gap: 6px; }
+    .tools-row { justify-content: flex-end; max-width: 180px; gap: 6px; }
     .now { margin-top: 0; }
     .now-title { min-height: 0; font-size: 14px; }
     .btn, .langs button { min-height: 32px; font-size: 13px; }
@@ -157,7 +158,7 @@
 <body>
 <div class="frame">
   <header class="rail">
-    <a class="mark" href="/">tty.link</a>
+    <a class="mark" href="/" aria-label="tty.link">tty.link :)</a>
     <h1 class="line" lang="en" aria-label="Making fun to make happy :)">Making fun<br>to make happy :)</h1>
     <p class="line-ko" lang="ko"><font-kku font="sebul" size="1em">재미로 세상을 한 뼘 더 행복하게</font-kku></p>
     <div class="now">
@@ -167,6 +168,7 @@
     <div class="tools">
       <div class="tools-row">
         <button class="btn next" type="button">Next</button>
+        <a class="btn all" href="/all/">All pages</a>
         <div class="langs" role="group" aria-label="Language">
           <button type="button" data-lang="en" aria-pressed="true">EN</button>
           <button type="button" data-lang="ko" aria-pressed="false" lang="ko">한국어</button>
@@ -185,6 +187,7 @@
   const nowTitle = document.querySelector('.now-title');
   const bar = document.querySelector('.progress span');
   const nextButton = document.querySelector('.next');
+  const allLink = document.querySelector('.all');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const DEFAULT_SECONDS = 16;
 
@@ -195,13 +198,15 @@
   let lang = new URLSearchParams(location.search).get('lang') || read('localStorage', 'tty.lang');
   if (lang !== 'en' && lang !== 'ko') lang = (navigator.languages || [navigator.language || '']).some((l) => /^ko\b/i.test(l)) ? 'ko' : 'en';
   const UI = {
-    en: { next: 'Next', stage: 'tty.link pages', langs: 'Language' },
-    ko: { next: '다음', stage: 'tty.link 페이지', langs: '언어' },
+    en: { next: 'Next', all: 'All pages', stage: 'tty.link pages', langs: 'Language' },
+    ko: { next: '다음', all: '전체 보기', stage: 'tty.link 페이지', langs: '언어' },
   };
   function applyLang() {
     root.classList.toggle('lang-ko', lang === 'ko');
     root.classList.toggle('lang-en', lang === 'en');
     nextButton.textContent = UI[lang].next;
+    allLink.textContent = UI[lang].all;
+    allLink.href = '/all/?lang=' + lang;
     stage.setAttribute('aria-label', UI[lang].stage);
     document.querySelector('.langs').setAttribute('aria-label', UI[lang].langs);
     document.querySelectorAll('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
@@ -371,15 +376,11 @@
     })
     .catch(() => {});
 
-  // The full opening plays once a session; after that the home page opens staged.
-  const seen = read('sessionStorage', 'tty.intro') === '1';
-  write('sessionStorage', 'tty.intro', '1');
-  const intro = seen || reduce
-    ? new Promise((r) => { showAll(); setTimeout(r, seen ? 0 : 1600); })
-    : typeLine();
+  // Every visit opens with the sentence; with reduced motion it is shown whole for a moment.
+  const intro = reduce ? new Promise((r) => { showAll(); setTimeout(r, 1600); }) : typeLine();
   Promise.all([intro, manifest]).then(() => {
-    toStage(!seen && !reduce);
-    if (upcoming) setTimeout(advance, seen || reduce ? 0 : 500);
+    toStage(!reduce);
+    if (upcoming) setTimeout(advance, reduce ? 0 : 500);
   });
 })();
 </script>
