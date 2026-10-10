@@ -77,6 +77,18 @@
       "summary": {"en": "Every era left a layer, and every layer kept something. Brush gently.", "ko": "시대마다 지층이 쌓이고, 지층마다 뭔가 남았다. 살살 털어 보세요."} },
     {"id": "cable-entropy", "file": "cable-entropy.html", "seconds": 18,
       "title": {"en": "Cable Entropy", "ko": "선 정리의 엔트로피"},
-      "summary": {"en": "Day 1, perfect cable management. Day 365, load-bearing spaghetti.", "ko": "1일차엔 완벽한 선 정리, 365일차엔 뭔가 받치고 있는 스파게티."} }
+      "summary": {"en": "Day 1, perfect cable management. Day 365, load-bearing spaghetti.", "ko": "1일차엔 완벽한 선 정리, 365일차엔 뭔가 받치고 있는 스파게티."} },
+    {"id": "robot-captcha", "file": "robot-captcha.html", "seconds": 26,
+      "title": {"en": "Prove You Are a Robot", "ko": "로봇임을 증명하세요"},
+      "summary": {"en": "A security check for the other side. Humans may still enter.", "ko": "반대편을 위한 보안 확인. 사람도 들어올 수는 있어요."} },
+    {"id": "agent-permissions", "file": "agent-permissions.html", "seconds": 24,
+      "title": {"en": "Your Agent Would Like To…", "ko": "에이전트가 묻습니다"},
+      "summary": {"en": "It asks before everything. Then it waters your plant.", "ko": "모든 걸 허락받는 에이전트. 결국 화분에 물을 줍니다."} },
+    {"id": "patch-advent", "file": "patch-advent.html", "seconds": 22,
+      "title": {"en": "The Patch Calendar", "ko": "패치 달력"},
+      "summary": {"en": "24 doors, 24 fixes. The last one says restart.", "ko": "문 24개, 패치 24개. 마지막 문은 재시작."} },
+    {"id": "switch-sommelier", "file": "switch-sommelier.html", "seconds": 24,
+      "title": {"en": "Switch Sommelier", "ko": "키보드 축 소믈리에"},
+      "summary": {"en": "Tasting notes for keyboard switches. Blue is a vintage your coworkers will remember.", "ko": "키보드 축 시음 노트. 청축은 동료들이 오래 기억할 빈티지."} }
   ]
 }

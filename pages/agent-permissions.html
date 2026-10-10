@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Agent Would Like To… | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
+<script src="/vendor/font-kku/font-kku.js" data-fonts="sebul dunggeun pilgi"></script>
+<style>
+  /* A very polite agent asks before every little thing. The dialogs pile up until
+     someone clicks "Always allow" — and it turns out all it wanted was to be nice. */
+  :root {
+    --wall-1: #d3e0c8;
+    --wall-2: #b7cbab;
+    --sun: rgba(255, 236, 170, .55);
+    --ink: #22302a;
+    --soft: #5c6c63;
+    --card: #fffffb;
+    --line: #e2e6dd;
+    --accent: #1f6f63;
+    --agent: #ff6b4a;
+    --note: #fff1a8;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    container-type: size;
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(38cqmax 38cqmax at 72% 30%, var(--sun), transparent 70%),
+      linear-gradient(160deg, var(--wall-1), var(--wall-2));
+    color: var(--ink);
+    font-family: 'Instrument Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
+  }
+  .lang-ko body { font-family: 'IBM Plex Sans KR', 'Instrument Sans', sans-serif; word-break: keep-all; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .bar {
+    position: absolute;
+    inset: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1.6cqmin;
+    height: clamp(26px, 4.4cqmin, 36px);
+    padding: 0 2.4cqmin;
+    background: rgba(255, 255, 255, .55);
+    backdrop-filter: blur(6px);
+    font-size: clamp(11px, 1.8cqmin, 14px);
+    font-weight: 600;
+  }
+  .bar .dot { width: 1.4em; height: 1.4em; border-radius: 50%; background: var(--ink); }
+  .bar .grow { flex: 1; }
+  .bar .count { padding: .15em .7em; border-radius: 999px; background: var(--agent); color: #fff; font-variant-numeric: tabular-nums; }
+  .bar .count:empty { display: none; }
+
+  .headline { position: absolute; left: 4cqw; top: calc(clamp(26px, 4.4cqmin, 36px) + 3cqmin); max-width: 60cqw; }
+  .headline h1 { font-size: clamp(20px, 5.4cqmin, 46px); font-weight: 700; line-height: 1.05; letter-spacing: -.02em; }
+  .headline p { margin-top: .8cqmin; font-size: clamp(12px, 2cqmin, 16px); color: var(--soft); }
+  .headline h1 > font-kku { color: var(--ink); }
+
+  /* ---- Desktop things ---- */
+  .icon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    justify-items: center;
+    gap: .6cqmin;
+    width: clamp(54px, 11cqmin, 96px);
+    translate: -50% -50%;
+    transition: left .9s cubic-bezier(.3, 1.3, .5, 1), top .9s cubic-bezier(.3, 1.3, .5, 1);
+  }
+  .icon svg { width: clamp(30px, 6.6cqmin, 58px); height: clamp(30px, 6.6cqmin, 58px); filter: drop-shadow(0 2px 2px rgba(0,0,0,.15)); }
+  .icon span {
+    max-width: 100%;
+    padding: .1em .4em;
+    border-radius: 4px;
+    font-size: clamp(9px, 1.55cqmin, 12.5px);
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: anywhere;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,.45);
+  }
+  .icon.lit span { background: var(--accent); text-shadow: none; }
+
+  .plant { position: absolute; left: 3cqw; bottom: 3cqh; width: clamp(56px, 12cqmin, 110px); }
+  .plant .stem { transform-box: fill-box; transform-origin: 50% 100%; }
+  .plant .bloom { transform-box: fill-box; transform-origin: center; scale: 0; }
+  .can { position: absolute; left: calc(3cqw + clamp(40px, 9cqmin, 84px)); bottom: calc(3cqh + clamp(70px, 15cqmin, 136px)); width: clamp(44px, 9cqmin, 80px); opacity: 0; transform-origin: 30% 70%; }
+  .drop { position: absolute; width: .9cqmin; height: 1.4cqmin; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: #5fa8ff; opacity: 0; }
+
+  .mug { position: absolute; right: calc(4cqw + clamp(70px, 14cqmin, 120px)); bottom: 4cqh; width: clamp(34px, 7cqmin, 60px); opacity: 0; }
+  .mug .steam path { fill: none; stroke: rgba(255,255,255,.9); stroke-width: 3; stroke-linecap: round; }
+
+  .agent { position: absolute; right: 4cqw; bottom: 3.6cqh; display: grid; justify-items: center; gap: .8cqmin; }
+  .agent svg { width: clamp(44px, 9cqmin, 80px); height: clamp(44px, 9cqmin, 80px); }
+  .agent .say {
+    padding: .35em .8em;
+    border-radius: 999px;
+    background: #fff;
+    font-size: clamp(10px, 1.7cqmin, 13.5px);
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,.12);
+  }
+  .agent .eye { transform-box: fill-box; transform-origin: center; }
+
+  .toast {
+    position: absolute;
+    right: 2.4cqw;
+    top: calc(clamp(26px, 4.4cqmin, 36px) + 2cqmin);
+    width: min(80cqw, 340px);
+    padding: 1.2em 1.3em;
+    border-radius: 14px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 10px 30px rgba(20, 40, 30, .18);
+    font-size: clamp(11px, 1.9cqmin, 14.5px);
+    line-height: 1.4;
+    opacity: 0;
+    translate: 0 -12px;
+  }
+  .toast b { display: block; margin-bottom: .2em; font-size: .9em; color: var(--soft); }
+
+  .note {
+    position: absolute;
+    left: 50%;
+    top: 79%;
+    width: clamp(150px, 28cqmin, 250px);
+    padding: 1.1em 1.1em 1.5em;
+    background: var(--note);
+    color: #3a3418;
+    font-size: clamp(14px, 2.7cqmin, 22px);
+    font-weight: 500;
+    line-height: 1.25;
+    box-shadow: 0 8px 18px rgba(0,0,0,.18);
+    rotate: -4deg;
+    translate: -50% -50%;
+    opacity: 0;
+  }
+  .note > font-kku { color: #3a3418; }
+
+  /* ---- Dialogs ---- */
+  .stack { position: absolute; inset: 0; pointer-events: none; }
+  .dialog {
+    position: absolute;
+    left: 50%;
+    top: 54%;
+    container-type: inline-size;
+    width: min(84cqw, 460px);
+    padding: clamp(16px, 3.4cqmin, 26px) clamp(16px, 3.4cqmin, 26px) clamp(14px, 2.8cqmin, 22px);
+    border-radius: 16px;
+    background: var(--card);
+    box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 20px 50px rgba(18, 40, 30, .28);
+    translate: calc(-50% + var(--dx, 0px)) calc(-50% + var(--dy, 0px));
+    pointer-events: auto;
+  }
+  .dialog .top { display: flex; gap: 3.6cqi; align-items: flex-start; }
+  .dialog .who { flex: none; width: 11cqi; height: 11cqi; }
+  .dialog .q { font-size: 5.2cqi; font-weight: 700; line-height: 1.25; }
+  .lang-ko .dialog .q { font-weight: 600; }
+  .dialog .q > font-kku { color: var(--ink); }
+  .dialog .why { margin-top: 1.6cqi; font-size: 3.8cqi; color: var(--soft); line-height: 1.4; }
+  .dialog code { font-family: inherit; padding: 0 .3em; border-radius: 4px; background: #eef1ea; }
+  .dialog .acts { display: flex; flex-wrap: wrap; gap: 2cqi; justify-content: flex-end; margin-top: 5cqi; }
+  .dialog button {
+    padding: 2.4cqi 4cqi;
+    border: 0;
+    border-radius: 10px;
+    background: #eef1ea;
+    font-size: 3.9cqi;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .dialog button.always { background: var(--accent); color: #fff; }
+  .dialog button.deny { background: transparent; color: var(--soft); }
+  .dialog button:hover { filter: brightness(.95); }
+
+  .cursor { position: absolute; left: 0; top: 0; z-index: 20; width: clamp(18px, 3.2cqmin, 28px); pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+
+  @media (prefers-reduced-motion: reduce) { .icon { transition: none; } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <span class="dot"></span>
+  <span data-lang="en">Agent</span><span data-lang="ko">에이전트</span>
+  <span class="grow"></span>
+  <span class="count"></span>
+  <span class="clock">10:24</span>
+</div>
+
+<header class="headline">
+  <h1>
+    <span data-lang="en">Your agent would like to…</span>
+    <span data-lang="ko"><font-kku font="sebul" size="clamp(22px, 5.6cqmin, 48px)">에이전트가 묻습니다</font-kku></span>
+  </h1>
+  <p>
+    <span data-lang="en">It just wants to help. Carefully. Very carefully.</span>
+    <span data-lang="ko">도와드리고 싶을 뿐이에요. 조심스럽게요. 아주 조심스럽게.</span>
+  </p>
+</header>
+
+<div class="desk" aria-hidden="true"></div>
+
+<svg class="plant" viewBox="0 0 100 130" aria-hidden="true">
+  <g class="stem">
+    <path d="M50 96 C 48 70, 52 52, 50 30" stroke="#2f7d4f" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M50 70 C 36 64, 28 54, 26 44 C 38 46, 46 54, 50 66 Z" fill="#46a36c"/>
+    <path d="M50 58 C 62 50, 72 44, 76 34 C 64 34, 54 42, 50 54 Z" fill="#3c9460"/>
+    <g class="bloom"><circle cx="50" cy="28" r="9" fill="#ff8fab"/><circle cx="50" cy="28" r="4" fill="#ffd43b"/></g>
+  </g>
+  <path d="M26 92 H74 L68 128 H32 Z" fill="#c8693f"/><rect x="22" y="88" width="56" height="10" rx="3" fill="#a5532f"/>
+</svg>
+<svg class="can" viewBox="0 0 80 60" aria-hidden="true">
+  <path d="M18 22 H52 V50 a4 4 0 0 1 -4 4 H22 a4 4 0 0 1 -4 -4 Z" fill="#7aa7c7"/>
+  <path d="M52 30 L74 16 L76 20 L54 36 Z" fill="#5f8fb2"/>
+  <path d="M22 22 C 24 8, 46 8, 48 22" stroke="#5f8fb2" stroke-width="4" fill="none"/>
+</svg>
+<svg class="mug" viewBox="0 0 60 70" aria-hidden="true">
+  <g class="steam"><path d="M22 18 c -4 -6, 4 -8, 0 -14"/><path d="M32 18 c -4 -6, 4 -8, 0 -14"/></g>
+  <path d="M10 24 H44 V58 a6 6 0 0 1 -6 6 H16 a6 6 0 0 1 -6 -6 Z" fill="#fff"/>
+  <path d="M44 32 h4 a8 8 0 0 1 0 16 h-4" stroke="#fff" stroke-width="5" fill="none"/>
+  <rect x="10" y="24" width="34" height="8" fill="#6b4226"/>
+</svg>
+
+<div class="agent" aria-hidden="true">
+  <svg viewBox="0 0 80 80">
+    <rect x="8" y="12" width="64" height="58" rx="22" fill="#ff6b4a"/>
+    <ellipse class="eye" cx="30" cy="40" rx="5" ry="7" fill="#fff"/><ellipse class="eye" cx="50" cy="40" rx="5" ry="7" fill="#fff"/>
+    <path class="mouth" d="M32 54 q8 5 16 0" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  </svg>
+  <span class="say"></span>
+</div>
+
+<div class="toast" role="status"><b></b><span></span></div>
+<p class="note"></p>
+<div class="stack"></div>
+<svg class="cursor" viewBox="0 0 24 30" aria-hidden="true"><path d="M2 2 L2 24 L8 18.5 L12 28 L16 26.3 L12.2 17 L20.5 17 Z" fill="#fff" stroke="#22302a" stroke-width="2" stroke-linejoin="round"/></svg>
+
+<script>
+(() => {
+  const ko = TTY.lang === 'ko';
+  const $ = (s) => document.querySelector(s);
+  const desk = $('.desk');
+  const stack = $('.stack');
+  const count = $('.count');
+  const say = $('.agent .say');
+  const toast = $('.toast');
+  const note = $('.note');
+  const cursor = $('.cursor');
+  const plantStem = $('.plant .stem');
+  const bloom = $('.plant .bloom');
+  const can = $('.can');
+  const mug = $('.mug');
+  const eyes = [...document.querySelectorAll('.agent .eye')];
+
+  const T = TTY.t({
+    en: {
+      deny: 'Deny', once: 'Allow once', always: 'Always allow',
+      asks: [
+        { q: 'Allow the agent to read <code>README.md</code>?', why: 'It wants to understand you better.' },
+        { q: 'Allow the agent to open <code>package.json</code>?', why: "It's a big one. 1,204 dependencies." },
+        { q: 'Allow the agent to rename <code>temp2_final_REAL</code>?', why: 'Suggested name: final_final.', rename: 'final_final' },
+        { q: 'Allow the agent to make you a coffee?', why: "You've been staring at that bug for 40 minutes." },
+        { q: 'Allow the agent to tell your mom you are eating well?', why: 'She asked. Twice.' },
+      ],
+      burst: [
+        { q: 'Allow the agent to water the plant?', why: 'It looks thirsty. So do you.' },
+        { q: 'Allow the agent to tidy the desktop?', why: 'It has an idea.' },
+        { q: 'Allow the agent to say “good job” out loud?', why: 'It is true, though.' },
+        { q: 'Allow the agent to leave you a note?', why: 'A short one.' },
+      ],
+      later: { q: 'Allow the agent to ask again later?', why: 'Okay. It will wait right here.' },
+      status: { idle: 'Thinking…', ask: 'Asking…', read: 'Reading README.md…', pkg: 'Counting dependencies…', rename: 'Renaming…', wait: 'Waiting politely…', done: 'All done :)' },
+      momTitle: 'Message sent to Mom',
+      momBody: '“I am eating well. Promise.”',
+      note: 'Thanks for trusting me. I only used it for nice things.',
+      requests: (n) => `${n} ${n === 1 ? 'request' : 'requests'}`,
+    },
+    ko: {
+      deny: '거부', once: '이번만 허용', always: '항상 허용',
+      asks: [
+        { q: '에이전트가 <code>README.md</code>를 읽어도 될까요?', why: '당신을 더 잘 이해하고 싶대요.' },
+        { q: '<code>package.json</code>을 열어도 될까요?', why: '좀 무거워요. 의존성이 1,204개예요.' },
+        { q: '<code>temp2_final_REAL</code>의 이름을 바꿔도 될까요?', why: '추천 이름: 진짜_최종_마지막', rename: '진짜_최종_마지막' },
+        { q: '커피 한 잔 타 드려도 될까요?', why: '그 버그를 40분째 보고 계세요.' },
+        { q: '어머니께 밥 잘 먹고 있다고 전해 드려도 될까요?', why: '두 번이나 물어보셨어요.' },
+      ],
+      burst: [
+        { q: '화분에 물을 줘도 될까요?', why: '목말라 보여요. 당신도요.' },
+        { q: '바탕화면을 정리해도 될까요?', why: '좋은 생각이 있대요.' },
+        { q: '“잘했어요”라고 소리 내서 말해도 될까요?', why: '사실이니까요.' },
+        { q: '쪽지를 남겨도 될까요?', why: '짧게요.' },
+      ],
+      later: { q: '나중에 다시 물어봐도 될까요?', why: '네. 여기서 얌전히 기다릴게요.' },
+      status: { idle: '생각 중…', ask: '물어보는 중…', read: 'README.md 읽는 중…', pkg: '의존성 세는 중…', rename: '이름 바꾸는 중…', wait: '얌전히 기다리는 중…', done: '다 했어요 :)' },
+      momTitle: '엄마에게 보냄',
+      momBody: '“밥 잘 먹고 다녀요. 진짜로요.”',
+      note: '믿어 줘서 고마워요. 좋은 일에만 썼어요.',
+      requests: (n) => `요청 ${n}건`,
+    },
+  });
+
+  /* ---- Desktop icons: a mess at first, a smile at the end ---- */
+  const ICONS = [
+    { name: 'README.md', kind: 'doc', at: [9, 34], smile: [40, 27] },
+    { name: 'package.json', kind: 'box', at: [21, 30], smile: [60, 27] },
+    { name: 'temp2_final_REAL', kind: 'folder', at: [13, 52], smile: [29, 46], id: 'temp' },
+    { name: TTY.t({ en: 'photo_0001.png', ko: '사진_0001.png' }), kind: 'image', at: [86, 24], smile: [37, 56] },
+    { name: TTY.t({ en: 'New Folder (7)', ko: '새 폴더 (7)' }), kind: 'folder', at: [91, 42], smile: [46, 61] },
+    { name: TTY.t({ en: 'budget.xlsx', ko: '예산.xlsx' }), kind: 'sheet', at: [79, 54], smile: [54, 61] },
+    { name: TTY.t({ en: 'todo.txt', ko: '할일.txt' }), kind: 'doc', at: [28, 63], smile: [63, 56] },
+    { name: TTY.t({ en: 'screenshot.png', ko: '스크린샷.png' }), kind: 'image', at: [90, 66], smile: [71, 46] },
+  ];
+  const SHAPES = {
+    doc: '<path d="M14 6 H38 L50 18 V58 H14 Z" fill="#fff"/><path d="M38 6 V18 H50" fill="#dfe6ee"/><path d="M20 28 H44 M20 36 H44 M20 44 H36" stroke="#9aa8b6" stroke-width="3"/>',
+    box: '<path d="M32 6 L56 18 V46 L32 58 L8 46 V18 Z" fill="#f2c27b"/><path d="M8 18 L32 30 L56 18 M32 30 V58" stroke="#c9944a" stroke-width="3" fill="none"/>',
+    folder: '<path d="M6 14 H26 L32 20 H58 V54 H6 Z" fill="#7cb8f2"/><path d="M6 24 H58 V54 H6 Z" fill="#9fcbf6"/>',
+    image: '<rect x="8" y="10" width="48" height="44" rx="4" fill="#fff"/><path d="M12 48 L26 30 L36 42 L42 34 L52 48 Z" fill="#7cc48f"/><circle cx="42" cy="22" r="5" fill="#ffd43b"/>',
+    sheet: '<rect x="12" y="6" width="40" height="52" rx="3" fill="#fff"/><path d="M12 20 H52 M12 32 H52 M12 44 H52 M26 6 V58 M40 6 V58" stroke="#5fb37f" stroke-width="2.4"/>',
+  };
+  const icons = ICONS.map((d) => {
+    const el = document.createElement('div');
+    el.className = 'icon';
+    el.innerHTML = `<svg viewBox="0 0 64 64">${SHAPES[d.kind]}</svg><span></span>`;
+    el.querySelector('span').textContent = d.name;
+    desk.append(el);
+    return Object.assign(d, { el });
+  });
+  // On tall screens the smile is drawn wider so the icons do not sit on each other.
+  const place = (icon, [x, y], smile) => {
+    if (smile && innerWidth < innerHeight * .9) { x = 50 + (x - 50) * 1.75; y = 22 + (y - 30) * 1.05; }
+    icon.el.style.left = x + '%'; icon.el.style.top = y + '%';
+  };
+  const temp = icons.find((i) => i.id === 'temp');
+
+  /* ---- Small pieces of motion ---- */
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const anim = (el, frames, opts) => (TTY.reduce ? null : el.animate(frames, opts));
+  function status(text) { say.textContent = text; }
+  function blink() { eyes.forEach((e) => anim(e, [{ scale: '1 1' }, { scale: '1 .1' }, { scale: '1 1' }], { duration: 220 })); }
+  function hop() { anim($('.agent svg'), [{ transform: 'none' }, { transform: 'translateY(-18%) rotate(-6deg)' }, { transform: 'none' }], { duration: 480, easing: 'cubic-bezier(.3,1.4,.5,1)' }); }
+  let requests = 0;
+  function bump() { requests += 1; count.textContent = T.requests(requests); anim(count, [{ scale: 1.25 }, { scale: 1 }], { duration: 260 }); }
+
+  let shownQ = new WeakMap();
+  // Piled dialogs fan out around the centre, so even a phone keeps them on screen.
+  function dialog(ask, i = 0, n = 1) {
+    const d = document.createElement('section');
+    d.className = 'dialog';
+    d.setAttribute('role', 'dialog');
+    const step = Math.min(innerWidth, innerHeight) * .028;
+    d.style.setProperty('--dx', `${(i - (n - 1) / 2) * step}px`);
+    d.style.setProperty('--dy', `${(i - (n - 1) / 2) * step * .8}px`);
+    d.innerHTML = `
+      <div class="top">
+        <svg class="who" viewBox="0 0 80 80" aria-hidden="true"><rect x="8" y="12" width="64" height="58" rx="22" fill="#ff6b4a"/><ellipse cx="30" cy="40" rx="5" ry="7" fill="#fff"/><ellipse cx="50" cy="40" rx="5" ry="7" fill="#fff"/></svg>
+        <div><p class="q"></p><p class="why"></p></div>
+      </div>
+      <div class="acts">
+        <button type="button" class="deny"></button>
+        <button type="button" class="once"></button>
+        <button type="button" class="always"></button>
+      </div>`;
+    d.querySelector('.q').innerHTML = ask.q;
+    d.querySelector('.why').textContent = ask.why;
+    d.querySelector('.deny').textContent = T.deny;
+    d.querySelector('.once').textContent = T.once;
+    d.querySelector('.always').textContent = T.always;
+    stack.append(d);
+    anim(d, [{ opacity: 0, scale: .9 }, { opacity: 1, scale: 1 }], { duration: 260, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+    bump();
+    return d;
+  }
+  async function close(d, how = 'away') {
+    const a = anim(d, how === 'away'
+      ? [{ opacity: 1, scale: 1 }, { opacity: 0, scale: .92 }]
+      : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translate(${(Math.random() - .5) * 60}px, -120%) rotate(${(Math.random() - .5) * 20}deg)` }],
+    { duration: how === 'away' ? 200 : 520, easing: 'ease-in', fill: 'forwards' });
+    if (a) await a.finished.catch(() => {});
+    d.remove();
+  }
+
+  /* ---- Cursor ---- */
+  let cur = [innerWidth * .5, innerHeight + 30];
+  const centre = (el) => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  async function glide(el, ms = 600) {
+    const [x, y] = centre(el);
+    cursor.animate([{ transform: `translate(${cur[0]}px, ${cur[1]}px)` }, { transform: `translate(${x}px, ${y}px)` }], { duration: ms, easing: 'cubic-bezier(.45,.05,.35,1)', fill: 'forwards' });
+    cur = [x, y];
+    await wait(ms);
+  }
+  function click() { cursor.animate([{ scale: 1 }, { scale: .8 }, { scale: 1 }], { duration: 170 }); }
+
+  /* ---- The nice things ---- */
+  async function niceThings() {
+    status(T.status.done);
+    hop();
+    // A smile out of the desktop icons.
+    icons.forEach((icon, i) => setTimeout(() => place(icon, icon.smile, true), TTY.reduce ? 0 : i * 70));
+    await wait(TTY.reduce ? 0 : 1100);
+
+    // Water the plant.
+    if (!TTY.reduce) {
+      can.animate([{ opacity: 0, transform: 'translateY(-20px)' }, { opacity: 1, transform: 'rotate(0deg)', offset: .3 }, { opacity: 1, transform: 'rotate(-28deg)', offset: .5 }, { opacity: 1, transform: 'rotate(-28deg)', offset: .85 }, { opacity: 0, transform: 'rotate(0deg)' }], { duration: 1500, easing: 'ease-in-out' });
+      const r = can.getBoundingClientRect();
+      for (let i = 0; i < 8; i++) {
+        const drop = document.createElement('i');
+        drop.className = 'drop';
+        drop.style.left = r.left + r.width * .05 + Math.random() * 10 + 'px';
+        drop.style.top = r.top + r.height * .45 + 'px';
+        document.body.append(drop);
+        drop.animate([{ opacity: 0, transform: 'none' }, { opacity: 1, offset: .2 }, { opacity: 0, transform: `translate(${-6 - Math.random() * 10}px, ${50 + Math.random() * 30}px)` }], { duration: 700, delay: 500 + i * 70, easing: 'ease-in' }).finished.then(() => drop.remove());
+      }
+      await wait(900);
+    }
+    anim(plantStem, [{ scale: '1 1' }, { scale: '1 1.18' }], { duration: 700, fill: 'forwards', easing: 'cubic-bezier(.3,1.4,.5,1)' });
+    if (TTY.reduce) plantStem.style.scale = '1 1.18';
+    bloom.style.scale = 1;
+    anim(bloom, [{ scale: 0 }, { scale: 1.2 }, { scale: 1 }], { duration: 600, delay: 300 });
+    await wait(TTY.reduce ? 0 : 700);
+
+    // Coffee.
+    mug.style.opacity = 1;
+    anim(mug, [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 400 });
+    if (!TTY.reduce) mug.querySelectorAll('.steam path').forEach((p, i) => p.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1 }, { opacity: 0, transform: 'translateY(-8px)' }], { duration: 1600, delay: i * 400, iterations: Infinity }));
+    await wait(TTY.reduce ? 0 : 500);
+
+    // Mom.
+    toast.querySelector('b').textContent = T.momTitle;
+    toast.querySelector('span').textContent = T.momBody;
+    toast.style.opacity = 1; toast.style.translate = '0 0';
+    anim(toast, [{ opacity: 0, translate: '0 -16px' }, { opacity: 1, translate: '0 0' }], { duration: 380, easing: 'cubic-bezier(.2,.9,.3,1.1)' });
+    await wait(TTY.reduce ? 0 : 700);
+
+    // A note.
+    if (ko) {
+      const el = document.createElement('font-kku');
+      el.setAttribute('font', 'pilgi');
+      el.setAttribute('size', 'clamp(16px, 3cqmin, 25px)');
+      el.setAttribute('wrap-unit', 'word');
+      el.textContent = T.note;
+      note.replaceChildren(el);
+    } else {
+      note.textContent = T.note;
+    }
+    note.style.opacity = 1;
+    anim(note, [{ opacity: 0, transform: 'scale(1.4) rotate(8deg)' }, { opacity: 1, transform: 'none' }], { duration: 480, easing: 'cubic-bezier(.2,.9,.3,1.1)' });
+    blink();
+  }
+
+  function resetScene() {
+    stack.replaceChildren();
+    icons.forEach((icon) => place(icon, icon.at));
+    temp.el.querySelector('span').textContent = temp.name;
+    icons.forEach((i) => i.el.classList.remove('lit'));
+    requests = 0; count.textContent = '';
+    toast.style.opacity = 0; toast.style.translate = '0 -12px';
+    note.style.opacity = 0; note.replaceChildren();
+    mug.style.opacity = 0; mug.getAnimations({ subtree: true }).forEach((a) => a.cancel());
+    plantStem.getAnimations().forEach((a) => a.cancel()); plantStem.style.scale = '';
+    bloom.style.scale = 0;
+    status(T.status.idle);
+  }
+
+  /* ---- The autoplay: once, once, once… always ---- */
+  let run = 0;
+  async function play() {
+    const mine = ++run;
+    const live = () => run === mine;
+    while (live()) {
+      resetScene();
+      cursor.style.opacity = 1;
+      cur = [innerWidth * .5, innerHeight + 30];
+      await wait(700); if (!live()) return;
+      const after = [
+        () => { icons[0].el.classList.add('lit'); status(T.status.read); },
+        () => { icons[1].el.classList.add('lit'); status(T.status.pkg); },
+        () => { status(T.status.rename); temp.el.querySelector('span').textContent = T.asks[2].rename; temp.el.classList.add('lit'); },
+        () => { status(T.status.wait); },
+        () => { status(T.status.wait); },
+      ];
+      for (let i = 0; i < T.asks.length; i++) {
+        status(T.status.ask); blink();
+        const d = dialog(T.asks[i]);
+        await wait(500); if (!live()) return;
+        const once = d.querySelector('.once');
+        if (i === 3) { await glide(d.querySelector('.deny'), 500); if (!live()) return; await wait(350); }
+        await glide(once, i === 0 ? 800 : 450); if (!live()) return;
+        click(); await wait(160);
+        await close(d); if (!live()) return;
+        after[i]();
+        await wait(650); if (!live()) return;
+      }
+      // Then they arrive faster than anyone can read.
+      status(T.status.ask);
+      const pile = T.burst.map((ask, i, all) => dialog(ask, i, all.length));
+      await wait(1100); if (!live()) return;
+      const top = pile[pile.length - 1];
+      await glide(top.querySelector('.once'), 450); if (!live()) return;
+      await wait(500); if (!live()) return;
+      await glide(top.querySelector('.always'), 380); if (!live()) return;
+      click(); await wait(200);
+      cursor.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards', delay: 300 });
+      await Promise.all(pile.reverse().map((d, i) => wait(i * 90).then(() => close(d, 'fly'))));
+      if (!live()) return;
+      await niceThings();
+      await wait(5200);
+    }
+  }
+
+  /* ---- A visitor answers ---- */
+  stack.addEventListener('click', async (e) => {
+    const b = e.target.closest('button');
+    if (!b || !e.isTrusted) return;
+    if (run >= 0) { run++; cursor.style.opacity = 0; cursor.getAnimations().forEach((a) => a.cancel()); }
+    const d = b.closest('.dialog');
+    if (b.classList.contains('always')) {
+      const all = [...stack.querySelectorAll('.dialog')];
+      await Promise.all(all.reverse().map((x, i) => wait(i * 90).then(() => close(x, 'fly'))));
+      niceThings();
+      return;
+    }
+    await close(d);
+    if (stack.querySelector('.dialog')) return;
+    const asked = b.classList.contains('deny') ? T.later : T.asks[Math.floor(Math.random() * T.asks.length)];
+    status(T.status.ask); blink();
+    dialog(b.classList.contains('deny') ? T.later : asked);
+  });
+
+  /* ---- Start ---- */
+  resetScene();
+  if (TTY.reduce) {
+    cursor.style.opacity = 0;
+    requests = T.asks.length + T.burst.length - 1;
+    bump();
+    temp.el.querySelector('span').textContent = T.asks[2].rename;
+    niceThings();
+  } else {
+    cursor.style.opacity = 0;
+  }
+  TTY.onShow(() => { if (!TTY.reduce) play(); });
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+})();
+</script>
+</body>
+</html>
