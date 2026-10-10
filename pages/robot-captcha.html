@@ -213,6 +213,10 @@
   .claw .jaw.bottom { transform-origin: 100% 0; }
   .arm.grip .jaw.top { rotate: 14deg; }
   .arm.grip .jaw.bottom { rotate: -14deg; }
+  /* For the checkbox the arm comes in from the left, so the rod never lies across its label. */
+  .arm.from-left { right: auto; left: 0; }
+  .arm.from-left .rod { border-radius: 0 999px 999px 0; }
+  .arm.from-left .claw { left: auto; right: 0; translate: 80% -50%; scale: -1 1; }
 
   .lang-ko .title > font-kku { color: var(--ink); }
   .lang-ko .check-label { padding-top: 1.8cqi; }
@@ -484,13 +488,20 @@
   }
 
   let armAt = null;
+  let armSide = 'right';
+  const armWidth = (x, side) => Math.max(0, side === 'left' ? x : innerWidth - x);
   async function reach(el, ms = 260) {
     const [x, y] = centre(el);
-    const from = armAt || [innerWidth + 40, y];
+    // The checkbox shares its row with the "I'm a robot" label; from the right the rod would
+    // cover the words, so that one is reached from the left. Everything else from the right.
+    const side = el === box ? 'left' : 'right';
+    if (armAt && side !== armSide) { retract(160); await wait(170); }
+    if (!armAt) { armSide = side; arm.classList.toggle('from-left', side === 'left'); }
+    const from = armAt || [side === 'left' ? -40 : innerWidth + 40, y];
     arm.classList.add('out');
     arm.animate([
-      { top: from[1] + 'px', width: Math.max(0, innerWidth - from[0]) + 'px' },
-      { top: y + 'px', width: (innerWidth - x) + 'px' },
+      { top: from[1] + 'px', width: armWidth(from[0], side) + 'px' },
+      { top: y + 'px', width: armWidth(x, side) + 'px' },
     ], { duration: ms, easing: 'cubic-bezier(.3, .8, .3, 1)', fill: 'forwards' });
     armAt = [x, y];
     await wait(ms);
@@ -499,7 +510,7 @@
   function retract(ms = 500) {
     if (!armAt) return;
     arm.animate([
-      { top: armAt[1] + 'px', width: (innerWidth - armAt[0]) + 'px' },
+      { top: armAt[1] + 'px', width: armWidth(armAt[0], armSide) + 'px' },
       { top: armAt[1] + 'px', width: '0px' },
     ], { duration: ms, easing: 'ease-in', fill: 'forwards' });
     armAt = null;

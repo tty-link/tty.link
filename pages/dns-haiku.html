@@ -151,6 +151,8 @@
   }
   .lang-en .foot { font-family: 'Yuji Boku', serif; }
   .foot.show { opacity: 1; translate: 0 0; }
+  /* Once written, tapping the scroll writes it again. */
+  .roll.done .sheet { cursor: pointer; }
 
   html:not(.embedded) body { padding-bottom: 40px; }
 </style>
@@ -327,15 +329,23 @@
   /* ---- Seal and its footnote ---- */
   let footTimer;
   const showFoot = (ms) => { foot.classList.add('show'); clearTimeout(footTimer); if (ms) footTimer = setTimeout(() => foot.classList.remove('show'), ms); };
+  // With reduced motion the footnote is part of the finished scroll and stays.
+  const hideFoot = () => { if (!TTY.reduce) foot.classList.remove('show'); };
   seal.addEventListener('pointerenter', () => showFoot(0));
-  seal.addEventListener('pointerleave', () => { foot.classList.remove('show'); });
+  seal.addEventListener('pointerleave', hideFoot);
   seal.addEventListener('focus', () => showFoot(0));
-  seal.addEventListener('blur', () => foot.classList.remove('show'));
-  seal.addEventListener('click', () => showFoot(2600));
+  seal.addEventListener('blur', hideFoot);
+  seal.addEventListener('click', (e) => { e.stopPropagation(); if (!TTY.reduce) showFoot(2600); });
 
   /* ---- The whole piece ---- */
+  let playing = false;
   async function play() {
-    if (TTY.reduce) { full(); return; }
+    if (TTY.reduce) { full(); showFoot(0); return; }
+    if (playing) return;
+    playing = true;
+    roll.classList.remove('done');
+    foot.classList.remove('show');
+    [sheet, bottomRod, seal, sign].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
     blank();
     seal.style.opacity = 0;
     sign.style.opacity = 0;
@@ -362,7 +372,10 @@
     roll.animate([{ transform: 'none' }, { transform: 'translateY(.4%)' }, { transform: 'none' }], { duration: 240, delay: 290 });
     await wait(1600);
     showFoot(3000);
+    roll.classList.add('done');
+    playing = false;
   }
+  sheet.addEventListener('click', () => { if (roll.classList.contains('done')) play(); });
 
   if (TTY.reduce) full(); else blank();
   TTY.onShow(() => { play(); if (TTY.reduce) { fit(); } });

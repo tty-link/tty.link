@@ -217,16 +217,49 @@
 
   /* ---- Parts: where each one sits when assembled, and how far it flies out ----
      English parts are SVG strokes (offsets in viewBox units). Korean parts are the jamo nodes
-     font-kku draws for 행복; their boxes are the whole glyph cell, so each carries the spot
-     where its ink sits (fractions of the glyph box) and an offset in em. */
+     font-kku draws for 행복, each with an offset in em; where its ink actually sits is
+     measured from the rendered node (see inkCentre), so the guides follow any word, font or size. */
   const KO_PARTS = [
-    { glyph: 0, role: 'choseong', ink: [.32, .27], move: [-.3, -.34], turn: -8, tag: 'a' },
-    { glyph: 0, role: 'jungseong', ink: [.7, .3], move: [.34, -.16], turn: 7, tag: 'b' },
-    { glyph: 0, role: 'jongseong', ink: [.44, .72], move: [-.06, .42], turn: -5, tag: 'c' },
-    { glyph: 1, role: 'choseong', ink: [.5, .2], move: [.04, -.42], turn: 6, tag: 'd' },
-    { glyph: 1, role: 'jungseong', ink: [.5, .4], move: [.42, .06], turn: -6, tag: 'e' },
-    { glyph: 1, role: 'jongseong', ink: [.56, .72], move: [.12, .44], turn: 5, tag: 'f' },
+    { glyph: 0, role: 'choseong', move: [-.3, -.34], turn: -8, tag: 'a' },
+    { glyph: 0, role: 'jungseong', move: [.34, -.16], turn: 7, tag: 'b' },
+    { glyph: 0, role: 'jongseong', move: [-.06, .42], turn: -5, tag: 'c' },
+    { glyph: 1, role: 'choseong', move: [.04, -.42], turn: 6, tag: 'd' },
+    { glyph: 1, role: 'jungseong', move: [.42, .06], turn: -6, tag: 'e' },
+    { glyph: 1, role: 'jongseong', move: [.12, .44], turn: 5, tag: 'f' },
   ];
+
+  /* A font-kku jamo node is a whole em box of one conjoining jamo, placed with a CSS
+     transform and sometimes clipped. Its ink is found from the font's own text metrics:
+     the glyph's ink box inside the untransformed node, cut by the clip-path, then carried
+     through the node's transform. Returns the assembled ink centre in viewport pixels. */
+  const meter = document.createElement('canvas').getContext('2d');
+  function inkCentre(node) {
+    const saved = [node.style.transform, node.style.translate, node.style.rotate];
+    node.style.transform = 'none'; node.style.translate = 'none'; node.style.rotate = 'none';
+    const box = node.getBoundingClientRect();
+    const w = node.offsetWidth, h = node.offsetHeight;
+    [node.style.transform, node.style.translate, node.style.rotate] = saved;
+    const cs = getComputedStyle(node);
+    meter.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const m = meter.measureText(node.textContent);
+    const fa = m.fontBoundingBoxAscent, fd = m.fontBoundingBoxDescent;
+    const lh = cs.lineHeight === 'normal' ? fa + fd : parseFloat(cs.lineHeight);
+    const padL = parseFloat(cs.paddingLeft) || 0, padT = parseFloat(cs.paddingTop) || 0;
+    const base = padT + (lh - (fa + fd)) / 2 + fa;
+    let x0 = padL - m.actualBoundingBoxLeft, x1 = padL + m.actualBoundingBoxRight;
+    let y0 = base - m.actualBoundingBoxAscent, y1 = base + m.actualBoundingBoxDescent;
+    const clip = /inset\(([^)]*)\)/.exec(cs.clipPath);
+    if (clip) {
+      const v = clip[1].split(/\s+round\s+/)[0].trim().split(/\s+/);
+      const [t, r, b, l] = [v[0], v[1] ?? v[0], v[2] ?? v[0], v[3] ?? v[1] ?? v[0]]
+        .map((x, i) => (x.endsWith('%') ? parseFloat(x) / 100 * (i % 2 ? w : h) : parseFloat(x) || 0));
+      x0 = Math.max(x0, l); x1 = Math.min(x1, w - r); y0 = Math.max(y0, t); y1 = Math.min(y1, h - b);
+    }
+    const [ox, oy] = cs.transformOrigin.split(' ').map(parseFloat);
+    const matrix = cs.transform === 'none' ? new DOMMatrix() : new DOMMatrix(cs.transform);
+    const p = matrix.transformPoint(new DOMPoint((x0 + x1) / 2 - ox, (y0 + y1) / 2 - oy));
+    return [box.left + ox + p.x, box.top + oy + p.y];
+  }
 
   let parts = [];
   function collect() {
@@ -247,7 +280,6 @@
     parts = KO_PARTS.map((p) => ({
       ...p,
       el: glyphs[p.glyph].querySelector(`[part~="${p.role}"]`),
-      box: glyphs[p.glyph],
       dx: p.move[0] * em, dy: p.move[1] * em,
     })).filter((p) => p.el);
     return parts.length === KO_PARTS.length;
@@ -263,8 +295,8 @@
       p.el.style.transform = prev;
       return [r.left + r.width / 2 - base.left, r.top + r.height / 2 - base.top];
     }
-    const r = p.box.getBoundingClientRect();
-    return [r.left + r.width * p.ink[0] - base.left, r.top + r.height * p.ink[1] - base.top];
+    const [x, y] = inkCentre(p.el);
+    return [x - base.left, y - base.top];
   }
 
   function place(p, t) {

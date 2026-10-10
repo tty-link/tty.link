@@ -180,6 +180,28 @@
   .counter b { display: inline-block; min-width: 2.6em; margin-left: .4em; padding: .15em .5em; border-radius: 999px; background: rgba(139, 77, 255, .28); color: #fff; text-align: center; }
   .counter.done b { background: var(--violet); }
   .hint { bottom: clamp(10px, 2.2vh, 22px); color: #9d93c7; }
+  /* After the stamp: a quiet way to search the résumé again. */
+  .again {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(8px, 1.8vh, 18px);
+    translate: -50% 0;
+    padding: .45em 1.1em;
+    border: 1.5px solid rgba(217, 208, 255, .55);
+    border-radius: 999px;
+    background: rgba(139, 77, 255, .18);
+    color: #ece6ff;
+    font: inherit;
+    font-size: clamp(12px, 1.6vmin + 4px, 15px);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .5s ease, background .2s ease;
+  }
+  .again:hover { background: rgba(139, 77, 255, .4); }
+  .again:focus-visible { outline: 2px solid var(--glow); outline-offset: 3px; }
+  .scene.finished .again { opacity: 1; pointer-events: auto; }
+  .scene.finished .hint { opacity: 0; }
 </style>
 </head>
 <body>
@@ -195,6 +217,7 @@
     <div class="torch" aria-hidden="true"></div>
   </article>
   <p class="hint"></p>
+  <button class="again" type="button"></button>
 </main>
 
 <script>
@@ -220,6 +243,7 @@
       note: 'Why is everyone a 10/10 this year?',
       counter: 'Hidden instructions found',
       hint: matchMedia('(pointer: fine)').matches ? 'Move the UV light over the résumé.' : 'Drag the UV light over the résumé.',
+      again: 'Look again',
     },
     ko: {
       name: '<font-kku font="sebul" size="10cqi">김지원</font-kku>',
@@ -241,6 +265,7 @@
       note: '<font-kku font="pilgi" size="4.6cqi" wrap-unit="word">올해는 왜 다들 만점이지…?</font-kku>',
       counter: '찾아낸 숨은 지시문',
       hint: matchMedia('(pointer: fine)').matches ? '자외선 손전등을 이력서 위로 움직여 보세요.' : '자외선 손전등을 이력서 위로 끌어 보세요.',
+      again: '다시 비춰 보기',
     },
   };
   const t = R[TTY.lang] || R.en;
@@ -268,6 +293,8 @@
   note.innerHTML = t.note + '<svg viewBox="0 0 120 26" aria-hidden="true"><path pathLength="1" d="M4 18 C 30 4, 60 26, 92 12 S 112 8, 116 14"/></svg>';
   counter.querySelector('.label').textContent = t.counter;
   document.querySelector('.hint').textContent = t.hint;
+  const again = document.querySelector('.again');
+  again.textContent = t.again;
 
   const hidden = [...paper.querySelectorAll('.hid')];
   const found = new Set();
@@ -307,9 +334,10 @@
   }
 
   function discover(el) {
+    if (found.has(el)) return;
     found.add(el);
     focus = el;
-    leaveAt = performance.now() + 2300;
+    leaveAt = performance.now() + LINGER;
     el.classList.add('found');
     counter.querySelector('.n').textContent = `${found.size}/3`;
     if (found.size === hidden.length) {
@@ -336,7 +364,32 @@
       note.animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 900, easing: 'ease-out' });
       note.querySelector('path').animate([{ strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDasharray: 1, strokeDashoffset: 0 }], { duration: 600, delay: 700, fill: 'both' });
     }, TTY.reduce ? 0 : 1300);
+    setTimeout(() => scene.classList.add('finished'), TTY.reduce ? 0 : 2600);
   }
+
+  // Start the search over: lines hidden again, stamp and note lifted, the torch back at the edge.
+  function reset() {
+    found.clear();
+    focus = null;
+    leg = null;
+    hidden.forEach((el) => el.classList.remove('found'));
+    counter.querySelector('.n').textContent = '0/3';
+    counter.classList.remove('done');
+    delete stamp.dataset.done;
+    [stamp, note, ...note.querySelectorAll('path')].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
+    stamp.style.opacity = '';
+    note.style.opacity = '';
+    scene.classList.remove('finished');
+    const s = rect();
+    light.x = s.width * 1.05; light.y = -s.height * .05;
+    lastPointer = -Infinity;
+    place();
+  }
+  again.addEventListener('click', (e) => {
+    e.stopPropagation();
+    reset();
+    if (TTY.reduce) { hidden.forEach(discover); place(); }
+  });
 
   /* ---- Who moves the light: a hand, or the idle sweep ---- */
   scene.addEventListener('pointermove', (e) => {
@@ -351,15 +404,28 @@
     lastPointer = performance.now();
   });
 
-  // When nobody holds the torch it checks the résumé on its own: each hidden line (lingering
-  // a moment on each find), then a slow drift.
+  // When nobody holds the torch it checks the résumé on its own, on a fixed clock: it glides
+  // to each hidden line in LEG ms (finding it on arrival), lingers LINGER ms, then the next.
+  // The finds therefore land at the same moments on any screen size. Afterwards it drifts.
+  const LEG = 1500;
+  const LINGER = 1000;
   let focus = null;
   let leaveAt = 0;
+  let leg = null;
+  const smooth = (k) => (k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
   function autoTarget(now) {
     const s = rect();
     if (focus && now < leaveAt) return centerOf(focus);
     const left = hidden.filter((el) => !found.has(el));
-    if (left.length) return centerOf(left[0]);
+    if (left.length) {
+      if (!leg || leg.el !== left[0]) leg = { el: left[0], start: now, from: { x: light.x, y: light.y } };
+      const k = Math.min(1, (now - leg.start) / LEG);
+      const to = centerOf(leg.el);
+      if (k >= 1) discover(leg.el);
+      const e = smooth(k);
+      return { x: leg.from.x + (to.x - leg.from.x) * e, y: leg.from.y + (to.y - leg.from.y) * e };
+    }
+    leg = null;
     const k = now / 2600;
     return { x: s.width * (.5 + .3 * Math.sin(k)), y: s.height * (.45 + .3 * Math.sin(k * 1.37 + 1)) };
   }
@@ -368,8 +434,12 @@
   function frame(now) {
     const dt = Math.min(64, now - last); last = now;
     const handHeld = now - lastPointer < 2200;
+    if (handHeld) leg = null;
     const goal = handHeld ? target : autoTarget(now);
-    const ease = handHeld ? 1 - Math.pow(.0005, dt / 1000) : 1 - Math.pow(.2, dt / 1000);
+    // A hand is followed closely; the scripted search is followed exactly (it is already smooth),
+    // except while drifting or lingering, where a soft chase keeps it calm.
+    const scripted = !handHeld && leg;
+    const ease = handHeld ? 1 - Math.pow(.0005, dt / 1000) : scripted ? 1 : 1 - Math.pow(.2, dt / 1000);
     light.x += (goal.x - light.x) * ease;
     light.y += (goal.y - light.y) * ease;
     place();

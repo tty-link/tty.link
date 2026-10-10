@@ -82,6 +82,7 @@
   .label .diff { display: block; margin-top: .2em; font-family: 'Martian Mono', monospace; font-weight: 500; font-size: .7em; color: var(--muted); }
   .label.tag .msg { display: inline-block; padding: .25em .6em; background: var(--ink); color: #fff; border-radius: .4em; }
   .label.tag .type { color: #8ff0b6; }
+  .label.tag .text { margin-left: .35em; }
   .portrait .label { font-size: 3.7cqw; }
   .portrait .label .time { display: inline; margin-right: .5em; }
   .portrait .label .msg { display: inline; }
@@ -158,12 +159,15 @@
         lunch: 'M470 200 L560 110 H700 L790 200',
         walk: 'M860 450 L770 540 H650 L560 450',
       },
+      // [x, y, side, max label width in % of the map]. Stations on a row are 14–16% apart, so
+      // their labels are kept narrower than that. The evening labels hang under the lower line,
+      // where nothing else is, so they never meet the morning labels in the middle band.
       at: {
-        wake: [110, 200, 'below'], coffee: [260, 200, 'below'], plants: [410, 200, 'below'],
+        wake: [110, 200, 'below', 13.5], coffee: [260, 200, 'below', 13.5], plants: [410, 200, 'below', 13.5],
         lunch: [580, 110, 'above-end'], dessert: [680, 110, 'above-start'],
         'merge-lunch': [800, 200, 'below'],
         walk: [710, 540, 'below'],
-        'merge-walk': [560, 450, 'above'], docs: [420, 450, 'above'], revert: [280, 450, 'above'], tag: [120, 450, 'above'],
+        'merge-walk': [560, 450, 'above'], docs: [420, 450, 'below', 12.8], revert: [280, 450, 'below', 13.5], tag: [120, 450, 'below', 15],
       },
     },
     portrait: {
@@ -217,7 +221,7 @@
     });
 
     const items = COMMITS.map((c) => {
-      const [x, y, side] = L.at[c.id];
+      const [x, y, side, width] = L.at[c.id];
       const st = document.createElementNS(NS, 'circle');
       st.setAttribute('cx', x);
       st.setAttribute('cy', y);
@@ -251,6 +255,7 @@
       } else {
         const gap = (c.tag ? 32 : 26) / L.h * 100;
         label.style.left = px + '%';
+        if (width) label.style.setProperty('--w', width + '%');
         if (side === 'below') { label.style.top = (py + gap) + '%'; label.style.transform = 'translateX(-50%)'; label.style.textAlign = 'center'; }
         if (side === 'above') { label.style.top = (py - gap) + '%'; label.style.transform = 'translate(-50%, -100%)'; label.style.textAlign = 'center'; }
         if (side === 'above-end') { label.style.top = (py - gap) + '%'; label.style.transform = 'translate(-88%, -100%)'; label.style.textAlign = 'right'; }

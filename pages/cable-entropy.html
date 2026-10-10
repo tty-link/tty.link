@@ -76,6 +76,8 @@
   .ticks span:first-child { translate: 0 0; }
   .ticks span:last-child { translate: -100% 0; }
   .slider input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  /* Opened on its own on a phone, _kit.js puts a small ":)" button bottom-right; keep the slider's end clear of it. */
+  @media (max-width: 600px) { html:not(.embedded) .slider { padding-right: 44px; } }
 
   .note { position: absolute; z-index: 2; right: 3%; top: 8%; width: clamp(110px, 20cqmin, 170px); padding: .6em .7em .8em; background: #fff59d; rotate: 6deg; box-shadow: 0 4px 8px rgba(0, 0, 0, .18); font-size: clamp(15px, 2.6cqmin, 22px); opacity: 0; pointer-events: none; }
   .note > font-kku { color: #2f2a1f; }

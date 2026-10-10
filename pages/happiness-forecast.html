@@ -11,7 +11,8 @@
 <script src="/vendor/font-kku/font-kku.js" data-fonts="geumbak sebul sticker"></script>
 <style>
   /* The evening weather, for smiles. The Happy Isles get their icons one by one, the hourly
-     chance of giggles rises, the smile index needle swings, and the ticker never stops. */
+     chance of giggles rises, the smile index needle swings, and the advisory strip flips
+     through all five advisories. Tapping an island replays its weather. */
   :root {
     --sea: #1d4aa8;
     --sea-deep: #143780;
@@ -63,7 +64,8 @@
   .rig { position: relative; height: min(100cqh, 100cqw * 540 / 600); aspect-ratio: 600 / 540; container-type: size; }
   .rig svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .waves path { fill: none; stroke: rgba(255,255,255,.12); stroke-width: 2; stroke-linecap: round; }
-  .isle { transform-box: fill-box; transform-origin: center; }
+  .isle { transform-box: fill-box; transform-origin: center; cursor: pointer; outline: none; }
+  .isle:focus-visible .land { stroke: var(--sun); stroke-width: 6; }
   .isle .shelf { fill: var(--shallow); opacity: .55; }
   .isle .land { stroke: var(--ink); stroke-width: 3.5; }
   .icon { transform-box: fill-box; transform-origin: center; }
@@ -122,7 +124,8 @@
 
   /* ---- Side: smile index and chance of giggles ---- */
   .side { grid-area: side; display: grid; gap: 2.4cqmin; align-content: center; min-height: 0; container-type: inline-size; }
-  @container (orientation: portrait) { .side { grid-template-columns: 1fr; } .gauge { display: none !important; } }
+  /* Portrait: the gauge stays, as a compact panel beside the chart. */
+  @container (orientation: portrait) { .side { grid-template-columns: minmax(0, .82fr) minmax(0, 1.5fr); align-items: stretch; gap: 2cqmin; } }
   .panel { padding: 3.2cqi 4cqi 3.6cqi; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); border-radius: 3cqi; }
   .panel h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 6.4cqi; line-height: 1; }
   .gauge svg { display: block; width: 100%; height: auto; margin-top: 1cqi; }
@@ -134,10 +137,12 @@
   .hours { display: grid; grid-template-columns: repeat(13, 1fr); gap: 1.2cqi; margin-top: 1cqi; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 3.6cqi; opacity: .8; }
   .hours span { text-align: center; }
   @container (orientation: portrait) {
-    .chart { height: 13cqh; }
-    .panel { padding: 2.4cqi 3.4cqi 2.8cqi; }
-    .panel h2 { font-size: 5cqi; }
-    .hours { font-size: 3cqi; }
+    .chart { height: 13cqh; gap: .8cqi; }
+    .panel { padding: 2.4cqi 2.6cqi 2.8cqi; border-radius: 2.4cqi; }
+    .panel h2 { font-size: 3.9cqi; line-height: 1.1; }
+    .hours { font-size: 2.6cqi; gap: .8cqi; }
+    .gauge { display: grid; align-content: start; }
+    .gauge svg { margin-top: 2cqi; }
   }
 
   /* ---- Ticker ---- */
@@ -153,13 +158,32 @@
   }
   .ticker .label { position: relative; z-index: 1; flex: none; height: 100%; display: grid; place-items: center; padding: 0 2.6cqmin; background: var(--ink); color: var(--sun); font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: clamp(15px, 2.6cqmin, 22px); }
   .lang-ko .ticker .label { font-family: 'IBM Plex Sans KR', sans-serif; font-weight: 600; font-size: clamp(13px, 2.2cqmin, 18px); }
-  .ticker .track { display: flex; flex: none; white-space: nowrap; }
-  .live .ticker .track { animation: scroll var(--dur, 40s) linear infinite; }
-  .ticker .item { display: inline-flex; align-items: center; gap: 1.6cqmin; padding: 0 2cqmin; font-weight: 600; font-size: clamp(14px, 2.3cqmin, 19px); }
-  .ticker .item svg { width: 1.2em; height: 1.2em; }
-  @keyframes scroll { to { translate: -50% 0; } }
+  /* One advisory at a time, flipping up every few seconds, so all five fit in the slot. */
+  .ticker .track { position: relative; flex: 1; align-self: stretch; overflow: hidden; }
+  .ticker .item {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    gap: 1.6cqmin;
+    padding: 0 2cqmin;
+    font-weight: 600;
+    font-size: clamp(14px, 2.3cqmin, 19px);
+    line-height: 1.2;
+    opacity: 0;
+    translate: 0 100%;
+    transition: translate .45s cubic-bezier(.3, .9, .3, 1), opacity .3s ease;
+  }
+  .ticker .item.on { opacity: 1; translate: 0 0; }
+  .ticker .item.off { opacity: 0; translate: 0 -100%; }
+  .ticker .item svg { flex: none; width: 1.2em; height: 1.2em; }
+  .ticker .count { flex: none; padding: 0 2.4cqmin; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: clamp(13px, 2.1cqmin, 17px); opacity: .7; }
+  @container (orientation: portrait) {
+    .ticker { height: clamp(44px, 9cqmin, 58px); }
+    .ticker .item { font-size: clamp(12.5px, 3.4cqmin, 15px); }
+  }
 
-  @media (prefers-reduced-motion: reduce) { .live * { animation: none !important; } }
+  @media (prefers-reduced-motion: reduce) { .live * { animation: none !important; } .ticker .item { transition: none; } }
 </style>
 </head>
 <body>
@@ -202,6 +226,7 @@
   <div class="ticker" aria-hidden="true">
     <div class="label"><span data-lang="en">Advisory</span><span data-lang="ko">특보</span></div>
     <div class="track"></div>
+    <div class="count"></div>
   </div>
 </main>
 
@@ -300,6 +325,24 @@
     }
     call.querySelector('.what').textContent = what;
     rig.append(call);
+
+    // Tapping an island replays its weather and pops its forecast card.
+    g.setAttribute('tabindex', '0');
+    g.setAttribute('role', 'button');
+    g.setAttribute('aria-label', `${name}: ${what}, ${isle.pct}`);
+    const replay = () => {
+      if (TTY.reduce) return;
+      icon.animate([
+        { transform: 'none' },
+        { transform: 'translateY(-26px) scale(1.25) rotate(-8deg)', offset: .35 },
+        { transform: 'translateY(4px) scale(.95) rotate(4deg)', offset: .7 },
+        { transform: 'none' },
+      ], { duration: 720, easing: 'cubic-bezier(.3, .8, .3, 1)' });
+      call.animate([{ transform: 'none' }, { transform: 'scale(1.18)', offset: .4 }, { transform: 'none' }],
+        { duration: 520, easing: 'cubic-bezier(.2, .9, .3, 1.3)' });
+    };
+    g.addEventListener('click', replay);
+    g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); replay(); } });
     return { g, land, icon, call };
   });
 
@@ -354,9 +397,30 @@
   const sunGlyph = '<svg viewBox="-30 -30 60 60" aria-hidden="true"><circle r="13" fill="#0f1f4a"/>' +
     [...Array(8)].map((_, i) => `<path d="M0 -26 V-19" transform="rotate(${i * 45})" stroke="#0f1f4a" stroke-width="5" stroke-linecap="round"/>`).join('') + '</svg>';
   const track = $('.track');
-  const once = NEWS.map((t) => `<span class="item">${sunGlyph}<span>${t}</span></span>`).join('');
-  track.innerHTML = once + once;
-  track.style.setProperty('--dur', (NEWS.join('').length * (TTY.lang === 'ko' ? .5 : .3)) + 's');
+  const counter = $('.ticker .count');
+  track.innerHTML = NEWS.map((t) => `<span class="item">${sunGlyph}<span>${t}</span></span>`).join('');
+  const items = [...track.children];
+  let current = -1;
+  function flip() {
+    if (current >= 0) { items[current].classList.remove('on'); items[current].classList.add('off'); }
+    current = (current + 1) % items.length;
+    const next = items[current];
+    next.classList.remove('off');
+    // Start below, then slide up into place.
+    next.style.transition = 'none';
+    next.style.translate = '0 100%';
+    void next.offsetWidth;
+    next.style.transition = '';
+    next.style.translate = '';
+    next.classList.add('on');
+    counter.textContent = `${current + 1}/${items.length}`;
+  }
+  let ticking = null;
+  function startTicker() {
+    if (ticking) return;
+    flip();
+    ticking = setInterval(flip, 2700);
+  }
 
   /* ---- The broadcast ---- */
   const screen = $('.screen');
@@ -371,6 +435,7 @@
 
   function play() {
     screen.classList.add('live');
+    startTicker();
     if (TTY.reduce) return;
     const ease = 'cubic-bezier(.2, .9, .3, 1.2)';
 

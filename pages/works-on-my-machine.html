@@ -119,6 +119,24 @@
 
   .hidden { opacity: 0; }
   @media (prefers-reduced-motion: reduce) { .hidden { opacity: 1; } }
+
+  /* Once the reply has landed, the certificate can be stamped again, as often as you like. */
+  .cert.stampable { cursor: pointer; }
+  .cert:focus-visible { outline: 3px solid #ffd84a; outline-offset: 6px; }
+  .seal.extra { opacity: .78; }
+  .hint {
+    position: fixed;
+    left: 50%;
+    bottom: max(10px, 2.4vh);
+    translate: -50% 0;
+    color: rgba(255, 255, 255, .78);
+    font: 500 clamp(12px, 1.8vmin, 15px)/1.3 'Cormorant Garamond', Georgia, serif;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity .6s;
+  }
+  .lang-ko .hint { font-family: 'Gowun Batang', serif; }
+  .hint.on { opacity: 1; }
 </style>
 </head>
 <body>
@@ -160,6 +178,10 @@
     <span data-lang="ko"><font-kku font="pilgi" size="6cqi" wrap-unit="word">좋아요. 그럼 그 컴퓨터를 출시하죠.</font-kku></span>
   </p>
 </article>
+<p class="hint" id="stamp-hint">
+  <span data-lang="en">Tap the certificate to stamp it again.</span>
+  <span data-lang="ko">상장을 누르면 도장을 한 번 더 찍어요.</span>
+</p>
 
 <script>
 (() => {
@@ -174,11 +196,53 @@
   const seal = document.querySelector('.seal');
   const note = document.querySelector('.note');
   const signature = document.querySelector('.sign path');
+  const hint = document.querySelector('.hint');
 
   if (!TTY.reduce) steps.forEach((el) => el.classList.add('hidden'));
 
+  // After the ceremony, every tap (or Enter/Space) brings the stamp down once more, somewhere
+  // new on the paper. Seven extra impressions at most; then the oldest is reused.
+  const thump = (el) => {
+    if (TTY.reduce) return;
+    el.animate([
+      { transform: 'scale(2.6)', opacity: 0, filter: 'blur(2px)' },
+      { transform: 'scale(.94)', opacity: .95, filter: 'blur(0)', offset: .7 },
+      { transform: 'scale(1)', opacity: .9 },
+    ], { duration: 420, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+    cert.animate([
+      { transform: 'none' }, { transform: 'translate(0, .6%) rotate(.4deg)' }, { transform: 'translate(0, -.2%)' }, { transform: 'none' },
+    ], { duration: 320, delay: 300 });
+  };
+  const extras = [];
+  let stampable = false;
+  function readyToStamp() {
+    stampable = true;
+    cert.classList.add('stampable');
+    cert.tabIndex = 0;
+    cert.setAttribute('aria-describedby', 'stamp-hint');
+    hint.classList.add('on');
+  }
+  function stampAgain() {
+    if (!stampable) return;
+    let copy = extras.length >= 7 ? extras.shift() : seal.cloneNode(true);
+    copy.classList.add('extra');
+    copy.classList.remove('hidden');
+    copy.style.right = (6 + Math.random() * 46).toFixed(1) + 'cqi';
+    copy.style.bottom = (8 + Math.random() * 80).toFixed(1) + 'cqi';
+    copy.style.rotate = (-28 + Math.random() * 40).toFixed(1) + 'deg';
+    if (!copy.isConnected) cert.insertBefore(copy, note);
+    extras.push(copy);
+    thump(copy);
+  }
+  cert.addEventListener('click', stampAgain);
+  cert.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    stampAgain();
+  });
+
   function play() {
-    if (TTY.reduce) { seal.classList.remove('hidden'); note.classList.remove('hidden'); return; }
+    if (TTY.reduce) { seal.classList.remove('hidden'); note.classList.remove('hidden'); readyToStamp(); return; }
     const ease = 'cubic-bezier(.2, .8, .2, 1)';
     cert.animate([{ transform: 'translateY(-6%) rotate(-1.5deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 700, easing: ease });
 
@@ -196,14 +260,7 @@
     const stampAt = signedAt + 900;
     setTimeout(() => {
       seal.classList.remove('hidden');
-      seal.animate([
-        { transform: 'scale(2.6)', opacity: 0, filter: 'blur(2px)' },
-        { transform: 'scale(.94)', opacity: .95, filter: 'blur(0)', offset: .7 },
-        { transform: 'scale(1)', opacity: .9 },
-      ], { duration: 420, easing: 'cubic-bezier(.5, 0, .9, .4)' });
-      cert.animate([
-        { transform: 'none' }, { transform: 'translate(0, .6%) rotate(.4deg)' }, { transform: 'translate(0, -.2%)' }, { transform: 'none' },
-      ], { duration: 320, delay: 300 });
+      thump(seal);
     }, stampAt);
 
     // And the reply arrives.
@@ -215,6 +272,7 @@
         { transform: 'none', opacity: 1 },
       ], { duration: 650, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
     }, stampAt + 1700);
+    setTimeout(readyToStamp, stampAt + 2500);
   }
 
   TTY.onShow(play);

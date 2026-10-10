@@ -137,6 +137,8 @@
     .events li:not(:nth-last-child(-n + 2)) { display: none; }
     .head { flex-wrap: wrap; }
   }
+  /* Opened on its own on a phone, _kit.js puts a small ":)" button bottom-right; end the log above it. */
+  @media (max-aspect-ratio: 4/5) and (max-width: 600px) { html:not(.embedded) .room { padding-bottom: 50px; } }
 </style>
 </head>
 <body>

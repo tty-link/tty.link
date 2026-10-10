@@ -307,8 +307,8 @@
       c4: 'Why Korean costs more',
       receipt: {
         title: 'The Token Factory', no: 'Receipt No. 0042',
-        rows: [['Hello world', '2'], ['unbelievable', '3'], ['안녕하세요, syllables', '5'], ['안녕하세요, again, in jamo', '12']],
-        tokens: ['Tokens', '22'], total: ['Total', '44 cookies'],
+        syllables: (w) => `${w}, syllables`, jamo: (w) => `${w}, again, in jamo`,
+        tokens: 'Tokens', total: 'Total', cost: (n) => `${n} cookies`,
         foot: 'Prices are made up. The feelings are real.',
       },
     },
@@ -322,8 +322,8 @@
       c4: '<font-kku font="sebul" size="1em">한국어 요금이 더 나오는 이유</font-kku>',
       receipt: {
         title: '토큰 공장', no: '영수증 0042번',
-        rows: [['Hello world', '2'], ['unbelievable', '3'], ['안녕하세요 (글자)', '5'], ['안녕하세요 (자모까지)', '12']],
-        tokens: ['토큰 합계', '22'], total: ['청구액', '쿠키 44개'],
+        syllables: (w) => `${w} (글자)`, jamo: (w) => `${w} (자모까지)`,
+        tokens: '토큰 합계', total: '청구액', cost: (n) => `쿠키 ${n}개`,
         foot: '요금은 지어낸 것입니다. 서운함은 진짜입니다.',
       },
     },
@@ -358,6 +358,21 @@
     (g.jamo.jongseong || []).forEach((j) => out.push(JONG[j.codePointAt(0) - 0x11a8]));
     return out.filter(Boolean);
   }
+
+  /* ---- What goes through the press. The meter, the receipt and its totals are all counted
+     from this one table, so changing a word or its pieces keeps them in step. ---- */
+  const PRICE = 2; // cookies per token
+  const ENGLISH = [
+    { text: 'Hello world', pieces: ['Hello', ' world'], line: 'c1' },
+    { text: 'unbelievable', pieces: ['un', 'believ', 'able'], line: 'c2' },
+  ];
+  const KOREAN = '안녕하세요';
+  const receiptRows = () => [
+    ...ENGLISH.map((r) => [r.text, r.pieces.length]),
+    [t.receipt.syllables(KOREAN), [...KOREAN].length],
+    [t.receipt.jamo(KOREAN), [...KOREAN].reduce((n, ch) => n + jamoOf(ch).length, 0)],
+  ];
+  const totalTokens = () => receiptRows().reduce((n, [, k]) => n + k, 0);
 
   /* ---- Pieces on the belt ---- */
   const kku = (text) => `<font-kku font="dunggeun" size="1em">${text}</font-kku>`;
@@ -395,7 +410,7 @@
   /* ---- Meters ---- */
   const count = { tokens: 0, bill: 0 };
   function add(n) {
-    const goal = { tokens: count.tokens + n, bill: (count.tokens + n) * 2 };
+    const goal = { tokens: count.tokens + n, bill: (count.tokens + n) * PRICE };
     const startT = count.tokens, startB = count.bill;
     const dur = TTY.reduce ? 0 : 500 + n * 60;
     const t0 = performance.now();
@@ -483,7 +498,7 @@
   }
 
   async function koreanRound() {
-    const word = '안녕하세요';
+    const word = KOREAN;
     const bar = make(kku(word), 'bar');
     setX(bar, -bar.w - 20);
     belt.classList.add('run');
@@ -539,7 +554,9 @@
 
   function printReceipt() {
     const r = t.receipt;
-    receipt.innerHTML = `<h2>${r.title}</h2><p class="no">${r.no}</p>${r.rows.map(([a, b]) => `<p class="row"><span>${a}</span><span>${b}</span></p>`).join('')}<p class="row total"><span>${r.tokens[0]}</span><span>${r.tokens[1]}</span></p><p class="row"><span>${r.total[0]}</span><span>${r.total[1]}</span></p><p class="foot">${r.foot}</p>`;
+    const rows = receiptRows();
+    const tokens = totalTokens();
+    receipt.innerHTML = `<h2>${r.title}</h2><p class="no">${r.no}</p>${rows.map(([a, b]) => `<p class="row"><span>${a}</span><span>${b}</span></p>`).join('')}<p class="row total"><span>${r.tokens}</span><span>${tokens}</span></p><p class="row"><span>${r.total}</span><span>${r.cost(tokens * PRICE)}</span></p><p class="foot">${r.foot}</p>`;
     if (TTY.reduce) { receipt.style.transform = 'none'; return Promise.resolve(); }
     const a = receipt.animate([{ transform: 'translateY(105%)' }, { transform: 'translateY(0)' }], { duration: 1800, easing: 'steps(14, end)', fill: 'forwards' });
     return a.finished.then(() => { receipt.style.transform = 'none'; a.cancel(); });
@@ -547,8 +564,10 @@
 
   /* ---- Run ---- */
   let running = false;
+  let encore = null;
   async function run() {
     if (running) return;
+    clearTimeout(encore);
     running = true;
     again.classList.remove('on');
     receipt.style.transform = '';
@@ -560,8 +579,7 @@
     lamp.classList.remove('on');
     caption.textContent = '';
     await sleep(500);
-    await englishRound('Hello world', ['Hello', ' world'], t.c1);
-    await englishRound('unbelievable', ['un', 'believ', 'able'], t.c2);
+    for (const r of ENGLISH) await englishRound(r.text, r.pieces, t[r.line]);
     const bits = await koreanRound();
     caption.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' }).finished.then((a) => { caption.textContent = ''; caption.getAnimations().forEach((x) => x.cancel()); });
     belt.classList.add('run');
@@ -570,19 +588,21 @@
     lamp.classList.remove('on');
     again.classList.add('on');
     running = false;
+    // Left alone, the factory starts another shift after a while.
+    encore = setTimeout(run, 9000);
   }
 
   // The end state, for visitors who asked for less motion.
   function still() {
     lane.replaceChildren();
-    const word = '안녕하세요';
+    const word = KOREAN;
     let bits = [];
     [...word].forEach((ch, i) => jamoOf(ch).forEach((j) => bits.push(make(kku(j), 'chip jamo', COLORS[i % COLORS.length]))));
     fit(bits, 5);
     const total = bits.reduce((s, i) => s + i.w, 0) + 5 * (bits.length - 1);
     let x = lane.clientWidth / 2 - total / 2;
     bits.forEach((b) => { setX(b, x); x += b.w + 5; });
-    count.tokens = 0; add(22);
+    count.tokens = 0; add(totalTokens());
     lamp.classList.add('on');
     say(t.c4, true);
   }

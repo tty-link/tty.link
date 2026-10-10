@@ -83,7 +83,8 @@
   .job .st { grid-column: 3; font-size: .86em; color: rgba(35, 65, 47, .55); white-space: nowrap; }
   .job.done .st { color: var(--green); font-weight: 600; }
   .note { margin-top: .9em; font-size: .86em; line-height: 1.45; color: rgba(35, 65, 47, .7); }
-  .lang-ko .note { word-break: keep-all; }
+  .lang-ko .note, .lang-ko .note-short { word-break: keep-all; }
+  .note-short { display: none; margin-top: .5em; font-size: 11.5px; line-height: 1.35; color: rgba(35, 65, 47, .72); }
   .final { min-height: 1.4em; margin-top: .7em; font-size: 1.5em; font-weight: 700; color: var(--green); visibility: hidden; }
   .final.on { visibility: visible; }
   .final > font-kku { color: var(--green); }
@@ -93,6 +94,8 @@
     .job { padding: .3em .2em; grid-template-columns: 1.2em 7.6em 1fr auto; }
     .job .st { grid-column: 4; grid-row: 1; text-align: right; }
     .note { display: none; }
+    /* Phones keep the every-50 joke in one short line, so "36" still makes sense. */
+    .note-short { display: block; }
     .final { margin-top: .3em; font-size: 15px; }
   }
 </style>
@@ -128,6 +131,8 @@
     <ol class="jobs"></ol>
     <p class="note" data-lang="en">Fun fact: */50 fires at :00 and :50 of every hour, not every 50 minutes. So you stretch twice an hour. Cron knows best.</p>
     <p class="note" data-lang="ko">참고로 */50은 50분마다가 아니라 매시 0분과 50분에 돌아요. 그래서 한 시간에 두 번 스트레칭. 크론이 다 알아서 해요.</p>
+    <p class="note-short" data-lang="en">*/50 means :00 and :50 of every hour, not every 50 minutes. Hence 36.</p>
+    <p class="note-short" data-lang="ko">*/50은 50분마다가 아니라 매시 0분과 50분. 그래서 36번.</p>
     <p class="final" aria-live="polite"></p>
   </section>
 </main>

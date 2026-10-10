@@ -88,7 +88,9 @@
   @container (orientation: portrait) {
     .hops { font-size: 12px; }
     .hop { padding: .38em 0; grid-template-columns: 1.8em 1fr auto 4.6em; }
-    .hop .what { display: none; }
+    /* One line per hop on phones; the newest hop also gets its story underneath. */
+    .hop:not(.cur) .what { display: none; }
+    .hop.cur .what { grid-area: 2 / 2 / 3 / 5; font-size: .95em; }
     .hop .n { grid-area: 1 / 1; }
     .hop .who { grid-area: 1 / 2; }
     .hop .lat { grid-area: 1 / 3; }
@@ -101,6 +103,8 @@
   .sum .big > font-kku { color: var(--text); }
   .sum .note { margin-top: .5cqmin; font-size: .82em; color: var(--dim); }
   .lang-ko .sum .note { word-break: keep-all; }
+  /* Opened on its own on a phone, _kit.js puts a small ":)" button bottom-right; keep clear of it. */
+  @media (max-width: 600px) { html:not(.embedded) .sum { padding-right: 44px; } }
 </style>
 </head>
 <body>
@@ -291,7 +295,7 @@
   async function trace() {
     const mine = ++run;
     web.replaceChildren(); route.replaceChildren();
-    rows.forEach((r) => r.classList.remove('on'));
+    rows.forEach((r) => r.classList.remove('on', 'cur'));
     setSummary(false);
     ttlN.textContent = '64'; pkN.textContent = '1';
     for (let i = 0; i < HOPS.length; i++) {
@@ -303,7 +307,8 @@
         if (mine !== run) return;
       }
       pulse(at);
-      rows[i].classList.add('on');
+      rows.forEach((r) => r.classList.remove('cur'));
+      rows[i].classList.add('on', 'cur');
       if (!TTY.reduce) rows[i].animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 380, easing: 'cubic-bezier(.4, 0, .2, 1)' });
       flip(ttlN, String(64 + i));
       flip(pkN, String(PACKETS[i]));
