@@ -35,17 +35,23 @@
   ::selection { background: var(--ink); color: var(--sun); }
   a { color: inherit; text-underline-offset: .2em; text-decoration-thickness: 2px; }
   a:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; border-radius: 2px; }
-  .mark { font-size: 15px; font-weight: 600; text-decoration: none; justify-self: start; }
+  .mark { font-size: 15px; text-decoration: none; justify-self: start; }
   main { align-self: end; }
-  h1 { font-size: clamp(36px, 9vw, 112px); font-weight: 750; line-height: 1.06; }
+  /* The headline uses the stroke letters of the home page (font-size is the x-height). */
+  h1 { font-size: clamp(20px, 5.4vw, 72px); font-weight: 400; line-height: 2.12; white-space: nowrap; }
   p { margin-top: .9em; font-size: clamp(16px, 2vw, 20px); font-weight: 500; }
 </style>
+<script src="/assets/tty-glyphs.js"></script>
 </head>
 <body>
 <a class="mark" href="/" aria-label="tty.link">tty.link :)</a>
 <main>
-  <h1>No page here :(</h1>
+  <h1 aria-label="No page here :(">No page here :(</h1>
   <p>This address doesn't exist. <a href="/">Go to the tty.link home page</a></p>
 </main>
+<script>
+  TTYGlyphs.wordmark(document.querySelector('.mark'));
+  TTYGlyphs.setWords(document.querySelector('h1'), ['No', 'page', 'here', ':(']);
+</script>
 </body>
 </html>

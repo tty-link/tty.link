@@ -89,7 +89,7 @@
       const style = document.createElement('style');
       style.textContent = [
         '.tty-nav{position:fixed;right:12px;bottom:12px;z-index:2147483647;display:flex;gap:6px;align-items:center}',
-        '.tty-nav a,.tty-nav button{padding:6px 10px;border:0;border-radius:999px;background:#ffd84a;color:#1b2b7a;',
+        '.tty-nav a,.tty-nav button{display:inline-flex;align-items:center;box-sizing:border-box;min-height:30px;padding:4px 10px;border:0;border-radius:999px;background:#ffd84a;color:#1b2b7a;',
         'font:600 13px/1 ui-monospace,Menlo,Consolas,monospace;text-decoration:none;cursor:pointer;',
         'box-shadow:0 0 0 1px rgba(27,43,122,.25),0 2px 8px rgba(0,0,0,.15)}',
         '.tty-nav button{display:none;width:34px;height:34px;padding:0}',
@@ -110,8 +110,15 @@
         const open = bar.classList.toggle('open');
         toggle.setAttribute('aria-expanded', String(open));
       });
-      bar.append(link('/all/?lang=' + lang, lang === 'ko' ? '전체 보기' : 'All pages'), link('/', 'tty.link :)'), toggle);
+      const home = link('/', 'tty.link :)');
+      home.setAttribute('aria-label', 'tty.link');
+      bar.append(link('/all/?lang=' + lang, lang === 'ko' ? '전체 보기' : 'All pages'), home, toggle);
       document.body.append(bar);
+      // Same wordmark as the home page; the text stays if the alphabet cannot load.
+      const glyphs = document.createElement('script');
+      glyphs.src = '/assets/tty-glyphs.js';
+      glyphs.onload = () => window.TTYGlyphs && window.TTYGlyphs.wordmark(home, 11);
+      document.head.append(glyphs);
     }
   });
 })();
