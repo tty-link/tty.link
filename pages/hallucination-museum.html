@@ -173,6 +173,27 @@
   .bubble::after { content: ""; position: absolute; left: 1.2em; bottom: -.45em; width: .9em; height: .9em; background: #fff; rotate: 45deg; }
   .bubble > font-kku { color: var(--ink); }
 
+  /* Browsing the wall once the guard is done (and from the start with reduced motion). */
+  .browse { position: absolute; inset: auto 0 0 0; z-index: 8; display: flex; justify-content: center; gap: max(14px, 2.2cqw); padding: 0 3cqw 3.6cqh; pointer-events: none; opacity: 0; transition: opacity .4s; }
+  .browse.on { opacity: 1; }
+  .browse button {
+    pointer-events: auto;
+    display: grid;
+    place-items: center;
+    width: max(40px, min(5.4cqw, 7.4cqh));
+    aspect-ratio: 1;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    background: rgba(69, 22, 31, .82);
+    color: var(--gold);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .35);
+  }
+  .browse button:disabled { opacity: .3; cursor: default; }
+  .browse button:focus-visible { outline: 3px solid #f3e7b5; outline-offset: 3px; }
+  .browse svg { width: 46%; height: 46%; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .browse:not(.on) button { visibility: hidden; }
+
   @container (orientation: portrait) {
     .wall, .track, .sign { --slot: 76cqw; }
     .wall { --line: 84cqh; }
@@ -201,6 +222,10 @@
   </header>
   <div class="track"></div>
   <div class="dim" aria-hidden="true"></div>
+  <nav class="browse">
+    <button type="button" class="prev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19"/></svg></button>
+    <button type="button" class="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 L16 12 L9 19"/></svg></button>
+  </nav>
 </main>
 
 <script>
@@ -382,16 +407,79 @@
     const g = local(guard);
     bubble.style.left = (g.x + g.w * .55) + 'px';
     bubble.animate([{ transform: 'translateY(10px) scale(.8)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.2, 1.3, .4, 1)', fill: 'forwards' });
+    openBrowsing();
   }
 
+  // Reduced motion: every sticker already on, the guard by the first exhibit, free to browse.
   function still() {
     exhibits.forEach((_, i) => stick(i, 'still'));
-    setGuard(standFor(exhibits.length - 1));
-    camera(centreOf(exhibits.length - 1), 0);
+    setGuard(Math.max(4, standFor(0)));
+    camera(centreOf(0), 0);
     const g = local(guard);
     bubble.style.left = (g.x + g.w * .55) + 'px';
     bubble.style.opacity = '1';
+    openBrowsing();
   }
+
+  /* ---- Browsing: buttons, arrow keys, wheel, swipe ---- */
+  const browse = document.querySelector('.browse');
+  const prevBtn = browse.querySelector('.prev');
+  const nextBtn = browse.querySelector('.next');
+  prevBtn.setAttribute('aria-label', TTY.t({ en: 'Previous exhibit', ko: '이전 전시물' }));
+  nextBtn.setAttribute('aria-label', TTY.t({ en: 'Next exhibit', ko: '다음 전시물' }));
+  // Stops are the distinct camera positions: on a wide screen several exhibits share one,
+  // so every press visibly moves the wall.
+  let browsing = false;
+  let moving = false;
+  function stops() {
+    const view = museum.clientWidth;
+    const max = Math.max(0, track.scrollWidth + 40 - view);
+    const all = exhibits.map((_, i) => Math.round(Math.max(0, Math.min(max, centreOf(i) - view * .5)))).sort((a, b) => a - b);
+    // Positions a few pixels apart are the same view.
+    return all.filter((v, i) => i === 0 || v - all[i - 1] > 40);
+  }
+  function syncButtons() {
+    const s = stops();
+    const cur = Math.round(camX);
+    prevBtn.disabled = !s.some((v) => v < cur - 20);
+    nextBtn.disabled = !s.some((v) => v > cur + 20);
+  }
+  function go(dir) {
+    if (!browsing || moving) return;
+    const s = stops();
+    const cur = Math.round(camX);
+    const goal = dir > 0 ? s.find((v) => v > cur + 20) : [...s].reverse().find((v) => v < cur - 20);
+    if (goal === undefined) return;
+    moving = true;
+    camera(goal + museum.clientWidth * .5, TTY.reduce ? 0 : 650).then(() => { moving = false; syncButtons(); });
+    syncButtons();
+  }
+  function openBrowsing() {
+    browsing = true;
+    syncButtons();
+    browse.classList.add('on');
+  }
+  prevBtn.addEventListener('click', () => go(-1));
+  nextBtn.addEventListener('click', () => go(1));
+  addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') go(-1);
+    if (e.key === 'ArrowRight') go(1);
+  });
+  let wheel = 0;
+  museum.addEventListener('wheel', (e) => {
+    if (!browsing) return;
+    wheel += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (Math.abs(wheel) > 60) { go(Math.sign(wheel)); wheel = 0; }
+  }, { passive: true });
+  let swipeX = null;
+  museum.addEventListener('pointerdown', (e) => { swipeX = e.clientX; });
+  museum.addEventListener('pointerup', (e) => {
+    if (swipeX === null) return;
+    const dx = e.clientX - swipeX;
+    swipeX = null;
+    if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+  });
+  addEventListener('resize', () => { if (browsing) { camera(camX + museum.clientWidth * .5, 0); syncButtons(); } });
 
   TTY.onShow(() => (TTY.reduce ? still() : tour()));
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));

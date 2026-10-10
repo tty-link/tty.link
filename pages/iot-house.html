@@ -267,8 +267,10 @@
     hit.setAttribute('tabindex', '0');
     hit.setAttribute('role', 'button');
     hit.setAttribute('aria-label', d.name[TTY.lang]);
-    hit.addEventListener('click', () => { idleUntil = performance.now() + 9000; notify(d); });
-    hit.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); notify(d); } });
+    // A click and a key press do the same thing: the device acts up and the cycle waits.
+    const press = () => { idleUntil = performance.now() + 9000; notify(d); };
+    hit.addEventListener('click', press);
+    hit.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); press(); } });
     svg.querySelector('.hits').append(hit);
   });
 
@@ -368,9 +370,12 @@
     setTimeout(tick, 2700);
   }
 
+  // Reduced motion: the feed is fixed. The plant (the punchline) sits on top; the kettle's
+  // note is the one that doesn't fit, so its coin stays visible in the picture instead.
   if (TTY.reduce) {
-    [...DEVICES].reverse().forEach((d) => notify(d));
+    ['kettle', 'bulb', 'toaster', 'lock', 'fridge', 'plant'].forEach((id) => notify(DEVICES.find((d) => d.id === id)));
     policy.setAttribute('height', 120);
+    coin.style.opacity = 1;
   }
   TTY.onShow(() => {
     if (TTY.reduce) return;

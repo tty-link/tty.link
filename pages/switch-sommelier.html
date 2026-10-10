@@ -112,23 +112,28 @@
   .list li.on button { background: linear-gradient(90deg, rgba(216, 180, 106, .22), transparent); }
   .list li.on .nm { color: var(--ink); }
 
+  /* The sommelier's note. In one column it sits under the list; in the two-column layout it
+     hangs from the card's bottom edge, over the empty padding only. Either way no score is
+     covered. Its text is written from the start, so nothing jumps when it appears. */
   .sig {
-    position: absolute;
-    right: -2cqi;
-    bottom: -6cqi;
-    width: 54cqi;
-    padding: 3.4cqi 4cqi;
+    position: relative;
+    width: auto;
+    max-width: 84%;
+    margin: 3cqi 0 0 auto;
+    padding: 2.2cqi 3.4cqi;
     background: #fff9e8;
     color: #4a2c4e;
     font-family: 'Homemade Apple', cursive;
     font-size: 3.6cqi;
     line-height: 1.6;
-    rotate: -4deg;
+    rotate: -2deg;
     box-shadow: 0 1.6cqi 3cqi rgba(0,0,0,.3);
     opacity: 0;
   }
   .sig > font-kku { color: #4a2c4e; }
-  @container page (max-width: 620px) { .sig { right: 3cqi; bottom: 3cqi; width: 62cqi; } }
+  @container page (min-width: 760px) and (min-aspect-ratio: 1/1) {
+    .sig { position: absolute; right: -2cqi; top: calc(100% - 3cqi); width: 54cqi; max-width: none; margin: 0; padding: 3.4cqi 4cqi; rotate: -4deg; }
+  }
 
   @container (min-width: 760px) and (min-aspect-ratio: 1/1) {
     .page { grid-template-columns: 1fr 1.05fr; grid-template-rows: auto 1fr; column-gap: 5cqw; }
@@ -352,7 +357,7 @@
     for (let k = 0; k < 3; k++) { await strike(SWITCHES[i].id, k); if (!live()) return; }
   }
 
-  function signNote() {
+  function writeNote() {
     if (ko) {
       const el = document.createElement('font-kku');
       el.setAttribute('font', 'pilgi');
@@ -363,6 +368,8 @@
     } else {
       sig.textContent = L.sig;
     }
+  }
+  function signNote() {
     sig.style.opacity = 1;
     if (!TTY.reduce) sig.animate([{ opacity: 0, transform: 'translateY(20%) rotate(6deg)' }, { opacity: 1, transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.2,.9,.3,1.1)' });
   }
@@ -393,6 +400,7 @@
   });
 
   /* ---- Start ---- */
+  writeNote();
   if (TTY.reduce) {
     show(2);
     for (let k = 0; k < 3; k++) drawPulse('blue', k);

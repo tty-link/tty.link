@@ -99,7 +99,9 @@
     opacity: 0;
   }
   .stamp .big { display: block; font-size: 5.4cqi; font-weight: 800; font-stretch: 112%; line-height: 1; }
-  .stamp .small { display: block; margin-top: .6cqi; font-size: 2.3cqi; font-weight: 600; }
+  .stamp .small { display: block; margin-top: .6cqi; font-size: max(12px, 2.3cqi); font-weight: 600; }
+  /* The small line is set in a regular Korean face: dojang turns to mush at this size. */
+  .lang-ko .stamp .small { margin-top: 1cqi; font-family: 'IBM Plex Sans KR', sans-serif; font-size: max(13px, 2.6cqi); font-weight: 600; }
   .stamp font-kku { color: var(--stamp); }
   .stamp .kk { display: block; }
 
@@ -355,7 +357,7 @@
         <div data-lang="en"><span class="big">Test passed.</span><span class="small">The smoke was decorative.</span></div>
         <div data-lang="ko">
           <span class="kk"><font-kku font="dojang" size="8.4cqi">통과</font-kku></span>
-          <span class="kk"><font-kku font="dojang" size="3cqi">연기는 장식이었습니다</font-kku></span>
+          <span class="small">연기는 장식이었습니다</span>
         </div>
       </div>
     </div>
@@ -491,6 +493,9 @@
   function reset() {
     timers.forEach(clearTimeout); timers = [];
     anims.forEach((a) => a.cancel()); anims = [];
+    puffs = [];
+    const r = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
     board.classList.remove('on');
     sw.setAttribute('aria-pressed', 'false');
     [pwr, ...leds].forEach((l) => light(l, '#3b2a4a'));
@@ -552,8 +557,9 @@
     });
   }
 
+  // A real switch: off stays off (dark board, meters at zero); on runs the test again.
   sw.addEventListener('click', () => {
-    if (sw.getAttribute('aria-pressed') === 'true') { reset(); later(500, powerOn); }
+    if (sw.getAttribute('aria-pressed') === 'true') reset();
     else powerOn();
   });
   document.querySelector('.c7-hit').addEventListener('click', () => {

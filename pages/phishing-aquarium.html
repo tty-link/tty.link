@@ -132,6 +132,8 @@
   .fish .tail { width: 4.6cqw; height: 6cqw; background: var(--fc); clip-path: polygon(100% 50%, 0 0, 22% 50%, 0 100%); animation: wag .5s ease-in-out infinite alternate; transform-origin: 100% 50%; }
   .fish.left .tail { clip-path: polygon(0 50%, 100% 0, 78% 50%, 100% 100%); transform-origin: 0 50%; }
   @keyframes wag { from { transform: scaleY(.8) skewY(-8deg); } to { transform: scaleY(1) skewY(8deg); } }
+  .fish:focus { outline: none; }
+  .fish:focus-visible .body { outline: .5cqw solid #fff; outline-offset: .5cqw; box-shadow: 0 0 0 1.1cqw rgba(30, 42, 51, .55), inset -.6cqw -.5cqw 0 rgba(0,0,0,.08); }
   .fish .fin { position: absolute; left: 40%; top: -1.3cqw; width: 4cqw; height: 1.8cqw; background: var(--fc); border-radius: 60% 60% 0 0; filter: brightness(.92); }
   .tag {
     position: absolute;
@@ -363,6 +365,7 @@
     el.querySelector('.subject').textContent = subject;
     el.style.setProperty('--fc', COLORS[Math.floor(Math.random() * COLORS.length)]);
     el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
     el.setAttribute('aria-label', TTY.t({ en: 'Report: ', ko: '신고: ' }) + from + ' ' + subject);
     school.append(el);
     const dir = Math.random() < .5 ? 1 : -1;
@@ -376,12 +379,18 @@
       curious: 0,
     };
     el.classList.toggle('left', dir < 0);
-    el.addEventListener('pointerdown', (e) => { e.stopPropagation(); report(f); });
+    el.addEventListener('pointerdown', (e) => { e.stopPropagation(); idleUntil = performance.now() + 9000; report(f); });
+    el.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      idleUntil = performance.now() + 9000;
+      report(f);
+    });
     fish.push(f);
     return f;
   }
 
-  function report(f) {
+  function report(f, stay) {
     if (f.state !== 'swim') return;
     f.state = 'leaving';
     reported += 1;
@@ -400,14 +409,31 @@
     }
     f.el.querySelector('.body').append(tag);
     if (!TTY.reduce) tag.animate([{ transform: 'scale(2.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.5,0,.9,.4)' });
+    cat.classList.add('peek');
+    setTimeout(() => cat.classList.remove('peek'), 1300);
+    if (stay) return;
+    // Reduced motion: no darting off. The reported fish fades out where it is and a new
+    // message takes its place in the same lane.
+    if (TTY.reduce) {
+      setTimeout(() => {
+        const fade = f.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600, fill: 'forwards' });
+        fade.finished.then(() => {
+          const hadFocus = document.activeElement === f.el;
+          f.el.remove();
+          fish.splice(fish.indexOf(f), 1);
+          const g = spawn(false, f.lane);
+          g.el.style.transform = `translate(${g.x * W}px, ${g.y * H}px)`;
+          if (hadFocus) g.el.focus({ preventScroll: true });
+        });
+      }, 900);
+      return;
+    }
     // Embarrassed: turn around, then dart off.
     setTimeout(() => {
       f.dir = f.x > 0.45 ? 1 : -1;
       f.el.classList.toggle('left', f.dir < 0);
       f.speed = 0.32;
     }, 650);
-    cat.classList.add('peek');
-    setTimeout(() => cat.classList.remove('peek'), 1300);
   }
 
   // Now and then the fish in the hook's lane gets curious about the key.
@@ -444,6 +470,10 @@
     for (let i = fish.length - 1; i >= 0; i--) {
       const f = fish[i];
       if (f.state === 'leaving' && (f.x > 1.2 || f.x < -0.6)) {
+        if (document.activeElement === f.el) {
+          const next = fish.find((g) => g.state === 'swim');
+          if (next) next.el.focus({ preventScroll: true });
+        }
         f.el.remove();
         fish.splice(i, 1);
         setTimeout(() => spawn(true, f.lane), 900);
@@ -469,10 +499,9 @@
   // Place the first school before anything moves.
   fish.forEach((f, i) => { f.x = [0.04, 0.5, 0.16, 0.56][i]; f.el.style.transform = `translate(${f.x * W}px, ${f.y * H}px)`; });
 
-  if (TTY.reduce) {
-    reported = 1;
-    renderCounter(false);
-  }
+  // Reduced motion: one fish near the hook is already reported, so the counter (1) has a
+  // tagged fish to match.
+  if (TTY.reduce) report(fish[1], true);
   TTY.onShow(() => {
     if (TTY.reduce) return;
     running = true;

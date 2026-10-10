@@ -288,9 +288,11 @@
     await anim(flipper, [{ transform: from }, { transform: down ? 'scaleY(-1)' : 'scaleY(1)' }], { duration: 420, easing: 'cubic-bezier(.6,0,.3,1)' });
   }
 
+  // With reduced motion the result is rolled once, so the count never changes on its own.
+  const steadyTarget = [3, 3, 3, 5][Math.floor(Math.random() * 4)];
   async function play() {
     const id = ++run;
-    const target = [3, 3, 3, 5][Math.floor(Math.random() * 4)];
+    const target = TTY.reduce ? steadyTarget : [3, 3, 3, 5][Math.floor(Math.random() * 4)];
     down = false;
     setCount(0);
     verdict.textContent = '';
@@ -307,8 +309,12 @@
     if (TTY.reduce) return finish(target, false);
     superposed(true);
     await wait(700);
+    // The first approach starts from where the plug is parked; later ones from where a
+    // bonk leaves it.
+    let from = PARK;
     while (id === run) {
-      await anim(plug, [{ transform: at(PARK + 20) }, { transform: at(MOUTH) }], { duration: 420, easing: 'cubic-bezier(.55,0,.9,.6)' });
+      await anim(plug, [{ transform: at(from) }, { transform: at(MOUTH) }], { duration: 420, easing: 'cubic-bezier(.55,0,.9,.6)' });
+      from = PARK + 20;
       if (id !== run) return;
       if (flips >= target && down) {
         // Contact: the superposition collapses and the plug simply goes in.
@@ -361,7 +367,7 @@
   function start() {
     clearTimeout(idle);
     const mine = ++starts;
-    play().then(() => { if (mine === starts) idle = setTimeout(start, 7000); });
+    play().then(() => { if (mine === starts && !TTY.reduce) idle = setTimeout(start, 7000); });
   }
   document.querySelectorAll('.again').forEach((b) => b.addEventListener('click', start));
   plug.addEventListener('click', start);

@@ -187,7 +187,10 @@
   /* Off: glass tubes, no light. */
   .is-off .big, .is-off .small, .is-off .open .tube { color: var(--glass); text-shadow: none; }
   .is-off .kk [part~="jamo"] { -webkit-text-stroke-color: var(--glass); text-shadow: none; animation: none; }
-  .is-off .broken { animation: none; }
+  /* The off state must beat the broken-tube flicker; the Korean selector is more specific,
+     so it is named here too. */
+  .is-off .broken,
+  .is-off .kk [part="glyph"][data-source="즉"] [part~="jongseong"] { animation: none; }
   .is-off .open { border-color: var(--glass); box-shadow: none; }
 
   /* On again: each tube sputters in, a little after the one before. */
