@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tilt+Neon&family=Kalam:wght@400;700&family=Gowun+Dodum&display=swap">
-<script src="/vendor/font-kku/font-kku.js" data-fonts="neon pilgi"></script>
+<script src="https://font.tty.link/lib/font-kku.js" data-fonts="neon pilgi"></script>
 <style>
   /* A repair shop's neon sign at night. One tube is broken, and the shop has decided that
      is a feature. Tapping the sign is percussive maintenance: it works, for a while. */
@@ -88,9 +88,11 @@
   /* Korean tubes: font-kku neon (pink initials and finals, sky-blue vowels). */
   .kk { display: block; line-height: 1; }
   .kk + .kk { margin-top: 2.8cqi; }
+  /* The glow follows each jamo's color (font-kku glow paint), so color recolors the glow and
+     stroke color recolors the tube. The glow is drawn after a clipped vowel is cut, so it stays whole. */
   .kk.small-ko [part~="jamo"] {
+    color: #5ef2ff;
     -webkit-text-stroke-color: var(--cyan);
-    text-shadow: 0 0 .04em #fff, 0 0 .12em #5ef2ff, 0 0 .3em #19c6ff, 0 0 .6em #0077b6;
   }
 
   /* The broken tube: the x of "fixed", and in Korean the final ㄱ of 즉. */
@@ -119,13 +121,9 @@
   }
   .open .tube { font-size: 8cqi; color: #eafff1; text-shadow: 0 0 .04em #fff, 0 0 .12em #3dff8f, 0 0 .3em #12d66b, 0 0 .6em #00873f; }
   .open .kk [part~="jamo"] {
+    color: #3dff8f;
     -webkit-text-stroke-color: var(--green);
-    text-shadow: 0 0 .04em #fff, 0 0 .12em #3dff8f, 0 0 .3em #12d66b, 0 0 .6em #00873f;
   }
-  /* A vowel bar above a final (the ㅜ of 중, the ㅡ of 는) is drawn clipped; a wide glow would
-     show the clip as a box, so those vowels glow close. */
-  .open .kk [part~="jungseong"] { text-shadow: 0 0 .04em #fff, 0 0 .1em #3dff8f, 0 0 .18em #12d66b; }
-  .kk.small-ko [part~="jungseong"] { text-shadow: 0 0 .04em #fff, 0 0 .1em #5ef2ff, 0 0 .18em #19c6ff; }
 
   .card {
     justify-self: start;

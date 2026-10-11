@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap">
-<script src="/vendor/font-kku/font-kku.js" data-fonts="pixel"></script>
-<script src="/vendor/font-kku/font-kku-fx.js"></script>
+<script src="https://font.tty.link/lib/font-kku.js" data-fonts="pixel"></script>
+<script src="https://font.tty.link/lib/font-kku-fx.js"></script>
 <style>
   /* A monster battle where the monster is a bug and the winning move is explaining your code
      to a rubber duck. Sprites are drawn pixel by pixel on tiny canvases and scaled up crisp. */
@@ -582,7 +582,7 @@
       const coarse = px * dpr < 22;
       const now = host.getAttribute('font');
       if (coarse && now === 'pixel') {
-        if (!fallbackLoaded && window.FontKku && FontKku.loadFont) fallbackLoaded = FontKku.loadFont('/vendor/font-kku/profiles/dunggeun.css').catch(() => {});
+        if (!fallbackLoaded && window.FontKku && FontKku.loadFont) fallbackLoaded = FontKku.loadFont('https://font.tty.link/lib/profiles/dunggeun.css').catch(() => {});
         host.setAttribute('data-was-pixel', '');
         host.setAttribute('font', 'dunggeun');
       } else if (!coarse && now === 'dunggeun' && host.hasAttribute('data-was-pixel')) {
