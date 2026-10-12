@@ -44,6 +44,7 @@
   }
   .scene {
     position: relative;
+    container-type: inline-size;
     align-self: center;
     border-radius: 2cqmin;
     overflow: hidden;
@@ -56,6 +57,25 @@
   .lang-ko .hand { font-family: 'Nanum Pen Script', 'Shadows Into Light', cursive; }
   .ring { fill: none; stroke: var(--marker); stroke-width: 4; stroke-linecap: round; }
   .ring-num { fill: var(--marker); font-size: 30px; }
+  /* A pass note in green pen, left on whatever turned out to be fine. */
+  .okay {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: .8cqi;
+    padding: .6cqi 1.6cqi .7cqi 1.2cqi;
+    border-radius: .8cqi;
+    background: #f1f9e8;
+    box-shadow: 0 .3cqi 1cqi rgba(30, 60, 20, .22);
+    color: #23753a;
+    font-size: max(13px, 2.9cqi);
+    line-height: 1.15;
+    white-space: nowrap;
+    rotate: -3deg;
+    pointer-events: none;
+  }
+  .lang-ko .okay { font-size: max(15px, 3.4cqi); }
+  .okay svg { flex: none; width: 1.1em; height: 1.1em; }
   .blink { animation: blink 1.4s steps(2) infinite; }
   @keyframes blink { 50% { opacity: .25; } }
 
@@ -111,7 +131,6 @@
     .item:not(.latest) { display: none; }
     .item { border-top: 0; padding: 1.4cqi 0; }
     .verdict { margin-top: 1.4cqi; }
-    .verdict.on ~ .hint, .verdict.on { }
   }
   .layout.done .list .item { display: none; }
   @container (min-aspect-ratio: 1/1) { .layout.done .list .item { display: grid; } .layout.done .list .item .note { display: none; } }
@@ -206,19 +225,18 @@
   <section class="report" aria-live="polite">
     <h1 data-lang="en">Find the vulnerabilities</h1>
     <h1 data-lang="ko"><font-kku font="sebul" size="10cqi">취약점 찾기</font-kku></h1>
-    <p class="sub" data-lang="en">A cozy office, walked through with a red marker.</p>
-    <p class="sub" data-lang="ko">아늑한 사무실을 빨간 펜 들고 한 바퀴.</p>
+    <p class="sub" data-lang="en">Scope: one cozy office · Tool: a red marker</p>
+    <p class="sub" data-lang="ko">점검 범위: 아늑한 사무실 · 점검 도구: 빨간 펜</p>
     <ol class="list"></ol>
     <div class="verdict">
       <span class="stamp"></span>
-      <small data-lang="en">Overall rating</small>
-      <small data-lang="ko">총평</small>
+      <small class="tally"></small>
       <strong data-lang="en">Cozy. Also critical.</strong>
       <strong data-lang="ko"><font-kku font="sebul" size="8cqi">아늑함. 그리고 치명적.</font-kku></strong>
     </div>
     <p class="hint">
-      <span data-lang="en">Click the picture to circle the next one.</span>
-      <span data-lang="ko">그림을 누르면 다음 취약점에 동그라미를 쳐요.</span>
+      <span data-lang="en">Click anything suspicious. Or anywhere, for the next one.</span>
+      <span data-lang="ko">수상한 곳을 눌러 보세요. 아무 데나 누르면 다음 취약점.</span>
     </p>
   </section>
 </div>
@@ -263,6 +281,23 @@
       en: ['Badge photo on social media', '#firstday. The barcode reads fine at 400%.'],
       ko: ['SNS에 올린 사원증 사진', '#첫출근. 400%로 확대하면 바코드도 읽힘.'] },
   ];
+
+  // Things that look like findings and are not. Clicking one leaves a pass note.
+  // Boxes are [x1, y1, x2, y2] in picture coordinates.
+  const DECOYS = [
+    { box: [308, 254, 344, 276], en: 'Coffee ring: pass. The coffee is fine.', ko: '커피 자국: 양호. 커피도 무사함.' },
+    { box: [400, 0, 460, 74], en: 'Lamp: no firmware. Pass.', ko: '조명: 펌웨어 없음. 양호.' },
+    { box: [36, 48, 196, 208], en: 'Window: locked. Suspiciously fine.', ko: '창문: 잠겨 있음. 수상할 만큼 양호.' },
+    { box: [460, 56, 598, 178], en: 'Bookshelf: unread. Pass.', ko: '책장: 아무도 안 읽음. 양호.' },
+    { box: [180, 196, 244, 338], en: 'Plant: pass. Needs water.', ko: '화분: 양호. 물은 좀 줘야 함.' },
+    { box: [180, 400, 680, 480], en: 'Rug: cozy. Pass.', ko: '러그: 아늑함. 양호.' },
+  ];
+
+  // The verdict opens with the count by severity, the way a report summary does.
+  const tallyParts = ['crit', 'high', 'med', 'low'].map((k) => [k, FINDINGS.filter((f) => f.sev === k).length]).filter(([, n]) => n);
+  document.querySelector('.tally').textContent = ko
+    ? `지적 ${FINDINGS.length}건: ` + tallyParts.map(([k, n]) => `${SEV[k].ko} ${n}`).join(' · ')
+    : `${FINDINGS.length} findings: ` + tallyParts.map(([k, n]) => `${n} ${SEV[k].en.toLowerCase()}`).join(' · ');
 
   function kku(font, size, text) {
     const el = document.createElement('font-kku');
@@ -334,36 +369,83 @@
     }
   }
 
-  let shown = 0;
+  // Findings keep their own numbers; the tour circles them in order, a visitor in any order.
+  const found = new Set();
   let timer = null;
   let rating = null;
+  const allFound = () => found.size === FINDINGS.length;
   function reset() {
     clearTimeout(rating);
-    shown = 0;
+    found.clear();
     rings.replaceChildren();
     list.replaceChildren();
     verdict.classList.remove('on');
     layout.classList.remove('done');
   }
-  function next() {
-    clearTimeout(timer);
-    if (shown === FINDINGS.length) { reset(); }
-    else {
-      const f = FINDINGS[shown];
-      shown += 1;
-      ring(f.at, shown);
-      writeUp(f, shown);
-      if (shown === FINDINGS.length) rating = setTimeout(rate, TTY.reduce ? 0 : 900);
-    }
-    if (!TTY.reduce) timer = setTimeout(next, shown === FINDINGS.length ? 7000 : 2300);
+  function circle(i) {
+    found.add(i);
+    ring(FINDINGS[i].at, i + 1);
+    writeUp(FINDINGS[i], i + 1);
+    if (allFound()) rating = setTimeout(rate, TTY.reduce ? 0 : 900);
   }
-  scene.addEventListener('click', next);
+  function schedule() {
+    clearTimeout(timer);
+    if (!TTY.reduce) timer = setTimeout(next, allFound() ? 7000 : 2300);
+  }
+  function next() {
+    if (allFound()) reset();
+    else circle(FINDINGS.findIndex((_, i) => !found.has(i)));
+    schedule();
+  }
+
+  /* ---- A visitor hunting for themselves ---- */
+  const svg = scene.querySelector('svg');
+  const toPicture = (e) => {
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  };
+  // The smallest ring that contains the click wins (the sticky note sits on the screen).
+  function findingAt({ x, y }) {
+    let best = -1, area = Infinity;
+    FINDINGS.forEach((f, i) => {
+      const [cx, cy, rx, ry] = f.at;
+      if (found.has(i) || ((x - cx) / (rx * 1.15)) ** 2 + ((y - cy) / (ry * 1.15)) ** 2 > 1) return;
+      if (rx * ry < area) { best = i; area = rx * ry; }
+    });
+    return best;
+  }
+  const decoyAt = ({ x, y }) => DECOYS.find(({ box: [x1, y1, x2, y2] }) => x >= x1 && x <= x2 && y >= y1 && y <= y2);
+  const CHECK = '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.8 10.4 l3 3 5.6 -6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  let note = null;
+  function pass(decoy, at) {
+    if (note) note.remove();
+    note = document.createElement('p');
+    note.className = 'okay hand';
+    note.innerHTML = CHECK + '<span></span>';
+    note.lastChild.textContent = decoy[TTY.lang];
+    scene.append(note);
+    // Above the spot clicked, kept inside the picture.
+    const w = scene.clientWidth, h = scene.clientHeight;
+    const px = (at.x / 800) * w, py = (at.y / 500) * h;
+    note.style.left = Math.max(6, Math.min(w - note.offsetWidth - 6, px - note.offsetWidth / 2)) + 'px';
+    note.style.top = Math.max(6, py - note.offsetHeight - 10) + 'px';
+    const mine = note;
+    if (TTY.reduce) { setTimeout(() => mine.remove(), 2400); return; }
+    mine.animate([{ opacity: 0, transform: 'translateY(30%) scale(.9)' }, { opacity: 1, transform: 'none', offset: .12 }, { opacity: 1, offset: .85 }, { opacity: 0 }], { duration: 2400, easing: 'ease-out' }).finished.then(() => mine.remove());
+  }
+  scene.addEventListener('click', (e) => {
+    const at = toPicture(e);
+    const i = findingAt(at);
+    if (i !== -1) { circle(i); schedule(); return; }
+    const decoy = decoyAt(at);
+    if (decoy) { pass(decoy, at); schedule(); return; }
+    next();
+  });
   scene.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } });
 
   if (TTY.reduce) {
-    FINDINGS.forEach((f, i) => { ring(f.at, i + 1); writeUp(f, i + 1); });
-    shown = FINDINGS.length;
-    rate();
+    FINDINGS.forEach((_, i) => circle(i));
   }
   TTY.onShow(() => { if (!TTY.reduce) timer = setTimeout(next, 900); });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));

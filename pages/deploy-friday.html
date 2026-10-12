@@ -75,25 +75,52 @@
   .screen[data-scene="1"] .face .calm, .screen[data-scene="2"] .face .calm { display: inline; }
   .screen[data-scene="3"] .face .panic { display: inline; }
   .screen[data-scene="4"] .face .stunned { display: inline; }
-  .screen[data-scene="5"] .face .joy { display: inline; }
+  .screen[data-scene="5"] .face .joy, .screen[data-scene="6"] .face .joy { display: inline; }
   .monitor > g { display: none; }
   .screen[data-scene="1"] .monitor .ready, .screen[data-scene="2"] .monitor .ready { display: inline; }
   .screen[data-scene="3"] .monitor .busy { display: inline; }
-  .screen[data-scene="4"] .monitor .done, .screen[data-scene="5"] .monitor .done { display: inline; }
+  .screen[data-scene="4"] .monitor .done, .screen[data-scene="5"] .monitor .done, .screen[data-scene="6"] .monitor .done { display: inline; }
   .screen[data-scene="2"] .press { animation: press .45s 1.15s both; }
   @keyframes press { 40% { transform: scale(.88); } 100% { transform: scale(1); } }
   .press { transform-box: fill-box; transform-origin: 50% 50%; }
   .busy .fill { transform-box: fill-box; transform-origin: 0 50%; animation: load 2.6s cubic-bezier(.5, 0, .5, 1) both; }
   @keyframes load { from { transform: scaleX(.04); } to { transform: scaleX(.92); } }
   .arms-up { display: none; }
-  .screen[data-scene="5"] .arms-up { display: inline; }
-  .screen[data-scene="5"] .arm-desk { display: none; }
+  .screen[data-scene="5"] .arms-up, .screen[data-scene="6"] .arms-up { display: inline; }
+  .screen[data-scene="5"] .arm-desk, .screen[data-scene="6"] .arm-desk { display: none; }
   .sweat { display: none; }
   .screen[data-scene="3"] .sweat { display: inline; }
   .clock .minute { transform-box: view-box; transform-origin: 200px 160px; rotate: 354deg; transition: rotate .6s cubic-bezier(.5, 1.6, .5, 1); }
-  .screen[data-scene="5"] .clock .minute { rotate: 360deg; }
+  .screen[data-scene="5"] .clock .minute, .screen[data-scene="6"] .clock .minute { rotate: 360deg; }
   .sky { transition: opacity 1.2s; }
-  .screen[data-scene="5"] .sky.late { opacity: 1; }
+  .screen[data-scene="5"] .sky.late, .screen[data-scene="6"] .sky.late { opacity: 1; }
+
+  /* Scene 6, the freeze-frame: scene 5 (captions and all) drained of colour, a slow push in,
+     and a phone notification dropped in over the "Deployed" screen. */
+  .screen[data-scene="6"] .shot { transform: scale(1.06); transition: transform 2.9s linear; }
+  .screen[data-scene="6"] .shot-wrap, .screen[data-scene="6"] .caps[data-scene="5"] { filter: grayscale(1) brightness(.72) contrast(1.15); }
+  .narr { left: 50%; top: 89%; translate: -50% -50%; font: 800 3.8cqi/1 'Grandstander', sans-serif; color: #fff; text-shadow: 0 .3cqi 1cqi rgba(0, 0, 0, .85); animation: fade .7s .15s backwards; }
+  .lang-ko .narr { font-family: 'Gowun Dodum', sans-serif; font-weight: 400; font-size: 4cqi; }
+  @keyframes fade { from { opacity: 0; } }
+  .alert {
+    position: absolute; left: 62%; top: 33%; z-index: 5; translate: -50% 0;
+    display: grid; grid-template-columns: auto 1fr auto; gap: .3em .8em; align-items: center;
+    box-sizing: border-box; width: max(50cqi, 15.5em); padding: .8em 1em; border-radius: 1.1em;
+    background: #fff; color: var(--ink);
+    font: 700 max(11px, 2.3cqi)/1.25 'Grandstander', 'Gowun Dodum', sans-serif;
+    box-shadow: 0 1cqi 3cqi rgba(0, 0, 0, .5);
+    animation: notify .5s .6s cubic-bezier(.2, .9, .3, 1.15) backwards, buzz .32s 1.2s 2 steps(4);
+  }
+  .lang-ko .alert { font-family: 'Gowun Dodum', sans-serif; }
+  .alert i { width: 1.9em; aspect-ratio: 1; border-radius: .45em; background: var(--pink); }
+  .alert .app, .alert time { font-size: .8em; opacity: .62; }
+  .alert p { grid-column: 1 / -1; margin: 0; font-size: 1.08em; }
+  @keyframes notify { from { opacity: 0; translate: -50% -60%; scale: .9; } }
+  @keyframes buzz { 25% { rotate: -1.4deg; } 75% { rotate: 1.4deg; } }
+
+  /* On air: live on a real Friday, a rerun any other day. */
+  .onair { margin-left: .5em; padding: .15em .45em; border-radius: .35em; background: rgba(255, 255, 255, .22); font: inherit; font-family: 'Grandstander', 'Gowun Dodum', sans-serif; font-style: normal; color: #fff; }
+  .onair.live { background: #e5383b; }
 
   /* ---- On-screen furniture ---- */
   .bug {
@@ -189,7 +216,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .shot, .lines, .slide, .glitchy, .lower, .pop .ch, .shake .ch, .pop [part="glyph"], .pop [part~="jongseong"], .shake [part="glyph"], .screen[data-scene="3"] .shot-wrap { animation: none !important; transition: none !important; }
+    .shot, .lines, .slide, .glitchy, .lower, .pop .ch, .shake .ch, .pop [part="glyph"], .pop [part~="jongseong"], .shake [part="glyph"], .screen[data-scene="3"] .shot-wrap, .narr, .alert { animation: none !important; transition: none !important; }
   }
 </style>
 </head>
@@ -237,10 +264,11 @@
           <rect x="772" y="252" width="486" height="300" rx="8" fill="#fbf7ff"/>
           <g class="monitor">
             <g class="ready">
-              <g fill="#d9d0ee"><rect x="800" y="282" width="210" height="14" rx="7"/><rect x="830" y="310" width="300" height="14" rx="7"/><rect x="830" y="338" width="170" height="14" rx="7"/><rect x="800" y="366" width="250" height="14" rx="7"/></g>
+              <text x="800" y="300" font-family="Grandstander, 'Gowun Dodum', sans-serif" font-weight="600" font-size="23" fill="#7a68a6" class="commit">fix: tiny change, should be fine</text>
+              <g fill="#d9d0ee"><rect x="830" y="326" width="300" height="14" rx="7"/><rect x="830" y="354" width="170" height="14" rx="7"/><rect x="800" y="382" width="250" height="14" rx="7"/></g>
               <g class="press">
-                <rect x="900" y="420" width="230" height="86" rx="43" fill="#2fbf71"/>
-                <text x="1015" y="477" text-anchor="middle" font-family="Grandstander, 'Gowun Dodum', sans-serif" font-weight="800" font-size="40" fill="#fff" class="btn-label">Deploy</text>
+                <rect x="875" y="420" width="280" height="86" rx="43" fill="#2fbf71"/>
+                <text x="1015" y="474" text-anchor="middle" font-family="Grandstander, 'Gowun Dodum', sans-serif" font-weight="800" font-size="31" fill="#fff" class="btn-label">Deploy to prod</text>
               </g>
             </g>
             <g class="busy">
@@ -280,7 +308,7 @@
       <div class="lines"></div>
     </div>
 
-    <span class="bug" aria-hidden="true"><b>tty</b> TV</span>
+    <span class="bug" aria-hidden="true"><b>tty</b> TV<em class="onair"></em></span>
     <span class="program" data-lang="en">Friday Deploys</span>
     <span class="program" data-lang="ko">금요일의 배포</span>
 
@@ -309,6 +337,10 @@
       <p class="cap cap-main pop en-main" data-split style="top: 22%">Weekend: saved!</p>
       <p class="cap cap-small slide bubble en-aside" style="top: 74%">See you Monday~</p>
     </div>
+    <div class="caps" data-scene="6" data-lang="en" hidden>
+      <div class="alert"><i></i><span class="app">ON-CALL</span><time>Sat 3:12 AM</time><p>[P1] 1 incident in prod</p></div>
+      <p class="cap narr">Little did he know…</p>
+    </div>
 
     <!-- Captions, Korean (font-kku) -->
     <div class="caps" data-scene="1" data-lang="ko">
@@ -335,6 +367,10 @@
       <p class="cap cap-main pop" style="top: 22%"><font-kku font="sticker" size="9cqi">주말 사수 성공!</font-kku></p>
       <p class="cap cap-small slide bubble" style="top: 74%"><font-kku font="malang" size="4.2cqi">월요일에 만나요~</font-kku></p>
     </div>
+    <div class="caps" data-scene="6" data-lang="ko" hidden>
+      <div class="alert"><i></i><span class="app">당직 알림</span><time>토 오전 3:12</time><p>[P1] 운영 장애 1건</p></div>
+      <p class="cap narr">그때까지만 해도 그는 몰랐다…</p>
+    </div>
   </div>
 
   <div class="timeline">
@@ -348,22 +384,30 @@
 (() => {
   const screen = document.querySelector('.screen');
   const SCENES = [
-    { ms: 3600, c: '#ffd23f', label: TTY.t({ en: '4:59', ko: '4시 59분' }), cue: TTY.t({ en: 'Friday, 4:59 PM (one minute to freedom)', ko: '금요일 오후 4시 59분 (퇴근 1분 전)' }) },
-    { ms: 3000, c: '#39c5ff', label: TTY.t({ en: 'Deploy', ko: '배포' }), cue: TTY.t({ en: 'And then… he pressed deploy', ko: '그리고 그는… 배포 버튼을 눌렀다' }) },
-    { ms: 3000, c: '#ff4f8b', label: TTY.t({ en: 'Panic', ko: '동공 지진' }), cue: TTY.t({ en: '(visible panic) ba-dum ba-dum', ko: '(동공 지진) 두근두근' }) },
-    { ms: 3300, c: '#7be0a5', label: TTY.t({ en: 'Result', ko: '결과' }), cue: TTY.t({ en: '0 incidents (disbelief)', ko: '장애 0건 (믿을 수 없음)' }) },
-    { ms: 3800, c: '#c9a7ff', label: TTY.t({ en: 'Weekend', ko: '주말' }), cue: TTY.t({ en: 'Weekend: saved! See you Monday~', ko: '주말 사수 성공! 월요일에 만나요~' }) },
+    { ms: 3200, c: '#ffd23f', label: TTY.t({ en: '4:59', ko: '4시 59분' }), cue: TTY.t({ en: 'Friday, 4:59 PM (one minute to freedom)', ko: '금요일 오후 4시 59분 (퇴근 1분 전)' }) },
+    { ms: 2700, c: '#39c5ff', label: TTY.t({ en: 'Deploy', ko: '배포' }), cue: TTY.t({ en: 'And then… he pressed deploy', ko: '그리고 그는… 배포 버튼을 눌렀다' }) },
+    { ms: 2600, c: '#ff4f8b', label: TTY.t({ en: 'Panic', ko: '동공 지진' }), cue: TTY.t({ en: '(visible panic) ba-dum ba-dum', ko: '(동공 지진) 두근두근' }) },
+    { ms: 2800, c: '#7be0a5', label: TTY.t({ en: 'Result', ko: '결과' }), cue: TTY.t({ en: '0 incidents (disbelief)', ko: '장애 0건 (믿을 수 없음)' }) },
+    { ms: 2800, c: '#c9a7ff', label: TTY.t({ en: 'Weekend', ko: '주말' }), cue: TTY.t({ en: 'Weekend: saved! See you Monday~', ko: '주말 사수 성공! 월요일에 만나요~' }) },
+    // The freeze-frame: scene 5 stays on screen, grey, and the phone goes off.
+    { ms: 2900, c: '#8a8496', also: 5, label: TTY.t({ en: 'Sat 3 AM', ko: '토 새벽 3시' }), cue: TTY.t({ en: 'Little did he know… [P1] 1 incident, Sat 3:12 AM', ko: '그때까지만 해도 그는 몰랐다… 토 오전 3:12 장애 1건' }) },
   ];
   const TOTAL = SCENES.reduce((a, s) => a + s.ms, 0);
 
   // Labels drawn inside the SVG
   const set = (sel, en, ko) => { document.querySelector(sel).textContent = TTY.t({ en, ko }); };
-  set('.btn-label', 'Deploy', '배포');
+  set('.btn-label', 'Deploy to prod', '운영 배포');
+  if (TTY.lang === 'ko') document.querySelector('.btn-label').setAttribute('font-size', '38');
+  set('.commit', 'fix: tiny change, should be fine', 'fix: 간단한 수정, 별일 없을 듯');
+  const live = new Date().getDay() === 5;
+  const onair = document.querySelector('.onair');
+  onair.textContent = live ? TTY.t({ en: 'LIVE', ko: '생방송' }) : TTY.t({ en: 'RERUN', ko: '재방송' });
+  onair.classList.toggle('live', live);
   set('.busy-label', 'Deploying…', '배포 중…');
   set('.done-label', 'Deployed', '배포 완료');
   screen.setAttribute('aria-label', TTY.t({
-    en: 'A variety-show clip: on Friday at 4:59 PM a junior developer presses deploy, panics, and gets zero incidents. Weekend saved.',
-    ko: '예능 장면: 금요일 오후 4시 59분, 막내 개발자가 배포 버튼을 누르고 동공 지진을 겪지만 장애는 0건. 주말 사수 성공.',
+    en: 'A variety-show clip: on Friday at 4:59 PM a junior developer presses deploy, panics, and gets zero incidents. Weekend saved. Freeze-frame: at 3:12 on Saturday morning, his phone gets a P1 alert.',
+    ko: '예능 장면: 금요일 오후 4시 59분, 막내 개발자가 배포 버튼을 누르고 동공 지진을 겪지만 장애는 0건. 주말 사수 성공. 정지 화면: 토요일 오전 3시 12분, 그의 휴대폰에 장애 알림이 온다.',
   }));
 
   // English captions: one span per letter (and a colour per word) so letters can bounce in.
@@ -424,7 +468,8 @@
   function show(i) {
     scene = i;
     screen.dataset.scene = String(i + 1);
-    caps.forEach((c) => { c.hidden = c.dataset.scene !== String(i + 1); });
+    // A scene may keep an earlier scene's captions up (the freeze-frame keeps scene 5's).
+    caps.forEach((c) => { c.hidden = c.dataset.scene !== String(i + 1) && c.dataset.scene !== String(SCENES[i].also); });
     [...clips.children].forEach((c, j) => c.classList.toggle('on', j === i));
     [...cues.querySelectorAll('.cue')].forEach((c, j) => c.classList.toggle('on', j === i));
   }
@@ -443,7 +488,7 @@
   }
   screen.addEventListener('click', () => go((scene + 1) % SCENES.length));
 
-  if (TTY.reduce) show(4);
+  if (TTY.reduce) show(SCENES.length - 1);
   else { caps.forEach((c) => { c.hidden = true; }); TTY.onShow(() => go(0)); }
 
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));

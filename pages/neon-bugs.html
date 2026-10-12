@@ -105,8 +105,15 @@
     70% { opacity: .2; } 70.8% { opacity: 1; }
     83% { opacity: .1; } 83.6% { opacity: 1; }
   }
-  .kicked .broken,
-  .kicked .kk [part="glyph"][data-source="즉"] [part~="jongseong"] { animation: none; opacity: 1; }
+  /* After enough knocks the x is fixed for good and another tube goes: the g of "Bugs"
+     (which leaves "Bu s fixed"), and in Korean the first ㅂ of 버그. */
+  .regressed .broken,
+  .regressed .kk [part="glyph"][data-source="즉"] [part~="jongseong"] { animation: none; opacity: 1; }
+  .regressed .regress,
+  .regressed .kk [part="glyph"][data-source="버"] [part~="choseong"] { animation: broken 5.2s steps(1, end) -2.1s infinite; }
+  .kicked .broken, .kicked .regress,
+  .kicked .kk [part="glyph"][data-source="즉"] [part~="jongseong"],
+  .kicked .kk [part="glyph"][data-source="버"] [part~="choseong"] { animation: none; opacity: 1; }
 
   /* Lower row: the Open sign, the shop's card, the switch. */
   .lower { display: grid; grid-template-columns: auto 1fr; gap: 4cqi; align-items: center; width: 100%; }
@@ -138,6 +145,9 @@
   .card-main { font-family: 'Kalam', cursive; font-weight: 700; font-size: 4.6cqi; line-height: 1.1; }
   .card-small { margin-top: 1.4cqi; font-family: 'Kalam', cursive; font-size: 2.9cqi; line-height: 1.3; color: #5b4f5e; }
   .lang-ko .card-small { font-family: 'Gowun Dodum', sans-serif; font-size: 2.7cqi; line-height: 1.5; word-break: keep-all; }
+  /* The status is corrected by hand, in red pen, every time the sign is knocked. */
+  .status s { text-decoration-color: #c8322b; text-decoration-thickness: .14em; opacity: .7; }
+  .status .pen { font-family: 'Kalam', cursive; font-weight: 700; color: #c8322b; }
 
   .controls { display: flex; flex-wrap: wrap; gap: 3cqi; align-items: center; justify-content: center; min-height: 44px; }
   .switch {
@@ -187,8 +197,9 @@
   .is-off .kk [part~="jamo"] { -webkit-text-stroke-color: var(--glass); text-shadow: none; animation: none; }
   /* The off state must beat the broken-tube flicker; the Korean selector is more specific,
      so it is named here too. */
-  .is-off .broken,
-  .is-off .kk [part="glyph"][data-source="즉"] [part~="jongseong"] { animation: none; }
+  .is-off .broken, .is-off .regress,
+  .is-off .kk [part="glyph"][data-source="즉"] [part~="jongseong"],
+  .is-off .kk [part="glyph"][data-source="버"] [part~="choseong"] { animation: none; }
   .is-off .open { border-color: var(--glass); box-shadow: none; }
 
   /* On again: each tube sputters in, a little after the one before. */
@@ -211,7 +222,14 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .broken, .kk [part="glyph"][data-source="즉"] [part~="jongseong"],
+    .regressed .regress, .regressed .kk [part="glyph"][data-source="버"] [part~="choseong"],
     .is-igniting .tube .ch, .is-igniting .kk [part~="jamo"], .is-igniting .open, .sign.thump { animation: none; }
+    /* Without the flicker, the broken tube is simply half dead. */
+    .broken, .kk [part="glyph"][data-source="즉"] [part~="jongseong"],
+    .regressed .regress, .regressed .kk [part="glyph"][data-source="버"] [part~="choseong"] { opacity: .3; }
+    .kicked .broken, .kicked .regress,
+    .kicked .kk [part="glyph"][data-source="즉"] [part~="jongseong"],
+    .kicked .kk [part="glyph"][data-source="버"] [part~="choseong"] { opacity: 1; }
     .bubble.on { animation: none; opacity: 1; translate: -50% -60%; }
     body::after, .track, .track::after { transition: none; }
   }
@@ -222,7 +240,7 @@
   <button class="sign" type="button" aria-describedby="card">
     <i class="screw a"></i><i class="screw b"></i><i class="screw c"></i><i class="screw d"></i>
     <span data-lang="en">
-      <span class="tube big" data-split>Bugs fi<span class="broken">x</span>ed</span>
+      <span class="tube big" data-split>Bu<span class="regress">g</span>s fi<span class="broken">x</span>ed</span>
       <span class="tube small" data-split>while you wait</span>
     </span>
     <span data-lang="ko">
@@ -240,8 +258,8 @@
     <aside class="card" id="card">
       <p class="card-main" data-lang="en">No refunds on features.</p>
       <p class="card-main" data-lang="ko"><font-kku font="pilgi" size="5cqi">기능은 환불되지 않습니다.</font-kku></p>
-      <p class="card-small" data-lang="en">Known issue: one tube flickers. Status: won't fix, it's a feature. Flickering anyway? Give the sign a tap.</p>
-      <p class="card-small" data-lang="ko">알려진 문제: 관 하나가 깜빡임. 처리 상태: 기능으로 분류됨. 그래도 신경 쓰이면 간판을 톡 쳐 주세요.</p>
+      <p class="card-small" data-lang="en">Known issue: one tube flickers.<br>Status: <span class="status">won't fix</span><br>Still bugging you? Tap the sign.</p>
+      <p class="card-small" data-lang="ko">알려진 문제: 관 하나가 깜빡임.<br>처리 상태: <span class="status">수정 안 함</span><br>그래도 거슬리면 간판을 톡 쳐 주세요.</p>
     </aside>
   </div>
 
@@ -264,7 +282,32 @@
     on: { en: 'Lights on', ko: '간판 켜기' },
     fixed: { en: 'Percussive maintenance: fixed. For now.', ko: '두드려서 고쳤습니다. 일단은요.' },
     again: { en: 'Fixed again. Same as last time.', ko: '또 고쳤습니다. 지난번처럼요.' },
+    regressed: { en: 'Fixed that one. Broke this one.', ko: '그건 고쳤는데 이게 나갔네요.' },
+    // The ticket's status after knocks 2, 3, 4 and 5 (the regression).
+    status: {
+      en: ["won't fix", 'by design', 'working as intended', 'feature', 'reopened'],
+      ko: ['수정 안 함', '의도된 동작', '사양입니다', '기능', '재발'],
+    },
+    onCall: { en: 'On call', ko: '당직 중' },
   };
+  const status = document.querySelector('.status');
+  const STATUS = TTY.t(TEXT.status);
+
+  // Between midnight and six the shop is closed, but someone is on call.
+  if (new Date().getHours() < 6) {
+    const open = document.querySelector('.open');
+    open.setAttribute('aria-label', 'On call');
+    const tube = open.querySelector('.tube');
+    if (tube) tube.textContent = TEXT.onCall.en;
+    const kk = open.querySelector('font-kku');
+    if (kk) {
+      const night = document.createElement('font-kku');
+      night.setAttribute('font', 'neon');
+      night.setAttribute('size', kk.getAttribute('size'));
+      night.textContent = TEXT.onCall.ko;
+      kk.replaceWith(night);
+    }
+  }
 
   // Each English letter is its own tube, so it can sputter in on its own beat.
   document.querySelectorAll('[data-split]').forEach((tube) => {
@@ -315,8 +358,25 @@
     sign.classList.remove('thump');
     void sign.offsetWidth;
     sign.classList.add('thump');
-    sign.classList.add('kicked');
-    bubble.textContent = TTY.t(kicks > 1 ? TEXT.again : TEXT.fixed);
+    // Knocks 2 to 4 relabel the ticket; the fifth fixes the x for good and, right then,
+    // another tube goes (so that one is not held steady).
+    sign.classList.toggle('kicked', kicks !== 5);
+    if (kicks >= 2 && kicks <= 5) {
+      let pen;
+      if (TTY.lang === 'ko') {
+        pen = document.createElement('font-kku');
+        pen.setAttribute('font', 'pilgi');
+        pen.setAttribute('size', '1.2em');
+        pen.style.color = '#c8322b';
+      } else {
+        pen = document.createElement('b');
+      }
+      pen.classList.add('pen');
+      pen.textContent = STATUS[kicks - 1];
+      status.replaceChildren(Object.assign(document.createElement('s'), { textContent: STATUS[kicks - 2] }), ' ', pen);
+    }
+    if (kicks === 5) body.classList.add('regressed');
+    bubble.textContent = TTY.t(kicks === 5 ? TEXT.regressed : kicks > 1 ? TEXT.again : TEXT.fixed);
     bubble.classList.remove('on');
     void bubble.offsetWidth;
     bubble.classList.add('on');

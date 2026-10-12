@@ -58,6 +58,7 @@
   .count .label > font-kku { color: var(--soft); }
   .count .num { display: block; font-size: clamp(54px, 13cqmin, 120px); font-weight: 900; line-height: .9; color: var(--psi); font-variant-numeric: tabular-nums; }
   .count .verdict { max-width: 15em; margin-top: 4px; font-size: clamp(13px, 2cqmin, 17px); font-weight: 700; min-height: 2.6em; }
+  .count .os { display: none; }
 
   .scene { grid-area: scene; position: relative; display: grid; place-items: center; min-height: 0; }
   .scene svg { width: 100%; max-height: 100%; overflow: hidden; }
@@ -77,6 +78,12 @@
   }
   .note > font-kku { color: var(--psi); }
   .eq { display: block; margin-top: 4px; font-family: 'STIX Two Text', serif; font-style: italic; font-weight: 500; font-size: 1.15em; color: var(--ink); }
+
+  /* Fig. 2 sits under the drawing, like the smaller figure on a textbook page. */
+  .fig2 { position: absolute; left: 4%; bottom: 2%; display: flex; align-items: center; gap: 12px; margin: 0; color: var(--ink); font-size: clamp(12px, 1.8cqmin, 15px); line-height: 1.35; }
+  .fig2 svg { flex: none; width: clamp(76px, 11cqmin, 108px); }
+  .fig2 figcaption { color: var(--soft); }
+  .fig2 b { color: var(--ink); }
 
   .notes { grid-area: notes; align-self: end; font-size: clamp(12px, 1.9cqmin, 15px); color: var(--soft); }
   .notes b { color: var(--ink); }
@@ -109,12 +116,15 @@
       grid-template-areas: "title title" "count count" "scene scene" "notes action";
       gap: 10px 12px;
     }
-    .count { display: flex; align-items: baseline; gap: 10px; text-align: left; }
+    .count { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; text-align: left; }
     .count .num { font-size: 44px; }
     .count .verdict { min-height: 0; margin: 0; }
+    .count .os { display: block; flex-basis: 100%; min-height: 1.35em; font-size: 13px; font-weight: 500; color: var(--soft); }
     .scene { display: flex; flex-direction: column; justify-content: center; gap: 14px; }
     .scene svg { flex: none; }
     .note { position: static; max-width: none; }
+    .fig2 { position: static; align-self: flex-start; padding-left: 4px; }
+    .fig2 svg { width: 64px; }
     .toast { display: none; }
   }
   html:not(.embedded) .lab { padding-bottom: max(clamp(16px, 4.4cqmin, 44px), 52px); }
@@ -132,6 +142,8 @@
     <span class="label" data-lang="ko"><font-kku font="dunggeun" size="clamp(13px, 2cqmin, 16px)">뒤집은 횟수</font-kku></span>
     <span class="num">0</span>
     <p class="verdict"></p>
+    <!-- On phones the figure is cropped and the notification hidden; its second opinion goes here. -->
+    <p class="os"></p>
   </aside>
 
   <section class="scene">
@@ -149,8 +161,9 @@
           <path d="M150 196 L200 172 H316 a8 8 0 0 1 8 8 V240 a8 8 0 0 1 -8 8 H200 L150 224 Z" fill="#20232c"/>
           <!-- trident on the overmold side: shows which way up the plug is -->
           <g transform="translate(258 210)" stroke="#e8ecf3" stroke-width="3" fill="none" stroke-linecap="round">
-            <path d="M-22 0 H24"/><path d="M-6 0 L6 -12 H14"/><path d="M2 0 L12 12 H18"/>
+            <path d="M-22 0 H26"/><path d="M-6 0 L6 -12 H14"/><path d="M2 0 L12 12 H18"/>
             <circle cx="-24" cy="0" r="4" fill="#e8ecf3" stroke="none"/><rect x="14" y="-16" width="8" height="8" fill="#e8ecf3" stroke="none"/><circle cx="20" cy="12" r="4" fill="#e8ecf3" stroke="none"/>
+            <path d="M25 -6 L35 0 L25 6 Z" fill="#e8ecf3" stroke="none"/>
           </g>
           <!-- metal shell, cut away to show the tongue -->
           <rect x="324" y="180" width="150" height="60" rx="3" fill="url(#steel)" stroke="#7c8594" stroke-width="2"/>
@@ -170,10 +183,11 @@
         <g fill="#b3bac5"><rect x="860" y="110" width="90" height="8" rx="4"/><rect x="860" y="126" width="90" height="8" rx="4"/><rect x="860" y="142" width="90" height="8" rx="4"/></g>
         <circle id="led" cx="660" cy="292" r="7" fill="#9aa3b1"/>
         <g class="toast">
-          <rect x="676" y="276" width="300" height="52" rx="12" fill="#fff" stroke="#c9cfda" stroke-width="2"/>
+          <rect id="toast-box" x="676" y="276" width="312" height="52" rx="12" fill="#fff" stroke="#c9cfda" stroke-width="2"/>
           <circle cx="702" cy="302" r="10" fill="var(--psi)"/>
-          <path d="M697 302 l4 4 l7 -8" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path id="toast-icon" d="M697 302 l4 4 l7 -8" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
           <text id="toast-text" x="722" y="308" font-family="Gabarito, IBM Plex Sans KR, sans-serif" font-size="19" font-weight="700" fill="#151824"></text>
+          <text id="toast-sub" x="722" y="331" font-family="Gabarito, IBM Plex Sans KR, sans-serif" font-size="15" font-weight="500" fill="#5a6177"></text>
         </g>
       </g>
 
@@ -207,6 +221,22 @@
       <span data-lang="ko"><font-kku font="dunggeun" size="clamp(14px, 2.2cqmin, 18px)" wrap-unit="word">관측하기 전까지 USB는 앞면과 뒷면이 겹쳐 있는 상태입니다.</font-kku></span>
       <span class="eq">|ψ⟩ = ( |up⟩ + |down⟩ ) / √2</span>
     </p>
+
+    <figure class="fig2">
+      <svg viewBox="0 0 92 44" aria-hidden="true">
+        <!-- USB-C, end on: the same both ways up -->
+        <rect x="16" y="12" width="60" height="20" rx="10" fill="none" stroke="currentColor" stroke-width="2.4"/>
+        <rect x="30" y="20.5" width="32" height="3" rx="1.5" fill="currentColor"/>
+        <path d="M8 30 A16 16 0 0 1 8 14" fill="none" stroke="var(--psi)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M4 17 L8 13 L12 17" fill="none" stroke="var(--psi)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M84 14 A16 16 0 0 1 84 30" fill="none" stroke="var(--psi)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M80 27 L84 31 L88 27" fill="none" stroke="var(--psi)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <figcaption>
+        <span data-lang="en"><b>Fig. 2.</b> USB-C: reversible.<br>Flipped twice anyway, out of habit.</span>
+        <span data-lang="ko"><b>그림 2.</b> USB-C: 앞뒤가 없다.<br>그래도 습관처럼 두 번 뒤집는다.</span>
+      </figcaption>
+    </figure>
   </section>
 
   <p class="notes">
@@ -224,6 +254,9 @@
   const T = {
     bonk: { en: 'bonk', ko: '툭' },
     toast: { en: 'USB device connected', ko: 'USB 장치가 연결되었습니다' },
+    // A moment later, in the blue (USB 3) port it is already in:
+    faster: { en: 'This device can perform faster', ko: '이 장치는 더 빨라질 수 있습니다' },
+    fasterSub: { en: 'Try a USB 3.0 port.', ko: 'USB 3.0 포트에 연결해 보세요.' },
     verdict3: { en: 'Flips: 3. As tradition requires.', ko: '3번 뒤집음. 전통을 지켰습니다.' },
     verdict5: { en: 'Flips: 5. Above and beyond tradition.', ko: '5번 뒤집음. 전통보다 정성껏.' },
   };
@@ -235,11 +268,31 @@
   const burst = document.querySelector('.burst');
   const bonkWord = document.querySelector('.bonk-word');
   const toast = document.querySelector('.toast');
+  const toastBox = document.getElementById('toast-box');
+  const toastIcon = document.getElementById('toast-icon');
+  const toastText = document.getElementById('toast-text');
+  const toastSub = document.getElementById('toast-sub');
+  const osLine = document.querySelector('.count .os');
   const led = document.getElementById('led');
   const num = document.querySelector('.count .num');
   const verdict = document.querySelector('.count .verdict');
   document.getElementById('bonk-text').textContent = TTY.t(T.bonk);
-  document.getElementById('toast-text').textContent = TTY.t(T.toast);
+  // The notification: first the good news, then the operating system's second opinion.
+  function setToast(upgrade) {
+    toastText.textContent = TTY.t(upgrade ? T.faster : T.toast);
+    toastSub.textContent = upgrade ? TTY.t(T.fasterSub) : '';
+    osLine.textContent = upgrade ? TTY.t(T.faster) + '.' : '';
+    toastText.setAttribute('font-size', upgrade ? 17 : 19);
+    toastText.setAttribute('y', upgrade ? 299 : 308);
+    toastBox.setAttribute('height', upgrade ? 66 : 52);
+    toastIcon.setAttribute('d', upgrade ? 'M702 297 v10 M702 293.2 v.1' : 'M697 302 l4 4 l7 -8');
+    // Keep both lines inside the box whatever the font did.
+    [toastText, toastSub].forEach((t) => {
+      let size = Number(t.getAttribute('font-size'));
+      while (t.textContent && size > 11 && t.getComputedTextLength() > 254) t.setAttribute('font-size', --size);
+    });
+  }
+  setToast(false);
   if (TTY.lang === 'ko') document.getElementById('bonk-text').setAttribute('font-family', 'IBM Plex Sans KR, sans-serif');
 
   // Plug positions along x (user units): parked, touching the port mouth, fully in.
@@ -297,6 +350,7 @@
     setCount(0);
     verdict.textContent = '';
     toast.style.opacity = 0;
+    setToast(false);
     led.setAttribute('fill', '#9aa3b1');
     led.style.filter = '';
     plug.getAnimations().forEach((a) => a.cancel());
@@ -348,10 +402,15 @@
     led.style.filter = 'drop-shadow(0 0 6px #2c5cff)';
     verdict.textContent = TTY.t(target === 3 ? T.verdict3 : T.verdict5);
     toast.style.opacity = 1;
-    if (animate) {
-      toast.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'ease-out' });
-      verdict.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
-    }
+    if (!animate) return setToast(true);
+    toast.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'ease-out' });
+    verdict.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
+    const id = run;
+    wait(1600).then(() => {
+      if (id !== run) return;
+      setToast(true);
+      toast.animate([{ transform: 'translateX(-6px)' }, { transform: 'translateX(4px)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out' });
+    });
   }
 
   // Plays again on its own a while after each success; a newer start cancels older ones.

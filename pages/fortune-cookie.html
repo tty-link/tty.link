@@ -11,7 +11,8 @@
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="malang pilgi"></script>
 <style>
   /* A fortune cookie for before you open a pull request. Tap it, it cracks, crumbs fly,
-     a slip slides out. Leave it alone and the next cookie arrives by itself. */
+     a slip slides out. Leave it alone and the next cookie arrives by itself. Now and then
+     a cookie holds two slips, and the second one is for your reviewer. */
   :root {
     --cloth: #0f4c5c;
     --cloth-weave: rgba(255, 255, 255, .045);
@@ -52,14 +53,16 @@
   .sub { margin-top: 1.4cqmin; font-size: max(13px, 2.3cqmin); opacity: .82; }
 
   .scene {
+    position: relative;
     display: grid;
     grid-template-columns: 1fr 1.05fr;
     align-items: center;
     gap: 4cqw;
     min-height: 0;
   }
+  /* Portrait keeps room under the slip for a double's second slip. */
   @container (orientation: portrait) {
-    .scene { grid-template-columns: 1fr; grid-template-rows: auto auto; align-content: center; gap: 4cqh; }
+    .scene { grid-template-columns: 1fr; grid-template-rows: auto auto; align-content: center; gap: 4cqh; padding-bottom: 64px; }
   }
 
   /* The plate is the button. */
@@ -98,6 +101,7 @@
     box-shadow: 0 1.6cqmin 3.6cqmin rgba(0, 0, 0, .28);
     rotate: -1.5deg;
     visibility: hidden;
+    z-index: 1;
   }
   @container (orientation: portrait) { .slip { width: min(100%, 84cqw); } }
   .slip::before, .slip::after {
@@ -117,6 +121,24 @@
   .learn { margin-top: .6cqmin; color: #6b6253; }
   .lang-ko .lucky, .lang-ko .learn { word-break: keep-all; }
   .lang-ko .lucky { font-weight: 400; }
+
+  /* The second slip of a double: it hangs out from under the first. JS places it. */
+  .twin {
+    position: absolute;
+    z-index: 0;
+    /* its top 12px is tucked under the first slip */
+    padding: calc(14px + 1.4cqmin) 3cqmin 1.8cqmin;
+    color: var(--ink);
+    background: var(--paper);
+    border-radius: 3px;
+    box-shadow: 0 1.2cqmin 2.8cqmin rgba(0, 0, 0, .26);
+    rotate: 1.4deg;
+    font: 500 max(14px, 2.7cqmin)/1.3 'Mali', cursive;
+    visibility: hidden;
+  }
+  .twin b { display: block; margin-bottom: .25em; font: 600 max(11px, 1.7cqmin)/1.2 'Fredoka', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--red); }
+  .lang-ko .twin b { font-family: 'Gowun Dodum', sans-serif; font-weight: 400; letter-spacing: 0; }
+  .twin span > font-kku { color: #2b2a6b; }
 
   .foot { display: flex; justify-content: space-between; gap: 2cqmin; font-size: max(12px, 2cqmin); opacity: .78; }
   /* Opened on its own on a phone, _kit.js puts a small ":)" button bottom-right; keep the footer clear of it. */
@@ -168,6 +190,7 @@
       <p class="lucky"></p>
       <p class="learn"></p>
     </article>
+    <p class="twin" aria-live="polite"><b data-lang="en">For your reviewer</b><b data-lang="ko">리뷰어 몫</b><span></span></p>
   </div>
 
   <footer class="foot">
@@ -188,6 +211,7 @@
   const crease = $('.crease');
   const tail = $('.tail');
   const slip = $('.slip');
+  const scene = $('.scene');
   const fortune = $('.fortune');
   const lucky = $('.lucky');
   const learn = $('.learn');
@@ -208,6 +232,23 @@
       'That meeting could have been an email. Today, it will be.',
       'Your variable names will make a stranger smile.',
       'Production will be boring today. Enjoy it.',
+      'CI goes green on the first run. No “re-run, just in case.”',
+      'Your diff: +12 −340. Someone will frame it.',
+      'The rebase will go clean. All fourteen commits.',
+      'Six months from now, this commit message will still make sense.',
+      'The answer you need is the top result, and it is not from 2011.',
+      'Your “quick fix” will, for once, be quick.',
+      'The dependency update will change nothing. Nothing at all.',
+      'The regex works the first time. Do not ask it why.',
+      'Your reviewer will run the code before commenting.',
+      'The docs will match the code. Read them while it lasts.',
+      'Staging will behave exactly like production.',
+      'You will name the thing well on the first try.',
+      'Every nitpick today will come labelled “nit:”.',
+      'Forty tabs open, and the laptop fan stays quiet.',
+      'Someone will read your PR description before the diff.',
+      'No off-by-one errors today. Not even one.',
+      'The code you wrote on Friday will still make sense on Monday.',
     ],
     ko: [
       '다음 PR은 한 번에 승인됩니다.',
@@ -218,20 +259,42 @@
       '누군가 당신의 README를 끝까지 읽습니다.',
       '리뷰 댓글이 딱 하나 달리는데, 칭찬입니다.',
       '쓴 코드보다 지운 코드가 많은 날입니다. 기분 최고.',
-      '들쭉날쭉하던 테스트가 오늘은 쉬는 날입니다.',
+      '잊을 만하면 깨지던 테스트가 오늘은 쉽니다.',
       '그 회의, 오늘은 정말 메일로 끝납니다.',
       '당신이 지은 변수 이름이 누군가를 웃게 합니다.',
       '오늘 운영 서버는 지루합니다. 마음껏 즐기세요.',
+      'CI가 한 번에 초록불입니다. ‘혹시 몰라’ 재실행은 없습니다.',
+      '오늘의 diff는 +12 −340. 누가 캡처해서 자랑합니다.',
+      '리베이스가 한 번에 깔끔하게 끝납니다. 커밋 14개 전부.',
+      '여섯 달 뒤에 봐도 이 커밋 메시지가 이해됩니다.',
+      '찾던 답이 검색 첫 줄에 있습니다. 2011년 글도 아닙니다.',
+      '‘금방 고칠게요’가 오늘은 정말 금방입니다.',
+      '라이브러리 버전을 올렸는데 아무 일도 안 일어납니다.',
+      '정규식이 한 번에 맞습니다. 왜 맞는지는 묻지 마세요.',
+      '리뷰어가 댓글 달기 전에 직접 돌려 봅니다.',
+      '문서와 코드가 일치합니다. 그대로일 때 읽어 두세요.',
+      '스테이징이 운영이랑 똑같이 움직입니다.',
+      '이름 짓기가 한 번에 끝납니다.',
+      '오늘 받는 사소한 지적에는 전부 ‘nit:’이 붙어 있습니다.',
+      '탭을 마흔 개 열어도 노트북 팬이 조용합니다.',
+      '누군가 diff보다 PR 설명을 먼저 읽습니다.',
+      '오늘 off-by-one 버그는 0개. 1개 아니고 진짜 0개.',
+      '금요일에 짠 코드가 월요일에도 이해됩니다.',
     ],
   });
-  // The back of the slip teaches a word, as fortune slips do.
+  // The back of the slip teaches a word, as fortune slips do (shuffled on its own).
   const WORDS = TTY.t({
     en: [
-      'Learn Korean: 칼퇴, leaving exactly on time.',
-      'Learn Korean: 머지, merge.',
-      'Learn Korean: 배포, deploy.',
-      'Learn Korean: 수고하셨습니다, thank you for your hard work.',
-      'Learn Korean: 커밋, commit. Easy one.',
+      'Learn Korean: 칼퇴 (kaltoe), leaving right on time.',
+      'Learn Korean: 머지 (meoji), merge.',
+      'Learn Korean: 배포 (baepo), deploy.',
+      'Learn Korean: 수고하셨습니다 (sugohasyeotseumnida), thanks for your hard work.',
+      'Learn Korean: 커밋 (keomit), commit. Easy one.',
+      'Learn Korean: 야근 (yageun), staying late. Not needed today.',
+      'Learn Korean: 퇴근 (toegeun), going home. The best command.',
+      'Learn Korean: 회식 (hoesik), team dinner. “Optional.”',
+      'Learn Korean: 화이팅 (hwaiting), you’ve got this.',
+      'Learn Korean: 점심 뭐 먹지 (jeomsim mwo meokji), what’s for lunch? Asked daily at 11:50.',
     ],
     ko: [
       '오늘의 영어: LGTM, 좋아 보여요.',
@@ -239,37 +302,75 @@
       '오늘의 영어: nit, 아주 사소한 의견.',
       '오늘의 영어: PTAL, 한 번 더 봐 주세요.',
       '오늘의 영어: TL;DR, 길어서 요약.',
+      '오늘의 영어: SGTM, 그렇게 하죠.',
+      '오늘의 영어: ship it, 내보냅시다.',
+      '오늘의 영어: bikeshedding, 사소한 걸로 끝없이 토론하기.',
+      '오늘의 영어: yak shaving, 본론 전에 딴 일만 하기.',
+      '오늘의 영어: EOD, 오늘 중. 몇 시까지인지는 아무도 모름.',
+      '오늘의 영어: FYI, 알고만 계세요.',
     ],
+  });
+  // A double cookie's second slip.
+  const FOR_REVIEWER = TTY.t({
+    en: ['This diff is under 200 lines.', 'The tests are already green.', 'Done before the coffee cools.', 'No “quick question” today.'],
+    ko: ['이번 diff는 200줄이 안 됩니다.', '테스트는 이미 초록불입니다.', '커피 식기 전에 리뷰 끝.', '오늘은 ‘잠깐 질문’이 없습니다.'],
   });
   const CODES = [200, 201, 202, 204, 304];
   const luckyLabel = TTY.t({ en: 'Lucky numbers: ', ko: '행운의 숫자: ' });
   const countText = (n) => TTY.t({ en: `Cookies opened: ${n}. Calories: 0.`, ko: `깨 본 쿠키 ${n}개. 칼로리 0.` });
   plate.setAttribute('aria-label', TTY.t({ en: 'Crack a fortune cookie', ko: '포춘쿠키 깨기' }));
 
-  let order = [];
-  const nextIndex = () => {
-    if (!order.length) order = FORTUNES.map((_, i) => i).sort(() => Math.random() - .5);
-    return order.pop();
+  // Shuffled bags: every item comes out once before any repeats.
+  const bag = (n) => {
+    let order = [];
+    return () => {
+      if (!order.length) order = Array.from({ length: n }, (_, i) => i).sort(() => Math.random() - .5);
+      return order.pop();
+    };
   };
+  const nextIndex = bag(FORTUNES.length), nextWord = bag(WORDS.length), nextKind = bag(FOR_REVIEWER.length);
   let opened = 0;
 
+  // Korean handwriting is a fresh font-kku element each time (its textContent holds jamo).
+  const pilgi = (text, size) => {
+    const el = document.createElement('font-kku');
+    el.setAttribute('font', 'pilgi');
+    el.setAttribute('size', size);
+    el.setAttribute('wrap-unit', 'word');
+    el.textContent = text;
+    return el;
+  };
   function write(i) {
-    if (TTY.lang === 'ko') {
-      const el = document.createElement('font-kku');
-      el.setAttribute('font', 'pilgi');
-      el.setAttribute('size', 'max(19px, 4.4cqmin)');
-      el.setAttribute('wrap-unit', 'word');
-      el.textContent = FORTUNES[i];
-      fortune.replaceChildren(el);
-    } else {
-      fortune.textContent = FORTUNES[i];
-    }
+    if (TTY.lang === 'ko') fortune.replaceChildren(pilgi(FORTUNES[i], 'max(19px, 4.4cqmin)'));
+    else fortune.textContent = FORTUNES[i];
     const nums = CODES.slice().sort(() => Math.random() - .5).slice(0, 3).sort((a, b) => a - b);
     lucky.textContent = luckyLabel + nums.join(', ');
-    learn.textContent = WORDS[i % WORDS.length];
+    learn.textContent = WORDS[nextWord()];
     opened += 1;
     count.textContent = countText(opened);
   }
+
+  // The second cookie of a visit is always a double, so the home stage shows one; after
+  // that, about one in six.
+  const twin = $('.twin');
+  const twinText = twin.querySelector('span');
+  const isDouble = () => opened === 2 || (opened > 2 && Math.random() < 1 / 6);
+  function placeTwin() {
+    const box = scene.getBoundingClientRect(), r = slip.getBoundingClientRect();
+    const narrow = box.height > box.width;
+    twin.style.left = `${r.left - box.left + r.width * (narrow ? .12 : .2)}px`;
+    twin.style.width = `${r.width * (narrow ? .84 : .74)}px`;
+    twin.style.top = `${r.bottom - box.top - 12}px`;
+  }
+  function showTwin() {
+    const text = FOR_REVIEWER[nextKind()];
+    if (TTY.lang === 'ko') twinText.replaceChildren(pilgi(text, 'max(15px, 3cqmin)'));
+    else twinText.textContent = text;
+    placeTwin();
+    twin.style.visibility = 'visible';
+    if (!TTY.reduce) return twin.animate([{ transform: 'translateY(-70%)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 520, easing: 'cubic-bezier(.25, .8, .3, 1.15)' }).finished;
+  }
+  addEventListener('resize', () => { if (twin.style.visibility === 'visible') placeTwin(); });
 
   const rand = (a, b) => a + Math.random() * (b - a);
   function burst() {
@@ -319,12 +420,18 @@
       write(i);
       settleCracked();
       slip.style.visibility = 'visible';
+      twin.style.visibility = 'hidden';
+      if (isDouble()) showTwin();
       busy = false;
       return;
     }
 
     // Clear the table: the old slip is tucked away and a fresh cookie drops on the plate.
     if (cracked) {
+      if (twin.style.visibility === 'visible') {
+        twin.animate([{ opacity: 1 }, { transform: 'translate(10%, -30%) rotate(8deg) scale(.8)', opacity: 0 }], { duration: 300, easing: 'ease-in', fill: 'forwards' })
+          .finished.then(() => { twin.style.visibility = 'hidden'; twin.getAnimations().forEach((a) => a.cancel()); });
+      }
       await slip.animate([{ transform: 'none', opacity: 1 }, { transform: 'translate(14%, -22%) rotate(10deg) scale(.8)', opacity: 0 }],
         { duration: 340, easing: 'cubic-bezier(.5, 0, .8, .4)', fill: 'forwards' }).finished;
       slip.style.visibility = 'hidden';
@@ -364,6 +471,8 @@
       { transform: `translate(${dx * .4}px, ${dy * .4 - to.height * .25}px) scale(.55, .4) rotate(-8deg)`, clipPath: 'inset(0 40% 0 0)', offset: .45 },
       { transform: 'none', clipPath: 'inset(0 0 0 0)' },
     ], { duration: 820, easing: 'cubic-bezier(.25, .8, .3, 1.08)' }).finished;
+    // A double: the second slip follows the first out of the cookie.
+    if (isDouble()) await showTwin();
 
     cracked = true;
     busy = false;

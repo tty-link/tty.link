@@ -8,10 +8,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shantell+Sans:ital,wght,BNCE,INFM@0,300..800,-100..100,0..100&family=Gowun+Dodum&display=swap">
-<script src="https://font.tty.link/lib/font-kku.js" data-fonts="sticker malang crayon dunggeun"></script>
+<script src="https://font.tty.link/lib/font-kku.js" data-fonts="sticker malang crayon dunggeun geumbak"></script>
 <style>
   /* A capsule toy machine that only stocks tiny good deeds. Turn the knob, a capsule drops,
-     flies out, twists open and unrolls one idea. Nobody playing? It turns itself. */
+     flies out, twists open and unrolls one idea. Nobody playing? It turns itself. One gold
+     capsule sits in the dome: the secret, once per visit. */
   :root {
     --mint: #c6f0df;
     --mint-dot: #a9e4cd;
@@ -45,6 +46,8 @@
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas: "head" "machine" "out";
+    /* the lid and cup fly off past the edges; they must not make the page scrollable */
+    overflow: clip;
   }
   @container (orientation: landscape) {
     .scene {
@@ -170,6 +173,28 @@
   }
   .idea { font-size: 8.4cqi; font-weight: 700; line-height: 1.12; text-wrap: balance; font-variation-settings: 'INFM' 100, 'BNCE' 0; }
   .idea-ko { display: block; }
+  /* The secret slip: a gold band that shines, and a sticker that says so. */
+  .rare {
+    display: none;
+    position: absolute;
+    right: 5cqi; top: 0;
+    translate: 0 -40%;
+    rotate: 5deg;
+    padding: 1.4cqi 3.2cqi;
+    border-radius: 99px;
+    background: var(--ink);
+    color: #ffe27a;
+    font-size: 4.4cqi; font-weight: 800; line-height: 1;
+    letter-spacing: .14em;
+  }
+  .lang-ko .rare { font-family: 'Gowun Dodum', sans-serif; letter-spacing: .06em; }
+  .slip.secret .rare { display: block; }
+  .slip.secret::before {
+    background: linear-gradient(100deg, #e3a81b 0 38%, #fff3c2 50%, #e3a81b 62% 100%) 0 0 / 300% 100%;
+    animation: shine 2.6s linear infinite;
+  }
+  @keyframes shine { from { background-position: 100% 0; } to { background-position: -50% 0; } }
+  @media (prefers-reduced-motion: reduce) { .slip.secret::before { animation: none; } }
 
   .capsule {
     place-self: center;
@@ -271,7 +296,7 @@
 
   <section class="out" aria-live="polite">
     <div class="stack">
-      <div class="slip"><p class="idea"></p></div>
+      <div class="slip"><span class="rare"><span data-lang="en">SECRET</span><span data-lang="ko">시크릿</span></span><p class="idea"></p></div>
       <div class="capsule" aria-hidden="true"><i class="lid"></i><i class="cup"></i></div>
     </div>
     <button class="again" type="button"><span data-lang="en">Turn again</span><span data-lang="ko">한 번 더 돌리기</span></button>
@@ -283,36 +308,47 @@
   document.title = TTY.t({ en: 'One Turn, One Good Deed', ko: '착한 일 뽑기' }) + ' | tty.link';
   const IDEAS = TTY.t({
     en: [
-      'Leave a kind review for a tiny restaurant.',
+      'Review the tiny place downstairs. Name the dish.',
       'Tell a coworker their code was easy to read.',
-      'Thank an open-source maintainer. No reason needed.',
-      'Add alt text to your images.',
-      'Let someone else merge first.',
+      'Upvote the answer you copied today.',
+      'Review the PR that’s been waiting three days.',
+      'Write alt text better than “image.png”.',
       'Return a stranger’s shopping cart.',
       'Write the docs you wished you’d had.',
-      'Name variables for the next reader.',
+      'Rename one variable called data2.',
       'Hold the elevator. Take the thank-you.',
       'End a meeting ten minutes early.',
       'Bring snacks to stand-up.',
       'Call someone before they call you.',
+      'Thank an open-source maintainer. No reason needed.',
+      'Answer the message you left on read.',
+      'Offer someone the last slice.',
+      'Tell a former teammate what they taught you.',
     ],
     ko: [
-      '동네 작은 식당에 다정한 리뷰 남기기',
+      '단골 분식집 리뷰에 메뉴 이름까지 칭찬하기',
       '동료에게 “코드 읽기 편했어요” 말하기',
-      '오픈소스 메인테이너에게 고맙다고 하기',
-      '이미지에 대체 텍스트 꼼꼼히 달기',
-      '내 PR보다 남의 PR 먼저 머지하기',
+      '오늘 복붙한 답변에 추천 누르기',
+      '사흘째 기다리는 PR 리뷰해 주기',
+      '대체 텍스트를 “이미지”보다 길게 쓰기',
       '누가 두고 간 카트 제자리에 돌려놓기',
       '내가 처음에 읽고 싶던 문서 써 두기',
-      '다음 사람이 읽기 좋게 변수 이름 짓기',
+      'data2라는 변수 하나 이름 고쳐 주기',
       '닫히는 엘리베이터 문 잡아 주기',
       '회의 10분 일찍 끝내기',
       '택배 기사님께 시원한 물 한 병',
       '부모님께 먼저 전화 걸기',
+      '오픈소스 메인테이너에게 고맙다고 하기',
+      '읽씹한 메시지에 답장하기',
+      '마지막 한 조각, 먼저 권하기',
+      '예전 사수에게 덕분에 배웠다고 연락하기',
     ],
   });
+  // One gold capsule sits in the dome. It comes out once per visit.
+  const SECRET = TTY.t({ en: 'Go home on time. This one’s for you.', ko: '정시에 퇴근하기. 이건 나한테 하는 착한 일' });
   const KO_FONTS = ['malang', 'crayon', 'sticker'];
   const COLORS = ['#ffd23f', '#4d9de0', '#ff7eb6', '#3bb273', '#9a6cff', '#ff8c42'];
+  const GOLD = '#f2b61c';
 
   const $ = (s) => document.querySelector(s);
   const knob = $('#knob');
@@ -329,40 +365,59 @@
   /* Capsules piled in the dome. */
   const SPOTS = [[72,178],[106,182],[140,180],[172,174],[55,146],[89,150],[123,148],[157,146],[189,140],[74,114],[108,118],[142,114],[176,110],[96,84],[132,86]];
   const NS = 'http://www.w3.org/2000/svg';
+  const GOLD_SPOT = 13; // near the top of the pile, where a second look finds it
   SPOTS.forEach(([x, y], i) => {
     const g = document.createElementNS(NS, 'g');
     g.setAttribute('transform', `translate(${x} ${y}) rotate(${(i * 47) % 180 - 90})`);
     g.innerHTML = `<circle r="17" fill="#fff" stroke="rgba(35,32,58,.85)" stroke-width="3.5"/>
-      <path d="M-17 0 A17 17 0 0 1 17 0 Z" fill="${COLORS[i % COLORS.length]}" stroke="rgba(35,32,58,.85)" stroke-width="3.5"/>
-      <circle cx="-6" cy="-8" r="3.2" fill="#fff" opacity=".7"/>`;
+      <path d="M-17 0 A17 17 0 0 1 17 0 Z" fill="${i === GOLD_SPOT ? GOLD : COLORS[i % COLORS.length]}" stroke="rgba(35,32,58,.85)" stroke-width="3.5"/>
+      <circle cx="-6" cy="-8" r="3.2" fill="#fff" opacity=".7"/>` +
+      (i === GOLD_SPOT ? '<path d="M7 -10 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6z" fill="#fff"/>' : '');
     const wrap = document.createElementNS(NS, 'g');
     wrap.append(g);
     pile.append(wrap);
   });
   const pileCaps = [...pile.children];
+  const goldCap = pileCaps[GOLD_SPOT];
 
+  // A shuffled bag: every idea once before any repeats, and never the same one twice in a row.
   let order = [];
+  let last = -1;
   const nextIdea = () => {
-    if (!order.length) order = IDEAS.map((_, i) => i).sort(() => Math.random() - .5);
-    return order.pop();
+    if (!order.length) {
+      order = IDEAS.map((_, i) => i);
+      for (let k = order.length - 1; k > 0; k--) {
+        const j = Math.floor(Math.random() * (k + 1));
+        [order[k], order[j]] = [order[j], order[k]];
+      }
+      if (order[order.length - 1] === last) [order[0], order[order.length - 1]] = [order[order.length - 1], order[0]];
+    }
+    return (last = order.pop());
   };
-  let shownColor = 0;
+  // The secret never comes first; after that one turn in six, and by the sixth turn for sure
+  // (the pity counter every gacha has).
+  let turns = 0;
+  let secretOut = false;
+  const drawSecret = () => !secretOut && turns > 1 && (turns >= 6 || Math.random() < 1 / 6);
+  let shownColor = Math.floor(Math.random() * COLORS.length);
 
-  function setIdea(i) {
-    const color = COLORS[(shownColor = (shownColor + 1 + Math.floor(Math.random() * (COLORS.length - 1))) % COLORS.length)];
+  function setIdea(i, secret) {
+    const color = secret ? GOLD : COLORS[(shownColor = (shownColor + 1 + Math.floor(Math.random() * (COLORS.length - 1))) % COLORS.length)];
+    const text = secret ? SECRET : IDEAS[i];
     slip.style.setProperty('--c', color);
     capsule.style.setProperty('--c', color);
     drop.style.setProperty('--c', color);
+    slip.classList.toggle('secret', secret);
     if (TTY.lang === 'ko') {
       const el = document.createElement('font-kku');
       el.className = 'idea-ko';
-      el.setAttribute('font', KO_FONTS[i % KO_FONTS.length]);
+      el.setAttribute('font', secret ? 'geumbak' : KO_FONTS[i % KO_FONTS.length]);
       el.setAttribute('size', '8.6cqi');
       el.setAttribute('wrap-unit', 'word');
-      el.textContent = IDEAS[i];
+      el.textContent = text;
       idea.replaceChildren(el);
     } else {
-      idea.textContent = IDEAS[i];
+      idea.textContent = text;
     }
   }
 
@@ -375,10 +430,14 @@
     if (busy) return;
     busy = true;
     clearTimeout(auto);
-    const i = nextIdea();
+    turns++;
+    const secret = drawSecret();
+    const i = secret ? -1 : nextIdea();
+    if (secret) secretOut = true;
 
     if (TTY.reduce) {
-      setIdea(i);
+      setIdea(i, secret);
+      if (secret) goldCap.style.opacity = 0;
       slip.style.visibility = 'visible';
       busy = false;
       return;
@@ -393,7 +452,7 @@
       // A forwards-filled animation would win again over the next unroll; drop it.
       crumple.cancel();
     }
-    setIdea(i);
+    setIdea(i, secret);
 
     // Knob: a full turn with a ratchety finish; the pile shuffles.
     knob.animate([
@@ -407,6 +466,9 @@
       { transform: `translate(${(n % 3 - 1) * 3}px, -${4 + (n % 4) * 2}px)` },
       { transform: 'translate(0, 0)' },
     ], { duration: 380, delay: 200 + (n % 5) * 60, iterations: 2, easing: 'ease-in-out' }));
+    // The gold one slips down out of sight: that is the one coming out.
+    if (secret) goldCap.animate([{ transform: 'translate(0, 0)', opacity: 1 }, { transform: 'translate(0, 40px)', opacity: 0 }],
+      { duration: 360, delay: 560, easing: 'cubic-bezier(.5, 0, .9, .5)', fill: 'forwards' });
 
     // A capsule drops into the chute and bounces.
     await new Promise((r) => setTimeout(r, 820));

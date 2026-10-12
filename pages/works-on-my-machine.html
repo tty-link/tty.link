@@ -64,15 +64,18 @@
   .body { font-size: 4.8cqi; line-height: 1.5; font-weight: 500; }
   .who { display: block; margin: 2cqi 0; font-size: 8.6cqi; font-style: italic; font-weight: 700; }
   .date { margin-top: 8cqi; font-size: 3.6cqi; font-style: italic; color: #6b5a3a; }
-  .sign { position: absolute; left: 10cqi; bottom: 10cqi; width: 34cqi; font-size: 3.2cqi; text-align: center; }
+  .sign { position: absolute; left: 9cqi; bottom: 9.5cqi; width: 38cqi; font-size: 3.2cqi; text-align: center; }
   .sign svg { display: block; width: 100%; height: 9cqi; }
   .sign svg path { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .sign > span { display: block; padding-top: 1cqi; border-top: .25cqi solid var(--ink); }
+  /* The second signer: the only witness there was. */
+  .witness { left: auto; right: 9cqi; }
+  .witness .hand { display: block; height: 9cqi; font: 6.4cqi/9cqi 'Gochi Hand', cursive; letter-spacing: .02em; rotate: -3deg; }
 
   .seal {
     position: absolute;
-    right: 8cqi;
-    bottom: 7cqi;
+    right: 10cqi;
+    bottom: 23cqi;
     display: grid;
     place-items: center;
     width: 30cqi;
@@ -90,7 +93,22 @@
     opacity: .9;
   }
   .seal b { display: block; font-size: 8cqi; }
-
+  /* Rubber stamps for the excuses that follow (and for the shipment): a box, not a seal. */
+  .seal.rect {
+    width: auto;
+    aspect-ratio: auto;
+    padding: 1.6cqi 3.2cqi 1.8cqi;
+    border-width: 1cqi;
+    border-radius: 1cqi;
+    font-size: 3.2cqi;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .seal.rect b { font-size: 5.8cqi; letter-spacing: .02em; }
+  .seal .tag { display: block; margin-top: .6cqi; font-size: 3.6cqi; letter-spacing: .01em; text-transform: none; }
+  /* Placed by its centre, in percent of the paper. */
+  .seal.at { right: auto; bottom: auto; translate: -50% -50%; }
+  .seal.shipped { left: 36%; top: 76%; rotate: 8deg; }
   .note {
     position: absolute;
     left: -5cqi;
@@ -168,6 +186,12 @@
     <span data-lang="ko">개발팀장 (빌드는 됨)</span>
   </div>
 
+  <div class="sign witness step">
+    <i class="hand">localhost</i>
+    <span data-lang="en">Witness</span>
+    <span data-lang="ko">증인</span>
+  </div>
+
   <div class="seal hidden" aria-hidden="true">
     <span data-lang="en">Works on<b>my</b>machine</span>
     <span data-lang="ko" class="ko"><font-kku font="dojang" size="5.4cqi">내 컴에선</font-kku><font-kku font="dojang" size="9cqi">됨</font-kku></span>
@@ -196,12 +220,37 @@
   const seal = document.querySelector('.seal');
   const note = document.querySelector('.note');
   const signature = document.querySelector('.sign path');
+  const witness = document.querySelector('.witness .hand');
   const hint = document.querySelector('.hint');
 
   if (!TTY.reduce) steps.forEach((el) => el.classList.add('hidden'));
 
-  // After the ceremony, every tap (or Enter/Space) brings the stamp down once more, somewhere
-  // new on the paper. Seven extra impressions at most; then the oldest is reused.
+  // A rubber stamp: a small line over a big one, and maybe a tag line. Korean is set in dojang.
+  const kku = (text, size) => `<font-kku font="dojang" size="${size}">${text}</font-kku>`;
+  const stamp = ([small, big, tag], cls) => {
+    const el = document.createElement('div');
+    el.className = 'seal rect ' + cls;
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = TTY.lang === 'ko'
+      ? `<span class="ko">${small ? kku(small, '4.4cqi') : ''}${kku(big, '6.8cqi')}${tag ? `<span class="tag">${tag}</span>` : ''}</span>`
+      : `${small ? `<span>${small}</span>` : ''}<b>${big}</b>${tag ? `<span class="tag">${tag}</span>` : ''}`;
+    return el;
+  };
+  // The reply took "ship your machine" literally.
+  const shipped = stamp(TTY.t({
+    en: ['', 'Shipped', 'my-machine:latest · 14.2 GB'],
+    ko: ['', '출시 완료', 'my-machine:latest · 14.2GB'],
+  }), 'shipped at hidden');
+  cert.append(shipped);
+
+  // Repeat taps: the same seal once more, then the excuses that usually come after it.
+  const EXCUSES = TTY.t({
+    en: [["Can't", 'reproduce'], ['Worked', 'yesterday'], ['Passed on', 'retry #3'], ['Works in', 'incognito']],
+    ko: [['재현', '안 됨'], ['어제는', '됐음'], ['세 번 돌리니', '됨'], ['시크릿 창에선', '됨']],
+  });
+
+  // After the ceremony, every tap (or Enter/Space) brings a stamp down once more: where you
+  // tapped, or somewhere new on the paper. Seven extra impressions at most; then the oldest goes.
   const thump = (el) => {
     if (TTY.reduce) return;
     el.animate([
@@ -215,6 +264,7 @@
   };
   const extras = [];
   let stampable = false;
+  let taps = 0;
   function readyToStamp() {
     stampable = true;
     cert.classList.add('stampable');
@@ -222,19 +272,28 @@
     cert.setAttribute('aria-describedby', 'stamp-hint');
     hint.classList.add('on');
   }
-  function stampAgain() {
+  // x, y: where on the paper, in percent of its width and height.
+  function stampAgain(x, y) {
     if (!stampable) return;
-    let copy = extras.length >= 7 ? extras.shift() : seal.cloneNode(true);
-    copy.classList.add('extra');
+    if (extras.length >= 7) extras.shift().remove();
+    const n = taps++;
+    const copy = n % 5 === 0 ? seal.cloneNode(true) : stamp(EXCUSES[(n % 5) - 1], '');
+    copy.classList.add('extra', 'at');
     copy.classList.remove('hidden');
-    copy.style.right = (6 + Math.random() * 46).toFixed(1) + 'cqi';
-    copy.style.bottom = (8 + Math.random() * 80).toFixed(1) + 'cqi';
-    copy.style.rotate = (-28 + Math.random() * 40).toFixed(1) + 'deg';
-    if (!copy.isConnected) cert.insertBefore(copy, note);
+    if (x === undefined) { x = 20 + Math.random() * 60; y = 12 + Math.random() * 76; }
+    copy.style.left = Math.min(80, Math.max(20, x)).toFixed(1) + '%';
+    copy.style.top = Math.min(88, Math.max(12, y)).toFixed(1) + '%';
+    copy.style.rotate = (-24 + Math.random() * 36).toFixed(1) + 'deg';
+    cert.append(copy);
     extras.push(copy);
     thump(copy);
   }
-  cert.addEventListener('click', stampAgain);
+  cert.addEventListener('click', (e) => {
+    const box = cert.getBoundingClientRect();
+    // Keyboard "clicks" have no position; let those land anywhere.
+    if (!e.detail) return stampAgain();
+    stampAgain((e.clientX - box.left) / box.width * 100, (e.clientY - box.top) / box.height * 100);
+  });
   cert.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
@@ -242,7 +301,7 @@
   });
 
   function play() {
-    if (TTY.reduce) { seal.classList.remove('hidden'); note.classList.remove('hidden'); readyToStamp(); return; }
+    if (TTY.reduce) { [seal, note, shipped].forEach((el) => el.classList.remove('hidden')); readyToStamp(); return; }
     const ease = 'cubic-bezier(.2, .8, .2, 1)';
     cert.animate([{ transform: 'translateY(-6%) rotate(-1.5deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 700, easing: ease });
 
@@ -255,9 +314,12 @@
     const signedAt = 450 + steps.length * 190;
     signature.animate([{ strokeDasharray: '1', strokeDashoffset: 1 }, { strokeDasharray: '1', strokeDashoffset: 0 }],
       { duration: 900, delay: signedAt - 300, easing: 'ease-in-out', fill: 'both' });
+    // Then the witness signs, neatly.
+    witness.animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }],
+      { duration: 700, delay: signedAt + 700, easing: 'ease-in-out', fill: 'both' });
 
     // Stamp: lifted high, slammed down, the paper flinches.
-    const stampAt = signedAt + 900;
+    const stampAt = signedAt + 1700;
     setTimeout(() => {
       seal.classList.remove('hidden');
       thump(seal);
@@ -272,7 +334,13 @@
         { transform: 'none', opacity: 1 },
       ], { duration: 650, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
     }, stampAt + 1700);
-    setTimeout(readyToStamp, stampAt + 2500);
+
+    // And the answer to the reply.
+    setTimeout(() => {
+      shipped.classList.remove('hidden');
+      thump(shipped);
+    }, stampAt + 4300);
+    setTimeout(readyToStamp, stampAt + 5100);
   }
 
   TTY.onShow(play);

@@ -10,9 +10,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;800&family=DM+Mono:wght@500&family=Gowun+Dodum&display=swap">
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="dunggeun sebul"></script>
 <style>
-  /* Five teammates run a Raft-style election to decide lunch. A network partition splits
-     the cluster into a black-bean side and a spicy side; when it heals, the only merge
-     without a conflict is committed everywhere: the half-and-half bowl. */
+  /* Five teammates run Raft to decide lunch. A network partition leaves the old leader on
+     the minority side: she can write black-bean but never commit it, while the majority
+     elects a new leader and commits spicy. When it heals, her order is retried, and the
+     kitchen applies the log in order to one bowl: the half-and-half. */
   :root {
     --bg: #fff1e2;
     --card: #fffaf3;
@@ -129,13 +130,16 @@
   .events li.win .t { color: #d7c4b2; }
   .aside { margin-top: 10px; font-size: clamp(12px, 1.7cqmin, 14px); color: var(--soft); }
 
-  /* Portrait stages: the cluster on top, the latest two log lines under it. */
+  /* Portrait stages: the cluster on top, the latest log line under it (two on tall ones).
+     The card grows to fit its lines, so a long entry is never cut off at the top. */
   @media (max-aspect-ratio: 4/5) {
     .room { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "head" "scene" "log"; }
-    .log { max-height: 30cqh; }
     .aside { display: none; }
-    .events li:not(:nth-last-child(-n + 2)) { display: none; }
+    .events li:not(:last-child) { display: none; }
     .head { flex-wrap: wrap; }
+  }
+  @media (max-aspect-ratio: 4/5) and (min-height: 700px) {
+    .events li:nth-last-child(2) { display: grid; }
   }
   /* Opened on its own on a phone, _kit.js puts a small ":)" button bottom-right; end the log above it. */
   @media (max-aspect-ratio: 4/5) and (max-width: 600px) { html:not(.embedded) .room { padding-bottom: 50px; } }
@@ -147,8 +151,8 @@
     <div>
       <h1 data-lang="en">Lunch, by Consensus</h1>
       <h1 data-lang="ko"><font-kku font="dunggeun" size="5.4cqmin">점심 메뉴 합의 알고리즘</font-kku></h1>
-      <p class="sub" data-lang="en">Five nodes. Two noodles. One commit.</p>
-      <p class="sub" data-lang="ko">노드 다섯, 면 두 종류, 커밋 하나.</p>
+      <p class="sub" data-lang="en">Five nodes. Two noodles. One bowl.</p>
+      <p class="sub" data-lang="ko">노드 다섯, 면 두 종류, 그릇 하나.</p>
     </div>
     <button class="again" type="button" data-lang="en">Order again</button>
     <button class="again" type="button" data-lang="ko">다시 주문하기</button>
@@ -165,7 +169,7 @@
         </g>
       </defs>
       <g class="links"></g>
-      <path class="crack" pathLength="1" d="M206 18 L224 92 L196 150 L236 228 L210 300 L250 372 L226 440 L266 520"/>
+      <path class="crack" pathLength="1" d="M553 10 L484 78 L390 111 L328 190 L234 224 L173 303 L79 336 L10 404"/>
       <g class="packets"></g>
       <g class="nodes"></g>
     </svg>
@@ -212,7 +216,11 @@
     const a = (deg * Math.PI) / 180;
     return { x: Math.round(C.x + R * Math.cos(a)), y: Math.round(C.y + R * Math.sin(a)) };
   });
-  const LEFT = [3, 4]; // the side the partition cuts off
+  // The partition cuts Minji (the first leader) and Haeun off from the other three.
+  const CUT = [0, 4], MAJOR = [1, 2, 3], ALL = [0, 1, 2, 3, 4];
+  const NAPPERS = [1, 2, 4];
+  const SPLIT = [{ x: 553, y: 10 }, { x: 10, y: 404 }]; // the crack's straight line, for dropped packets
+  const ASK = '#ff8a3d', YES = '#2ec27e', INK = { jjajang: '#3d2a1e', jjamppong: '#e0412a' };
 
   const DISH = {
     jjajang: { en: 'black-bean', ko: '짜장' },
@@ -236,7 +244,8 @@
   // Nodes: an avatar, a status ring, an election timer, a badge, a name, and the dish in its log.
   const nodes = POS.map((p, i) => {
     const g = el('g', { class: 'node', transform: `translate(${p.x} ${p.y})`, tabindex: '0', role: 'button' }, nodesG);
-    g.setAttribute('aria-label', TTY.t({ en: `${NAMES[i]}: tap to let them nap`, ko: `${NAMES[i]}: 누르면 잠깐 졸아요` }));
+    // Minji and Jihoon run the elections; the other three can be sent for a nap.
+    g.setAttribute('aria-label', NAPPERS.includes(i) ? TTY.t({ en: `${NAMES[i]}: tap to let them nap`, ko: `${NAMES[i]}: 누르면 잠깐 졸아요` }) : NAMES[i]);
     el('circle', { class: 'ring', r: 52 }, g);
     const timer = el('circle', { class: 'timer', r: 52, pathLength: 1, 'stroke-dasharray': '1', transform: 'rotate(-90)' }, g);
     el('circle', { class: 'body', r: 42, fill: COLORS[i] }, g);
@@ -251,18 +260,20 @@
     const name = el('text', { class: 'name', x: 0, y: 76 }, g);
     name.textContent = NAMES[i];
     // the dish this node has in its log
-    const chip = el('g', { class: 'chip', transform: `translate(${p.x < C.x - 20 ? -70 : p.x > C.x + 20 ? 70 : 82} ${p.y < C.y ? -8 : 18}) scale(.72)`, opacity: 0 }, g);
+    const chip = el('g', { class: 'chip', transform: `translate(${p.x < C.x - 20 ? -70 : p.x > C.x + 20 ? 70 : -82} ${p.y < C.y ? -8 : 18}) scale(.72)`, opacity: 0 }, g);
     el('use', { href: '#bowl' }, chip);
     const topA = el('ellipse', { class: 'bowl-top', cx: 0, cy: -2, rx: 24, ry: 7, 'clip-path': 'url(#left-half)' }, chip);
     const topB = el('ellipse', { class: 'bowl-top', cx: 0, cy: -2, rx: 24, ry: 7, 'clip-path': 'url(#right-half)' }, chip);
     const chipLabel = el('text', { y: 50, 'text-anchor': 'middle', style: `font: 700 ${TTY.lang === 'ko' ? 21 : 18}px ${TTY.lang === 'ko' ? "'Gowun Dodum'" : "'Hanken Grotesk'"}, sans-serif; fill: #8a6f5c` }, chip);
-    return { g, timer, chip, topA, topB, chipLabel, napping: false, dish: null };
+    return { g, timer, chip, topA, topB, chipLabel, napping: false, dish: null, pending: false };
   });
 
-  function setDish(i, dish) {
+  // A dish in a node's log; a pending (uncommitted) entry is drawn faint.
+  function setDish(i, dish, pending = false) {
     const n = nodes[i];
     n.dish = dish;
-    n.chip.setAttribute('opacity', dish ? 1 : 0);
+    n.pending = !!dish && pending;
+    n.chip.setAttribute('opacity', dish ? (n.pending ? .42 : 1) : 0);
     if (!dish) return;
     const a = dish === 'jjamppong' ? '#e0412a' : '#3d2a1e';
     const b = dish === 'jjajang' ? '#3d2a1e' : '#e0412a';
@@ -275,17 +286,33 @@
     nodes[i].g.classList.add(role);
   };
 
-  // A packet: a small dish-coloured dot that travels from one node to another.
+  // How far along a link the crack lies (0..1), where a packet across the partition is lost.
+  const crossAt = (a, b) => {
+    const [A, B] = SPLIT;
+    const r = { x: b.x - a.x, y: b.y - a.y }, q = { x: B.x - A.x, y: B.y - A.y };
+    const den = r.x * q.y - r.y * q.x;
+    return den ? ((A.x - a.x) * q.y - (A.y - a.y) * q.x) / den : .5;
+  };
+  // A packet: a small coloured dot that travels from one node to another. Across the
+  // partition it stops at the crack and is gone.
+  let partitioned = false;
   function packet(from, to, color, ms = 620) {
     const dot = el('circle', { r: 8, fill: color, stroke: '#fff', 'stroke-width': 2.5 }, packetsG);
     const a = POS[from], b = POS[to];
-    const anim = dot.animate([
-      { transform: `translate(${a.x}px, ${a.y}px)` },
-      { transform: `translate(${b.x}px, ${b.y}px)` },
-    ], { duration: TTY.reduce ? 1 : ms, easing: 'cubic-bezier(.45, 0, .25, 1)', fill: 'forwards' });
+    const lost = partitioned && CUT.includes(from) !== CUT.includes(to);
+    const k = lost ? crossAt(a, b) : 1;
+    const end = { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+    const frames = [
+      { transform: `translate(${a.x}px, ${a.y}px) scale(1)`, opacity: 1 },
+      { transform: `translate(${end.x}px, ${end.y}px) scale(1)`, opacity: 1, offset: lost ? .78 : 1 },
+    ];
+    if (lost) frames.push({ transform: `translate(${end.x}px, ${end.y}px) scale(1.9)`, opacity: 0 });
+    const anim = dot.animate(frames, { duration: TTY.reduce ? 1 : ms, easing: lost ? 'ease-out' : 'cubic-bezier(.45, 0, .25, 1)', fill: 'forwards' });
     return anim.finished.then(() => dot.remove(), () => dot.remove());
   }
-  const others = (i, pool = [0, 1, 2, 3, 4]) => pool.filter((j) => j !== i && !nodes[j].napping);
+  // Awake nodes in a pool other than i; reach() keeps only those i can get a packet to.
+  const awake = (i, pool = ALL) => pool.filter((j) => j !== i && !nodes[j].napping);
+  const reach = (i, pool = ALL) => awake(i, pool).filter((j) => !(partitioned && CUT.includes(i) !== CUT.includes(j)));
 
   // The log on the right.
   let tick = 0;
@@ -314,39 +341,65 @@
   // ---- the story ----
   const L = TTY.t({
     en: {
-      timeout: 'Minji\'s election timer runs out first. She asks everyone for a vote.',
-      leader: 'Minji is leader with 4 votes. She proposes black-bean noodles.',
-      partition: 'Network partition. Jihoon and Haeun can\'t hear the others.',
-      other: 'On the far side, Jihoon times out and starts term 2: spicy seafood noodles.',
-      split: 'Split brain: 3 nodes want black-bean, 2 want spicy. Nobody eats.',
-      heal: 'Partition healed. The logs disagree.',
-      merge: 'Conflict resolved with the only merge that has no conflicts.',
-      commit: 'Committed on all 5 nodes: the half-and-half bowl.',
-      nap: (n) => `${n} is napping. Quorum still holds.`,
+      timeout: 'Minji\'s election timer runs out first. Term 1: she asks for votes.',
+      leader: (t, v) => `Minji is leader of term ${t} with ${v} of 5 votes.`,
+      lost: (n, t, v) => `${n} gets ${v} of 5 votes in term ${t}. No majority, so the timer starts again.`,
+      partition: 'Network partition. Minji and Haeun are cut off from the other three.',
+      stale: (k) => `Minji, still leader in her own mind, writes black-bean at index 1. ${k} of 5 nodes have it: no commit.`,
+      second: (t, v) => `No heartbeats reach the far side. Jihoon times out and wins term ${t} with ${v} of 5 votes.`,
+      commit: 'Jihoon writes spicy at index 1. Three of five have it: committed.',
+      stall: 'Not enough nodes awake for a majority. The commit waits.',
+      two: 'Two leaders, two lunches. Only one side can commit.',
+      heal: (t) => `Partition heals. Minji sees term ${t} and steps down. Her uncommitted black-bean is overwritten.`,
+      retry: 'Minji orders again. Index 2: black-bean, committed on 5 of 5.',
+      apply: 'The kitchen applies the log in order, to one bowl: spicy, then black-bean.',
+      nap: (n, ok) => `${n} is napping. ${ok ? 'A majority is still awake.' : 'No majority awake on this side.'}`,
       wake: (n) => `${n} is back and catches up on the log.`,
     },
     ko: {
-      timeout: '민지의 선거 타이머가 먼저 끝났어요. 다들 한 표씩 부탁합니다.',
-      leader: '민지가 4표로 리더가 됐어요. 제안: 짜장면.',
-      partition: '네트워크 분할! 지훈이랑 하은이한테 소식이 안 닿아요.',
-      other: '건너편에선 지훈이가 2기를 엽니다. 제안: 짬뽕.',
-      split: '스플릿 브레인. 짜장 셋, 짬뽕 둘. 아무도 못 먹는 중.',
-      heal: '분할 복구. 로그가 서로 다릅니다.',
-      merge: '충돌 없는 유일한 병합으로 해결합니다.',
-      commit: '다섯 노드 모두 커밋: 짬짜면.',
-      nap: (n) => `${subject(n)} 조는 중. 그래도 정족수는 채웠어요.`,
+      timeout: '민지의 선거 타이머가 먼저 끝났어요. 1기 출마, 한 표씩 부탁합니다.',
+      leader: (t, v) => `민지가 5표 중 ${v}표로 ${t}기 리더가 됐어요.`,
+      lost: (n, t, v) => `${subject(n)} ${t}기 선거에서 5표 중 ${v}표만 받았어요. 과반이 아니라 다시 기다려요.`,
+      partition: '네트워크 분할! 민지랑 하은이가 나머지 셋과 끊겼어요.',
+      stale: (k) => `민지는 아직 리더인 줄 알고 1번 칸에 짜장을 적어요. 받은 노드는 5개 중 ${k}개, 커밋 못 해요.`,
+      second: (t, v) => `건너편엔 하트비트가 안 와요. 지훈이가 ${t}기에 나서서 5표 중 ${v}표로 당선.`,
+      commit: '지훈이가 1번 칸에 짬뽕을 적어요. 5개 노드 중 3개가 받았으니 커밋.',
+      stall: '깨어 있는 노드가 과반이 안 돼요. 커밋은 기다립니다.',
+      two: '리더 둘, 점심 둘. 커밋은 한쪽만 됩니다.',
+      heal: (t) => `분할 복구. 민지는 ${t}기를 보고 물러나요. 커밋 못 한 짜장은 덮어써져요.`,
+      retry: '민지가 다시 주문해요. 2번 칸에 짜장, 다섯 노드 모두 커밋.',
+      apply: '주방은 로그를 순서대로 한 그릇에 담습니다. 짬뽕, 그다음 짜장.',
+      nap: (n, ok) => `${subject(n)} 조는 중. ${ok ? '그래도 과반은 깨어 있어요.' : '이쪽은 깨어 있는 노드가 과반이 안 돼요.'}`,
       wake: (n) => `${subject(n)} 깨서 밀린 로그를 따라잡아요.`,
     },
   });
 
   let run = 0;
-  const wait = (ms, id) => new Promise((go, stop) => setTimeout(() => (id === run ? go() : stop('stale')), TTY.reduce ? 0 : ms));
+  let T = 0;
+  const leaders = new Set();
+  const stale = () => new Error('stale');
+  const wait = (ms, id) => new Promise((go, stop) => setTimeout(() => (id === run ? go() : stop(stale())), TTY.reduce ? 0 : ms));
+  // Await packets (or a timer), then stop if a newer run has started meanwhile.
+  const step = (p, id) => p.then((v) => { if (id !== run) throw stale(); return v; });
+  const until = (ok, id) => new Promise((go, stop) => {
+    const check = () => (id !== run ? stop(stale()) : ok() ? go() : setTimeout(check, 120));
+    check();
+  });
+  const majority = (n) => n >= 3;
 
   function reset() {
     events.replaceChildren();
     tick = 0;
+    T = 0;
     term(0);
-    nodes.forEach((n, i) => { setRole(i, 'follower'); setDish(i, null); n.napping = false; n.g.classList.remove('napping'); n.timer.style.opacity = 0; });
+    leaders.clear();
+    partitioned = false;
+    nodes.forEach((n, i) => {
+      clearTimeout(n.wakeTimer);
+      setRole(i, 'follower'); setDish(i, null); n.napping = false; n.g.classList.remove('napping');
+      n.timer.getAnimations().forEach((a) => a.cancel());
+      n.timer.style.opacity = 0;
+    });
     links.forEach((l) => l.line.classList.remove('cut'));
     crack.getAnimations().forEach((a) => a.cancel());
     crack.style.strokeDashoffset = 1;
@@ -360,92 +413,145 @@
     if (!TTY.reduce) verdict.animate([{ opacity: 0, scale: .6 }, { opacity: 1, scale: 1.06, offset: .7 }, { opacity: 1, scale: 1 }], { duration: 700, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
   }
 
+  // An election timer running out on node i.
+  async function countdown(i, ms, id) {
+    const timer = nodes[i].timer;
+    timer.style.opacity = 1;
+    await step(timer.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: 1 }], { duration: ms, easing: 'linear', fill: 'forwards' }).finished, id);
+    timer.style.opacity = 0;
+  }
+  // Raft's election: the candidate bumps the term, votes for itself and asks its side.
+  // Without a majority it waits for another timeout and tries again with a higher term.
+  async function elect(c, pool, ms, id, first) {
+    for (let k = 0; ; k++) {
+      await countdown(c, k ? 900 : ms, id);
+      T += 1;
+      term(T);
+      setRole(c, 'candidate');
+      if (!k && first) log(first);
+      const asked = reach(c, pool);
+      await step(Promise.all(awake(c, pool).map((j) => packet(c, j, ASK))), id);
+      await wait(150, id);
+      const yes = asked.filter((j) => !nodes[j].napping);
+      await step(Promise.all(yes.map((j) => packet(j, c, YES))), id);
+      if (majority(yes.length + 1)) {
+        setRole(c, 'leader');
+        leaders.add(c);
+        return yes.length + 1;
+      }
+      setRole(c, 'follower');
+      log(L.lost(NAMES[c], T, yes.length + 1), 'alert');
+    }
+  }
+
   async function story() {
     const id = ++run;
     reset();
     if (TTY.reduce) {
-      [L.timeout, L.leader, L.partition, L.split, L.heal, L.commit].forEach((t, i) => log(t, i === 2 || i === 3 ? 'alert' : i === 5 ? 'win' : ''));
+      [[L.partition, 'alert'], [L.stale(2)], [L.second(2, 3)], [L.commit], [L.heal(2)], [L.retry], [L.apply, 'win']].forEach(([t, kind]) => log(t, kind));
       [...events.children].forEach((li) => li.classList.remove('fresh'));
-      nodes.forEach((n, i) => { setRole(i, i === 0 ? 'leader' : 'follower'); setDish(i, 'half'); });
-      term(3);
+      nodes.forEach((n, i) => { setRole(i, i === 3 ? 'leader' : 'follower'); setDish(i, 'half'); });
+      term(2);
       showVerdict();
       return;
     }
     try {
       await wait(500, id);
-      // Term 1: Minji's timer runs out first.
-      nodes[0].timer.style.opacity = 1;
-      await nodes[0].timer.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: 1 }], { duration: 1400, easing: 'linear', fill: 'forwards' }).finished;
-      if (id !== run) return;
-      nodes[0].timer.style.opacity = 0;
-      setRole(0, 'candidate');
-      term(1);
-      log(L.timeout);
-      await Promise.all(others(0).map((j) => packet(0, j, '#ff8a3d')));
-      await wait(150, id);
-      await Promise.all(others(0).map((j) => packet(j, 0, '#2ec27e')));
-      setRole(0, 'leader');
-      log(L.leader);
+      // Term 1: Minji's timer runs out first, and the whole cluster votes.
+      const v1 = await elect(0, ALL, 1400, id, L.timeout);
+      log(L.leader(T, v1));
       await wait(400, id);
-      await Promise.all(others(0).map((j) => packet(0, j, '#3d2a1e', 700)));
-      [0, ...others(0)].forEach((j) => setDish(j, 'jjajang'));
-      await wait(900, id);
 
-      // The partition: a crack runs through the cluster.
+      // The partition: a crack cuts Minji and Haeun off from the other three.
       crack.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 650, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'forwards' });
       svg.animate([{ transform: 'translate(0, 0)' }, { transform: 'translate(-5px, 2px)' }, { transform: 'translate(4px, -2px)' }, { transform: 'none' }], { duration: 360, delay: 380 });
       await wait(420, id);
-      links.forEach((l) => { if (LEFT.includes(l.a) !== LEFT.includes(l.b)) l.line.classList.add('cut'); });
+      partitioned = true;
+      links.forEach((l) => { if (CUT.includes(l.a) !== CUT.includes(l.b)) l.line.classList.add('cut'); });
       log(L.partition, 'alert');
-      await wait(900, id);
-
-      // The far side elects its own leader and its own lunch.
-      nodes[3].timer.style.opacity = 1;
-      await nodes[3].timer.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: 1 }], { duration: 900, fill: 'forwards' }).finished;
-      if (id !== run) return;
-      nodes[3].timer.style.opacity = 0;
-      setRole(3, 'candidate');
-      term(2);
-      await packet(3, 4, '#ff8a3d');
-      await packet(4, 3, '#2ec27e');
-      setRole(3, 'leader');
-      log(L.other);
-      await packet(3, 4, '#e0412a', 650);
-      setDish(3, 'jjamppong');
-      setDish(4, 'jjamppong');
       await wait(500, id);
-      log(L.split, 'alert');
-      // Both leaders keep shouting their dish at the gap.
-      await Promise.all([packet(0, 4, '#3d2a1e', 500).catch(() => {}), packet(3, 2, '#e0412a', 500)]);
-      await wait(700, id);
 
-      // Heal: the crack closes, logs collide, the bowl is split.
-      crack.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: -1 }], { duration: 600, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'forwards' });
-      links.forEach((l) => l.line.classList.remove('cut'));
-      log(L.heal);
-      await Promise.all([packet(0, 3, '#3d2a1e'), packet(3, 0, '#e0412a'), packet(1, 4, '#3d2a1e'), packet(4, 2, '#e0412a')]);
-      setRole(3, 'follower');
-      term(3);
-      log(L.merge);
+      // Minji doesn't know. She writes black-bean and sends it to everyone; only her side
+      // hears it, so it stays uncommitted. Meanwhile the far side stops hearing heartbeats.
+      const farTimer = countdown(3, 1500, id);
+      farTimer.catch(() => {}); // awaited below; a newer run may abandon it first
+      setDish(0, 'jjajang', true);
+      const heard = reach(0);
+      await step(Promise.all(awake(0).map((j) => packet(0, j, INK.jjajang, 700))), id);
+      heard.forEach((j) => setDish(j, 'jjajang', true));
+      await step(Promise.all(heard.map((j) => packet(j, 0, YES, 450))), id);
+      log(L.stale(heard.length + 1));
+      await farTimer;
+
+      // Term 2 on the majority side (term 3 or more, if someone there dozed off).
+      // The timer above already ran out, so the first try starts straight away.
+      const v2 = await elect(3, MAJOR, 1, id);
+      log(L.second(T, v2));
+      await wait(300, id);
+
+      // Jihoon writes spicy. With three awake on his side, it commits.
+      setDish(3, 'jjamppong', true);
+      for (;;) {
+        const got = reach(3, MAJOR);
+        await step(Promise.all(got.map((j) => packet(3, j, INK.jjamppong, 650))), id);
+        got.forEach((j) => setDish(j, 'jjamppong', true));
+        if (majority(got.length + 1)) { [3, ...got].forEach((j) => setDish(j, 'jjamppong')); break; }
+        log(L.stall, 'alert');
+        await until(() => majority(reach(3, MAJOR).length + 1), id);
+      }
+      log(L.commit);
       await wait(400, id);
-      await Promise.all(others(0).map((j) => packet(0, j, '#7a3a25', 700)));
-      [0, 1, 2, 3, 4].forEach((j) => setDish(j, 'half'));
-      log(L.commit, 'win');
+
+      // Two leaders at once, each shouting its dish at the gap; nothing gets across.
+      log(L.two, 'alert');
+      await step(Promise.all([packet(0, 2, INK.jjajang, 600), packet(3, 4, INK.jjamppong, 600)]), id);
+      await wait(500, id);
+
+      // Heal: Jihoon's next heartbeat carries a higher term. Minji steps down, and the
+      // uncommitted black-bean on her side is replaced by the committed spicy.
+      crack.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: -1 }], { duration: 600, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'forwards' });
+      partitioned = false;
+      links.forEach((l) => l.line.classList.remove('cut'));
+      const back = reach(3, CUT);
+      await step(Promise.all(back.map((j) => packet(3, j, INK.jjamppong))), id);
+      leaders.delete(0);
+      setRole(0, 'follower');
+      back.forEach((j) => setDish(j, 'jjamppong'));
+      log(L.heal(T));
+      await wait(500, id);
+
+      // The client retries: Minji's order goes through the leader as index 2.
+      await step(packet(0, 3, INK.jjajang, 600), id);
+      await until(() => nodes.every((n) => !n.napping), id);
+      await step(Promise.all(reach(3).map((j) => packet(3, j, INK.jjajang, 700))), id);
+      log(L.retry);
+      await wait(500, id);
+      ALL.forEach((j) => setDish(j, 'half'));
+      log(L.apply, 'win');
       showVerdict();
     } catch (e) { /* replaced by a newer run */ }
   }
 
-  // Tapping a node lets it nap for a while; the cluster carries on.
+  // Tapping Junho, Seoyeon or Haeun lets them nap for a while. A napping node gets no
+  // packets and casts no vote; on its side a commit waits until a majority is awake.
   nodes.forEach((n, i) => {
     const nap = () => {
-      if (n.napping || i === 0) return;
+      if (n.napping || !NAPPERS.includes(i)) return;
+      const mine = run;
       n.napping = true;
       n.g.classList.add('napping');
-      log(L.nap(NAMES[i]));
-      setTimeout(() => {
+      const side = partitioned ? (CUT.includes(i) ? CUT : MAJOR) : ALL;
+      log(L.nap(NAMES[i], majority(side.filter((j) => !nodes[j].napping).length)));
+      n.wakeTimer = setTimeout(() => {
+        if (mine !== run) return;
         n.napping = false;
         n.g.classList.remove('napping');
         log(L.wake(NAMES[i]));
+        // Catch up from the leader on its side of the network, if there is one.
+        const lead = [...leaders].find((l) => !partitioned || CUT.includes(l) === CUT.includes(i));
+        if (lead === undefined || !nodes[lead].dish) return;
+        const { dish, pending } = nodes[lead];
+        packet(lead, i, INK[dish] || '#7a3a25').then(() => { if (mine === run && nodes[i].dish !== 'half') setDish(i, dish, pending); });
       }, 3500);
     };
     n.g.addEventListener('click', nap);

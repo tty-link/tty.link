@@ -12,7 +12,7 @@
 <style>
   /* A security check for the other side: a verification widget whose questions are easy
      for machines. A human cursor tries every one and fails kindly; a robot arm then does
-     the lot in three seconds and is welcomed in. */
+     the lot in a few seconds and is welcomed in. */
   :root {
     --bg: #dbe4ec;
     --dot: rgba(29, 36, 51, .1);
@@ -148,7 +148,11 @@
   .timer span { display: block; height: 100%; background: var(--bad); transform-origin: 0 50%; }
 
   .pixels { display: grid; grid-template-columns: 1fr; place-items: center; height: 100%; gap: 2cqi; }
-  .pixels canvas { width: 46cqi; height: 46cqi; image-rendering: pixelated; border-radius: 1cqi; box-shadow: 0 0 0 .5cqi var(--line); }
+  .pixels canvas { display: block; width: 46cqi; height: 46cqi; image-rendering: pixelated; border-radius: 1cqi; box-shadow: 0 0 0 .5cqi var(--line); }
+  .pic { position: relative; }
+  /* Marks one pixel for the colour question (pixel 37, 29 of 64). */
+  .ring { position: absolute; left: calc(37.5 / 64 * 100%); top: calc(29.5 / 64 * 100%); width: 4.4cqi; height: 4.4cqi; translate: -50% -50%; border: .7cqi solid var(--ink); border-radius: 50%; box-shadow: 0 0 0 .4cqi #fff; display: none; }
+  .ring.on { display: block; }
   .answer { min-width: 40cqi; padding: 2.2cqi 3.4cqi; border: .5cqi solid var(--line); border-radius: 1.6cqi; font-size: 5cqi; font-weight: 600; text-align: center; background: #f6f8fb; }
 
   .chart { display: grid; place-items: center; align-content: center; height: 100%; gap: 1.6cqi; font-family: 'Geologica', sans-serif; font-weight: 800; color: var(--ink); }
@@ -182,6 +186,8 @@
 
   .foot { display: flex; align-items: center; gap: 2.4cqi; padding: 3cqi 4.4cqi; border-top: 1px solid var(--line); }
   .foot svg { width: 6.4cqi; height: 6.4cqi; color: var(--steel); }
+  .foot .icon { display: grid; padding: 0; border: 0; background: none; cursor: pointer; }
+  .foot .icon:hover svg { color: var(--head); }
   .foot .grow { flex: 1; }
   .btn { padding: 2.2cqi 4.4cqi; border: 0; border-radius: 1.4cqi; background: #eef2f7; font-size: 4cqi; font-weight: 600; cursor: pointer; }
   .btn.main { background: var(--head); color: #fff; }
@@ -266,7 +272,7 @@
           </div>
         </div>
         <div class="panel" data-panel="pixels">
-          <div class="pixels"><canvas width="64" height="64"></canvas><p class="answer">&nbsp;</p></div>
+          <div class="pixels"><span class="pic"><canvas width="64" height="64"></canvas><i class="ring"></i></span><p class="answer">&nbsp;</p></div>
         </div>
         <div class="panel" data-panel="chart">
           <div class="chart"><p>E</p><p>FP</p><p>TOZ</p><p>LPED</p><p class="tiny"></p></div>
@@ -288,7 +294,7 @@
       <p class="status"></p>
 
       <div class="foot">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M19 12a7 7 0 1 1-2.1-5M19 4v4h-4"/></svg>
+        <button class="icon reload" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M19 12a7 7 0 1 1-2.1-5M19 4v4h-4"/></svg></button>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M4 15v-3a8 8 0 0 1 16 0v3M4 15a2 2 0 0 0 2 2h1v-5H6a2 2 0 0 0-2 2zm16 0a2 2 0 0 1-2 2h-1v-5h1a2 2 0 0 1 2 2z"/></svg>
         <span class="grow"></span>
         <button class="btn skip" type="button"></button>
@@ -331,6 +337,8 @@
   const cursor = $('.cursor');
   const arm = $('.arm');
   const skipBtn = $('.skip');
+  const reloadBtn = $('.reload');
+  const ring = $('.ring');
   const verifyBtn = $('.verify');
 
   const HASH = '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824'; // SHA-256 of "hello"
@@ -338,26 +346,37 @@
   const isPrime = (n) => { if (n < 2) return false; for (let d = 2; d * d <= n; d++) if (n % d === 0) return false; return true; };
   const factor = (n) => { for (let d = 2; d * d <= n; d++) if (n % d === 0) return `${d} × ${n / d}`; return null; };
 
+  // Korean particles after a number follow how it is read aloud: 일, 삼, 육, 칠, 팔, 십, 백
+  // end in a consonant (91은, 13이에요); 이, 사, 오, 구 do not (2는, 119는).
+  const josa = (n, withFinal, without) => (n % 10 === 0 || [1, 3, 6, 7, 8].includes(n % 10) ? withFinal : without);
   const T = TTY.t({
     en: {
       step: (i) => `Check ${i} of 4`,
       primes: 'Select all squares with a prime number.',
       hash: 'Type the SHA-256 of “hello”. You have 2 seconds.',
       hashLabel: 'SHA-256 (64 characters)',
+      unix: 'Type the current Unix time in milliseconds. You have 2 seconds.',
+      unixLabel: 'Unix time (ms)',
       pixels: 'How many pixels are in this square?',
+      colour: 'What colour is the circled pixel? In hex, please.',
       chart: 'Read the bottom line from 3 metres away.',
       tinyText: 'you are doing great',
       skip: 'Skip', verify: 'Verify',
       fail91: '91 is 7 × 13. Everyone falls for 91.',
       hashFail: (n) => `Time's up. ${n} of 64 characters. Respect.`,
+      unixFail: 'Time’s up. It changed 2,000 times while you typed.',
       humanGuess: 'a lot?',
       pixelFail: '“A lot” is technically correct. It is 4,096.',
+      colourGuess: 'blue?',
+      colourFail: '“Blue” is fair. It is #4dabf7.',
       squint: 'Squinting detected. Very human.',
       boxFail: 'Hmm. Your cursor moved like a human.',
       assist: 'Robot assistance engaged.',
       primesDone: '97, 2, 89, 113, 127 and 7. Done.',
       hashDone: 'Typed 64 of 64. Done.',
+      unixDone: 'Correct to the millisecond. Done.',
       pixelDone: '64 × 64 = 4,096. Done.',
+      colourDone: 'Read it off the pixel: #4dabf7. Done.',
       chartDone: 'It says: you are doing great. Done.',
       big: 'Verified: robot.',
       small: 'Welcome, friend.',
@@ -365,6 +384,8 @@
       granted: 'Access granted. Beep boop, politely.',
       aside: '(Humans: you are still welcome. Try the other pages.)',
       mineGood: 'Suspiciously accurate. Are you a robot?',
+      mineGranted: 'We’ll take that as a yes. Beep boop.',
+      reload: 'New challenge',
       mineWrong: (n, f) => (f ? `${n} is ${f}. So close.` : `${n} is not prime. Easy to miss.`),
       mineMissed: (n) => `You missed ${n}. It is prime and a little lonely.`,
     },
@@ -373,20 +394,28 @@
       primes: '소수가 적힌 칸을 모두 고르세요.',
       hash: '“hello”의 SHA-256 값을 입력하세요. 2초 드립니다.',
       hashLabel: 'SHA-256 (64자)',
+      unix: '지금 유닉스 시간을 밀리초로 입력하세요. 2초 드립니다.',
+      unixLabel: '유닉스 시간(밀리초)',
       pixels: '이 정사각형에 픽셀이 몇 개 있을까요?',
+      colour: '동그라미 친 픽셀은 무슨 색일까요? 16진수로요.',
       chart: '3미터 떨어져서 맨 아래 줄을 읽으세요.',
       tinyText: '잘하고 있어요',
       skip: '건너뛰기', verify: '확인',
       fail91: '91은 7 × 13이에요. 다들 91에서 넘어가요.',
       hashFail: (n) => `시간 종료. 64자 중 ${n}자. 존중합니다.`,
+      unixFail: '시간 종료. 입력하는 동안 2,000번 바뀌었어요.',
       humanGuess: '많이요?',
       pixelFail: '“많이요”도 틀린 말은 아니에요. 4,096개예요.',
+      colourGuess: '파란색?',
+      colourFail: '“파란색”도 맞긴 해요. #4dabf7이에요.',
       squint: '눈 찡그림 감지. 아주 사람다워요.',
       boxFail: '음. 커서가 너무 사람처럼 움직였어요.',
       assist: '로봇 지원을 시작합니다.',
       primesDone: '97, 2, 89, 113, 127, 7. 끝.',
       hashDone: '64자 중 64자. 끝.',
+      unixDone: '밀리초까지 정확. 끝.',
       pixelDone: '64 × 64 = 4,096. 끝.',
+      colourDone: '픽셀에서 바로 읽었어요. #4dabf7. 끝.',
       chartDone: '“잘하고 있어요”라고 적혀 있네요. 끝.',
       big: '확인 완료: 로봇',
       small: '어서 오세요, 친구.',
@@ -394,8 +423,10 @@
       granted: '접근을 허가합니다. 삐빅, 공손하게.',
       aside: '(사람도 환영해요. 다른 페이지도 둘러보세요.)',
       mineGood: '수상할 만큼 정확해요. 혹시 로봇이세요?',
-      mineWrong: (n, f) => (f ? `${n}은(는) ${f}예요. 아깝다.` : `${n}은(는) 소수가 아니에요. 헷갈릴 만해요.`),
-      mineMissed: (n) => `${n}을(를) 놓쳤어요. 소수인데 좀 외로워요.`,
+      mineGranted: '그런 걸로 할게요. 삐빅.',
+      reload: '새 문제',
+      mineWrong: (n, f) => (f ? `${n}${josa(n, '은', '는')} ${f}${josa(+f.split(' ').pop(), '이에요', '예요')}. 아깝다.` : `${n}${josa(n, '은', '는')} 소수가 아니에요. 헷갈릴 만해요.`),
+      mineMissed: (n) => `${n}${josa(n, '을', '를')} 놓쳤어요. 소수인데 좀 외로워요.`,
     },
   });
 
@@ -443,11 +474,20 @@
   function shake(el) { if (!TTY.reduce) el.animate([{ transform: 'none' }, { transform: 'translateX(-2%)' }, { transform: 'translateX(2%)' }, { transform: 'translateX(-1%)' }, { transform: 'none' }], { duration: 380 }); }
 
   const PANELS = ['primes', 'hash', 'pixels', 'chart'];
+  // Two of the panels ask one of two questions; each round picks afresh, so a second
+  // round (or the reload button) shows a different pair.
+  const ask = { hash: 'hash', pixels: 'pixels' };
+  function shuffleQuestions() {
+    ask.hash = Math.random() < .5 ? 'hash' : 'unix';
+    ask.pixels = Math.random() < .5 ? 'pixels' : 'colour';
+  }
   function showPanel(name) {
     document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.dataset.panel === name));
     const i = PANELS.indexOf(name);
     headSmall.textContent = T.step(i + 1);
-    headQ.textContent = T[name];
+    headQ.textContent = T[ask[name] || name];
+    hashLabel.textContent = ask.hash === 'unix' ? T.unixLabel : T.hashLabel;
+    ring.classList.toggle('on', ask.pixels === 'colour');
     head.classList.remove('done');
   }
   function reset() {
@@ -521,52 +561,59 @@
   async function humanTries(mine) {
     const live = () => run === mine;
     showPanel('primes');
-    await glide(cells[0], 650);
+    await glide(cells[0], 600);
     for (const n of [91, 51, 1]) {
       if (!live()) return false;
       const c = cells[NUMBERS.indexOf(n)];
-      await glide(c, 420); if (!live()) return false;
+      await glide(c, 380); if (!live()) return false;
       tap(c); c.classList.add('sel');
-      await wait(180);
+      await wait(150);
     }
-    await glide(verifyBtn, 500); if (!live()) return false;
+    await glide(verifyBtn, 450); if (!live()) return false;
     tap(verifyBtn);
     cells[0].classList.add('wrong');
     say(T.fail91, 'bad'); shake($('.widget'));
-    await wait(1600); if (!live()) return false;
+    await wait(1500); if (!live()) return false;
 
     say('');
     showPanel('hash');
     await glide(hashField, 500); if (!live()) return false;
     tap(hashField); hashField.classList.add('typing');
     timer.animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }], { duration: 2000, fill: 'forwards' });
-    for (const ch of '2cf2') { await wait(330 + Math.random() * 120); if (!live()) return false; hashField.textContent += ch; }
+    // The human gets four characters in: of the hash, or of a clock that will not wait.
+    const typed = ask.hash === 'unix' ? String(Date.now()).slice(0, 4) : HASH.slice(0, 4);
+    for (const ch of typed) { await wait(330 + Math.random() * 120); if (!live()) return false; hashField.textContent += ch; }
     await wait(250); if (!live()) return false;
     hashField.classList.remove('typing');
-    say(T.hashFail(4), 'bad');
-    await wait(1500); if (!live()) return false;
-
-    say('');
-    showPanel('pixels');
-    await glide(canvas, 550, 1.4); if (!live()) return false;
-    for (const n of ['1, 2, 3…', '1, 2, 3, 4…']) { await glide(canvas, 260, .3); if (!live()) return false; say(n); }
-    await glide(answer, 420); if (!live()) return false;
-    tap(answer); answer.textContent = T.humanGuess;
-    await wait(400); if (!live()) return false;
-    say(T.pixelFail, 'bad');
-    await wait(1600); if (!live()) return false;
-
-    say('');
-    showPanel('chart');
-    await glide(tiny, 550); if (!live()) return false;
-    for (let i = 0; i < 3; i++) { await glide(tiny, 170, .25); if (!live()) return false; }
-    say(T.squint, 'bad');
+    say(ask.hash === 'unix' ? T.unixFail : T.hashFail(4), 'bad');
     await wait(1400); if (!live()) return false;
 
     say('');
-    await glide(box, 550); if (!live()) return false;
+    showPanel('pixels');
+    if (ask.pixels === 'colour') {
+      await glide(ring, 550, 1.2); if (!live()) return false;
+      for (let i = 0; i < 2; i++) { await glide(ring, 200, .25); if (!live()) return false; }
+    } else {
+      await glide(canvas, 550, 1.4); if (!live()) return false;
+      for (const n of ['1, 2, 3…', '1, 2, 3, 4…']) { await glide(canvas, 260, .3); if (!live()) return false; say(n); }
+    }
+    await glide(answer, 380); if (!live()) return false;
+    tap(answer); answer.textContent = ask.pixels === 'colour' ? T.colourGuess : T.humanGuess;
+    await wait(300); if (!live()) return false;
+    say(ask.pixels === 'colour' ? T.colourFail : T.pixelFail, 'bad');
+    await wait(1400); if (!live()) return false;
+
+    say('');
+    showPanel('chart');
+    await glide(tiny, 500); if (!live()) return false;
+    for (let i = 0; i < 3; i++) { await glide(tiny, 170, .25); if (!live()) return false; }
+    say(T.squint, 'bad');
+    await wait(1300); if (!live()) return false;
+
+    say('');
+    await glide(box, 500); if (!live()) return false;
     tap(box); box.classList.add('spin');
-    await wait(900); if (!live()) return false;
+    await wait(800); if (!live()) return false;
     box.classList.remove('spin');
     say(T.boxFail, 'bad'); shake(box);
     await wait(1300);
@@ -578,42 +625,43 @@
     const live = () => run === mine;
     cursor.animate([{ transform: `translate(${cur[0]}px, ${cur[1]}px)`, opacity: 1 }, { transform: `translate(${cur[0] - 40}px, ${innerHeight + 40}px)`, opacity: 0 }], { duration: 600, fill: 'forwards', easing: 'ease-in' });
     say(T.assist, 'ok');
-    await reach(box, 520); await pinch(); if (!live()) return;
+    await reach(box, 400); await pinch(); if (!live()) return;
     box.classList.add('on'); box.setAttribute('aria-checked', 'true');
-    await wait(250);
+    await wait(200);
 
     showPanel('primes');
     cells.forEach((c) => c.classList.remove('sel', 'wrong'));
-    for (const c of cells.filter((c) => isPrime(+c.dataset.n))) { await reach(c, 120); if (!live()) return; await pinch(); if (!live()) return; c.classList.add('good'); }
+    for (const c of cells.filter((c) => isPrime(+c.dataset.n))) { await reach(c, 100); if (!live()) return; await pinch(); if (!live()) return; c.classList.add('good'); }
     say(T.primesDone, 'ok');
-    await wait(500); if (!live()) return;
+    await wait(450); if (!live()) return;
 
     showPanel('hash');
-    await reach(hashField, 200); if (!live()) return;
+    await reach(hashField, 180); if (!live()) return;
     hashField.textContent = '';
     timer.getAnimations().forEach((a) => a.cancel());
     timer.style.transform = 'scaleX(1)';
-    for (let i = 0; i < 64; i += 4) { hashField.textContent = HASH.slice(0, i + 4); await wait(16); }
-    say(T.hashDone, 'ok');
-    await wait(550); if (!live()) return;
+    const exact = ask.hash === 'unix' ? String(Date.now()) : HASH;
+    for (let i = 0; i < exact.length; i += 4) { hashField.textContent = exact.slice(0, i + 4); await wait(16); }
+    say(ask.hash === 'unix' ? T.unixDone : T.hashDone, 'ok');
+    await wait(450); if (!live()) return;
 
     showPanel('pixels');
-    await reach(answer, 200); if (!live()) return;
-    await pinch(); answer.textContent = '4,096';
-    say(T.pixelDone, 'ok');
-    await wait(550); if (!live()) return;
+    await reach(answer, 180); if (!live()) return;
+    await pinch(); answer.textContent = ask.pixels === 'colour' ? '#4dabf7' : '4,096';
+    say(ask.pixels === 'colour' ? T.colourDone : T.pixelDone, 'ok');
+    await wait(450); if (!live()) return;
 
     showPanel('chart');
-    await reach(tiny, 200); if (!live()) return;
+    await reach(tiny, 180); if (!live()) return;
     lens.animate([{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'none' }], { duration: 260, fill: 'forwards', easing: 'cubic-bezier(.2,.9,.3,1.2)' });
     say(T.chartDone, 'ok');
-    await wait(900); if (!live()) return;
+    await wait(800); if (!live()) return;
 
     retract();
     finish();
   }
 
-  function finish() {
+  function finish(granted = T.granted) {
     head.classList.add('done');
     headSmall.textContent = T.passed;
     headQ.textContent = T.small;
@@ -627,7 +675,7 @@
     } else {
       $('.welcome .big').textContent = T.big;
     }
-    $('.welcome .small').textContent = T.granted;
+    $('.welcome .small').textContent = granted;
     welcome.classList.add('on');
     if (!TTY.reduce) welcome.animate([{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.1)' });
     say('');
@@ -638,6 +686,7 @@
   async function play() {
     const mine = ++run;
     while (run === mine) {
+      shuffleQuestions();
       reset();
       armAt = null;
       arm.getAnimations().forEach((a) => a.cancel());
@@ -680,6 +729,23 @@
     if (missed) { say(T.mineMissed(+missed.dataset.n), 'bad'); shake($('.widget')); return; }
     picked.forEach((c) => { c.classList.remove('sel'); c.classList.add('good'); });
     say(T.mineGood, 'ok');
+    // A human who gets every prime is let in as a robot.
+    const mine = run;
+    setTimeout(() => {
+      if (run !== mine || !mineMode) return;
+      box.classList.add('on'); box.setAttribute('aria-checked', 'true');
+      setTimeout(() => { if (run === mine && mineMode) finish(T.mineGranted); }, TTY.reduce ? 0 : 500);
+    }, TTY.reduce ? 0 : 1300);
+  });
+  // A new challenge, as on the real widgets: fresh questions and the whole scene again.
+  reloadBtn.setAttribute('aria-label', T.reload);
+  reloadBtn.title = T.reload;
+  reloadBtn.addEventListener('click', (e) => {
+    if (!e.isTrusted) return;
+    mineMode = false;
+    retract(150);
+    if (TTY.reduce) { run++; shuffleQuestions(); reset(); return; }
+    play();
   });
   skipBtn.addEventListener('click', (e) => {
     if (!e.isTrusted) return;

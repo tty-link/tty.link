@@ -66,6 +66,9 @@
   @keyframes ring { 0% { opacity: .95; transform: scale(.5); } 100% { opacity: 0; transform: scale(1.5); } }
   .hot { fill: transparent; cursor: pointer; }
   .coin { opacity: 0; }
+  .vacuum { transition: transform 1.2s ease-in-out; }
+  .vacuum.go { transform: translateX(-34px); }
+  .floorplan { fill: none; stroke: #2a9d8f; stroke-width: 4; stroke-dasharray: 9 7; opacity: 0; pointer-events: none; }
 
   /* ---- The app ---- */
   .app {
@@ -115,7 +118,7 @@
   @media (prefers-reduced-motion: reduce) {
     .wifi path, .steam path, .bulb-glow, .leaf { animation: none; }
     .wifi path, .steam path { opacity: .7; }
-    .policy, .door, .toast { transition: none; }
+    .policy, .door, .toast, .vacuum { transition: none; }
   }
 </style>
 </head>
@@ -123,7 +126,7 @@
 <div class="layout">
   <div class="house">
     <svg viewBox="0 0 600 540" role="img" aria-labelledby="house-label">
-      <title id="house-label">A house with a connected fridge, toaster, light bulb, kettle, door lock and plant sensor</title>
+      <title id="house-label">A house with a connected fridge, toaster, light bulb, kettle, door lock, robot vacuum, hall camera and plant sensor</title>
       <!-- ground -->
       <ellipse cx="300" cy="500" rx="300" ry="34" fill="#b9dca9"/>
       <!-- roof and attic -->
@@ -164,6 +167,14 @@
       <rect x="520" y="248" width="5" height="26" fill="#495057"/><circle cx="522.5" cy="248" r="4" fill="#2bb673"/>
       <path class="heart" d="M536 226 l6 -6 a4 4 0 0 1 6 6 l-6 6 -6 -6 z" fill="#ff6b9a" opacity="0"/>
 
+      <!-- living room floor: the robot vacuum, which knows the floor plan by heart -->
+      <g class="vacuum">
+        <rect x="268" y="272" width="32" height="6" rx="2.5" fill="#6c757d"/>
+        <rect x="258" y="277" width="52" height="16" rx="8" fill="#4a4e69"/>
+        <path d="M263 287 h42" stroke="#22223b" stroke-width="2.4"/>
+        <circle cx="300" cy="282.5" r="2.4" fill="#7bd389"/>
+      </g>
+
       <!-- kitchen: fridge, toaster, kettle -->
       <rect x="58" y="330" width="76" height="150" rx="6" fill="#e9ecef" stroke="#adb5bd" stroke-width="3"/>
       <path d="M58 384 H134" stroke="#adb5bd" stroke-width="3"/>
@@ -192,8 +203,22 @@
         <path d="M503 422 h10 M503 427 h10" stroke="#6c757d" stroke-width="2"/>
       </g>
       <rect x="440" y="478" width="96" height="8" rx="3" fill="#8d6e63"/>
+      <!-- hall corner: a camera that streams to more people than intended -->
+      <g class="cam">
+        <rect x="544" y="305" width="12" height="8" fill="#6c757d"/>
+        <g transform="rotate(28 548 320)"><rect x="516" y="311" width="34" height="17" rx="6" fill="#f8f9fa" stroke="#495057" stroke-width="2.4"/><circle cx="522" cy="319.5" r="4.6" fill="#212529"/><circle cx="523.2" cy="318.2" r="1.3" fill="#8fd3ff"/></g>
+        <circle cx="541" cy="317" r="2" fill="#ff5d5d"/>
+      </g>
+      <g class="live" opacity="0">
+        <rect x="446" y="310" width="58" height="20" rx="10" fill="#ff3b3b"/>
+        <circle cx="457" cy="320" r="3.4" fill="#fff"/>
+        <text x="482" y="324.6" font-size="13" font-weight="800" text-anchor="middle" fill="#fff" font-family="Figtree, sans-serif">LIVE 3</text>
+      </g>
       <circle cx="372" cy="352" r="15" fill="#fff" stroke="#6d4c41" stroke-width="3"/>
       <path d="M372 352 V342 M372 352 H379" stroke="#6d4c41" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- the floor plan, as uploaded -->
+      <path class="floorplan" d="M46 154 H554 V474 H46 Z M46 300 H554 M330 154 V474"/>
 
       <!-- alert rings and hit areas -->
       <g class="rings"></g>
@@ -211,8 +236,8 @@
     <h1 data-lang="ko"><font-kku font="sticker" size="8.2cqi">즐거운 나의 공격 표면</font-kku></h1>
     <p class="status">
       <i aria-hidden="true"></i>
-      <span data-lang="en">6 devices online. 1 of them should be.</span>
-      <font-kku data-lang="ko" font="dunggeun" size="4cqi">기기 6대 연결됨. 연결돼야 할 기기는 1대.</font-kku>
+      <span data-lang="en">8 devices online. 1 of them should be.</span>
+      <font-kku data-lang="ko" font="dunggeun" size="4cqi">기기 8대 연결됨. 연결돼야 할 기기는 1대.</font-kku>
     </p>
     <ol class="feed"></ol>
     <p class="hint">
@@ -236,6 +261,8 @@
     kettle: '<path d="M5 20 l2 -12 h10 l2 12 z" fill="#fff"/><path d="M17 10 c 4 0, 4 6, 1 7" stroke="#fff" stroke-width="2" fill="none"/>',
     lock: '<rect x="5" y="10" width="14" height="11" rx="2" fill="#fff"/><path d="M8 10 V7 a4 4 0 0 1 8 0 v3" stroke="#fff" stroke-width="2.4" fill="none"/>',
     plant: '<path d="M8 21 h8 l-1 -6 h-6 z" fill="#fff"/><path d="M12 15 C 6 12, 6 6, 9 4 C 12 7, 12 11, 12 15 C 14 9, 18 7, 20 8 C 19 12, 15 14, 12 15" fill="#fff"/>',
+    vacuum: '<circle cx="12" cy="12" r="8.5" fill="#fff"/><circle cx="12" cy="8.5" r="2.2" fill="#6a5acd"/><path d="M6.5 14.5 h11" stroke="#6a5acd" stroke-width="1.6"/>',
+    camera: '<rect x="2.5" y="7" width="13" height="10" rx="2.5" fill="#fff"/><path d="M15.5 10.5 l6 -3.5 v10 l-6 -3.5 z" fill="#fff"/><circle cx="9" cy="12" r="2.4" fill="#c4455d"/>',
   };
   const DEVICES = [
     { id: 'fridge', at: [96, 404, 52], c: '#4d7cc2', name: { en: 'Fridge', ko: '냉장고' },
@@ -247,10 +274,18 @@
     { id: 'kettle', at: [272, 410, 34], c: '#7d8f99', name: { en: 'Kettle', ko: '전기포트' },
       say: { en: 'Mined $0.0001 of crypto overnight. Water: lukewarm.', ko: '밤새 코인을 0.13원어치 채굴했어요. 물은 미지근해요.' } },
     { id: 'lock', at: [490, 414, 50], c: '#3d405b', name: { en: 'Front door', ko: '현관 도어락' },
-      say: { en: 'Login successful. Username: admin. Password: admin.', ko: '로그인 성공. 아이디 admin, 비밀번호 admin.' } },
+      say: { en: 'Unlocked. Username: admin. Password: admin. Was this you?', ko: '문이 열렸어요. 아이디 admin, 비밀번호 admin. 본인이 맞나요?' } },
+    { id: 'vacuum', at: [284, 284, 30], c: '#6a5acd', name: { en: 'Robot vacuum', ko: '로봇청소기' },
+      say: { en: 'Uploaded a map of your home to the cloud. Under the sofa is the worst.', ko: '집 평면도를 클라우드에 올렸어요. 소파 밑이 제일 더러워요.' } },
+    { id: 'camera', at: [532, 322, 26], c: '#c4455d', name: { en: 'Hall camera', ko: '현관 카메라' },
+      say: { en: 'Streaming live to the internet. 3 viewers, nobody you know.', ko: '인터넷에 생중계 중이에요. 시청자 3명, 다 모르는 사람이에요.' } },
     { id: 'plant', at: [506, 250, 44], c: '#2bb673', name: { en: 'Plant sensor', ko: '화분 센서' },
-      say: { en: 'Soil moist. All good. The only device in this house that is fine.', ko: '흙 촉촉, 상태 좋음. 이 집에서 유일하게 멀쩡한 기기예요.' } },
+      say: { en: 'Soil: moist. Botnets joined: 0. Good plant.', ko: '흙 촉촉, 가입한 봇넷 0개. 기특한 화분이에요.' } },
   ];
+  const byId = (id) => DEVICES.find((d) => d.id === id);
+  // Each visit: the fridge (which texts the toaster) and the toaster open, three of the rest
+  // follow, and the plant always gets the last word.
+  const TOUR = ['fridge', 'toaster', ...['bulb', 'kettle', 'lock', 'vacuum', 'camera'].sort(() => Math.random() - .5).slice(0, 3), 'plant'].map(byId);
 
   // Rings that pulse around a device, and generous hit areas to tap it.
   const rings = {};
@@ -281,10 +316,14 @@
   const door = svg.querySelector('.door');
   const led = svg.querySelector('.lock-led');
   const heart = svg.querySelector('.heart');
+  const vacuum = svg.querySelector('.vacuum');
+  const floorplan = svg.querySelector('.floorplan');
+  const live = svg.querySelector('.live');
   coin.textContent = TTY.t({ en: '+$0.0001', ko: '+0.13원' });
   let policyLength = 34;
   const ACT = {
     fridge() {
+      if (TTY.reduce) return;
       const codes = ['****', '1?3?', 'code?', '2FA'];
       codes.forEach((c, i) => setTimeout(() => { fridgeText.textContent = c; }, i * 650));
     },
@@ -299,8 +338,19 @@
     },
     lock() {
       led.setAttribute('fill', '#2bb673');
+      if (TTY.reduce) return;
       door.classList.add('open');
       setTimeout(() => { door.classList.remove('open'); led.setAttribute('fill', '#ff5d5d'); }, 2000);
+    },
+    vacuum() {
+      if (TTY.reduce) { floorplan.style.opacity = .8; return; }
+      vacuum.classList.add('go');
+      setTimeout(() => vacuum.classList.remove('go'), 1300);
+      floorplan.animate([{ opacity: 0 }, { opacity: .85, offset: .2 }, { opacity: .85, offset: .7 }, { opacity: 0 }], { duration: 2400, easing: 'ease-out' });
+    },
+    camera() {
+      if (TTY.reduce) { live.setAttribute('opacity', 1); return; }
+      live.animate([{ opacity: 0 }, { opacity: 1, offset: .08 }, { opacity: .35, offset: .3 }, { opacity: 1, offset: .5 }, { opacity: .35, offset: .7 }, { opacity: 1, offset: .9 }, { opacity: 0 }], { duration: 2600 });
     },
     plant() {
       if (TTY.reduce) { heart.setAttribute('opacity', 1); return; }
@@ -364,7 +414,7 @@
   let idleUntil = 0;
   function tick() {
     if (performance.now() > idleUntil) {
-      notify(DEVICES[turn % DEVICES.length]);
+      notify(TOUR[turn % TOUR.length]);
       turn += 1;
     }
     setTimeout(tick, 2700);
@@ -373,8 +423,7 @@
   // Reduced motion: the feed is fixed. The plant (the punchline) sits on top; the kettle's
   // note is the one that doesn't fit, so its coin stays visible in the picture instead.
   if (TTY.reduce) {
-    ['kettle', 'bulb', 'toaster', 'lock', 'fridge', 'plant'].forEach((id) => notify(DEVICES.find((d) => d.id === id)));
-    policy.setAttribute('height', 120);
+    ['kettle', 'toaster', 'camera', 'lock', 'fridge', 'plant'].forEach((id) => notify(byId(id)));
     coin.style.opacity = 1;
   }
   TTY.onShow(() => {

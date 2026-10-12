@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap">
+<!-- Pixelify Sans draws 5 exactly like S (Lv.405 read as Lv.40S); Tiny5 lends the page its 5 and nothing else. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiny5&text=5&display=swap">
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="pixel"></script>
 <script src="https://font.tty.link/lib/font-kku-fx.js"></script>
 <style>
@@ -31,7 +33,7 @@
     --dialog-h: clamp(118px, 29cqh, 236px);
   }
   html, body { height: 100%; margin: 0; }
-  body { overflow: hidden; background: var(--sky-3); color: var(--navy); font-family: 'Pixelify Sans', system-ui, sans-serif; }
+  body { overflow: hidden; background: var(--sky-3); color: var(--navy); font-family: 'Tiny5', 'Pixelify Sans', system-ui, sans-serif; }
   button { font: inherit; color: inherit; }
 
   .game { position: fixed; inset: 0; container-type: size; overflow: hidden; user-select: none; -webkit-user-select: none; }
@@ -58,6 +60,10 @@
 
   .foe { right: 7cqw; top: 23%; width: 40cqmin; }
   .foe .bug { position: absolute; left: 50%; bottom: 38%; width: 62%; translate: -50% 0; }
+  /* A HEISENBUG is never quite there. */
+  .foe .bug.heisen { animation: unsure 3.1s steps(1, end) infinite; }
+  @keyframes unsure { 0%, 100% { opacity: .9; } 18% { opacity: .35; } 21% { opacity: .9; } 57% { opacity: .2; } 59% { opacity: .6; } 62% { opacity: .9; } }
+  @media (prefers-reduced-motion: reduce) { .foe .bug.heisen { animation: none; opacity: .6; } }
   .me { left: 4cqw; bottom: -6cqmin; width: 46cqmin; }
   .me .dev { position: absolute; left: 50%; bottom: 30%; width: 64%; translate: -50% 0; }
   .me .duck { position: absolute; left: 84%; bottom: 52%; width: 30%; opacity: 0; }
@@ -181,9 +187,9 @@
 
   <div class="box info foe-info">
     <div class="info-head">
-      <span data-lang="en">BUG</span>
-      <span data-lang="ko"><font-kku font="pixel" size="clamp(16px, 3.4cqmin, 28px)">버그</font-kku></span>
-      <span class="lv">Lv.404</span>
+      <span data-lang="en" class="foe-name">BUG</span>
+      <span data-lang="ko"><font-kku class="foe-name" font="pixel" size="clamp(16px, 3.4cqmin, 28px)">버그</font-kku></span>
+      <span class="lv foe-lv">Lv.404</span>
     </div>
     <div class="meter"><span>HP</span><div class="bar hp-bug"><i></i></div></div>
   </div>
@@ -224,11 +230,18 @@
   /* ---------- Script ---------- */
   const L = TTY.t({
     en: {
-      appear: 'A wild BUG appeared!',
+      // A different bug each battle. hold: a line after the super-effective hit (the bug is left
+      // on 1 HP); log: what console.log does to it instead of printing; lv: a number climbs.
+      species: [
+        { id: 'bug', name: 'BUG', lv: '404', appear: 'A wild BUG appeared!', fixed: 'The wild BUG was fixed.\nDEV gained a quiet afternoon.' },
+        { id: 'off', name: 'OFF-BY-ONE', lv: '405', appear: 'A wild OFF-BY-ONE appeared!', hold: 'OFF-BY-ONE endured the hit!\nDEV changed <= to <.', fixed: 'The wild OFF-BY-ONE was fixed.\nDEV gained a quiet afternoon.' },
+        { id: 'heisen', name: 'HEISENBUG', lv: '??', appear: 'A wild HEISENBUG appeared!', log: ['DEV used console.log!', 'HEISENBUG vanished while watched!', '…and came back once the logs were gone.'], fixed: 'The wild HEISENBUG was fixed.\nAt least, nobody has seen it since.' },
+        { id: 'leak', name: 'MEMORY LEAK', lv: 512, appear: 'A wild MEMORY LEAK appeared!', fixed: 'The wild MEMORY LEAK was fixed.\nDEV got 11 GB of RAM back.' },
+      ],
       ask: 'What will DEV do?',
       moves: [['log', 'console.log'], ['duck', 'Ask the duck'], ['stash', 'git stash & run'], ['reboot', 'Off and on']],
       log: ['DEV used console.log!', 'It printed "here".\nThen "here 2".', 'It’s not very effective…'],
-      duck: ['DEV called the RUBBER DUCK!', 'DEV explained the code to the duck,\nline by line…', '…and spotted the bug halfway through!', 'It’s super effective!', 'The wild BUG was fixed.\nDEV gained a quiet afternoon.'],
+      duck: ['DEV called the RUBBER DUCK!', 'DEV explained the code to the duck,\nline by line…', '…and spotted the bug halfway through!', 'It’s super effective!'],
       stash: ['DEV stashed everything and ran!', 'Got away safely…', '…but the BUG will still be here on Monday.'],
       reboot: ['DEV turned it off and on again.', '…', 'It works?!', 'Nobody knows why.\nThe BUG is confused!'],
       back: 'DEV came back.\nBugs don’t leave on their own.',
@@ -236,11 +249,16 @@
       quack: 'Quack.',
     },
     ko: {
-      appear: '앗! 야생의 버그가 나타났다!',
+      species: [
+        { id: 'bug', name: '버그', lv: '404', appear: '앗! 야생의 버그가 나타났다!', fixed: '야생의 버그를 고쳤다!\n평화로운 오후를 얻었다.' },
+        { id: 'off', name: '오프바이원', lv: '405', appear: '앗! 야생의 오프바이원이 나타났다!', hold: '오프바이원은 HP 1로 버텼다!\n개발자는 <=를 <로 고쳤다.', fixed: '야생의 오프바이원을 고쳤다!\n평화로운 오후를 얻었다.' },
+        { id: 'heisen', name: '하이젠버그', lv: '??', appear: '앗! 야생의 하이젠버그가 나타났다!', log: ['개발자의 console.log!', '지켜보자 하이젠버그가 사라졌다!', '…로그를 지우자 다시 나타났다.'], fixed: '야생의 하이젠버그를 고쳤다!\n…적어도 그 뒤로 본 사람은 없다.' },
+        { id: 'leak', name: '메모리 누수', lv: 512, appear: '앗! 야생의 메모리 누수가 나타났다!', fixed: '야생의 메모리 누수를 고쳤다!\nRAM 11GB를 되찾았다.' },
+      ],
       ask: '개발자는 무엇을 할까?',
       moves: [['log', 'console.log'], ['duck', '오리에게 묻기'], ['stash', 'stash 하고 튀기'], ['reboot', '껐다 켜기']],
       log: ['개발자의 console.log!', '"여기"가 찍혔다.\n"여기2"도 찍혔다.', '효과가 별로인 듯하다…'],
-      duck: ['개발자는 고무 오리를 불렀다!', '오리에게 코드를\n한 줄씩 설명했다…', '…설명하다가 버그를 찾았다!', '효과가 굉장했다!', '야생의 버그를 고쳤다!\n평화로운 오후를 얻었다.'],
+      duck: ['개발자는 고무 오리를 불렀다!', '오리에게 코드를\n한 줄씩 설명했다…', '…설명하다가 버그를 찾았다!', '효과가 굉장했다!'],
       stash: ['개발자는 전부 stash 하고 도망쳤다!', '무사히 도망쳤다…', '…버그는 월요일에도 기다리고 있을 것이다.'],
       reboot: ['개발자는 껐다 켰다.', '…', '된다?!', '아무도 이유를 모른다.\n버그는 혼란에 빠졌다!'],
       back: '개발자는 돌아왔다.\n버그는 저절로 사라지지 않는다.',
@@ -303,7 +321,14 @@
       p.ell(20, 4.6, 12, 2.2, '#93d371');
       return p;
     },
-    bug() {
+    // Each species has its own shell; the OFF-BY-ONE has one leg too many.
+    bug(kind = 'bug') {
+      const [shell, shade, shine, spot] = {
+        bug: ['#e5484d', '#bd3239', '#ff8c90', '#ffd166'],
+        off: ['#f08c00', '#c26a00', '#ffc078', '#fff3bf'],
+        heisen: ['#9775fa', '#7048e8', '#d0bfff', '#ffffff'],
+        leak: ['#40c057', '#2b8a3e', '#b2f2bb', '#ffd166'],
+      }[kind];
       const p = Pix(40, 32);
       const legs = [[[11, 16], [5, 13], [3, 15]], [[10, 20], [4, 21], [2, 23]], [[11, 24], [6, 28], [4, 30]]];
       legs.forEach((leg) => {
@@ -312,13 +337,14 @@
           p.line(39 - leg[i][0], leg[i][1], 39 - leg[i + 1][0], leg[i + 1][1], NAVY);
         }
       });
+      if (kind === 'off') { p.line(29, 22, 35, 25, NAVY); p.line(35, 25, 38, 27, NAVY); }
       p.line(16, 6, 12, 1, NAVY); p.line(23, 6, 27, 1, NAVY);
       p.rect(10, 0, 3, 2, '#ffd166'); p.rect(27, 0, 3, 2, '#ffd166');
-      p.ell(19.5, 20, 11.5, 9.5, '#e5484d');
-      p.ell(19.5, 20, 11.5, 9.5, '#bd3239', (x, y) => (x - 19.5) * .5 + (y - 20) > 4);
-      p.ell(14, 15, 3.4, 2.2, '#ff8c90');
+      p.ell(19.5, 20, 11.5, 9.5, shell);
+      p.ell(19.5, 20, 11.5, 9.5, shade, (x, y) => (x - 19.5) * .5 + (y - 20) > 4);
+      p.ell(14, 15, 3.4, 2.2, shine);
       for (let y = 12; y <= 29; y++) { p.px(19, y, NAVY); p.px(20, y, NAVY); }
-      [[13, 21], [25, 17], [15, 26], [24, 25]].forEach(([x, y]) => p.ell(x, y, 1.9, 1.9, '#ffd166'));
+      [[13, 21], [25, 17], [15, 26], [24, 25]].forEach(([x, y]) => p.ell(x, y, 1.9, 1.9, spot));
       p.ell(19.5, 9, 7.6, 5.4, '#3a3d5c');
       p.rect(14, 7, 3, 3, '#fff'); p.rect(22, 7, 3, 3, '#fff');
       p.px(16, 7, '#3a3d5c'); p.px(22, 7, '#3a3d5c'); // angry brows
@@ -364,6 +390,28 @@
   const duck = $('.duck');
   const hp = $('.hp-bug');
   const field = $('.field');
+  const foeName = $('.foe-name');
+  const foeLv = $('.foe-lv');
+
+  // Battles draw species from a shuffled bag, so the same bug never comes twice in a row.
+  let bag = [];
+  let sp = null;
+  function nextSpecies() {
+    if (!bag.length) {
+      bag = L.species.slice().sort(() => Math.random() - .5);
+      if (sp && bag[bag.length - 1] === sp) bag.unshift(bag.pop());
+    }
+    return bag.pop();
+  }
+  // A MEMORY LEAK keeps growing until it is fixed: a level a quarter second, and a bit bigger.
+  let leaking = 0;
+  let level = 0;
+  function startLeak() {
+    level = sp.lv;
+    leaking = setInterval(() => { foeLv.textContent = 'Lv.' + (++level); }, 250);
+    anim(bug, [{ scale: '1' }, { scale: '1.18' }], { duration: 18000, easing: 'steps(12)', fill: 'forwards' });
+  }
+  const stopLeak = () => { clearInterval(leaking); leaking = 0; };
 
   L.moves.forEach(([id, label]) => {
     const b = document.createElement('button');
@@ -445,14 +493,23 @@
   /* ---------- Moves ---------- */
   const MOVES = {
     async log() {
-      await type(L.log[0]);
+      const said = sp.log || L.log;
+      await type(said[0]);
       await sleep(300);
       for (let i = 0; i < 3; i++) { pop(L.logs[i], (58 + i * 7) + '%', (8 + i * 9) + '%', 1500); await sleep(260); }
       await sleep(500);
+      if (sp.log) {
+        // Watched, the HEISENBUG is simply not there.
+        bug.style.visibility = 'hidden';
+        await lines([said[1]], 900);
+        bug.style.visibility = '';
+        await lines([said[2]]);
+        return;
+      }
       setHp(97);
       shake(bug);
       await sleep(400);
-      await lines(L.log.slice(1));
+      await lines(said.slice(1));
     },
     async duck() {
       await type(L.duck[0]);
@@ -460,19 +517,28 @@
       anim(duck, [{ translate: '0 -160%', opacity: 1 }, { translate: '0 8%', offset: .7 }, { translate: '0 -6%', offset: .85 }, { translate: '0 0' }], { duration: 650, easing: 'steps(8)' });
       await sleep(700);
       pop(L.quack, KO ? '30%' : '29%', '46%', 900);
-      await sleep(900);
-      await lines([L.duck[1]], 1100);
+      await sleep(700);
+      await lines([L.duck[1]], 900);
       await type(L.duck[2]);
       await sleep(300);
       anim($('.flash'), [{ opacity: 0 }, { opacity: .9 }, { opacity: 0 }], { duration: 300, easing: 'steps(3)' });
       blink(bug, 3);
-      setHp(0);
+      setHp(sp.hold ? 1 : 0);
+      stopLeak();
       await sleep(1000);
       await lines([L.duck[3]], 700);
+      if (sp.hold) {
+        // The OFF-BY-ONE survives on exactly one HP, until the loop is fixed.
+        await type(sp.hold);
+        await sleep(300);
+        blink(bug, 2);
+        setHp(0);
+        await sleep(700);
+      }
       anim(bug, [{ translate: '-50% 0', opacity: 1 }, { translate: '-50% 45%', opacity: 0 }], { duration: 700, easing: 'steps(7)', fill: 'forwards' });
       if (TTY.reduce) bug.style.opacity = 0;
       await sleep(700);
-      await type(L.duck[4]);
+      await type(sp.fixed);
       return 'won';
     },
     async stash() {
@@ -532,10 +598,16 @@
 
   function reset() {
     setHp(100);
+    stopLeak();
     bug.getAnimations().forEach((a) => a.cancel());
     dev.getAnimations().forEach((a) => a.cancel());
-    bug.style.opacity = ''; duck.style.opacity = 0;
+    bug.style.opacity = ''; bug.style.visibility = ''; duck.style.opacity = 0;
     put('');
+    sp = nextSpecies();
+    SPRITES.bug(sp.id).paint(bug);
+    bug.classList.toggle('heisen', sp.id === 'heisen');
+    foeName.textContent = sp.name;
+    foeLv.textContent = 'Lv.' + sp.lv;
   }
 
   async function battle() {
@@ -549,11 +621,12 @@
     anim($('.foe'), [{ translate: '120cqw 0' }, { translate: '0 0' }], { duration: 900, delay: 350, easing: 'steps(10)', fill: 'backwards' });
     anim($('.me'), [{ translate: '-120cqw 0' }, { translate: '0 0' }], { duration: 900, delay: 350, easing: 'steps(10)', fill: 'backwards' });
     await sleep(1350);
-    await lines([L.appear], 900);
+    if (sp.id === 'leak') startLeak();
+    await lines([sp.appear], 800);
     let first = true;
     for (;;) {
       await type(L.ask);
-      const id = await openMenu(first ? 2600 : 4200);
+      const id = await openMenu(first ? 2000 : 4200);
       first = false;
       const result = await MOVES[id]();
       if (result === 'won') break;

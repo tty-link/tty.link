@@ -11,8 +11,9 @@
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="malang sebul"></script>
 <style>
   /* Flat-pack instructions for happiness: an exploded view of the word, parts lettered and
-     listed, then the parts click together. In Korean the parts are jamo, which is exactly
-     how Hangul is built. */
+     listed, then the parts click together and the parts list counts down to zero. In Korean
+     the parts are jamo, which is exactly how Hangul is built. And, as with every flat pack,
+     one little bag turns up at the end anyway. */
   :root {
     --paper: #fbfaf7;
     --ink: #1c1c1f;
@@ -72,6 +73,8 @@
   .icon svg * { fill: none; stroke: var(--ink); stroke-width: 6; stroke-linecap: round; }
   .part .count { font-variant-numeric: tabular-nums; }
   .part .count b { font-weight: 700; }
+  .part { transition: opacity .3s ease; }
+  .part.used { opacity: .38; }
   .aside { margin-top: .6cqmin; padding-top: 1.4cqmin; border-top: 1px dashed var(--line); color: #5b5a56; font-size: .92em; line-height: 1.45; }
 
   /* The diagram. */
@@ -88,6 +91,41 @@
   .overlay .callout text { fill: var(--blue); font: 700 14px 'Jost', sans-serif; text-anchor: middle; dominant-baseline: central; }
   .overlay .tick { stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; }
   .swash { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+
+  /* The bag that turns up after "nothing left over". */
+  .spare {
+    position: absolute;
+    right: 0; top: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: .5em;
+    font-size: clamp(11px, 1.9cqmin, 16px);
+    line-height: 1.3;
+    visibility: hidden;
+  }
+  .spare.on { visibility: visible; }
+  .bag {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: clamp(72px, 13cqmin, 120px);
+    aspect-ratio: 1.15;
+    padding-top: 14%;
+    border: 2px solid var(--ink);
+    border-radius: 6% 6% 14% 14% / 8% 8% 16% 16%;
+    background: rgba(255, 255, 255, .7);
+  }
+  /* the zip, and the hole it hangs from */
+  .bag::before { content: ""; position: absolute; left: 6%; right: 6%; top: 13%; height: 5%; border-block: 2px solid var(--ink); }
+  .bag::after { content: ""; position: absolute; left: 50%; top: 4%; width: 9%; aspect-ratio: 1; translate: -50% 0; border: 2px solid var(--ink); border-radius: 50%; }
+  .bag svg { width: 66%; height: auto; overflow: visible; }
+  .bag svg * { fill: none; stroke: var(--ink); stroke-width: 6; stroke-linecap: round; }
+  .bag svg .dot { fill: var(--ink); stroke: none; }
+  .bag font-kku { color: var(--ink); }
+  .spare-note { display: grid; grid-template-columns: auto auto; gap: .45em; align-items: start; white-space: nowrap; }
+  .spare-note .tag { width: 1.7em; height: 1.7em; margin-top: -.1em; }
 
   /* Step 3: what each part is for. */
   .captions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15em), 1fr)); gap: 1.2cqmin 3cqi; padding-top: 1.6cqmin; font-size: clamp(12px, 2.1cqmin, 18px); }
@@ -120,8 +158,14 @@
     .steps { font-size: 11px; gap: 1.6cqi; }
     .step span { line-height: 1.15; }
     .captions { grid-template-columns: 1fr 1fr; font-size: 11.5px; gap: 1cqmin 3cqi; }
+    /* Phones: under the word, the note beside the bag. */
+    .spare { top: auto; bottom: 0; flex-direction: row-reverse; align-items: flex-end; font-size: 11px; }
+    .bag { width: 58px; }
   }
-  @media (prefers-reduced-motion: reduce) { .cap { opacity: 1; } }
+  /* Opened on its own, the tty.link links sit at the bottom right; keep the steps above them. */
+  html:not(.embedded) .sheet { padding-bottom: max(clamp(14px, 4cqmin, 40px), 54px); }
+  @media (max-width: 600px) { html:not(.embedded) .sheet { padding-bottom: 46px; } }
+  @media (prefers-reduced-motion: reduce) { .cap { opacity: 1; } .spare { visibility: visible; } }
 </style>
 </head>
 <body>
@@ -138,18 +182,18 @@
       <p class="parts-title" data-lang="en">Parts</p>
       <p class="parts-title" data-lang="ko">부품</p>
       <!-- English parts: four shapes make every letter of the word. -->
-      <div class="part" data-lang="en"><span class="tag">a</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="20" y1="4" x2="20" y2="36"/></svg></span><span class="count">Upright <b>×5</b></span></div>
-      <div class="part" data-lang="en"><span class="tag">b</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="6" y1="20" x2="34" y2="20"/></svg></span><span class="count">Crossbar <b>×2</b></span></div>
-      <div class="part" data-lang="en"><span class="tag">c</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="10" y1="36" x2="30" y2="4"/></svg></span><span class="count">Slant <b>×4</b></span></div>
-      <div class="part" data-lang="en"><span class="tag">d</span><span class="icon"><svg viewBox="0 0 40 40"><path d="M8 6 H18 A14 14 0 0 1 18 34 H8"/></svg></span><span class="count">Bowl <b>×2</b></span></div>
-      <div class="part" data-lang="en"><span class="tag">e</span><span class="icon"><svg viewBox="0 0 40 40"><circle cx="12" cy="20" r="4" style="fill:var(--ink);stroke:none"/><circle cx="28" cy="20" r="4" style="fill:var(--ink);stroke:none"/></svg></span><span class="count">Dot <b>×2</b></span></div>
+      <div class="part" data-lang="en" data-type="a"><span class="tag">a</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="20" y1="4" x2="20" y2="36"/></svg></span><span class="count">Upright <b>×5</b></span></div>
+      <div class="part" data-lang="en" data-type="b"><span class="tag">b</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="6" y1="20" x2="34" y2="20"/></svg></span><span class="count">Crossbar <b>×2</b></span></div>
+      <div class="part" data-lang="en" data-type="c"><span class="tag">c</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="10" y1="36" x2="30" y2="4"/></svg></span><span class="count">Slant <b>×4</b></span></div>
+      <div class="part" data-lang="en" data-type="d"><span class="tag">d</span><span class="icon"><svg viewBox="0 0 40 40"><path d="M8 6 H18 A14 14 0 0 1 18 34 H8"/></svg></span><span class="count">Bowl <b>×2</b></span></div>
+      <div class="part" data-lang="en" data-type="e"><span class="tag">e</span><span class="icon"><svg viewBox="0 0 40 40"><circle cx="12" cy="20" r="4" style="fill:var(--ink);stroke:none"/><circle cx="28" cy="20" r="4" style="fill:var(--ink);stroke:none"/></svg></span><span class="count">Dot <b>×2</b></span></div>
       <!-- Korean parts: the six jamo of 행복. -->
-      <div class="part" data-lang="ko"><span class="tag">a</span><span class="icon"><font-kku font="malang" size="1.5em">ㅎ</font-kku></span><span class="count">초성 <b>×1</b></span></div>
-      <div class="part" data-lang="ko"><span class="tag">b</span><span class="icon"><font-kku font="malang" size="1.5em">ㅐ</font-kku></span><span class="count">중성 <b>×1</b></span></div>
-      <div class="part" data-lang="ko"><span class="tag">c</span><span class="icon"><font-kku font="malang" size="1.5em">ㅇ</font-kku></span><span class="count">종성 <b>×1</b></span></div>
-      <div class="part" data-lang="ko"><span class="tag">d</span><span class="icon"><font-kku font="malang" size="1.5em">ㅂ</font-kku></span><span class="count">초성 <b>×1</b></span></div>
-      <div class="part" data-lang="ko"><span class="tag">e</span><span class="icon"><font-kku font="malang" size="1.5em">ㅗ</font-kku></span><span class="count">중성 <b>×1</b></span></div>
-      <div class="part" data-lang="ko"><span class="tag">f</span><span class="icon"><font-kku font="malang" size="1.5em">ㄱ</font-kku></span><span class="count">종성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko" data-type="a"><span class="tag">a</span><span class="icon"><font-kku font="malang" size="1.5em">ㅎ</font-kku></span><span class="count">초성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko" data-type="b"><span class="tag">b</span><span class="icon"><font-kku font="malang" size="1.5em">ㅐ</font-kku></span><span class="count">중성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko" data-type="c"><span class="tag">c</span><span class="icon"><font-kku font="malang" size="1.5em">ㅇ</font-kku></span><span class="count">종성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko" data-type="d"><span class="tag">d</span><span class="icon"><font-kku font="malang" size="1.5em">ㅂ</font-kku></span><span class="count">초성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko" data-type="e"><span class="tag">e</span><span class="icon"><font-kku font="malang" size="1.5em">ㅗ</font-kku></span><span class="count">중성 <b>×1</b></span></div>
+      <div class="part" data-lang="ko" data-type="f"><span class="tag">f</span><span class="icon"><font-kku font="malang" size="1.5em">ㄱ</font-kku></span><span class="count">종성 <b>×1</b></span></div>
       <p class="aside" data-lang="en">Screws: 0. We checked twice.<br>Tools: none. A friend helps.</p>
       <p class="aside" data-lang="ko">나사: 0개. 두 번 확인했어요.<br>공구: 필요 없음. 친구가 있으면 좋아요.</p>
     </section>
@@ -181,19 +225,28 @@
         </svg>
         <font-kku class="hb" data-lang="ko" font="malang" size="1em">행복</font-kku>
         <svg class="overlay" aria-hidden="true"></svg>
+        <div class="spare">
+          <div class="bag" aria-hidden="true">
+            <!-- English: two dots and a bowl, loose, which happen to be a smile. -->
+            <svg data-lang="en" viewBox="0 0 60 44"><circle class="dot" cx="17" cy="9" r="5.5"/><circle class="dot" cx="43" cy="9" r="5.5"/><path d="M8 22 V26 A14 14 0 0 0 52 26 V22"/></svg>
+            <font-kku data-lang="ko" font="malang" size="2.6em">ㅋㅋ</font-kku>
+          </div>
+          <p class="spare-note" data-lang="en"><span class="tag">f</span><span>Left over: 1 smile.<br>Some assembly required.</span></p>
+          <p class="spare-note" data-lang="ko"><span class="tag">g</span><span>남은 부품: ㅋ ×2<br>남는 건 ㅋㅋ뿐</span></p>
+        </div>
       </div>
       <div class="captions">
         <p class="cap" data-lang="en"><span class="tag">a</span><span>Upright: stand by someone.</span></p>
-        <p class="cap" data-lang="en"><span class="tag">b</span><span>Crossbar: a hand on a shoulder.</span></p>
-        <p class="cap" data-lang="en"><span class="tag">c</span><span>Slant: lean in, look again.</span></p>
+        <p class="cap" data-lang="en"><span class="tag">b</span><span>Crossbar: holds two sides together.</span></p>
+        <p class="cap" data-lang="en"><span class="tag">c</span><span>Slant: lean on each other. See A.</span></p>
         <p class="cap" data-lang="en"><span class="tag">d</span><span>Bowl: room for a big smile.</span></p>
-        <p class="cap" data-lang="en"><span class="tag">e</span><span>Dots: eyes, wide open.</span></p>
-        <p class="cap" data-lang="ko"><span class="tag">a</span><span>ㅎ: 하하 웃을 때의 ㅎ</span></p>
-        <p class="cap" data-lang="ko"><span class="tag">b</span><span>ㅐ: 해처럼 환하게</span></p>
+        <p class="cap" data-lang="en"><span class="tag">e</span><span>Dots: make it sound Swedish.</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">a</span><span>ㅎ: “하하”의 ㅎ</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">b</span><span>ㅐ: “애썼어”의 ㅐ</span></p>
         <p class="cap" data-lang="ko"><span class="tag">c</span><span>ㅇ: 동그랗게 웃는 입</span></p>
-        <p class="cap" data-lang="ko"><span class="tag">d</span><span>ㅂ: 밥은 먹었어? 의 ㅂ</span></p>
-        <p class="cap" data-lang="ko"><span class="tag">e</span><span>ㅗ: 오! 하고 반가운 소리</span></p>
-        <p class="cap" data-lang="ko"><span class="tag">f</span><span>ㄱ: 괜찮아의 ㄱ</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">d</span><span>ㅂ: “밥은 먹었어?”의 ㅂ</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">e</span><span>ㅗ: “오, 왔어?”의 ㅗ</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">f</span><span>ㄱ: “괜찮아”의 ㄱ</span></p>
       </div>
     </section>
 
@@ -212,6 +265,21 @@
   const overlay = document.querySelector('.overlay');
   const steps = [...document.querySelectorAll('.step')];
   const caps = [...document.querySelectorAll('.cap')];
+  const spare = document.querySelector('.spare');
+  // Parts list rows by part letter, with how many of each there are.
+  const stock = {};
+  document.querySelectorAll('.part[data-type]').forEach((row) => {
+    const b = row.querySelector('.count b');
+    stock[row.dataset.type] = { row, b, n: parseInt(b.textContent.replace('×', ''), 10), left: 0 };
+  });
+  const setLeft = (type, n) => {
+    const s = stock[type];
+    if (!s) return;
+    s.left = n;
+    s.b.textContent = '×' + n;
+    s.row.classList.toggle('used', n === 0);
+  };
+  const restock = () => Object.keys(stock).forEach((t) => setLeft(t, stock[t].n));
   const NS = 'http://www.w3.org/2000/svg';
   const host = document.querySelector('.hb');
 
@@ -376,7 +444,10 @@
     if (!collect()) return setTimeout(play, 120);
 
     caps.forEach((c) => { c.getAnimations().forEach((a) => a.cancel()); c.style.opacity = TTY.reduce ? 1 : 0; });
-    if (TTY.reduce) { parts.forEach((p) => place(p, 0)); overlay.replaceChildren(); setStep(2); return; }
+    spare.getAnimations({ subtree: true }).forEach((a) => a.cancel());
+    spare.classList.toggle('on', TTY.reduce);
+    if (TTY.reduce) { parts.forEach((p) => place(p, 0)); Object.keys(stock).forEach((t) => setLeft(t, 0)); overlay.replaceChildren(); setStep(2); return; }
+    restock();
 
     // 1. Lay out: the parts appear apart, the guides draw in, callouts pop.
     setStep(0);
@@ -402,7 +473,7 @@
         const a = p.el.animate(frames(p), { duration: 620, delay: 220 + i * 110, easing: 'cubic-bezier(.5, 0, .25, 1.25)', fill: 'backwards' });
         running.push(a);
         later(() => place(p, 0), 220 + i * 110);
-        later(() => ticks(p), 220 + i * 110 + 560);
+        later(() => { ticks(p); setLeft(p.tag, stock[p.tag].left - 1); }, 220 + i * 110 + 560);
       });
     }, 2900);
 
@@ -415,6 +486,18 @@
       caps.forEach((c, i) => c.animate([{ opacity: 0, translate: '0 .4em' }, { opacity: 1, translate: '0 0' }],
         { duration: 380, delay: i * 140, easing: 'cubic-bezier(.3, 1.4, .5, 1)', fill: 'forwards' }));
     }, doneAt);
+
+    // 4. "Nothing left over." Then a little bag drops in anyway.
+    later(() => {
+      spare.classList.add('on');
+      spare.querySelector('.bag').animate([
+        { transform: 'translateY(-120%) rotate(-14deg)', opacity: 0 },
+        { transform: 'translateY(6%) rotate(5deg)', opacity: 1, offset: .62 },
+        { transform: 'translateY(-3%) rotate(-2deg)', offset: .82 },
+        { transform: 'none' },
+      ], { duration: 700, easing: 'cubic-bezier(.5, 0, .5, 1)', fill: 'backwards' });
+      spare.querySelector('.spare-note').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 650, fill: 'backwards' });
+    }, doneAt + 1700);
   }
 
   document.querySelector('.diagram').addEventListener('click', play);

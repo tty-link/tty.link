@@ -94,7 +94,7 @@
 
   .lines { display: flex; flex-direction: column; align-items: center; gap: 5.6cqi; filter: url(#bleed); }
   .line { display: flex; align-items: baseline; justify-content: center; min-height: 1.3em; color: var(--ink); white-space: nowrap; }
-  .lang-en .line { font-family: 'Yuji Boku', serif; font-size: 6.3cqi; }
+  .lang-en .line { font-family: 'Yuji Boku', serif; font-size: calc(6.3cqi * var(--fit, 1)); }
   .lang-ko .line { font-size: 8.2cqi; }
   .line .lat { font-family: 'Yuji Boku', serif; font-size: .82em; margin: 0 .12em; }
   .lang-en .line .lat { font-size: 1em; margin: 0; }
@@ -133,6 +133,25 @@
   /* The dojang face carries its own red ink, so the Korean seal is the outlined kind. */
   .lang-ko .seal { background: rgba(243, 238, 226, .4); border: .6cqi solid var(--seal); box-shadow: none; mix-blend-mode: multiply; }
   .seal:focus-visible { outline: .5cqi solid var(--seal); outline-offset: 1cqi; }
+  .lead-seal {
+    position: absolute;
+    left: 6cqi;
+    top: 5.5cqi;
+    display: grid;
+    place-items: center;
+    width: 5.6cqi;
+    height: 8.6cqi;
+    border-radius: 50%;
+    background:
+      radial-gradient(40% 30% at 35% 30%, rgba(255, 255, 255, .14), transparent 70%),
+      var(--seal);
+    color: var(--paper);
+    font: 800 2.7cqi/.92 'Shippori Mincho B1', serif;
+    text-align: center;
+    rotate: 3deg;
+    opacity: 0;
+    pointer-events: none;
+  }
   .foot {
     position: absolute;
     right: 5cqi;
@@ -149,7 +168,6 @@
     transition: opacity .25s, translate .25s;
     translate: 0 1cqi;
   }
-  .lang-en .foot { font-family: 'Yuji Boku', serif; }
   .foot.show { opacity: 1; translate: 0 0; }
   /* Once written, tapping the scroll writes it again. */
   .roll.done .sheet { cursor: pointer; }
@@ -173,20 +191,12 @@
   <div class="roll">
     <div class="sheet">
       <article class="paper">
-        <h1 class="lines" data-lang="en" aria-label="It's not DNS. There's no way it's DNS. It was DNS.">
-          <span class="line" data-seg='[["lat","It&#39;s not DNS"]]'></span>
-          <span class="line" data-seg='[["lat","There&#39;s no way it&#39;s DNS"]]'></span>
-          <span class="line" data-seg='[["lat","It was DNS"]]'></span>
-        </h1>
-        <h1 class="lines" data-lang="ko" aria-label="DNS일 리 없다. 절대 DNS일 리 없다. DNS였다.">
-          <span class="line" data-seg='[["lat","DNS"],["kku","일 리 없다"]]'></span>
-          <span class="line" data-seg='[["kku","절대"],["lat"," DNS"],["kku","일 리 없다"]]'></span>
-          <span class="line" data-seg='[["lat","DNS"],["kku","였다"]]'></span>
-        </h1>
-        <p class="sign" data-lang="en">a sysadmin, 3 a.m.</p>
-        <p class="sign" data-lang="ko">새벽 세 시, 어느 시스템 관리자</p>
-        <p class="foot" data-lang="en">(It's always DNS.)</p>
-        <p class="foot" data-lang="ko">(언제나 DNS다.)</p>
+        <!-- The verse, its signature and footnote are written by the script (VERSES). -->
+        <h1 class="lines"></h1>
+        <p class="sign"></p>
+        <p class="foot"></p>
+        <!-- The leading seal: an oval stamped where the writing begins. Port 53. -->
+        <span class="lead-seal" aria-hidden="true">5<br>3</span>
         <button class="seal" type="button">
           <span class="seal-en" data-lang="en" aria-label="Seal: DNS">D<br>N<br>S</span>
           <span class="seal-ko" data-lang="ko" aria-label="낙관: 또 너냐">
@@ -204,38 +214,83 @@
   const roll = document.querySelector('.roll');
   const sheet = document.querySelector('.sheet');
   const bottomRod = document.querySelector('.rod.bottom');
-  const lines = [...document.querySelectorAll(`.lines[data-lang="${TTY.lang}"] .line`)];
+  const h1 = document.querySelector('.lines');
   const seal = document.querySelector('.seal');
-  const foot = document.querySelector(`.foot[data-lang="${TTY.lang}"]`);
-  const sign = document.querySelector(`.sign[data-lang="${TTY.lang}"]`);
+  const leadSeal = document.querySelector('.lead-seal');
+  const foot = document.querySelector('.foot');
+  const sign = document.querySelector('.sign');
+  const paper = document.querySelector('.paper');
+
+  /* ---- The series. English lines scan 5-7-5; Korean ones keep a natural three-beat rhythm.
+     A Korean line is a list of pieces: 'lat' is brushed letter by letter in Yuji Boku,
+     'kku' jamo by jamo in butgeul. The classic comes first and turns up most often. ---- */
+  const VERSES = [
+    {
+      en: { lines: ["It's not DNS", "There's no way it's DNS", 'It was DNS'], sign: 'a sysadmin, 3 a.m.', foot: "(It's always DNS.)" },
+      ko: { lines: [[['lat', 'DNS'], ['kku', '일 리 없다']], [['kku', '절대'], ['lat', ' DNS'], ['kku', '일 리 없다']], [['lat', 'DNS'], ['kku', '였다']]], sign: '새벽 세 시, 어느 시스템 관리자', foot: '(언제나 DNS다.)' },
+    },
+    {
+      en: { lines: ['I changed the record', 'The TTL was one day', 'See you tomorrow'], sign: 'a sysadmin, Friday 6 p.m.', foot: '(TTL 86400)' },
+      ko: { lines: [[['kku', '레코드를 바꿨다']], [['lat', 'TTL'], ['kku', '은 하루']], [['kku', '내일 뵙겠습니다']]], sign: '금요일 저녁 여섯 시, 어느 시스템 관리자', foot: '(TTL 86400)' },
+    },
+    {
+      en: { lines: ['Asked once, too early', 'It replied: no such domain', 'Now cached for an hour'], sign: 'a developer, slightly early', foot: '(NXDOMAIN · SOA minimum 3600)' },
+      ko: { lines: [[['kku', '레코드 만들기 전에']], [['kku', '딱 한 번 물어봤을 뿐']], [['kku', '한 시간째 없단다']]], sign: '조금 성급했던 어느 개발자', foot: '(NXDOMAIN · SOA 최솟값 3600)' },
+    },
+    {
+      en: { lines: ['Wait for it to spread', "It doesn't. It never did", 'Caches die of age'], sign: 'a sysadmin, hour 47', foot: '(TTL 3412, 3411, 3410…)' },
+      ko: { lines: [[['kku', '전파되길 기다렸다']], [['kku', '퍼지는 게 아니었다']], [['kku', '캐시가 늙어 죽을 뿐']]], sign: '마흔일곱 시간째, 어느 시스템 관리자', foot: '(TTL 3412, 3411, 3410…)' },
+    },
+  ];
+  let verse = Math.random() < .4 ? 0 : 1 + Math.floor(Math.random() * (VERSES.length - 1));
 
   /* ---- Build each line: Latin letters as spans, Hangul as font-kku hosts ---- */
-  const steps = []; // [{line, run(): Promise}]
   const shown = new WeakMap();
-  lines.forEach((line) => {
-    const segs = JSON.parse(line.dataset.seg);
-    const parts = segs.map(([kind, text]) => {
-      if (kind === 'lat') {
-        const box = document.createElement('span');
-        box.className = 'lat';
-        const chars = [...text].map((c) => {
-          const ch = document.createElement('span');
-          ch.className = 'ch';
-          ch.textContent = c === ' ' ? ' ' : c;
-          box.append(ch);
-          return ch;
-        });
-        line.append(box);
-        return { kind, text, chars };
-      }
-      const host = document.createElement('font-kku');
-      host.setAttribute('font', 'butgeul');
-      host.setAttribute('size', '1em');
-      line.append(host);
-      return { kind, text, host };
+  let lines = [];
+  function build(v) {
+    const text = VERSES[v][TTY.lang];
+    const segsOf = (l) => (typeof l === 'string' ? [['lat', l]] : l);
+    h1.setAttribute('aria-label', text.lines.map((l) => segsOf(l).map(([, t]) => t).join('') + '.').join(' '));
+    sign.textContent = text.sign;
+    foot.textContent = text.foot;
+    lines = text.lines.map((l) => {
+      const line = document.createElement('span');
+      line.className = 'line';
+      line._parts = segsOf(l).map(([kind, piece]) => {
+        if (kind === 'lat') {
+          const box = document.createElement('span');
+          box.className = 'lat';
+          // Spaces go in as no-break spaces so the inline-block letters keep them.
+          const chars = [...piece].map((c) => {
+            const ch = document.createElement('span');
+            ch.className = 'ch';
+            ch.textContent = c === ' ' ? '\u00a0' : c;
+            box.append(ch);
+            return ch;
+          });
+          line.append(box);
+          return { kind, text: piece, chars };
+        }
+        const host = document.createElement('font-kku');
+        host.setAttribute('font', 'butgeul');
+        host.setAttribute('size', '1em');
+        line.append(host);
+        return { kind, text: piece, host };
+      });
+      return line;
     });
-    line._parts = parts;
-  });
+    h1.replaceChildren(...lines);
+  }
+
+  // A long English line gets a slightly smaller brush rather than running off the paper.
+  // (The letters are laid out while hidden, so the width is known before the brush starts.)
+  function fit() {
+    if (TTY.lang !== 'en') return;
+    h1.style.removeProperty('--fit');
+    const room = paper.clientWidth * .9;
+    const widest = Math.max(...lines.map((l) => l.getBoundingClientRect().width));
+    if (widest > room) h1.style.setProperty('--fit', (room / widest).toFixed(3));
+  }
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   function setHost(host, text) {
@@ -340,21 +395,24 @@
   /* ---- The whole piece ---- */
   let playing = false;
   async function play() {
-    if (TTY.reduce) { full(); showFoot(0); return; }
+    if (TTY.reduce) { full(); document.fonts.ready.then(fit); showFoot(0); roll.classList.add('done'); return; }
     if (playing) return;
     playing = true;
     roll.classList.remove('done');
     foot.classList.remove('show');
-    [sheet, bottomRod, seal, sign].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
-    blank();
+    [sheet, bottomRod, seal, leadSeal, sign].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
     seal.style.opacity = 0;
+    leadSeal.style.opacity = 0;
     sign.style.opacity = 0;
+    build(verse);
+    blank();
     const h = sheet.offsetHeight;
     // Unroll: the paper is revealed from the top while the bottom rod drops.
     const ease = 'cubic-bezier(.45, .05, .2, 1)';
     sheet.animate([{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 1300, easing: ease, fill: 'both' });
     bottomRod.animate([{ transform: `translateY(${-h}px)` }, { transform: 'none' }], { duration: 1300, easing: ease, fill: 'both' });
     await Promise.all([wait(1500), document.fonts.ready]);
+    fit();
     petalsOn();
     for (const line of lines) {
       for (const p of line._parts) await (p.kind === 'lat' ? brushLatin(p) : brushHangul(p));
@@ -363,6 +421,15 @@
     sign.style.opacity = 1;
     sign.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
     await wait(500);
+    // Two stamps: the small oval where the writing begins, then the seal.
+    const stamp = [
+      { transform: 'scale(1.9) rotate(-8deg)', opacity: 0 },
+      { transform: 'scale(.95)', opacity: 1, offset: .7 },
+      { transform: 'scale(1)', opacity: 1 },
+    ];
+    leadSeal.style.opacity = .92;
+    leadSeal.animate(stamp, { duration: 320, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+    await wait(520);
     seal.style.opacity = 1;
     seal.animate([
       { transform: 'scale(1.9) rotate(-8deg)', opacity: 0 },
@@ -375,9 +442,16 @@
     roll.classList.add('done');
     playing = false;
   }
-  sheet.addEventListener('click', () => { if (roll.classList.contains('done')) play(); });
+  // Tapping the finished scroll writes the next one in the series.
+  sheet.addEventListener('click', () => {
+    if (!roll.classList.contains('done')) return;
+    verse = (verse + 1) % VERSES.length;
+    if (TTY.reduce) build(verse);
+    play();
+  });
 
-  if (TTY.reduce) full(); else blank();
+  build(verse);
+  if (TTY.reduce) { full(); leadSeal.style.opacity = .92; } else blank();
   TTY.onShow(() => { play(); if (TTY.reduce) { fit(); } });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);

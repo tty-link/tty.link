@@ -198,11 +198,11 @@
   }
   .lang-ko .receipt { font-family: 'Nanum Gothic Coding', monospace; }
   .receipt h2 { font-size: 1.15em; text-align: center; }
-  .receipt .no { margin-bottom: .7em; text-align: center; opacity: .7; }
+  .receipt .no { margin-bottom: .5em; text-align: center; opacity: .7; }
   .receipt .row { display: flex; justify-content: space-between; gap: 1em; }
   .receipt .row span:last-child { white-space: nowrap; }
-  .receipt .total { margin-top: .5em; padding-top: .5em; border-top: 1.5px dashed #9aa3a7; font-weight: 700; }
-  .receipt .foot { margin-top: .8em; font-size: .9em; opacity: .75; text-align: center; }
+  .receipt .total { margin-top: .4em; padding-top: .4em; border-top: 1.5px dashed #9aa3a7; font-weight: 700; }
+  .receipt .foot { margin-top: .6em; font-size: .9em; opacity: .75; text-align: center; }
 
   .again {
     position: absolute;
@@ -300,30 +300,26 @@
     en: {
       tokens: 'Tokens', bill: 'Your bill', unit: 'cookies', plate: 'Cutter No. 7', bin: 'Billing',
       fine: 'A cartoon. Real tokenizers are more complicated, and pricier to explain.',
-      again: 'Run it again',
-      c1: 'Hello world: two tokens. A bargain.',
-      c2: 'un, believ, able. Three tokens, still believable.',
-      c3: '안녕하세요… five already?',
+      again: 'Next shift',
       c4: 'Why Korean costs more',
       receipt: {
         title: 'The Token Factory', no: 'Receipt No. 0042',
-        syllables: (w) => `${w}, syllables`, jamo: (w) => `${w}, again, in jamo`,
+        syllables: (w) => `${w}, syllables`, jamo: (w) => `${w}, jamo too`,
         tokens: 'Tokens', total: 'Total', cost: (n) => `${n} cookies`,
+        answer: ['Answer', 'sold separately'],
         foot: 'Prices are made up. The feelings are real.',
       },
     },
     ko: {
       tokens: '토큰', bill: '청구액', unit: '쿠키', plate: '7번 절단기', bin: '청구',
       fine: '만화입니다. 실제 토크나이저는 더 복잡하고, 설명하기는 더 비쌉니다.',
-      again: '다시 돌리기',
-      c1: 'Hello world는 두 토큰. 거저네요.',
-      c2: 'un, believ, able. 세 토큰, 아직은 믿을 만하죠.',
-      c3: '안녕하세요… 벌써 다섯 개?',
+      again: '다음 교대',
       c4: '<font-kku font="sebul" size="1em">한국어 요금이 더 나오는 이유</font-kku>',
       receipt: {
         title: '토큰 공장', no: '영수증 0042번',
         syllables: (w) => `${w} (글자)`, jamo: (w) => `${w} (자모까지)`,
         tokens: '토큰 합계', total: '청구액', cost: (n) => `쿠키 ${n}개`,
+        answer: ['답변', '별도'],
         foot: '요금은 지어낸 것입니다. 서운함은 진짜입니다.',
       },
     },
@@ -360,13 +356,26 @@
   }
 
   /* ---- What goes through the press. The meter, the receipt and its totals are all counted
-     from this one table, so changing a word or its pieces keeps them in step. ---- */
+     from these tables, so changing a word or its pieces keeps them in step (the captions
+     spell their counts out in words, so those are matched by hand). ---- */
   const PRICE = 2; // cookies per token
-  const ENGLISH = [
-    { text: 'Hello world', pieces: ['Hello', ' world'], line: 'c1' },
-    { text: 'unbelievable', pieces: ['un', 'believ', 'able'], line: 'c2' },
+  const WORDS = {
+    hello: { text: 'Hello world', pieces: ['Hello', ' world'], line: TTY.t({ en: 'Hello world: two tokens. A bargain.', ko: 'Hello world는 두 토큰. 거저네요.' }) },
+    thanks: { text: 'Thank you', pieces: ['Thank', ' you'], line: TTY.t({ en: 'Thank you: two tokens. A bargain.', ko: 'Thank you는 두 토큰. 거저네요.' }) },
+    work: { text: 'Good work', pieces: ['Good', ' work'], line: TTY.t({ en: 'Good work: two tokens. A bargain.', ko: 'Good work는 두 토큰. 거저네요.' }) },
+    unbelievable: { text: 'unbelievable', pieces: ['un', 'believ', 'able'], line: TTY.t({ en: 'un, believ, able. Three tokens, still believable.', ko: 'un, believ, able. 세 토큰, 아직은 믿을 만하죠.' }) },
+    strawberry: { text: 'strawberry', pieces: ['str', 'aw', 'berry'], line: TTY.t({ en: 'str, aw, berry. Three tokens. Don’t ask about the r’s.', ko: 'str, aw, berry. 세 토큰. r이 몇 개인지는 묻지 마세요.' }) },
+  };
+  // A shift: an English greeting, one longer word, then the same greeting in Korean.
+  // Each shift (Next shift, or the encore) moves to the next; the first is picked at random.
+  const SHIFTS = [
+    { english: [WORDS.hello, WORDS.unbelievable], korean: '안녕하세요', line: TTY.t({ en: '안녕하세요… same hello, five already?', ko: '안녕하세요… 같은 인사인데 벌써 다섯 개?' }) },
+    { english: [WORDS.thanks, WORDS.strawberry], korean: '감사합니다', line: TTY.t({ en: '감사합니다… same thanks, five already?', ko: '감사합니다… 같은 말인데 벌써 다섯 개?' }) },
+    { english: [WORDS.work, WORDS.unbelievable], korean: '수고하셨습니다', line: TTY.t({ en: '수고하셨습니다… same thing, seven already?', ko: '수고하셨습니다… 같은 말인데 벌써 일곱 개?' }) },
   ];
-  const KOREAN = '안녕하세요';
+  let shiftNo = Math.floor(Math.random() * SHIFTS.length);
+  let ENGLISH = SHIFTS[shiftNo].english;
+  let KOREAN = SHIFTS[shiftNo].korean;
   const receiptRows = () => [
     ...ENGLISH.map((r) => [r.text, r.pieces.length]),
     [t.receipt.syllables(KOREAN), [...KOREAN].length],
@@ -512,7 +521,7 @@
     });
     await spreadTo(syl, 10);
     add(syl.length);
-    say(t.c3);
+    say(SHIFTS[shiftNo].line);
     lamp.classList.add('on');
     const blink = lamp.animate([{ opacity: 1 }, { opacity: .35 }], { duration: 260, iterations: Infinity, direction: 'alternate' });
     await sleep(1200);
@@ -543,7 +552,7 @@
     await sleep(2400);
     return bits;
   }
-  // Twelve jamo chips must fit on a phone's belt: shrink them together if needed.
+  // Twelve to sixteen jamo chips must fit on a phone's belt: shrink them together if needed.
   function fit(items, gap) {
     const total = items.reduce((s, i) => s + i.w, 0) + gap * (items.length - 1);
     const room = lane.clientWidth * .96;
@@ -556,7 +565,7 @@
     const r = t.receipt;
     const rows = receiptRows();
     const tokens = totalTokens();
-    receipt.innerHTML = `<h2>${r.title}</h2><p class="no">${r.no}</p>${rows.map(([a, b]) => `<p class="row"><span>${a}</span><span>${b}</span></p>`).join('')}<p class="row total"><span>${r.tokens}</span><span>${tokens}</span></p><p class="row"><span>${r.total}</span><span>${r.cost(tokens * PRICE)}</span></p><p class="foot">${r.foot}</p>`;
+    receipt.innerHTML = `<h2>${r.title}</h2><p class="no">${r.no}</p>${rows.map(([a, b]) => `<p class="row"><span>${a}</span><span>${b}</span></p>`).join('')}<p class="row total"><span>${r.tokens}</span><span>${tokens}</span></p><p class="row"><span>${r.total}</span><span>${r.cost(tokens * PRICE)}</span></p><p class="row"><span>${r.answer[0]}</span><span>${r.answer[1]}</span></p><p class="foot">${r.foot}</p>`;
     if (TTY.reduce) { receipt.style.transform = 'none'; return Promise.resolve(); }
     const a = receipt.animate([{ transform: 'translateY(105%)' }, { transform: 'translateY(0)' }], { duration: 1800, easing: 'steps(14, end)', fill: 'forwards' });
     return a.finished.then(() => { receipt.style.transform = 'none'; a.cancel(); });
@@ -565,10 +574,16 @@
   /* ---- Run ---- */
   let running = false;
   let encore = null;
+  let shifts = 0;
   async function run() {
     if (running) return;
     clearTimeout(encore);
     running = true;
+    if (shifts++) {
+      shiftNo = (shiftNo + 1) % SHIFTS.length;
+      ENGLISH = SHIFTS[shiftNo].english;
+      KOREAN = SHIFTS[shiftNo].korean;
+    }
     again.classList.remove('on');
     receipt.style.transform = '';
     receipt.innerHTML = '';
@@ -579,7 +594,7 @@
     lamp.classList.remove('on');
     caption.textContent = '';
     await sleep(500);
-    for (const r of ENGLISH) await englishRound(r.text, r.pieces, t[r.line]);
+    for (const r of ENGLISH) await englishRound(r.text, r.pieces, r.line);
     const bits = await koreanRound();
     caption.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' }).finished.then((a) => { caption.textContent = ''; caption.getAnimations().forEach((x) => x.cancel()); });
     belt.classList.add('run');

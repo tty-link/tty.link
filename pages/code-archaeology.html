@@ -12,7 +12,8 @@
 <style>
   /* A dig through a codebase: each era left a layer, and each layer kept something.
      A brush (the pointer, or one that works on its own) clears the dust off one fossil
-     after another, and each gets a museum label. */
+     after another, and each gets a museum label, dated by git blame. Every dig site holds
+     several finds per layer, so the next visit turns up different ones. */
   :root {
     --sky: #f6e7c8;
     --ink: #2a2118;
@@ -119,6 +120,8 @@
   .tag .spec { display: block; font: 600 .82em 'IBM Plex Mono', monospace; color: var(--soft); }
   .tag .name { display: block; margin: .15em 0 .3em; font-weight: 700; font-size: 1.08em; }
   .tag .note { font-style: italic; }
+  /* the credit line a museum label ends with, here from git blame */
+  .tag .blame, .card .blame { display: block; margin-top: .4em; font: 500 .8em 'IBM Plex Mono', 'Gowun Batang', monospace; color: var(--soft); }
   .lang-ko .tag .note { font-style: normal; }
 
   /* The verdict lands in the empty topsoil band, so no fossil is covered. */
@@ -199,13 +202,14 @@
     <p class="era" style="top: 60%"><b>2014</b><span class="label" data-lang="en">jQuery deposits</span><span class="label" data-lang="ko">jQuery 매장층</span></p>
     <p class="era" style="top: 81%"><b>2011</b><span class="label" data-lang="en">The TODO layer</span><span class="label" data-lang="ko">TODO 지층</span></p>
 
-    <!-- fossils: x/y in % of the ground; the order is the order the brush visits them -->
-    <div class="fossil trilobite" data-at="34 66" tabindex="0" role="button"><span class="stone">var self = this;</span></div>
-    <div class="fossil amber" data-at="30 46" data-at-narrow="33 41" tabindex="0" role="button"><span class="stone">// do not touch</span></div>
-    <div class="fossil" data-at="74 46" data-at-narrow="62 52" tabindex="0" role="button"><span class="stone">// temporary fix, remove by Friday</span></div>
-    <div class="fossil bones" data-at="62 25" data-at-narrow="55 25" tabindex="0" role="button"><span class="stone">user-service</span><span class="stone">user-service-v2</span><span class="stone">user-service-final</span></div>
-    <div class="fossil spine" data-at="30 89" data-at-narrow="50 91" tabindex="0" role="button"><span class="stone">function handleEverything() { /* 900 lines */ }</span></div>
-    <div class="fossil" data-at="76 85" data-at-narrow="72 79" tabindex="0" role="button"><span class="stone">// TODO: fix later</span></div>
+    <!-- fossil slots: x/y in % of the ground; the order is the order the brush visits them.
+         What is buried in each slot comes from FINDS in the script. -->
+    <div class="fossil trilobite" data-at="34 66" data-at-narrow="40 66" tabindex="0" role="button"></div>
+    <div class="fossil amber" data-at="30 46" data-at-narrow="42 41" tabindex="0" role="button"></div>
+    <div class="fossil" data-at="74 46" data-at-narrow="62 52" tabindex="0" role="button"></div>
+    <div class="fossil bones" data-at="62 25" data-at-narrow="55 29" tabindex="0" role="button"></div>
+    <div class="fossil spine" data-at="30 89" data-at-narrow="50 91" tabindex="0" role="button"></div>
+    <div class="fossil" data-at="76 85" data-at-narrow="72 79" tabindex="0" role="button"></div>
 
     <canvas class="dust" aria-hidden="true"></canvas>
     <div class="tags"></div>
@@ -238,23 +242,93 @@
   const stamp = document.querySelector('.stamp');
   const fossils = [...document.querySelectorAll('.fossil')];
 
-  const LABELS = TTY.t({
-    en: [
-      { spec: 'Specimen 14-01', name: 'var self = this', note: 'A trilobite of the callback era. Survived three refactors and one rewrite.' },
-      { spec: 'Specimen 17-02', name: '// do not touch', note: 'Perfectly preserved in amber. Nobody ever dared.' },
-      { spec: 'Specimen 17-05', name: 'The temporary fix', note: 'Says "remove by Friday". Does not say which year.' },
-      { spec: 'Specimen 19-11', name: 'user-service, in pieces', note: 'One service, found scattered across fourteen repositories.' },
-      { spec: 'Specimen 11-00', name: 'handleEverything()', note: 'A 900-line function, fully articulated. Every joint still holds.' },
-      { spec: 'Specimen 11-07', name: '// TODO: fix later', note: 'The oldest known TODO. Later never came.' },
+  // What each slot may hold: the code as it was found (ko when the Korean dig differs),
+  // and its museum label. spec is the specimen number, blame who git blame names.
+  const FINDS = [
+    [ // 2014, the trilobite
+      { code: 'var self = this;',
+        en: { spec: 'Specimen 14-01', blame: 'dhyoon (left 2016)', name: 'var self = this', note: 'A trilobite of the callback era. Survived three refactors and one rewrite.' },
+        ko: { spec: '표본 14-01', blame: 'dhyoon (2016 퇴사)', name: 'var self = this', note: '콜백 시대의 삼엽충. 리팩터링 세 번과 전면 재작성 한 번에서 살아남음.' } },
+      { code: '}); }); }); });',
+        en: { spec: 'Specimen 14-03', blame: 'mlee (left 2015)', name: 'Callback pyramid, tail end', note: 'Only the closing brackets survive. The opening has never been found.' },
+        ko: { spec: '표본 14-03', blame: 'mlee (2015 퇴사)', name: '콜백 피라미드 꼬리 부분', note: '닫는 괄호만 남았음. 여는 쪽은 아직 발견되지 않음.' } },
+      { code: '<!--[if lt IE 9]>', codeKo: '<object classid="clsid:…">',
+        en: { spec: 'Specimen 14-08', blame: 'webmaster (role abolished)', name: 'Ritual object', note: 'Offered to Internet Explorer 8 in exchange for safe passage.' },
+        ko: { spec: '표본 14-08', blame: 'webmaster (직책 폐지)', name: '액티브X 설치 유도 장치', note: '“보안 프로그램을 설치해야 합니다.” 이 지층의 모든 길이 여기로 통했음.' } },
+      { code: "$('.btn').live('click', save);",
+        en: { spec: 'Specimen 14-05', blame: 'mlee (left 2015)', name: 'An extinct method', note: 'Removed from jQuery in 2013. Still bound to every button here in 2014.' },
+        ko: { spec: '표본 14-05', blame: 'mlee (2015 퇴사)', name: '멸종한 메서드', note: 'jQuery에서는 2013년에 사라졌음. 이 지층에선 2014년에도 버튼마다 붙어 있음.' } },
     ],
-    ko: [
-      { spec: '표본 14-01', name: 'var self = this', note: '콜백 시대의 삼엽충. 리팩터링 세 번과 전면 재작성 한 번에서 살아남음.' },
-      { spec: '표본 17-02', name: '// do not touch', note: '호박 속에 완벽하게 보존됨. 아무도 손대지 못했으니까.' },
-      { spec: '표본 17-05', name: '임시 수정', note: '"금요일까지 삭제"라고 적혀 있음. 몇 년도 금요일인지는 안 적혀 있음.' },
-      { spec: '표본 19-11', name: '조각난 user-service', note: '서비스 하나가 저장소 열네 곳에 흩어져 발견됨.' },
-      { spec: '표본 11-00', name: 'handleEverything()', note: '900줄짜리 함수 화석. 뼈마디가 지금도 전부 붙어 있음.' },
-      { spec: '표본 11-07', name: '// TODO: fix later', note: '가장 오래된 TODO. \'나중\'은 끝내 오지 않았다.' },
+    [ // 2017, in amber
+      { code: '// do not touch',
+        en: { spec: 'Specimen 17-02', blame: 'sjchoi (now CTO)', name: '// do not touch', note: 'Perfectly preserved in amber. Nobody ever dared.' },
+        ko: { spec: '표본 17-02', blame: 'sjchoi (현 CTO)', name: '// do not touch', note: '호박 속에 완벽하게 보존됨. 아무도 손대지 못했으니까.' } },
+      { code: "// I don't know why this works",
+        en: { spec: 'Specimen 17-04', blame: 'hpark (left 2018)', name: 'Unexplained mechanism', note: 'Sealed in amber along with the author’s confusion.' },
+        ko: { spec: '표본 17-04', blame: 'hpark (2018 퇴사)', name: '작동 원리 미상', note: '작성자의 당혹감까지 함께 굳었음.' } },
+      { code: '// ask Dave before changing', codeKo: '// 수정 전 김 대리에게 문의',
+        en: { spec: 'Specimen 17-09', blame: 'dave (left 2017)', name: 'A standing order', note: 'Written by Dave himself, the year he left. Nobody has asked him yet.' },
+        ko: { spec: '표본 17-09', blame: '김 대리 본인 (2017 퇴사)', name: '구전 지침', note: '김 대리가 직접 적고 그해 퇴사했음. 아직 아무도 못 물어봄.' } },
     ],
+    [ // 2017, plain stone
+      { code: '// temporary fix, remove by Friday',
+        en: { spec: 'Specimen 17-05', blame: 'you', name: 'The temporary fix', note: 'Says “remove by Friday”. Does not say which year.' },
+        ko: { spec: '표본 17-05', blame: '본인', name: '임시 수정', note: '“금요일까지 삭제”라고 적혀 있음. 몇 년도 금요일인지는 안 적혀 있음.' } },
+      { code: "setTimeout(render, 0); // don't ask",
+        en: { spec: 'Specimen 17-07', blame: 'yjlee (left 2019)', name: 'The zero-millisecond fix', note: 'Fixed a race condition by waiting zero milliseconds. It worked.' },
+        ko: { spec: '표본 17-07', blame: 'yjlee (2019 퇴사)', name: '0밀리초 수정', note: '0밀리초 기다려서 경쟁 상태를 고쳤음. 그리고 고쳐졌음.' } },
+      { code: 'if (user.id === 4217) return; // hotfix',
+        en: { spec: 'Specimen 17-11', blame: 'summer intern, 2017', name: 'Exception 4217', note: 'An exception made for one user. Nobody remembers who.' },
+        ko: { spec: '표본 17-11', blame: '2017년 여름 인턴', name: '4217번 예외', note: '사용자 한 명만을 위한 예외. 그게 누구였는지는 아무도 모름.' } },
+    ],
+    [ // 2019, bones in pieces
+      { code: ['user-service', 'user-service-v2', 'user-service-final'],
+        en: { spec: 'Specimen 19-11', blame: 'platform team (disbanded)', name: 'user-service, in pieces', note: 'One service, found scattered across fourteen repositories.' },
+        ko: { spec: '표본 19-11', blame: '플랫폼팀 (해체)', name: '조각난 user-service', note: '서비스 하나가 저장소 열네 곳에 흩어져 발견됨.' } },
+      { code: ['/api/v1', '/api/v2', '/api/v3'],
+        en: { spec: 'Specimen 19-14', blame: 'four teams', name: 'Three generations of one API', note: 'All three still in production. Something calls v1 every Tuesday.' },
+        ko: { spec: '표본 19-14', blame: '네 팀', name: 'API 삼대', note: '셋 다 아직 운영 중. 매주 화요일마다 누군가 v1을 부름.' } },
+      { code: ['node_modules', 'node_modules', 'node_modules'],
+        en: { spec: 'Specimen 19-20', blame: 'npm install', name: 'node_modules, nested', note: 'Three nested copies. Heavier than the rest of the site combined.' },
+        ko: { spec: '표본 19-20', blame: 'npm install', name: '겹겹이 node_modules', note: '세 겹으로 중첩됨. 무게가 유적 나머지를 다 합친 것보다 무거움.' } },
+    ],
+    [ // 2011, the long spine
+      { code: 'function handleEverything() { /* 900 lines */ }',
+        en: { spec: 'Specimen 11-00', blame: 'the founder', name: 'handleEverything()', note: 'A 900-line function, fully articulated. Every joint still holds.' },
+        ko: { spec: '표본 11-00', blame: '창업자', name: 'handleEverything()', note: '900줄짜리 함수 화석. 뼈마디가 지금도 전부 붙어 있음.' } },
+      { code: 'catch (Exception e) { /* should never happen */ }',
+        en: { spec: 'Specimen 11-03', blame: 'yhshin (left 2012)', name: 'The impossible case', note: 'Happened 41,000 times in 2012 alone.' },
+        ko: { spec: '표본 11-03', blame: 'yhshin (2012 퇴사)', name: '일어날 리 없는 일', note: '2012년 한 해에만 41,000번 일어났음.' } },
+      { code: `"SELECT * FROM users WHERE id = '" + id + "'"`,
+        en: { spec: 'Specimen 11-05', blame: 'contractor, 2011', name: 'Hand-assembled SQL', note: 'Still opens for anyone who knocks. One quote mark is enough.' },
+        ko: { spec: '표본 11-05', blame: '외주, 2011', name: '손으로 이어 붙인 SQL', note: '지금도 누가 두드리든 열어 줌. 따옴표 하나면 충분함.' } },
+    ],
+    [ // 2011, plain stone
+      { code: '// TODO: fix later',
+        en: { spec: 'Specimen 11-07', blame: 'jhkim (left 2016)', name: '// TODO: fix later', note: 'The oldest known TODO. Later never came.' },
+        ko: { spec: '표본 11-07', blame: 'jhkim (2016 퇴사)', name: '// TODO: fix later', note: '가장 오래된 TODO. ‘나중’은 끝내 오지 않았다.' } },
+      { code: '// FIXME',
+        en: { spec: 'Specimen 11-09', blame: 'anonymous', name: 'A bare FIXME', note: 'No further detail. Scholars still argue about what was broken.' },
+        ko: { spec: '표본 11-09', blame: '익명', name: '설명 없는 FIXME', note: '더 적힌 건 없음. 무엇이 고장이었는지 학계에서도 의견이 갈림.' } },
+      { code: '// sorry about this', codeKo: '// 죄송합니다',
+        en: { spec: 'Specimen 11-12', blame: 'you', name: 'An apology', note: 'The only apology recovered from the site.' },
+        ko: { spec: '표본 11-12', blame: '본인', name: '사과문', note: '현장에서 나온 유일한 사과문.' } },
+    ],
+  ];
+  // Each visit turns the dig over: a counter kept in this browser moves every slot on to its
+  // next find (a first visit starts somewhere random). Slots are offset so one visit mixes them.
+  let visit = Math.floor(Math.random() * 3);
+  try {
+    const kept = localStorage.getItem('tty.dig');
+    if (kept !== null && Number.isFinite(+kept)) visit = +kept;
+    localStorage.setItem('tty.dig', String(visit + 1));
+  } catch (e) { /* storage blocked: a random dig */ }
+  const LABELS = fossils.map((f, k) => {
+    const find = FINDS[k][(visit + k) % FINDS[k].length];
+    const code = (TTY.lang === 'ko' && find.codeKo) || find.code;
+    f.replaceChildren(...[].concat(code).map((text) => Object.assign(document.createElement('span'), { className: 'stone', textContent: text })));
+    const label = find[TTY.lang];
+    return { spec: label.spec, name: label.name, note: label.note, blame: `git blame: ${label.blame}` };
   });
 
   // Place fossils from data-at (data-at-narrow on phone-sized stages) and build their tags.
@@ -269,10 +343,8 @@
     const [x, y] = f.dataset.at.split(' ').map(Number);
     const tag = document.createElement('div');
     tag.className = 'tag';
-    tag.innerHTML = '<span class="spec"></span><span class="name"></span><span class="note"></span>';
-    tag.children[0].textContent = LABELS[i].spec;
-    tag.children[1].textContent = LABELS[i].name;
-    tag.children[2].textContent = LABELS[i].note;
+    tag.innerHTML = '<span class="spec"></span><span class="name"></span><span class="note"></span><span class="blame"></span>';
+    ['spec', 'name', 'note', 'blame'].forEach((key, k) => { tag.children[k].textContent = LABELS[i][key]; });
     // labels sit on the side with more room, above unless the fossil is near the top
     tag.style.left = x > 55 ? `calc(${x}% - clamp(170px, 30cqmin, 270px) - 3%)` : `calc(${x}% + 3%)`;
     tag.style.top = y < 40 ? `calc(${y}% + 4%)` : `calc(${y}% - 4%)`;

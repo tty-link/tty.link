@@ -61,6 +61,13 @@
   .cable-shadow { fill: none; stroke: rgba(0, 0, 0, .28); stroke-width: 9; stroke-linecap: round; }
   .label rect { fill: var(--tag); stroke: #c9c4b8; stroke-width: 1.2; }
   .label text { font: 700 11px 'Red Hat Mono', monospace; fill: var(--ink); text-anchor: middle; }
+  .tape rect { fill: #efe2bb; stroke: #cbb98a; stroke-width: 1; }
+  .tape text { font: 700 12px 'Red Hat Mono', monospace; fill: #3b3426; text-anchor: middle; }
+  .lang-ko .tape text { font-family: 'IBM Plex Sans KR', sans-serif; font-size: 12px; }
+  /* Port lights flicker with traffic; an empty port stays dark. */
+  .led.live { animation: traffic var(--blink, 1s) steps(2, jump-none) infinite; }
+  @keyframes traffic { 0%, 60% { opacity: 1; } 61%, 100% { opacity: .25; } }
+  @media (prefers-reduced-motion: reduce) { .led.live { animation: none; } }
   .warn rect { fill: #ffd60a; stroke: #1f2228; stroke-width: 2; }
   .warn text { font: 700 12px 'Red Hat Mono', monospace; fill: #1f2228; }
   .lang-ko .warn text { font-family: 'IBM Plex Sans KR', sans-serif; font-size: 13px; }
@@ -76,8 +83,9 @@
   .ticks span:first-child { translate: 0 0; }
   .ticks span:last-child { translate: -100% 0; }
   .slider input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
-  /* Opened on its own on a phone, _kit.js puts a small ":)" button bottom-right; keep the slider's end clear of it. */
-  @media (max-width: 600px) { html:not(.embedded) .slider { padding-right: 44px; } }
+  /* Opened on its own, _kit.js puts its links (on a phone, a small ":)" button) bottom-right;
+     keep the slider and its 365 tick clear of them. */
+  html:not(.embedded) .room { padding-bottom: max(clamp(14px, 3.8cqmin, 38px), 48px); }
 
   .note { position: absolute; z-index: 2; right: 3%; top: 8%; width: clamp(110px, 20cqmin, 170px); padding: .6em .7em .8em; background: #fff59d; rotate: 6deg; box-shadow: 0 4px 8px rgba(0, 0, 0, .18); font-size: clamp(15px, 2.6cqmin, 22px); opacity: 0; pointer-events: none; }
   .note > font-kku { color: #2f2a1f; }
@@ -120,6 +128,7 @@
       <g class="ties"></g>
       <g class="labels"></g>
       <g class="mystery-label"></g>
+      <g class="tape-label"></g>
       <g class="parcel" opacity="0">
         <rect x="608" y="476" width="96" height="46" rx="5" fill="#c79a5b" stroke="#7d5a2e" stroke-width="2.5"/>
         <path d="M608 492 H704 M656 476 V522" stroke="#7d5a2e" stroke-width="2.5"/>
@@ -158,24 +167,28 @@
     return e;
   };
 
+  // A tiny seeded noise so the mess is the same mess every time.
+  const rnd = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
   const COLORS = ['#e63946', '#f4a261', '#e9c46a', '#2a9d8f', '#4f8fd9', '#8e7dbe', '#ff70a6', '#6a994e'];
   const NAMES = TTY.t({
     en: ['WEB-01', 'WEB-02', 'DB', 'CACHE', 'MAIL', 'VPN', 'PRINTER', 'NAS'],
     ko: ['WEB-01', 'WEB-02', 'DB', 'CACHE', 'MAIL', 'VPN', '프린터', 'NAS'],
   });
-  const portX = (i) => 136 + i * 76;
+  // Ten ports on the panel and the switch. The eight cables use ports 1–8; port 0 and port 9
+  // are spare on day 1 (the temporary cable and the mystery cable find them later).
+  const portAt = (k) => 112 + k * 64;
+  const portX = (i) => portAt(i + 1);
   const TOP = 110, BOTTOM = 418;
+  const SPARE_TEMP = 9, SPARE_MYSTERY = 0;
 
   // Ports and switch lights.
-  for (let i = 0; i < 8; i++) {
-    el('rect', { x: portX(i) - 14, y: 88, width: 28, height: 24, rx: 3, fill: '#14161a' }, svg.querySelector('.panel-ports'));
-    el('rect', { x: portX(i) - 14, y: 410, width: 28, height: 24, rx: 3, fill: '#14161a' }, svg.querySelector('.switch-ports'));
-    el('circle', { class: 'led', cx: portX(i) - 8, cy: 448, r: 3.2, fill: '#3ddc84' }, svg.querySelector('.switch-leds'));
+  for (let k = 0; k < 10; k++) {
+    el('rect', { x: portAt(k) - 13, y: 88, width: 26, height: 24, rx: 3, fill: '#14161a' }, svg.querySelector('.panel-ports'));
+    el('rect', { x: portAt(k) - 13, y: 410, width: 26, height: 24, rx: 3, fill: '#14161a' }, svg.querySelector('.switch-ports'));
+    el('circle', { class: 'led', cx: portAt(k) - 7, cy: 448, r: 3.2, fill: '#2a3a30', style: `--blink: ${(.5 + rnd(k * 3 + 1) * 1.1).toFixed(2)}s` }, svg.querySelector('.switch-leds'));
   }
   const leds = [...svg.querySelectorAll('.led')];
-
-  // A tiny seeded noise so the mess is the same mess every time.
-  const rnd = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 
   // Where cable i plugs into the switch: on day 1 straight down, later some get re-patched.
   const REPATCH = [0, 1, 5, 3, 7, 2, 6, 4];
@@ -219,6 +232,9 @@
   const cables = COLORS.map((c) => ({ shadow: el('path', { class: 'cable-shadow' }, cablesG), line: el('path', { class: 'cable', stroke: c }, cablesG) }));
   const mysteryShadow = el('path', { class: 'cable-shadow' }, cablesG);
   const mystery = el('path', { class: 'cable', stroke: '#9aa0a6', 'stroke-dasharray': '1', pathLength: 1 }, cablesG);
+  // The temporary cable: from the spare switch port, out of the rack, to somewhere.
+  const tempShadow = el('path', { class: 'cable-shadow' }, cablesG);
+  const temp = el('path', { class: 'cable', stroke: '#eceae4', 'stroke-dasharray': '1', pathLength: 1 }, cablesG);
 
   // Zip ties around the bundle.
   const tiesG = svg.querySelector('.ties');
@@ -252,6 +268,11 @@
     t.textContent = line;
   });
 
+  // Masking tape on the temporary cable. Printed labels peel; this one never does.
+  const tapeG = el('g', { class: 'tape', opacity: 0 }, svg.querySelector('.tape-label'));
+  el('rect', { x: -24, y: -10, width: 48, height: 20, rx: 1.5 }, tapeG);
+  el('text', { y: 4.5 }, tapeG).textContent = TTY.t({ en: 'TEMP', ko: '임시' });
+
   const STAGES = TTY.t({
     en: [
       [1, '<b>Day 1.</b> Cable management complete. Photo taken for the wiki.'],
@@ -284,10 +305,12 @@
       c.shadow.setAttribute('transform', 'translate(2 4)');
     });
 
-    // Labels hang just under the panel and peel off one by one.
+    // Labels hang just under the panel and peel off one by one. The purple one (VPN) goes
+    // twice as fast, so by day 180 nobody can say what it does; by day 365 every printed
+    // label is gone and only the masking tape on the temporary cable is left.
     labels.forEach((g, i) => {
       const [x, y] = points(i, t)[1];
-      const peel = Math.max(0, t * 1.6 - rnd(i * 5) * .9);
+      const peel = Math.max(0, t * (i === 5 ? 3.2 : 1.6) - rnd(i * 5) * .9 + Math.pow(t, 6) * .8);
       const drop = peel > .75 ? (peel - .75) * 420 : 0;
       g.setAttribute('transform', `translate(${x.toFixed(1)} ${(y + 4 + drop).toFixed(1)}) rotate(${(peel * 70 * (i % 2 ? 1 : -1)).toFixed(1)} -26 -9)`);
       g.setAttribute('opacity', drop > 120 ? 0 : 1);
@@ -302,9 +325,22 @@
     const slide = Math.max(0, (t - .55) / .45);
     ties[0].g.setAttribute('transform', `translate(${slide * 40} ${slide * 90}) rotate(${slide * 25} 400 232)`);
 
-    // The mystery cable creeps in from outside the rack.
+    // The temporary cable (day 30): out of the spare switch port and off the edge of the rack.
+    // It sags a little more every month and never leaves.
+    const tp = Math.max(0, Math.min(1, (t - .05) / .03));
+    const sag = t * 40;
+    const td = smooth([[portAt(SPARE_TEMP), BOTTOM], [portAt(SPARE_TEMP) + 6, BOTTOM - 50], [700, 330 + sag], [742, 300 + sag], [790, 330 + sag * .5], [840, 300]]);
+    temp.setAttribute('d', td);
+    tempShadow.setAttribute('d', td);
+    tempShadow.setAttribute('transform', 'translate(2 4)');
+    temp.style.strokeDashoffset = 1 - tp;
+    tempShadow.setAttribute('opacity', tp > .98 ? 1 : 0);
+    tapeG.setAttribute('opacity', tp > .98 ? 1 : 0);
+    tapeG.setAttribute('transform', `translate(${portAt(SPARE_TEMP) + 4} ${BOTTOM - 62}) rotate(${-6 + t * 4})`);
+
+    // The mystery cable creeps in from outside the rack and takes the other spare port.
     const m = Math.max(0, Math.min(1, (t - .78) / .14));
-    const md = smooth([[-40, 300], [30, 250], [120, 340], [240, 180], [330, 330], [portX(4) - 30, 300], [portX(5), BOTTOM]].map(([x, y], k) => [x + Math.sin(k * 2) * t * 20, y]));
+    const md = smooth([[-40, 300], [30, 250], [120, 340], [240, 180], [330, 330], [portAt(SPARE_MYSTERY) + 70, 330], [portAt(SPARE_MYSTERY), BOTTOM]].map(([x, y], k) => [x + Math.sin(k * 2) * t * 20, y]));
     mystery.setAttribute('d', md);
     mysteryShadow.setAttribute('d', md);
     mysteryShadow.setAttribute('transform', 'translate(2 4)');
@@ -313,8 +349,14 @@
     warnG.setAttribute('opacity', m > .98 ? 1 : 0);
     warnG.setAttribute('transform', 'translate(118 176) rotate(-4)');
 
-    // Lights: on day 1 all green; by day 365 one blinks amber and nobody asks why.
-    leds.forEach((l, i) => l.setAttribute('fill', t > .6 && i === 5 ? '#ffb703' : '#3ddc84'));
+    // Lights: a port lights up once something is plugged in and flickers with traffic. After
+    // day 220 one kinked cable drops to 100 Mb/s and its light turns amber; nobody asks why.
+    const plugged = (k) => (k >= 1 && k <= 8) || (k === SPARE_TEMP && tp > .98) || (k === SPARE_MYSTERY && m > .98);
+    leds.forEach((l, k) => {
+      const on = plugged(k);
+      l.classList.toggle('live', on);
+      l.setAttribute('fill', !on ? '#2a3a30' : t > .6 && k === 6 ? '#ffb703' : '#3ddc84');
+    });
 
     note.style.opacity = t > .88 ? 1 : 0;
     parcel.setAttribute('opacity', day >= 366 ? 1 : 0);
@@ -331,7 +373,7 @@
 
   // ---- time-lapse ----
   let playing = null;
-  let touched = 0;
+  let touched = -Infinity; // (0 here held the autoplay back for the page's first 3.5 s)
   // Keyframes of the auto play: [day, time ms]; it lingers on the milestones.
   const PLAY = [[1, 0], [1, 1200], [30, 2400], [30, 3600], [90, 4900], [90, 6100], [180, 7300], [180, 8400], [300, 9600], [300, 10700], [365, 12000], [365, 13800], [366, 14200]];
   function dayAt(ms) {

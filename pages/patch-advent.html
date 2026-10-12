@@ -120,6 +120,10 @@
   .bay.last .door { background: linear-gradient(160deg, #ffe8a3, #e8b34a); }
   .bay.last .door .led { background: var(--warm-2); box-shadow: 0 0 1.4cqi var(--warm-2); }
   .bay.green .inside svg .glow { fill: var(--led); }
+  /* After the restart, the power bay asks again. */
+  .bay.again .inside svg path { stroke: var(--amber); }
+  .bay.again .inside svg { animation: nag 1s steps(2, end) infinite; }
+  @keyframes nag { 50% { opacity: .3; } }
 
   .rack.dark .bay { filter: brightness(.45); transition: filter .4s; }
   .rack.dark .door .led { animation: none; opacity: .15; }
@@ -146,6 +150,7 @@
   .lang-ko .receipt .row:last-child { font-weight: 400; }
   .receipt .no { color: #8a8f99; }
   .receipt:empty { display: none; }
+  .receipt.again { padding-top: 1em; padding-bottom: 1.2em; font-size: clamp(12px, 2.6cqmin, 20px); }
 
   /* ---- Restart ---- */
   .restart {
@@ -186,29 +191,34 @@
   }
   @keyframes breathe { 50% { box-shadow: 0 1.4cqi 0 #157a56, 0 0 0 3.4cqi rgba(56, 217, 150, .1); } }
   .restart .later { border: 0; background: none; color: #6a7286; font-size: 3.8cqi; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
+  .restart .total { margin-top: 1.4cqi; font-size: 3.3cqi; color: #9a7b3c; }
+  .restart .total:empty { display: none; }
 
   .done {
     position: absolute;
     left: 50%;
-    bottom: 6cqh;
+    bottom: max(8px, 3cqh);
     padding: .7em 1.2em;
     border-radius: 999px;
     background: #fff3cf;
     color: var(--ink);
     font-weight: 700;
-    font-size: clamp(13px, 2.4cqmin, 19px);
+    font-size: clamp(12px, 2.4cqmin, 19px);
     white-space: nowrap;
     translate: -50% 0;
     opacity: 0;
   }
   .done > font-kku { color: var(--ink); }
-  .ring { position: absolute; left: 50%; top: 50%; width: clamp(60px, 14cqmin, 110px); translate: -50% -50%; opacity: 0; }
+  .ring { position: absolute; left: 50%; top: 50%; width: clamp(60px, 14cqmin, 110px); translate: -50% -50%; opacity: 0; pointer-events: none; }
   .ring circle { fill: none; stroke-width: 6; }
+  .progress { position: absolute; left: 50%; top: calc(50% + clamp(60px, 14cqmin, 110px) / 2 + 1.6cqmin); translate: -50% 0; text-align: center; white-space: nowrap; color: var(--text); font-size: clamp(12px, 2.2cqmin, 17px); opacity: 0; pointer-events: none; }
+  .progress b { display: block; font-weight: 600; }
+  .progress span { display: block; margin-top: .3em; font-size: .85em; color: #b8c4dc; }
 
   .title h1 > font-kku { color: #fff3cf; }
 
   @media (prefers-reduced-motion: reduce) {
-    .snow i, .lights i, .door .led, .restart .now { animation: none; }
+    .snow i, .lights i, .door .led, .restart .now, .bay.again .inside svg { animation: none; }
     .door { transition: none; }
   }
 </style>
@@ -247,11 +257,13 @@
   <p class="why"></p>
   <button class="now" type="button"></button>
   <button class="later" type="button"></button>
+  <p class="total"></p>
 </section>
 <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
   <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,.15)"/>
   <circle class="arc" cx="50" cy="50" r="42" stroke="#38d996" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 50 50)"/>
 </svg>
+<p class="progress" aria-hidden="true"><b></b><span></span></p>
 <p class="done"></p>
 
 <script>
@@ -266,10 +278,11 @@
   const laterBtn = $('.restart .later');
   const done = $('.done');
   const ring = $('.ring');
+  const progress = $('.progress');
 
   const T = TTY.t({
     en: {
-      notes: [
+      pool: [
         "Updated: everyone's printer driver. Again.",
         "Removed: the 'remember me' box that remembered too much.",
         "Rotated: 'Spring2026!' to 'Summer2026!'.",
@@ -292,18 +305,34 @@
         'Reset: the router, by unplugging it and plugging it back in.',
         'Applied: least privilege. Expected: grumbling.',
         'Revised: the incident plan. It now has a page 2.',
-        'Backed up: the backups.',
-        'Restart required.',
+        'Disabled: SMBv1. Waiting for the screaming.',
+        "Closed: the 'temporary' firewall rule, any to any.",
+        'Deleted: /test.php from production. And /test2.php.',
+        'Updated: log4j. Yes, still.',
+        'Turned off: directory listing on /backup/.',
+        "Retired: the shared 'team' account six people used.",
+        'Moved: the .env file out of the web root.',
+        'Enabled: auto-update. Disabled: auto-update (it restarted mid-demo).',
+        "Removed: the vendor's backdoor, a.k.a. 'remote support'.",
+        "Retired: the reception PC's 2009 operating system.",
+        'Renamed: passwords.xlsx to not_passwords.xlsx.',
+        'Unplugged: the Wi-Fi extender someone brought from home.',
       ],
+      backups: 'Backed up: the backups.',
+      required: 'Restart required.',
       restartTitle: 'Restart required.',
       restartWhy: '23 patches are waiting for one small act of courage.',
       now: 'Restart now',
       later: 'Remind me in 10 minutes',
-      snoozed: 'It has been 10 minutes.',
-      done: 'All 24 patches applied. Happy uptime.',
+      snoozed: ['It has been 10 minutes.', 'It has been 10 more minutes.'],
+      total: (t) => 'Snoozed so far: ' + t,
+      units: { d: 'd', h: 'h', m: 'min' },
+      working: 'Working on updates',
+      unplug: "Don't unplug the rack.",
+      done: 'All 24 patches applied. Uptime: 0 days.',
     },
     ko: {
-      notes: [
+      pool: [
         '업데이트: 모두의 프린터 드라이버. 또.',
         "삭제: 너무 많은 걸 기억하던 '로그인 유지' 체크박스",
         "변경: 'Spring2026!'을 'Summer2026!'로",
@@ -326,17 +355,41 @@
         '초기화: 공유기. 뽑았다가 다시 꽂아서.',
         '적용: 최소 권한 원칙. 예상: 원성.',
         '개정: 침해 대응 계획서. 이제 2쪽도 있음.',
-        '백업: 백업의 백업',
-        '재시작이 필요합니다.',
+        '비활성화: SMBv1. 누가 소리 지르나 기다리는 중.',
+        "닫음: '임시'로 열어 둔 방화벽 규칙 any → any",
+        '삭제: 운영 서버의 /test.php. 그리고 /test2.php.',
+        '업데이트: log4j. 네, 아직도요.',
+        '끔: /backup/ 디렉터리 목록 보기',
+        '정리: 여섯 명이 같이 쓰던 공용 계정',
+        '이동: 웹 루트에 있던 .env 파일',
+        '켬: 자동 업데이트. 끔: 자동 업데이트(시연 중에 재시작함).',
+        "제거: 제조사가 '원격 지원'이라 부르던 뒷문",
+        '은퇴: 안내 데스크 PC의 2009년산 운영체제',
+        '이름 변경: 비밀번호.xlsx → 비밀번호아님.xlsx',
+        '뽑음: 누가 집에서 가져온 와이파이 증폭기',
       ],
+      backups: '백업: 백업의 백업',
+      required: '재시작이 필요합니다.',
       restartTitle: '재시작이 필요합니다',
       restartWhy: '패치 23개가 작은 용기 하나를 기다리고 있어요.',
       now: '지금 재시작',
       later: '10분 뒤에 다시 알림',
-      snoozed: '10분 지났습니다.',
-      done: '패치 24개 적용 완료. 오늘도 무중단.',
+      snoozed: ['10분 지났습니다.', '또 10분 지났습니다.'],
+      total: (t) => '지금까지 미룬 시간: ' + t,
+      units: { d: '일', h: '시간', m: '분' },
+      working: '업데이트 작업 중',
+      unplug: '랙 전원을 뽑지 마세요.',
+      done: '패치 24개 적용 완료. 가동 시간 0일.',
     },
   });
+
+  // Behind the doors: 22 notes drawn from the pool each round, then the backups, then the
+  // one everyone knows. A 25th slip prints after the restart.
+  let notes = [];
+  const shuffleNotes = () => {
+    notes = [...T.pool].sort(() => Math.random() - .5).slice(0, 22).concat(T.backups, T.required, T.required);
+  };
+  shuffleNotes();
 
   /* ---- Snow and lights ---- */
   const snow = $('.snow');
@@ -388,7 +441,8 @@
     printed.push(i);
     const rows = printed.slice(-3).map((n) => `<p class="row"><span class="no">#${String(n + 1).padStart(2, '0')}</span><span></span></p>`).join('');
     receipt.innerHTML = rows;
-    receipt.querySelectorAll('.row').forEach((row, k) => { row.lastChild.textContent = T.notes[printed.slice(-3)[k]]; });
+    receipt.classList.toggle('again', i === 24);
+    receipt.querySelectorAll('.row').forEach((row, k) => { row.lastChild.textContent = notes[printed.slice(-3)[k]]; });
     if (!TTY.reduce && !quick) receipt.animate([{ transform: 'translateY(-14%)', clipPath: 'inset(0 0 40% 0)' }, { transform: 'none', clipPath: 'inset(0)' }], { duration: 380, easing: 'steps(6, end)' });
   }
   function open(i, quick) {
@@ -402,8 +456,18 @@
   /* ---- Restart ---- */
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   let restartTitle = '';
+  let snoozes = 0;
+  // 10 minutes per snooze, added up the way a calendar would: 1 h 20 min, 2 d 3 h.
+  const snoozedFor = () => {
+    const m = snoozes * 10, u = T.units;
+    const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), r = m % 60;
+    const join = (a, b) => (a + ' ' + b).trim();
+    if (d) return join(d + (ko ? u.d : ' ' + u.d), h ? h + (ko ? u.h : ' ' + u.h) : '');
+    if (h) return join(h + (ko ? u.h : ' ' + u.h), r ? r + (ko ? u.m : ' ' + u.m) : '');
+    return r + (ko ? u.m : ' ' + u.m);
+  };
   function showRestart(snoozed) {
-    const title = snoozed ? T.snoozed : T.restartTitle;
+    const title = snoozed ? T.snoozed[Math.min(snoozes, 2) - 1] : T.restartTitle;
     if (restartTitle !== title) {
       restartTitle = title;
       if (ko) {
@@ -417,12 +481,14 @@
       }
     }
     restart.querySelector('.why').textContent = T.restartWhy;
+    restart.querySelector('.total').textContent = snoozes ? T.total(snoozedFor()) : '';
     nowBtn.textContent = T.now;
     laterBtn.textContent = T.later;
     restart.classList.add('on');
     if (!TTY.reduce) restart.animate([{ opacity: 0, transform: 'scale(.85)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
   }
   async function snooze() {
+    snoozes += 1;
     if (!TTY.reduce) await restart.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(30%) scale(.9)' }], { duration: 260, easing: 'ease-in' }).finished;
     restart.classList.remove('on');
   }
@@ -435,7 +501,17 @@
     rack.classList.add('dark');
     ring.style.opacity = 1;
     const arc = ring.querySelector('.arc');
-    if (!TTY.reduce) await arc.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 1600, easing: 'ease-in-out', fill: 'forwards' }).finished;
+    if (!TTY.reduce) {
+      // Quick to 99%, then the long 99%, as every restart does.
+      const steps = [[0, 0], [.09, 7], [.23, 31], [.36, 64], [.45, 99], [.9, 99], [1, 100]];
+      progress.querySelector('span').textContent = T.unplug;
+      const say = (pct) => { progress.querySelector('b').textContent = `${T.working} ${pct}%`; };
+      say(0);
+      progress.style.opacity = 1;
+      steps.forEach(([at, pct]) => setTimeout(() => say(pct), at * 2000));
+      await arc.animate(steps.map(([at, pct]) => ({ offset: at, strokeDashoffset: 1 - pct / 100 })), { duration: 2000, easing: 'linear', fill: 'forwards' }).finished;
+      progress.style.opacity = 0;
+    }
     ring.style.opacity = 0;
     rack.classList.remove('dark');
     for (const b of all) { b.classList.add('green'); if (!TTY.reduce) await wait(35); }
@@ -443,7 +519,7 @@
     if (ko) {
       const el = document.createElement('font-kku');
       el.setAttribute('font', 'dunggeun');
-      el.setAttribute('size', 'clamp(15px, 2.6cqmin, 21px)');
+      el.setAttribute('size', 'clamp(13px, 2.6cqmin, 21px)');
       el.textContent = T.done;
       done.replaceChildren(el);
     } else {
@@ -451,13 +527,20 @@
     }
     done.style.opacity = 1;
     if (!TTY.reduce) done.animate([{ opacity: 0, transform: 'translateY(30%)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.1)' });
+    // And then, on a fresh slip: one more.
+    if (!TTY.reduce) await wait(1000);
+    if (!restarting) return;
+    printed.length = 0;
+    print(24);
+    all[23].classList.add('again');
   }
 
   /* ---- Autoplay ---- */
   let run = 0;
   function resetAll() {
     restarting = false;
-    all.forEach((b) => b.classList.remove('open', 'green'));
+    snoozes = 0;
+    all.forEach((b) => b.classList.remove('open', 'green', 'again'));
     printed.length = 0;
     receipt.innerHTML = '';
     restart.classList.remove('on');
@@ -470,11 +553,12 @@
     const live = () => run === mine;
     while (live()) {
       resetAll();
-      await wait(600);
+      shuffleNotes();
+      await wait(400);
       for (let i = 0; i < 23; i++) {
         if (!live()) return;
         open(i, i >= 6);
-        await wait(i < 6 ? 950 : 190);
+        await wait(i < 6 ? 900 : 190);
       }
       await wait(500); if (!live()) return;
       all[23].animate([{ transform: 'none' }, { transform: 'scale(1.08)' }, { transform: 'none' }], { duration: 500, iterations: 2 });
@@ -483,7 +567,7 @@
       await wait(600); if (!live()) return;
       showRestart(false);
       for (let k = 0; k < 2; k++) {
-        await wait(1200); if (!live()) return;
+        await wait(1000); if (!live()) return;
         laterBtn.animate([{ transform: 'none' }, { transform: 'scale(.92)' }, { transform: 'none' }], { duration: 200 });
         await snooze(); await wait(500); if (!live()) return;
         showRestart(true);

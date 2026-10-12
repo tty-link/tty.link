@@ -11,7 +11,8 @@
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="dunggeun pilgi"></script>
 <style>
   /* A good day as a commit graph, drawn the way a metro map is: coloured lines, stations,
-     interchanges where branches merge back. A train runs the day from wake-up to the tag. */
+     interchanges where branches merge back. A train runs the day from wake-up to the tag,
+     and stops once, at the lunch merge, for the day's only conflict. */
   :root {
     --paper: #f5f4ef;
     --ink: #1d1d22;
@@ -19,6 +20,7 @@
     --main: #00a84d;
     --lunch: #ef7c1c;
     --walk: #996cac;
+    --conflict: #e5484d;
   }
   * { box-sizing: border-box; margin: 0; }
   html, body { height: 100%; }
@@ -67,6 +69,7 @@
   .line { fill: none; stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; }
   .station { fill: #fff; stroke: var(--ink); stroke-width: 5; transform-box: fill-box; transform-origin: center; }
   .station.swap { stroke-width: 7; }
+  .station.conflict { stroke: var(--conflict); }
   .train { transform-box: fill-box; transform-origin: center; }
 
   .label {
@@ -80,6 +83,9 @@
   .label .msg { display: block; font-weight: 700; }
   .label .type { font-family: 'Martian Mono', monospace; font-weight: 700; font-size: .78em; color: var(--c, var(--main)); }
   .label .diff { display: block; margin-top: .2em; font-family: 'Martian Mono', monospace; font-weight: 500; font-size: .7em; color: var(--muted); }
+  .label .nw { white-space: nowrap; }
+  .label .diff.alarm { color: var(--conflict); font-weight: 700; }
+  .label .diff.fixed { color: var(--main); font-weight: 700; }
   .label.tag .msg { display: inline-block; padding: .25em .6em; background: var(--ink); color: #fff; border-radius: .4em; }
   .label.tag .type { color: #8ff0b6; }
   .label.tag .text { margin-left: .35em; }
@@ -87,6 +93,7 @@
   .portrait .label .time { display: inline; margin-right: .5em; }
   .portrait .label .msg { display: inline; }
   .portrait .label .diff { display: none; }
+  .portrait .label.knot .diff { display: block; }
   @container (max-height: 640px) {
     .top h1 { font-size: clamp(22px, 5.6cqmin, 40px); }
     .top p { display: none; }
@@ -135,16 +142,17 @@
   const $ = (s) => document.querySelector(s);
   const ko = TTY.lang === 'ko';
 
-  // The day, in commit order. type + message + what changed.
+  // The day, in commit order. type + message + what changed. Merge commits keep git's own
+  // message (in English in both languages, as git writes it); the lunch merge has a conflict.
   const COMMITS = [
-    { id: 'wake', line: 'main', time: '07:00', type: 'feat:', en: 'wake up without an alarm', ko: '알람 없이 기상', diff: ['+8h sleep', '+수면 8시간'] },
+    { id: 'wake', line: 'main', time: '07:00', type: 'feat:', en: 'wake up without an alarm', ko: '알람 없이 기상', diff: ['+8h sleep, −3 snoozes', '+수면 8시간, −스누즈 3번'] },
     { id: 'coffee', line: 'main', time: '07:40', type: 'fix:', en: 'coffee temperature regression', ko: '커피 온도 회귀 버그', diff: ['+3°C, −1 sigh', '+3°C, −한숨 1'] },
-    { id: 'plants', line: 'main', time: '09:10', type: 'chore:', en: 'water the plants', ko: '화분에 물 주기', diff: ['+500 ml', '+물 500ml'] },
+    { id: 'plants', line: 'main', time: '09:10', type: 'chore:', en: 'water the plants', ko: '화분에 물 주기', diff: ['3 pots changed, +500 ml', '화분 3개 변경, +500ml'] },
     { id: 'lunch', line: 'lunch', time: '12:00', type: 'feat:', en: 'lunch with friends', ko: '친구들이랑 점심', diff: ['+3 friends', '+친구 3명'] },
     { id: 'dessert', line: 'lunch', time: '12:40', type: 'feat:', en: 'extra dessert (not in spec)', ko: '디저트 추가 (기획에 없음)', diff: ['+1 cake, 0 tests', '+케이크 1, 테스트 0'] },
-    { id: 'merge-lunch', line: 'main', swap: 'lunch', time: '13:10', type: 'merge:', en: 'lunch with friends (no conflicts)', ko: '점심 머지 (충돌 없음)', diff: ['0 conflicts', '충돌 0건'] },
+    { id: 'merge-lunch', line: 'main', swap: 'lunch', time: '13:10', type: 'Merge', git: "branch 'lunch-with-friends'", diff: ['Accept Both Changes', '두 변경 사항 모두 수락'], conflict: ['CONFLICT (content): stomach', 'CONFLICT (content): 배'] },
     { id: 'walk', line: 'walk', time: '15:00', type: 'refactor:', en: 'replace doomscrolling with a walk', ko: '둠스크롤링을 산책으로 교체', diff: ['−47 min feed, +6,214 steps', '−피드 47분, +6,214걸음'] },
-    { id: 'merge-walk', line: 'main', swap: 'walk', time: '15:40', type: 'merge:', en: 'go-outside', ko: '바깥 공기 머지', diff: ['+1 good mood', '+기분 1'] },
+    { id: 'merge-walk', line: 'main', swap: 'walk', time: '15:40', type: 'Merge', git: "branch 'go-outside'", diff: ['+2 dogs petted', '+강아지 2마리 쓰다듬음'] },
     { id: 'docs', line: 'main', time: '17:20', type: 'docs:', en: 'tell someone they did great', ko: '동료에게 잘했다고 말하기', diff: ['+1 compliment', '+칭찬 1'] },
     { id: 'revert', line: 'main', time: '19:30', type: 'revert:', en: '“skip dinner”', ko: '“저녁 거르기”', diff: ['+1 proper dinner', '+제대로 된 저녁 1끼'] },
     { id: 'tag', line: 'main', tag: true, time: '22:30', type: 'v1.0', en: 'a good day', ko: '좋은 하루', diff: ['shipped', '배포 완료'] },
@@ -165,7 +173,7 @@
       at: {
         wake: [110, 200, 'below', 13.5], coffee: [260, 200, 'below', 13.5], plants: [410, 200, 'below', 13.5],
         lunch: [580, 110, 'above-end'], dessert: [680, 110, 'above-start'],
-        'merge-lunch': [800, 200, 'below'],
+        'merge-lunch': [800, 200, 'below', 20],
         walk: [710, 540, 'below'],
         'merge-walk': [560, 450, 'above'], docs: [420, 450, 'below', 12.8], revert: [280, 450, 'below', 13.5], tag: [120, 450, 'below', 15],
       },
@@ -231,11 +239,18 @@
       stationsG.append(st);
 
       const label = document.createElement('div');
-      label.className = 'label' + (c.tag ? ' tag' : '');
+      label.className = 'label' + (c.tag ? ' tag' : '') + (c.conflict ? ' knot' : '');
       label.style.setProperty('--c', COLORS[c.line === 'main' && c.swap ? c.swap : c.line]);
-      label.innerHTML = `<span class="time">${c.time}</span><span class="msg"><span class="type">${c.type}</span> <span class="text"></span></span><span class="diff">${c.diff[ko ? 1 : 0]}</span>`;
+      // a diff wraps between its parts, never inside one
+      const diff = c.diff[ko ? 1 : 0].split(', ').map((part) => `<span class="nw">${part}</span>`).join(', ');
+      label.innerHTML = `<span class="time">${c.time}</span><span class="msg"><span class="type">${c.type}</span> <span class="text"></span></span><span class="diff">${diff}</span>`;
       const text = label.querySelector('.text');
-      if (ko) {
+      if (c.git) {
+        // branch 'name': the line may break before the name, not at its hyphens
+        const [word, name] = c.git.split(' ');
+        text.innerHTML = `${word} <span class="nw"></span>`;
+        text.lastChild.textContent = name;
+      } else if (ko) {
         const k = document.createElement('font-kku');
         k.setAttribute('font', c.tag ? 'pilgi' : 'dunggeun');
         if (c.tag) k.style.color = '#fff';
@@ -290,17 +305,28 @@
     return built;
   }
 
+  // The lunch merge: red while the conflict is open, then git's resolution in green.
+  const setKnot = (it, open) => {
+    const d = it.label.querySelector('.diff');
+    d.textContent = (open ? it.c.conflict : it.c.diff)[ko ? 1 : 0];
+    d.className = 'diff ' + (open ? 'alarm' : 'fixed');
+    it.st.classList.toggle('conflict', open);
+  };
+
   let run = 0;
   function play() {
     const b = build();
     const me = ++run;
     const all = [b.paths.main, b.paths.lunch, b.paths.walk];
+    const knot = b.items.find((it) => it.c.conflict);
     if (TTY.reduce) {
       all.forEach((p) => { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; });
       b.items.forEach((it) => { it.st.classList.remove('hidden'); it.label.classList.remove('hidden'); });
+      setKnot(knot, false);
       train.style.display = 'none';
       return;
     }
+    setKnot(knot, true);
 
     all.forEach((p) => { const l = p.getTotalLength(); p.style.strokeDasharray = `${l} ${l}`; p.style.strokeDashoffset = l; });
     b.items.forEach((it) => { it.st.classList.add('hidden'); it.label.classList.add('hidden'); it.shown = false; });
@@ -308,7 +334,9 @@
     const branchStart = { lunch: null, walk: null };
 
     const DURATION = 7600;
-    const t0 = performance.now() + 300;
+    const HOLD_MS = 1300; // the train waits at the conflict this long
+    let t0 = performance.now() + 300;
+    let held = null, resolved = false;
     const pop = (it) => {
       if (it.shown) return;
       it.shown = true;
@@ -319,11 +347,30 @@
     };
     const BRANCH_MS = 1150;
 
+    // ease the whole day: a slow morning, a steady afternoon, a gentle stop
+    const at = (now) => {
+      const k = Math.min(1, Math.max(0, (now - t0) / DURATION));
+      return [k, k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2];
+    };
     const frame = (now) => {
       if (me !== run) return;
-      const k = Math.min(1, Math.max(0, (now - t0) / DURATION));
-      // ease the whole day: a slow morning, a steady afternoon, a gentle stop
-      const e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      let [k, e] = at(now);
+      // "Well, almost": the train stands at the lunch merge while the conflict is open.
+      if (!resolved && e >= knot.on) {
+        if (held === null) {
+          held = now;
+          pop(knot);
+          knot.st.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.4)' }, { transform: 'scale(1)' }], { duration: 380, delay: 300, iterations: 2, easing: 'ease-in-out' });
+        }
+        if (now - held < HOLD_MS) e = knot.on;
+        else {
+          resolved = true;
+          t0 += HOLD_MS;
+          [k, e] = at(now);
+          setKnot(knot, false);
+          knot.st.animate([{ transform: 'scale(.6)' }, { transform: 'scale(1.25)', offset: .6 }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(.2, .9, .3, 1.3)' });
+        }
+      }
       const len = e * b.mainLen;
       b.paths.main.style.strokeDashoffset = b.mainLen - len;
       const p = b.paths.main.getPointAtLength(len);

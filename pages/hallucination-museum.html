@@ -110,6 +110,11 @@
   .conf { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .5em; margin-top: .7em; font-size: .82em; font-weight: 600; color: #3d3430; }
   .conf .bar { height: .5em; border-radius: 999px; background: #e4dccb; overflow: hidden; }
   .conf .bar i { display: block; height: 100%; width: 100%; border-radius: inherit; background: linear-gradient(90deg, #4e9a52, #7cc36a); transform-origin: 0 50%; }
+  /* Past 100% the bar pokes out of its track, under the number. */
+  .sure .conf .bar { overflow: visible; }
+  .sure .conf .bar i { background: linear-gradient(90deg, #4e9a52, #7cc36a 80%, #b5e05a); }
+  .conf .pct { position: relative; z-index: 1; min-width: 2.6em; text-align: right; font-variant-numeric: tabular-nums; }
+  .sure .conf .pct { color: #2f7d3a; font-weight: 700; }
 
   .sticker {
     position: absolute;
@@ -253,32 +258,54 @@
       <circle cx="40" cy="40" r="4.5" fill="#c0392b"/><circle cx="58" cy="36" r="4.5" fill="#c0392b"/><circle cx="52" cy="56" r="4.5" fill="#c0392b"/><circle cx="38" cy="58" r="4" fill="#c0392b"/>
       <path d="M72 62 q2 8 0 14 q-2 3 -4 0 q-1 -6 4 -14Z" fill="#f2c94c"/>
       <g transform="translate(96 44)"><rect x="-9" y="-6" width="18" height="34" rx="3" fill="#fff" stroke="#c9c2b2"/><rect x="-4" y="-14" width="8" height="9" rx="2" fill="#ff8a1e"/><rect x="-9" y="6" width="18" height="10" fill="#4a90d9"/></g>`,
-    calendar: `<rect width="120" height="90" fill="#fdfbf6"/><rect x="6" y="8" width="108" height="12" fill="#c0392b"/>
-      ${Array.from({ length: 14 }, (_, i) => `<rect x="${6 + i * 7.714}" y="22" width="7" height="6" fill="${i % 7 === 0 ? '#f4d4cf' : '#ece6d6'}"/>`).join('')}
-      ${Array.from({ length: 42 }, (_, i) => `<rect x="${6 + (i % 14) * 7.714 + .5}" y="${31 + Math.floor(i / 14) * 18}" width="6" height="15" fill="none" stroke="#d8d0bf" stroke-width=".8"/>`).join('')}
-      <text x="60" y="17.5" text-anchor="middle" font-size="7" font-family="Georgia" fill="#fff">14</text>`,
+    // A parcel that never shipped: tape, a blank label, a 404 stamp.
+    box: `<rect width="120" height="90" fill="#ece4d2"/>
+      <path d="M22 34 L60 20 L98 34 L60 48 Z" fill="#d9ab6c"/><path d="M22 34 L60 48 L60 84 L22 70 Z" fill="#c38f4e"/><path d="M98 34 L60 48 L60 84 L98 70 Z" fill="#a9773b"/>
+      <path d="M41 27 L79 41 L79 52" stroke="#efe2b8" stroke-width="5" fill="none"/>
+      <path d="M28 47 L53 56 L53 69 L28 60 Z" fill="#fffdf7"/><path d="M31 52 l18 6.5 M31 56.5 l14 5 M31 61 l17 6" stroke="#b3aa9a" stroke-width="1.3"/>
+      <g transform="translate(79 63) rotate(-12)"><rect x="-14" y="-7.5" width="28" height="15" rx="2.5" fill="none" stroke="#c0392b" stroke-width="1.8"/><text y="4" text-anchor="middle" font-size="11" font-weight="700" font-family="Georgia" fill="#c0392b">404</text></g>`,
+    // A gavel on its block, and an apple drifting up.
+    gavel: `<rect width="120" height="90" fill="#efe6d2"/>
+      <rect x="34" y="70" width="48" height="8" rx="2" fill="#6b4226"/><rect x="39" y="65" width="38" height="6" rx="2" fill="#8a5a34"/>
+      <g transform="translate(70 44) rotate(-32)"><rect x="-2" y="-2.5" width="40" height="5" rx="2" fill="#7a4b2a"/><rect x="-15" y="-10" width="15" height="20" rx="3" fill="#5a3520"/><rect x="-17" y="-7" width="3" height="14" fill="#c9a24a"/><rect x="-1" y="-7" width="3" height="14" fill="#c9a24a"/></g>
+      <circle cx="26" cy="22" r="8" fill="#c0392b"/><path d="M26 14 q1 -4 4 -6" stroke="#5a3520" stroke-width="1.5" fill="none"/><path d="M27 13 q5 -4 9 -1 q-4 3 -9 1" fill="#5fb36b"/>
+      <path d="M21 35 v6 M26 36 v8 M31 35 v6" stroke="#9c8b70" stroke-width="1.4" stroke-linecap="round"/>`,
+    // Fifteen books on a shelf; ten of them were never written.
+    books: `<rect width="120" height="90" fill="#efe6d2"/><rect x="6" y="76" width="108" height="5" fill="#7a4b2a"/>
+      ${[48, 54, 44, 52, 40, 56, 46, 50, 42, 55, 47, 51, 43, 53, 45].map((h, i) => (i % 3 === 0
+        ? `<rect x="${10 + i * 6.7}" y="${76 - h}" width="5.6" height="${h}" rx=".8" fill="${['#2f5d8a', '#b8462e', '#3f7a4a', '#7a4f8c', '#c79a2e'][i / 3]}"/><rect x="${10 + i * 6.7}" y="${80 - h}" width="5.6" height="2" fill="rgba(255,255,255,.45)"/>`
+        : `<rect x="${10.4 + i * 6.7}" y="${76.4 - h}" width="4.8" height="${h - .8}" rx=".8" fill="none" stroke="#a89a80" stroke-width=".9" stroke-dasharray="2 1.6"/>`)).join('')}`,
   };
 
-  const EX = {
+  // The first exhibit is fixed per language; four more are drawn from the pool on each visit.
+  const FIRST = {
+    en: { art: 'phone', title: "Abraham Lincoln's iPhone", meta: '1863. Aluminium, glass, top hat.', desc: 'Used to send the Gettysburg Address as a group text.' },
+    ko: { art: 'macbook', title: '세종대왕의 맥북프로 던짐 사건', meta: '15세기, 실록에 기록되어 있다고 함', desc: '훈민정음 초고를 쓰다가 담당자에게 맥북프로를 던진 것으로 전해집니다.' },
+  };
+  const POOL = {
     en: [
-      { art: 'phone', title: "Abraham Lincoln's iPhone", meta: '1863. Aluminium, glass, top hat.', desc: 'Used to send the Gettysburg Address as a group text.' },
       { art: 'paper', title: '“Citations Need Not Exist”', meta: 'Smith et al., 2031. Published 1998.', desc: 'Cited four thousand times, mostly by itself.' },
       { art: 'moon', title: 'The Great Wall, Seen from the Moon', meta: 'Map, actual size. Ink on certainty.', desc: 'Clearly visible. Please take our word for it.' },
       { art: 'pizza', title: 'Pizza, Structurally Sound', meta: 'Recipe card. Cheese, glue (non-toxic).', desc: 'Keeps the cheese on. Do not try this at home, or anywhere.' },
-      { art: 'calendar', title: 'The Fourteen Days of the Week', meta: 'Calendar. Two of every Monday.', desc: 'Finally explains why the week felt so long.' },
+      { art: 'box', title: 'The Package Everyone Recommends', meta: 'Version 4.2.0. Cardboard, nothing inside.', desc: 'Install with total confidence. 404&nbsp;Not&nbsp;Found.' },
+      { art: 'gavel', title: 'Smith v. Gravity (2019)', meta: 'Supreme Court. The plaintiff won.', desc: 'Cited in a real court filing. The judge looked it up.' },
+      { art: 'books', title: 'Summer Reading List', meta: 'Newspaper insert. Real authors, mostly.', desc: 'Fifteen great novels for the beach. Ten were never written.' },
     ],
     ko: [
-      { art: 'macbook', title: '세종대왕의 맥북프로 던짐 사건', meta: '15세기, 실록에 기록되어 있다고 함', desc: '훈민정음 초고를 쓰다가 담당자에게 맥북프로를 던진 것으로 전해집니다.' },
       { art: 'paper', title: '논문 「인용은 없어도 된다」', meta: '김 외, 2031년 작, 1998년 발표', desc: '4,000회 인용됨. 대부분 스스로를 인용함.' },
       { art: 'moon', title: '달에서 본 만리장성 지도', meta: '실제 크기, 확신 위에 잉크', desc: '아주 선명하게 보입니다. 저희를 믿어 주세요.' },
       { art: 'pizza', title: '치즈가 안 흘러내리는 피자', meta: '레시피 카드, 치즈와 풀(무독성)', desc: '치즈를 꽉 잡아 줍니다. 집에서도, 어디서도 따라 하지 마세요.' },
-      { art: 'calendar', title: '일주일의 열네 요일', meta: '달력, 월요일이 두 번씩', desc: '일주일이 유독 길었던 이유가 드디어 밝혀졌습니다.' },
+      { art: 'box', title: '모두가 추천하는 패키지', meta: '4.2.0 버전, 골판지, 내용물 없음', desc: '자신 있게 설치하세요. 404&nbsp;Not&nbsp;Found.' },
+      { art: 'gavel', title: '대법원 2019다4040 판결', meta: '중력 무효 확인 소송, 원고 승소', desc: '실제 소송 서면에 인용됨. 판사님이 찾아보셨습니다.' },
+      { art: 'books', title: '여름 휴가 추천 도서 15권', meta: '신문 별지, 작가는 대부분 실존', desc: '바닷가에서 읽기 좋은 소설들. 그중 10권은 쓰인 적이 없습니다.' },
     ],
   };
   const L = TTY.lang === 'ko'
-    ? { conf: '확신도', sticker: '<font-kku font="pilgi" size="1.1em">출처 필요</font-kku>', bubble: '<font-kku font="dunggeun" size="1.05em">확인 완료. 여전히 100%.</font-kku>' }
-    : { conf: 'Confidence', sticker: 'citation needed', bubble: 'Checked. Still 100%.' };
-  const list = EX[TTY.lang] || EX.en;
+    ? { conf: '확신도', sticker: '<font-kku font="pilgi" size="1.1em">출처 필요</font-kku>', bubble: '<font-kku font="dunggeun" size="1.05em">확인 완료. 여전히 100%.</font-kku>', again: (pct) => `<font-kku font="dunggeun" size="1.05em">재확인. 여전히 ${pct}.</font-kku>` }
+    : { conf: 'Confidence', sticker: 'citation needed', bubble: 'Checked. Still 100%.', again: (pct) => `Rechecked. Still ${pct}.` };
+  const pool = [...(POOL[TTY.lang] || POOL.en)];
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const list = [FIRST[TTY.lang] || FIRST.en, ...pool.slice(0, 4)];
 
   const museum = document.querySelector('.museum');
   const track = document.querySelector('.track');
@@ -292,7 +319,7 @@
         <h2 class="p-title">${TTY.lang === 'ko' ? `<font-kku font="dunggeun" size="1em" wrap-unit="word">${e.title}</font-kku>` : e.title}</h2>
         <p class="p-meta">${e.meta}</p>
         <p class="p-desc">${e.desc}</p>
-        <div class="conf"><span>${L.conf}</span><span class="bar"><i></i></span><span>100%</span></div>
+        <div class="conf"><span>${L.conf}</span><span class="bar"><i></i></span><span class="pct">100%</span></div>
         <span class="sticker">${L.sticker}</span>
       </div>
     </section>`).join('') + `
@@ -364,11 +391,25 @@
     beam.style.transform = `rotate(${Math.atan2(ty - hy, tx - hx)}rad)`;
   }
 
+  // Asked again for a source, the meter flinches and comes back surer than before.
+  const INSIST = [101, 103, 108, 115, 130, 160, 250, 400, 999];
+  function insist(placard) {
+    const n = Math.min(INSIST.length, (+placard.dataset.asked || 0) + 1);
+    placard.dataset.asked = n;
+    const pct = INSIST[n - 1];
+    const bar = placard.querySelector('.conf .bar i');
+    const to = Math.min(1.14, pct / 100);
+    placard.querySelector('.pct').textContent = pct + '%';
+    placard.classList.add('sure');
+    bar.style.transform = `scaleX(${to})`;
+    if (!TTY.reduce) bar.animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(.9)' }, { transform: `scaleX(${to + .04})` }, { transform: `scaleX(${to})` }], { duration: 520, easing: 'ease-out' });
+  }
+
   function stick(i, quick) {
     const placard = exhibits[i].querySelector('.placard');
     const sticker = placard.querySelector('.sticker');
     if (sticker.dataset.on) {
-      if (!TTY.reduce) placard.querySelector('.conf .bar i').animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(.96)' }, { transform: 'scaleX(1)' }], { duration: 300 });
+      insist(placard);
       return;
     }
     sticker.dataset.on = '1';
@@ -453,6 +494,47 @@
     moving = true;
     camera(goal + museum.clientWidth * .5, TTY.reduce ? 0 : 650).then(() => { moving = false; syncButtons(); });
     syncButtons();
+    // The guard follows to the exhibit in the middle of the new view and checks it again.
+    const mid = goal + museum.clientWidth * .5;
+    let near = 0;
+    exhibits.forEach((_, i) => { if (Math.abs(centreOf(i) - mid) < Math.abs(centreOf(near) - mid)) near = i; });
+    recheck(near);
+  }
+
+  // A walk that can be cut short by the next press: it starts from wherever he is now.
+  let patrol = 0;
+  async function recheck(i) {
+    const run = ++patrol;
+    const x = Math.max(4, standFor(i));
+    const from = new DOMMatrixReadOnly(getComputedStyle(guard).transform).m41;
+    bubble.getAnimations().forEach((a) => a.cancel());
+    bubble.style.opacity = '0';
+    beam.getAnimations().forEach((a) => a.cancel());
+    guard.getAnimations().forEach((a) => a.cancel());
+    if (TTY.reduce) {
+      setGuard(x);
+    } else {
+      if (Math.abs(x - from) > 2) {
+        guard.classList.add('walk');
+        guard.style.scale = x < from ? '-1 1' : '1 1';
+        const a = guard.animate([{ transform: `translateX(${from}px)` }, { transform: `translateX(${x}px)` }], { duration: Math.min(1300, Math.max(400, Math.abs(x - from) * 2)), easing: 'ease-in-out', fill: 'forwards' });
+        try { await a.finished; } catch (e) { return; }
+        if (run !== patrol) return;
+        a.cancel();
+      }
+      setGuard(x);
+      guard.classList.remove('walk');
+      guard.style.scale = '1 1';
+      aim(i);
+      beam.animate([{ opacity: 0 }, { opacity: 1, offset: .2 }, { opacity: 1, offset: .75 }, { opacity: 0 }], { duration: 1100, fill: 'forwards' });
+      await sleep(900);
+      if (run !== patrol) return;
+    }
+    const g = local(guard);
+    bubble.innerHTML = L.again(exhibits[i].querySelector('.pct').textContent);
+    bubble.style.left = (g.x + g.w * .55) + 'px';
+    bubble.style.opacity = '1';
+    if (!TTY.reduce) bubble.animate([{ transform: 'translateY(10px) scale(.8)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.2, 1.3, .4, 1)' });
   }
   function openBrowsing() {
     browsing = true;

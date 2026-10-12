@@ -141,6 +141,10 @@
     .stage { align-self: center; align-items: center; height: 100%; max-height: 72cqh; grid-template-rows: minmax(0, 1fr) auto; }
     .card { align-self: center; }
   }
+  /* Narrow screens: the list goes into two columns so the glass and key keep their room. */
+  @container page (max-width: 520px) {
+    .list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 5cqi; }
+  }
   /* Short phones: the list collapses to one line so the card fits. */
   @container (max-height: 640px) and (max-width: 520px) {
     .list button { padding: 1cqi 0; font-size: 3.4cqi; }
@@ -229,20 +233,25 @@
   const tilt = $('.tilt');
   const line = $('.wave .line');
 
+  // Type lines follow a switch spec sheet: force at actuation, then actuation point / total
+  // travel. The last bottle is not a switch at all: the shallow laptop keyboard of a
+  // certain vintage, known for keys that typed twice or not at all.
   const SWITCHES = TTY.t({
     en: [
-      { id: 'red', c: '#c0392b', name: 'Red', type: 'linear, 45 g, 4 mm travel', score: '92', notes: 'Light-bodied and linear, with notes of 3 a.m. deadlines. Smooth all the way down.', pairs: 'Gaming, and refactors after midnight.' },
-      { id: 'brown', c: '#8a5a35', name: 'Brown', type: 'tactile, 55 g, 4 mm travel', score: '90', notes: 'Balanced, with a gentle tactile finish. Polite in any company.', pairs: 'Meetings and open-plan offices.' },
-      { id: 'blue', c: '#2e6fd8', name: 'Blue', type: 'clicky, 60 g, 4 mm travel', score: '97', scoreNote: 'yours. 41 for your coworkers', notes: 'Bold and clicky. Your coworkers will remember this vintage.', pairs: 'Working alone. Far away.' },
-      { id: 'silent', c: '#8c8f99', name: 'Silent', type: 'dampened linear, 45 g, 3.7 mm travel', score: '89', notes: 'So quiet the deadline never hears you coming. Hints of library.', pairs: 'Shared flats, sleeping babies, secret side projects.' },
-      { id: 'black', c: '#2b2b30', name: 'Black', type: 'heavy linear, 60 g, 4 mm travel', score: '93', notes: 'Full-bodied and heavy. Builds character, and forearms.', pairs: 'Typing with conviction.' },
+      { id: 'red', c: '#c0392b', name: 'Red', type: 'linear · 45 g · 2.0 / 4.0 mm', score: '92', notes: 'Light-bodied and linear, with notes of 3 a.m. deadlines. Smooth all the way down.', pairs: 'Gaming, and refactors after midnight.' },
+      { id: 'brown', c: '#8a5a35', name: 'Brown', type: 'tactile · 55 g · 2.0 / 4.0 mm', score: '90', notes: 'A small bump halfway down, like rereading an email before you send it.', pairs: 'Meetings and open-plan offices.' },
+      { id: 'blue', c: '#2e6fd8', name: 'Blue', type: 'clicky · 60 g · 2.2 / 4.0 mm', score: '97', scoreNote: 'yours. 41 for your coworkers', notes: 'Bold and clicky. Your coworkers will remember this vintage.', pairs: 'Working alone. Far away.' },
+      { id: 'silent', c: '#8c8f99', name: 'Silent', type: 'dampened · 45 g · 1.9 / 3.7 mm', score: '89', notes: 'So quiet your manager assumes you are idle. Hints of library.', pairs: 'Shared flats, sleeping babies, secret side projects.' },
+      { id: 'black', c: '#2b2b30', name: 'Black', type: 'linear · 60 g · 2.0 / 4.0 mm', score: '93', notes: 'Full-bodied and heavy. Builds character, and forearms.', pairs: 'Typing with conviction.' },
+      { id: 'butterfly', c: '#9aa3ad', name: 'Butterfly', type: 'vintage 2016 · 0.5 mm, all of it', score: '—', scoreNote: 'recalled', listScore: 'recalled', notes: 'Crisp and shallow, notes of toast crumb. The finish sometimes arrives twwice.', pairs: 'A repair program.' },
     ],
     ko: [
-      { id: 'red', c: '#c0392b', name: '적축', type: '리니어, 작동압 45g, 이동 거리 4mm', score: '92점', notes: '가볍고 매끄러운 바디. 새벽 3시 마감의 향이 나요. 끝까지 부드럽게 넘어갑니다.', pairs: '게임, 그리고 자정 넘은 리팩터링' },
-      { id: 'brown', c: '#8a5a35', name: '갈축', type: '택타일, 작동압 55g, 이동 거리 4mm', score: '90점', notes: '균형 잡힌 맛에 은은한 걸림이 남습니다. 어느 자리에서나 무난해요.', pairs: '회의, 그리고 개방형 사무실' },
-      { id: 'blue', c: '#2e6fd8', name: '청축', type: '클리키, 작동압 60g, 이동 거리 4mm', score: '97점', scoreNote: '나에게. 옆자리는 41점', notes: '묵직하고 경쾌한 클릭감. 동료들이 이 빈티지를 오래 기억할 거예요.', pairs: '혼자 일하는 날. 아주 멀리서.' },
-      { id: 'silent', c: '#8c8f99', name: '저소음', type: '저소음 리니어, 작동압 45g, 이동 거리 3.7mm', score: '89점', notes: '너무 조용해서 마감이 다가오는 소리도 안 들려요. 도서관 향이 은은합니다.', pairs: '룸메이트, 잠든 아기, 몰래 하는 사이드 프로젝트' },
-      { id: 'black', c: '#2b2b30', name: '흑축', type: '묵직한 리니어, 작동압 60g, 이동 거리 4mm', score: '93점', notes: '풀바디에 묵직한 압. 인내심과 팔뚝을 함께 길러 줍니다.', pairs: '확신에 찬 타이핑' },
+      { id: 'red', c: '#c0392b', name: '적축', type: '리니어 · 45g · 입력 2.0 / 바닥 4.0mm', score: '92점', notes: '가볍고 매끄러운 바디. 새벽 3시 마감의 향이 나요. 끝까지 부드럽게 넘어갑니다.', pairs: '게임, 그리고 자정 넘은 리팩터링' },
+      { id: 'brown', c: '#8a5a35', name: '갈축', type: '택타일 · 55g · 입력 2.0 / 바닥 4.0mm', score: '90점', notes: '중간에 한 번 멈칫합니다. 보내기 전에 다시 읽는 메일처럼요.', pairs: '회의, 그리고 개방형 사무실' },
+      { id: 'blue', c: '#2e6fd8', name: '청축', type: '클리키 · 60g · 입력 2.2 / 바닥 4.0mm', score: '97점', scoreNote: '나에게. 옆자리는 41점', notes: '묵직하고 경쾌한 클릭감. 동료들이 이 빈티지를 오래 기억할 거예요.', pairs: '혼자 일하는 날. 아주 멀리서.' },
+      { id: 'silent', c: '#8c8f99', name: '저소음', type: '저소음 · 45g · 입력 1.9 / 바닥 3.7mm', score: '89점', notes: '너무 조용해서 팀장님이 노는 줄 압니다. 도서관 향이 은은해요.', pairs: '룸메이트, 잠든 아기, 몰래 하는 사이드 프로젝트' },
+      { id: 'black', c: '#2b2b30', name: '흑축', type: '리니어 · 60g · 입력 2.0 / 바닥 4.0mm', score: '93점', notes: '풀바디에 묵직한 압. 인내심과 팔뚝을 함께 길러 줍니다.', pairs: '확신에 찬 타이핑' },
+      { id: 'butterfly', c: '#9aa3ad', name: '버터플라이', type: '2016년산 · 이동 거리 0.5mm가 전부', score: '—', scoreNote: '리콜됨', listScore: '리콜', notes: '얕고 바삭한 맛, 빵 부스러기 향. 여운이 가끔 두 번 찍찍힙니다.', pairs: '무상 수리 프로그램' },
     ],
   });
   const L = TTY.t({
@@ -253,15 +262,15 @@
   $('.pairs-label').textContent = L.pairs;
 
   // Black ink on a black switch would vanish in the glass: the liquid gets a little light.
-  const LIQUID = { red: '#a3242c', brown: '#7a4a2a', blue: '#2e6fd8', silent: '#9aa0ad', black: '#3c3542' };
-  const WAVE = { red: '#e0544a', brown: '#c98a5a', blue: '#5a95f0', silent: '#b9bdc8', black: '#bdb3cc' };
+  const LIQUID = { red: '#a3242c', brown: '#7a4a2a', blue: '#2e6fd8', silent: '#9aa0ad', black: '#3c3542', butterfly: '#c9ced6' };
+  const WAVE = { red: '#e0544a', brown: '#c98a5a', blue: '#5a95f0', silent: '#b9bdc8', black: '#bdb3cc', butterfly: '#dfe3ea' };
 
   const items = SWITCHES.map((sw, i) => {
     const li = document.createElement('li');
     li.innerHTML = '<button type="button"><span class="dot"></span><span class="nm"></span><span class="sc"></span></button>';
     li.style.setProperty('--c', sw.c);
     li.querySelector('.nm').textContent = sw.name;
-    li.querySelector('.sc').textContent = sw.score;
+    li.querySelector('.sc').textContent = sw.listScore || sw.score;
     li.querySelector('button').addEventListener('click', (e) => { if (!e.isTrusted) return; takeOver(); taste(i); });
     list.append(li);
     return li;
@@ -274,6 +283,8 @@
     blue: (t) => (t < .14 ? t / .14 * .2 : t < .24 ? .95 : .95 * Math.exp(-(t - .24) * 9)) + .05,
     silent: (t) => Math.sin(Math.PI * t) * .07,
     black: (t) => Math.pow(Math.sin(Math.PI * t), .6) * .5,
+    // a short tick, then the same tick again: one press, two letters
+    butterfly: (t) => (t < .2 ? Math.sin(Math.PI * t / .2) * .42 : t > .46 && t < .64 ? Math.sin(Math.PI * (t - .46) / .18) * .34 : 0),
   };
   function pulse(id, from, width) {
     const pts = [];
@@ -281,7 +292,7 @@
     for (let k = 0; k <= n; k++) {
       const t = k / n;
       const env = PROFILE[id](t);
-      const osc = Math.sin(k * (id === 'blue' ? 2.6 : id === 'black' ? .9 : 1.6));
+      const osc = Math.sin(k * (id === 'blue' || id === 'butterfly' ? 2.6 : id === 'black' ? .9 : 1.6));
       pts.push(`${(from + t * width).toFixed(1)} ${(20 - env * osc * 18).toFixed(1)}`);
     }
     return pts.join(' L');
@@ -337,23 +348,28 @@
     tilt.animate([{ rotate: '0deg' }, { rotate: '-7deg' }, { rotate: '6deg' }, { rotate: '-3deg' }, { rotate: '0deg' }], { duration: 1500, easing: 'ease-in-out' });
   }
   async function strike(id, k) {
-    const travel = id === 'silent' ? 13 : 15;
-    const down = id === 'black' ? 170 : id === 'blue' ? 90 : 120;
+    // Key travel in px is roughly to scale: 15 for 4 mm, 13 for 3.7 mm, 2 for half a millimetre.
+    const travel = id === 'butterfly' ? 2 : id === 'silent' ? 13 : 15;
+    const down = id === 'black' ? 170 : id === 'blue' ? 90 : id === 'butterfly' ? 70 : 120;
+    // The butterfly's third key sticks for a moment before it comes back up.
+    const stuck = id === 'butterfly' && k === 2 ? 700 : 0;
     if (!TTY.reduce) {
       const frames = id === 'brown' || id === 'blue'
         ? [{ transform: 'none' }, { transform: `translateY(${travel * .35}px)`, offset: .3 }, { transform: `translateY(${travel * .4}px)`, offset: .42 }, { transform: `translateY(${travel}px)`, offset: .6 }, { transform: 'none' }]
-        : [{ transform: 'none' }, { transform: `translateY(${travel}px)`, offset: .5 }, { transform: 'none' }];
-      press.animate(frames, { duration: down * 2.6, easing: 'ease-in-out' });
+        : stuck
+          ? [{ transform: 'none' }, { transform: `translateY(${travel}px)`, offset: .12 }, { transform: `translateY(${travel}px)`, offset: .88 }, { transform: 'none' }]
+          : [{ transform: 'none' }, { transform: `translateY(${travel}px)`, offset: .5 }, { transform: 'none' }];
+      press.animate(frames, { duration: down * 2.6 + stuck, easing: 'ease-in-out' });
     }
     drawPulse(id, k);
-    await wait(TTY.reduce ? 0 : down * 2.6 + 180);
+    await wait(TTY.reduce ? 0 : down * 2.6 + stuck + 180);
   }
   async function taste(i, live = () => true) {
     show(i);
     waveD = 'M0 20';
     line.setAttribute('d', waveD);
     swirl();
-    await wait(TTY.reduce ? 0 : 900); if (!live()) return;
+    await wait(TTY.reduce ? 0 : 800); if (!live()) return;
     for (let k = 0; k < 3; k++) { await strike(SWITCHES[i].id, k); if (!live()) return; }
   }
 
@@ -383,10 +399,10 @@
       sig.style.opacity = 0;
       for (let i = 0; i < SWITCHES.length; i++) {
         await taste(i, live); if (!live()) return;
-        await wait(1500); if (!live()) return;
+        await wait(1200); if (!live()) return;
       }
       signNote();
-      await wait(5200);
+      await wait(5000);
     }
   }
   function takeOver() { run++; }

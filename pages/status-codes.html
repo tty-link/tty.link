@@ -12,7 +12,9 @@
 <style>
   /* A station departure board, except every line is an HTTP status code read kindly.
      The code and its reason phrase arrive on real split flaps: each flap is four halves,
-     the old top folds down, the new bottom falls into place. */
+     the old top folds down, the new bottom falls into place. Each visit runs seven codes:
+     200, 418, 429 and 503 always, plus three of the others. Where the real response carries
+     a header (Retry-After, Location), the board prints it under the kind words. */
   :root {
     --hall: #d8d2c4;
     --board: #121418;
@@ -105,7 +107,11 @@
   .flap.blank > span > b { color: transparent; }
 
   .msg { min-height: 1.1em; font-size: 6.6cqi; font-weight: 600; line-height: 1.04; letter-spacing: -.005em; }
-  .msg .w { display: inline-block; }
+  .msg .word { display: inline-block; }
+  /* A response header, where the real response would carry one. Headers come before the body,
+     so it sits above the kind words; on wide boards it floats in the space above them. */
+  .msg { position: relative; }
+  .msg .hdr { position: absolute; left: 0; bottom: 100%; margin-bottom: .5cqi; white-space: nowrap; font-size: 2.7cqi; font-weight: 500; line-height: 1.2; letter-spacing: .02em; color: var(--yellow); font-variant-numeric: tabular-nums; }
   .lang-ko .msg { font-size: 1px; min-height: 9cqi; }
   .msg > font-kku { color: var(--char); }
 
@@ -139,6 +145,7 @@
     .code { --w: 18cqi; --gap: 1.4cqi; }
     .reason { --w: 7.6cqi; --gap: .9cqi; row-gap: 1.6cqi; }
     .msg { font-size: 9.4cqi; }
+    .msg .hdr { position: static; display: block; margin-bottom: 1.6cqi; font-size: 4.6cqi; }
     .now { padding: 5cqi 4cqi 4cqi; gap: 4cqi; }
     .rows li { grid-template-columns: 11cqi 1fr auto; padding: 2.2cqi 4cqi; font-size: max(13px, 3.8cqi); }
     .rows li.far { display: none; }
@@ -167,15 +174,30 @@
 
 <script>
 (() => {
-  const CODES = [
-    { code: '200', reason: 'OK', en: 'You’re doing fine.', ko: '지금 잘하고 있어요.', note: { en: 'On time', ko: '정시' } },
+  // Every reason phrase must be spelled with LETTERS below and fit 19 flaps (two rows of 11
+  // on narrow boards). hdr: the header the real response would carry.
+  const POOL = [
+    { code: '100', reason: 'CONTINUE', en: 'Go on. I’m listening.', ko: '계속 말해요. 듣고 있어요.', note: { en: 'Now boarding', ko: '탑승 중' } },
+    { code: '101', reason: 'SWITCHING PROTOCOLS', en: 'Try another way. Keep the connection.', ko: '방법을 바꿔도 연결은 그대로예요.', note: { en: 'Change here', ko: '환승' } },
+    { code: '200', reason: 'OK', en: 'You’re doing fine.', ko: '지금 잘하고 있어요.', note: { en: 'On time', ko: '정시' }, always: true },
     { code: '201', reason: 'CREATED', en: 'You made something today.', ko: '오늘도 하나 만들었네요.', note: { en: 'Arrived', ko: '도착' } },
+    { code: '202', reason: 'ACCEPTED', en: 'It’s in. Results can take a while.', ko: '접수됐어요. 결과는 천천히 와요.', note: { en: 'Expected later', ko: '도착 예정' } },
     { code: '204', reason: 'NO CONTENT', en: 'It’s okay to say nothing.', ko: '아무 말 안 해도 괜찮아요.', note: { en: 'Quiet car', ko: '조용한 칸' } },
+    { code: '206', reason: 'PARTIAL CONTENT', en: 'Some of it is enough for today.', ko: '오늘은 조금만 해도 돼요.', note: { en: 'Runs part way', ko: '단축 운행' } },
+    { code: '302', reason: 'FOUND', en: 'Took the long way. Still got home.', ko: '멀리 돌아도 집에는 닿아요.', note: { en: 'Diverted', ko: '우회 운행' }, hdr: 'Location: /home' },
     { code: '304', reason: 'NOT MODIFIED', en: 'You don’t have to change to be liked.', ko: '안 바뀌어도 이미 좋아요.', note: { en: 'As scheduled', ko: '변경 없음' } },
-    { code: '418', reason: 'I’M A TEAPOT', en: 'Take a tea break.', ko: '차 한잔하고 가요.', note: { en: 'Tea stop', ko: '찻집 정차' } },
-    { code: '429', reason: 'TOO MANY REQUESTS', en: 'Rest. The world will retry.', ko: '잠깐 쉬어요. 세상은 알아서 재시도해요.', note: { en: 'Delayed: resting', ko: '지연: 휴식 중' }, tone: 'late' },
-    { code: '503', reason: 'SERVICE UNAVAILABLE', en: 'You’re allowed to be offline.', ko: '오프라인이어도 괜찮아요.', note: { en: 'Off today', ko: '오늘 운휴' }, tone: 'off' },
+    { code: '418', reason: 'I’M A TEAPOT', en: 'Take a tea break.', ko: '차 한잔하고 가요.', note: { en: 'Tea stop', ko: '찻집 정차' }, always: true },
+    { code: '429', reason: 'TOO MANY REQUESTS', en: 'Rest. The world will retry.', ko: '잠깐 쉬어요. 세상은 알아서 재시도해요.', note: { en: 'Delayed: resting', ko: '지연: 휴식 중' }, tone: 'late', hdr: 'Retry-After: 600', always: true },
+    { code: '503', reason: 'SERVICE UNAVAILABLE', en: 'You’re allowed to be offline.', ko: '오프라인이어도 괜찮아요.', note: { en: 'Off today', ko: '오늘 운휴' }, tone: 'off', hdr: 'Retry-After: 86400', always: true },
   ];
+  // Today's timetable: the four regulars and three others, in code order.
+  const others = POOL.filter((c) => !c.always);
+  for (let k = others.length - 1; k > 0; k--) {
+    const j = Math.floor(Math.random() * (k + 1));
+    [others[k], others[j]] = [others[j], others[k]];
+  }
+  const extras = others.slice(0, 3);
+  const CODES = POOL.filter((c) => c.always || extras.includes(c));
   const HOLD = 3900;
   const DIGITS = '0123456789';
   const LETTERS = " ABCDEFGHIJKLMNOPQRSTUVWXYZ’";
@@ -292,13 +314,21 @@
       if (animate) host.animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 700, easing: 'cubic-bezier(.6, 0, .3, 1)' });
     } else {
       c.en.split(' ').forEach((word, i) => {
+        // Not "w": the tty.link wordmark script styles .w on standalone pages.
         const w = document.createElement('span');
-        w.className = 'w';
+        w.className = 'word';
         w.textContent = word;
         msg.append(w, ' ');
         if (animate) w.animate([{ opacity: 0, transform: 'translateY(.35em)', clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, transform: 'none', clipPath: 'inset(0 0 0 0)' }],
           { duration: 420, delay: i * 70, easing: 'cubic-bezier(.2, .9, .3, 1)', fill: 'backwards' });
       });
+    }
+    if (c.hdr) {
+      const h = document.createElement('span');
+      h.className = 'hdr';
+      h.textContent = c.hdr;
+      msg.prepend(h);
+      if (animate) h.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: 700, fill: 'backwards' });
     }
   }
 
@@ -342,15 +372,17 @@
     if (w === lastWide) return;
     lastWide = w;
     buildReason();
-    const c = CODES[Math.max(0, index)];
+    const c = CODES[index < 0 ? first : index];
     const lines = layoutReason(c.reason);
     [...reasonBox.children].forEach((row, r) => [...row.children].forEach((f, k) => setFace(f, lines[r][k])));
     setMessage(c, false);
   });
   lastWide = wide;
 
-  if (TTY.reduce) show(0);
-  else TTY.onShow(() => show(0));
+  // The board opens on 200 OK; any 1xx codes today come round at the end.
+  const first = CODES.findIndex((c) => c.code === '200');
+  if (TTY.reduce) show(first);
+  else TTY.onShow(() => show(first));
 
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);

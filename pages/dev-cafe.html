@@ -231,22 +231,36 @@
 <script>
 (() => {
   const ko = TTY.lang === 'ko';
+  // say: the barista's answers, in turn, each time that drink is ordered again.
   const MENU = [
     { en: ['Espresso (sync)', '3.00', 'Blocks until ready.'], ko: ['에스프레소 (동기)', '3,000', '다 나올 때까지 아무것도 못 해요.'],
-      say: { en: 'One espresso. Everyone behind you is now waiting too.', ko: '에스프레소 나왔습니다. 뒤에 계신 분들도 같이 기다리셨어요.' } },
+      say: [{ en: 'One espresso. Everyone behind you is now waiting too.', ko: '에스프레소 나왔습니다. 뒤에 계신 분들도 같이 기다리셨어요.' },
+            { en: "Another? I'm waiting on the grinder, and the grinder's waiting on me.", ko: '한 잔 더요? 저는 그라인더를, 그라인더는 저를 기다리고 있어요.' }] },
     { en: ['Async Latte', 'Promise<4.50>', 'Arrives eventually.'], ko: ['비동기 라테', 'Promise<4,500>', '언젠가는 나옵니다.'],
-      say: { en: "Order received. We'll call you back. Probably.", ko: '주문 받았어요. 나오면 불러 드릴게요. 아마도요.' } },
+      say: [{ en: "Order received. We'll call you back.", ko: '주문 받았어요. 진동벨 울리면 오세요.' }] },
     { en: ['Null Tea', 'null', "There's nothing in it."], ko: ['널 티', 'null', '컵 안에 아무것도 없어요.'],
-      say: { en: 'Here you go. (Hands you nothing, very carefully.)', ko: '여기 있습니다. (빈 컵을 아주 조심스럽게 건넨다)' } },
+      say: [{ en: 'Here you go. (Hands you nothing, very carefully.)', ko: '여기 있습니다. (빈 컵을 아주 조심스럽게 건넨다)' },
+            { en: "Milk? Cannot read properties of null (reading 'milk').", ko: "우유 넣어 드릴까요? Cannot read properties of null (reading 'milk')" }] },
     { en: ['Recursive Refill', 'n + 1', 'See: Recursive Refill.'], ko: ['재귀 리필', 'n + 1', "'재귀 리필'을 참고하세요."],
-      say: { en: 'One Recursive Refill, which comes with one Recursive Refill, which comes with…', ko: '재귀 리필 하나요, 재귀 리필 하나 추가요, 재귀 리필 하나 추가요…' } },
+      say: [{ en: 'One Recursive Refill, which comes with one Recursive Refill, which comes with…', ko: '재귀 리필 하나요, 재귀 리필 하나 추가요, 재귀 리필 하나 추가요…' },
+            { en: 'Sorry, the cup stack overflowed.', ko: '죄송해요, 컵 스택이 넘쳤어요.' }] },
     { en: ['Cold Brew Cache', '2.00', 'Served stale, twice as fast.'], ko: ['콜드브루 캐시', '2,000', '좀 오래됐지만 두 배 빨라요.'],
-      say: { en: "Brewed yesterday. Still good. Probably.", ko: '어제 내린 거예요. 아직 괜찮아요. 아마도요.' } },
+      say: [{ en: "That's yesterday's. For today's, do a hard refresh.", ko: '어제 내린 거예요. 오늘 걸 원하시면 강력 새로고침 하세요.' },
+            { en: "One fresh brew, coming up. …Huh. Yesterday's again.", ko: '새로 내려 드릴게요. …어, 또 어제 거네요.' }] },
     { en: ['Merge Conflict Mocha', '4.50 | 5.00', 'Two flavours. You pick one.'], ko: ['머지 충돌 모카', '4,500 | 5,000', '두 가지 맛, 하나만 고르세요.'],
-      say: { en: 'Chocolate or vanilla? Resolving it is on you.', ko: '초코랑 바닐라 중에 직접 골라 주세요. 충돌 해결은 손님 몫이에요.' } },
+      say: [{ en: 'Chocolate or vanilla? Resolving it is on you.', ko: '초코냐 바닐라냐, 충돌 해결은 손님 몫이에요.' },
+            { en: '<<<<<<< chocolate ======= vanilla >>>>>>> Stir well.', ko: '<<<<<<< 초코 ======= 바닐라 >>>>>>> 잘 저어 드세요.' }] },
     { en: ['Hotfix Hot Chocolate', '4.00', 'No tests. Extra marshmallows.'], ko: ['핫픽스 핫초코', '4,000', '테스트 없음, 마시멜로 추가.'],
-      say: { en: 'Deployed straight to your table. Untested, but warm.', ko: '테이블로 바로 배포했습니다. 테스트는 안 했지만 따뜻해요.' } },
+      say: [{ en: 'Deployed straight to your table. Untested, but warm.', ko: '테이블로 바로 배포했습니다. 테스트는 안 했지만 따뜻해요.' },
+            { en: "Spilled? We'll fix that in the next hotfix.", ko: '쏟으셨어요? 다음 핫픽스에서 고칠게요.' }] },
   ];
+  // The Async Latte really is asynchronous: it turns up a while later, whatever is going on.
+  const ASYNC = 1;
+  const LATTE = {
+    wait: 6000,
+    pending: { en: "Still pending. Awaiting it won't make it faster.", ko: '아직 대기 중이에요. await 하셔도 안 빨라져요.' },
+    resolved: { en: 'One Async Latte, resolved! …Hello?', ko: '(지이잉) 비동기 라테 나왔습니다! …손님?' },
+  };
   const SPECIAL = 6;
   const PROMPT = { en: 'Tap a drink to order.', ko: '메뉴를 눌러 주문해 보세요.' };
 
@@ -344,12 +358,21 @@
       if (i >= chars.length) clearInterval(typing);
     }, ko ? 55 : 32);
   }
-  function order(i) {
-    const li = rows[i];
+  function wiggle(li) {
     li.classList.remove('wiggle');
     void li.offsetWidth;
     li.classList.add('wiggle');
-    answer(TTY.t(MENU[i].say));
+  }
+  const asked = MENU.map(() => 0);
+  let latte = 0;
+  function order(i) {
+    wiggle(rows[i]);
+    if (i === ASYNC) {
+      if (latte) { answer(TTY.t(LATTE.pending)); return; }
+      latte = setTimeout(() => { latte = 0; wiggle(rows[ASYNC]); answer(TTY.t(LATTE.resolved)); }, LATTE.wait);
+    }
+    const says = MENU[i].say;
+    answer(TTY.t(says[asked[i]++ % says.length]));
   }
   rows.forEach((li, i) => {
     li.addEventListener('click', () => { touched = true; order(i); });
@@ -413,11 +436,12 @@
     await pause(700);
     ring().animate([{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }], { duration: 900, easing: 'ease-in-out', fill: 'both' });
 
-    // If nobody orders, the regulars do.
-    await pause(2400);
-    if (!touched) order(3);
-    await pause(5200);
-    if (!touched) order(2);
+    // If nobody orders, the regulars do: an Async Latte, then something else, and then the
+    // latte turns up after it.
+    await pause(1400);
+    if (!touched) order(ASYNC);
+    await pause(2600);
+    if (!touched) order([3, 2, 4, 5][Math.floor(Math.random() * 4)]);
   }
 
   addEventListener('resize', () => { fit(); if (overlay.firstChild) ring(); });

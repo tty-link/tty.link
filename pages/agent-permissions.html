@@ -115,6 +115,7 @@
     box-shadow: 0 2px 6px rgba(0,0,0,.12);
   }
   .agent .eye { transform-box: fill-box; transform-origin: center; }
+  .agent { transition: translate 1.2s cubic-bezier(.4, 0, .3, 1); }
 
   .toast {
     position: absolute;
@@ -172,7 +173,11 @@
   .dialog .q > font-kku { color: var(--ink); }
   .dialog .why { margin-top: 1.6cqi; font-size: 3.8cqi; color: var(--soft); line-height: 1.4; }
   .dialog code { font-family: inherit; padding: 0 .3em; border-radius: 4px; background: #eef1ea; }
-  .dialog .acts { display: flex; flex-wrap: wrap; gap: 2cqi; justify-content: flex-end; margin-top: 5cqi; }
+  /* The call it would make, and its scope, as permission prompts show them. */
+  .dialog .tool { display: grid; gap: .6cqi; margin: 3.6cqi 0 0 14.6cqi; padding: 2.2cqi 3cqi; border-radius: 8px; background: #f2f4ee; box-shadow: inset 0 0 0 1px var(--line); }
+  .dialog .tool code { padding: 0; background: none; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: max(10.5px, 3.3cqi); line-height: 1.35; color: #31443b; overflow-wrap: anywhere; }
+  .dialog .tool span { font-size: max(10px, 3.1cqi); color: var(--soft); }
+  .dialog .acts { display: flex; flex-wrap: wrap; gap: 2cqi; justify-content: flex-end; margin-top: 4cqi; }
   .dialog button {
     padding: 2.4cqi 4cqi;
     border: 0;
@@ -196,7 +201,7 @@
     .toast b { display: inline; margin: 0 .6em 0 0; }
   }
 
-  @media (prefers-reduced-motion: reduce) { .icon { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .icon, .agent { transition: none; } }
 </style>
 </head>
 <body>
@@ -272,53 +277,88 @@
   const can = $('.can');
   const mug = $('.mug');
   const eyes = [...document.querySelectorAll('.agent .eye')];
+  const agent = $('.agent');
 
+  // Each ask reads like a real permission prompt: the question, why, the tool call it would
+  // make and its scope. The calls are plain function calls, not any one product's format.
+  const now = new Date();
+  const hhmm = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const sigan = now.getMinutes() ? `${now.getHours()}시 ${now.getMinutes()}분이에요` : `${now.getHours()}시예요`;
   const T = TTY.t({
     en: {
-      deny: 'Deny', once: 'Allow once', always: 'Always allow',
+      deny: 'Deny', once: 'Allow once', always: 'Always allow', scope: 'Scope',
       asks: [
-        { q: 'Allow the agent to read <code>README.md</code>?', why: 'It wants to understand you better.' },
-        { q: 'Allow the agent to open <code>package.json</code>?', why: "It's a big one. 1,204 dependencies." },
-        { q: 'Allow the agent to rename <code>temp2_final_REAL</code>?', why: 'Suggested name: final_final.', rename: 'final_final' },
-        { q: 'Allow the agent to make you a coffee?', why: "You've been staring at that bug for 40 minutes." },
-        { q: 'Allow the agent to tell your mom you are eating well?', why: 'She asked. Twice.' },
+        { q: 'Allow the agent to read <code>README.md</code>?', why: 'It wants to understand you better.', tool: 'read_file("README.md")', scope: 'this project' },
+        { q: 'Allow the agent to open <code>package.json</code>?', why: "It's a big one. 1,204 dependencies.", tool: 'shell("ls node_modules | wc -l")', scope: 'node_modules (all of it)' },
+        { q: 'Allow the agent to rename <code>temp2_final_REAL</code>?', why: 'Suggested name: final_final.', rename: 'final_final', tool: 'rename("temp2_final_REAL", "final_final")', scope: '~/Desktop' },
+        { q: 'Allow the agent to make you a coffee?', why: "You've been staring at that bug for 40 minutes.", tool: 'brew_coffee(strength="strong")', scope: 'the office kitchen' },
+        { q: 'Allow the agent to tell your mom you are eating well?', why: 'She asked. Twice.', tool: 'send_message(to="Mom", text="I am eating well.")', scope: 'family group chat' },
       ],
+      // The last one lands on top, so its call is the one you can read: a hint of the ending.
       burst: [
-        { q: 'Allow the agent to water the plant?', why: 'It looks thirsty. So do you.' },
-        { q: 'Allow the agent to tidy the desktop?', why: 'It has an idea.' },
-        { q: 'Allow the agent to say “good job” out loud?', why: 'It is true, though.' },
-        { q: 'Allow the agent to leave you a note?', why: 'A short one.' },
+        { q: 'Allow the agent to water the plant?', why: 'It looks thirsty. So do you.', tool: 'water_plant(ml=150)', scope: 'one plant' },
+        { q: 'Allow the agent to say “good job” out loud?', why: 'It is true, though.', tool: 'speak("good job", volume="soft")', scope: 'out loud' },
+        { q: 'Allow the agent to leave you a note?', why: 'A short one.', tool: 'write_note(length="short")', scope: 'one sticky note' },
+        { q: 'Allow the agent to tidy the desktop?', why: 'It has an idea.', tool: 'arrange_icons(shape="smile")', scope: '~/Desktop' },
       ],
-      later: { q: 'Allow the agent to ask again later?', why: 'Okay. It will wait right here.' },
-      status: { idle: 'Thinking…', ask: 'Asking…', read: 'Reading README.md…', pkg: 'Counting dependencies…', rename: 'Renaming…', wait: 'Waiting politely…', done: 'All done :)' },
+      // Only asked when someone answers "Allow once" by hand.
+      more: [
+        { q: 'Allow the agent to read <code>.env</code>?', why: 'It will not look at the secrets. Promise.', tool: 'read_file(".env")', scope: 'secrets (eyes closed)' },
+        { q: 'Allow the agent to close 47 browser tabs?', why: 'It bookmarked them first. All 47.', tool: 'close_tabs(keep=3)', scope: '47 tabs' },
+        { q: 'Allow the agent to remind you to stretch?', why: 'Your shoulders are up by your ears.', tool: 'remind("stretch", when="now")', scope: 'your shoulders' },
+        { q: 'Allow the agent to hold your notifications for 25 minutes?', why: 'Except Mom.', tool: 'do_not_disturb(minutes=25, except=["Mom"])', scope: 'everything but Mom' },
+      ],
+      night: { q: 'Allow the agent to suggest bed?', why: `It is ${hhmm}. The bug will still be here tomorrow.`, tool: 'suggest("sleep")', scope: 'tonight' },
+      // Each "Deny" in a row gets a smaller ask; the third time it goes and sits by the plant.
+      denied: [
+        { q: 'Allow the agent to ask again later?', why: 'Okay. It will wait right here.', tool: 'ask_again(after="5m")', scope: 'right here' },
+        { q: 'Allow the agent to just sit here quietly?', why: 'It will not touch anything.', tool: 'sit(quietly=true)', scope: 'this corner' },
+        { q: 'Allow the agent to keep the plant company?', why: 'It is already there.', tool: 'keep_company("plant")', scope: 'one plant' },
+      ],
+      status: { idle: 'Thinking…', ask: 'Asking…', read: 'Reading README.md…', pkg: 'Counting dependencies…', rename: 'Renaming…', wait: 'Waiting politely…', done: 'All done :)', plant: 'Sitting with the plant.' },
       momTitle: 'Message sent to Mom',
       momBody: '“I am eating well. Promise.”',
       note: 'Thanks for trusting me. I only used it for nice things.',
       requests: (n) => `${n} ${n === 1 ? 'request' : 'requests'}`,
     },
     ko: {
-      deny: '거부', once: '이번만 허용', always: '항상 허용',
+      deny: '거부', once: '이번만 허용', always: '항상 허용', scope: '범위',
       asks: [
-        { q: '에이전트가 <code>README.md</code>를 읽어도 될까요?', why: '당신을 더 잘 이해하고 싶대요.' },
-        { q: '<code>package.json</code>을 열어도 될까요?', why: '좀 무거워요. 의존성이 1,204개예요.' },
-        { q: '<code>temp2_final_REAL</code>의 이름을 바꿔도 될까요?', why: '추천 이름: 진짜_최종_마지막', rename: '진짜_최종_마지막' },
-        { q: '커피 한 잔 타 드려도 될까요?', why: '그 버그를 40분째 보고 계세요.' },
-        { q: '어머니께 밥 잘 먹고 있다고 전해 드려도 될까요?', why: '두 번이나 물어보셨어요.' },
+        { q: '에이전트가 <code>README.md</code>를 읽어도 될까요?', why: '당신을 더 잘 이해하고 싶대요.', tool: 'read_file("README.md")', scope: '이 프로젝트' },
+        { q: '<code>package.json</code>을 열어도 될까요?', why: '좀 무거워요. 의존성이 1,204개예요.', tool: 'shell("ls node_modules | wc -l")', scope: 'node_modules 전체' },
+        { q: '<code>temp2_final_REAL</code>의 이름을 바꿔도 될까요?', why: '추천 이름: 진짜_최종_마지막', rename: '진짜_최종_마지막', tool: 'rename("temp2_final_REAL", "진짜_최종_마지막")', scope: '~/바탕화면' },
+        { q: '커피 한 잔 타 드려도 될까요?', why: '그 버그를 40분째 보고 계세요.', tool: 'brew_coffee(strength="진하게")', scope: '탕비실' },
+        { q: '어머니께 밥 잘 먹고 있다고 전해 드려도 될까요?', why: '두 번이나 물어보셨어요.', tool: 'send_message(to="엄마", text="밥 잘 먹고 다녀요")', scope: '가족 단톡방' },
       ],
       burst: [
-        { q: '화분에 물을 줘도 될까요?', why: '목말라 보여요. 당신도요.' },
-        { q: '바탕화면을 정리해도 될까요?', why: '좋은 생각이 있대요.' },
-        { q: '“잘했어요”라고 소리 내서 말해도 될까요?', why: '사실이니까요.' },
-        { q: '쪽지를 남겨도 될까요?', why: '짧게요.' },
+        { q: '화분에 물을 줘도 될까요?', why: '목말라 보여요. 당신도요.', tool: 'water_plant(ml=150)', scope: '화분 1개' },
+        { q: '“잘했어요”라고 소리 내서 말해도 될까요?', why: '사실이니까요.', tool: 'speak("잘했어요", volume="soft")', scope: '육성으로' },
+        { q: '쪽지를 남겨도 될까요?', why: '짧게요.', tool: 'write_note(length="short")', scope: '쪽지 1장' },
+        { q: '바탕화면을 정리해도 될까요?', why: '좋은 생각이 있대요.', tool: 'arrange_icons(shape="smile")', scope: '~/바탕화면' },
       ],
-      later: { q: '나중에 다시 물어봐도 될까요?', why: '네. 여기서 얌전히 기다릴게요.' },
-      status: { idle: '생각 중…', ask: '물어보는 중…', read: 'README.md 읽는 중…', pkg: '의존성 세는 중…', rename: '이름 바꾸는 중…', wait: '얌전히 기다리는 중…', done: '다 했어요 :)' },
+      more: [
+        { q: '<code>.env</code>를 읽어도 될까요?', why: '비밀값은 안 볼게요. 진짜로요.', tool: 'read_file(".env")', scope: '비밀값 (눈 감고)' },
+        { q: '브라우저 탭 47개를 닫아도 될까요?', why: '먼저 다 북마크해 뒀어요. 47개 전부.', tool: 'close_tabs(keep=3)', scope: '탭 47개' },
+        { q: '스트레칭하라고 말씀드려도 될까요?', why: '어깨가 귀까지 올라가 있어요.', tool: 'remind("stretch", when="now")', scope: '어깨' },
+        { q: '25분만 알림을 꺼 둬도 될까요?', why: '엄마 빼고요.', tool: 'do_not_disturb(minutes=25, except=["엄마"])', scope: '엄마 빼고 전부' },
+      ],
+      night: { q: '이제 그만 주무시라고 해도 될까요?', why: `지금 ${sigan}. 버그는 내일도 있어요.`, tool: 'suggest("sleep")', scope: '오늘 밤' },
+      denied: [
+        { q: '나중에 다시 물어봐도 될까요?', why: '네. 여기서 얌전히 기다릴게요.', tool: 'ask_again(after="5m")', scope: '바로 여기' },
+        { q: '그냥 조용히 앉아 있어도 될까요?', why: '아무것도 안 만질게요.', tool: 'sit(quietly=true)', scope: '이 구석' },
+        { q: '화분 곁에 있어 줘도 될까요?', why: '이미 와 있어요.', tool: 'keep_company("plant")', scope: '화분 1개' },
+      ],
+      status: { idle: '생각 중…', ask: '물어보는 중…', read: 'README.md 읽는 중…', pkg: '의존성 세는 중…', rename: '이름 바꾸는 중…', wait: '얌전히 기다리는 중…', done: '다 했어요 :)', plant: '화분 옆에 앉아 있어요.' },
       momTitle: '엄마에게 보냄',
       momBody: '“밥 잘 먹고 다녀요. 진짜로요.”',
       note: '믿어 줘서 고마워요. 좋은 일에만 썼어요.',
       requests: (n) => `요청 ${n}건`,
     },
   });
+  // The menu bar shows the visitor's own time.
+  const clock = document.querySelector('.clock');
+  const tickClock = () => { const d = new Date(); clock.textContent = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  tickClock(); setInterval(tickClock, 20000);
 
   /* ---- Desktop icons: a mess at first, a smile at the end ---- */
   const ICONS = [
@@ -365,6 +405,7 @@
   function blink() { eyes.forEach((e) => anim(e, [{ scale: '1 1' }, { scale: '1 .1' }, { scale: '1 1' }], { duration: 220 })); }
   function hop() { anim($('.agent svg'), [{ transform: 'none' }, { transform: 'translateY(-18%) rotate(-6deg)' }, { transform: 'none' }], { duration: 480, easing: 'cubic-bezier(.3,1.4,.5,1)' }); }
   let requests = 0;
+  let denies = 0;
   function bump() { requests += 1; count.textContent = T.requests(requests); anim(count, [{ scale: 1.25 }, { scale: 1 }], { duration: 260 }); }
 
   let shownQ = new WeakMap();
@@ -381,6 +422,7 @@
         <svg class="who" viewBox="0 0 80 80" aria-hidden="true"><rect x="8" y="12" width="64" height="58" rx="22" fill="#ff6b4a"/><ellipse cx="30" cy="40" rx="5" ry="7" fill="#fff"/><ellipse cx="50" cy="40" rx="5" ry="7" fill="#fff"/></svg>
         <div><p class="q"></p><p class="why"></p></div>
       </div>
+      <p class="tool"><code></code><span></span></p>
       <div class="acts">
         <button type="button" class="deny"></button>
         <button type="button" class="once"></button>
@@ -388,6 +430,8 @@
       </div>`;
     d.querySelector('.q').innerHTML = ask.q;
     d.querySelector('.why').textContent = ask.why;
+    d.querySelector('.tool code').textContent = ask.tool;
+    d.querySelector('.tool span').textContent = `${T.scope}: ${ask.scope}`;
     d.querySelector('.deny').textContent = T.deny;
     d.querySelector('.once').textContent = T.once;
     d.querySelector('.always').textContent = T.always;
@@ -418,6 +462,8 @@
 
   /* ---- The nice things ---- */
   async function niceThings() {
+    agent.style.translate = '';
+    denies = 0;
     status(T.status.done);
     hop();
     // A smile out of the desktop icons.
@@ -484,6 +530,8 @@
     mug.style.opacity = 0; mug.getAnimations({ subtree: true }).forEach((a) => a.cancel());
     plantStem.getAnimations().forEach((a) => a.cancel()); plantStem.style.scale = '';
     bloom.style.scale = 0;
+    agent.style.translate = '';
+    denies = 0;
     status(T.status.idle);
   }
 
@@ -547,10 +595,36 @@
     }
     await close(d);
     if (stack.querySelector('.dialog')) return;
-    const asked = b.classList.contains('deny') ? T.later : T.asks[Math.floor(Math.random() * T.asks.length)];
+    if (b.classList.contains('deny')) {
+      const ask = T.denied[Math.min(denies, T.denied.length - 1)];
+      denies += 1;
+      // Third time: it walks over to the plant, sits down, and asks if it may stay.
+      if (denies === T.denied.length) {
+        status(T.status.plant);
+        const p = $('.plant').getBoundingClientRect();
+        const a = agent.getBoundingClientRect();
+        agent.style.translate = `${p.right + 8 - a.left}px 0`;
+        await wait(TTY.reduce ? 0 : 1300);
+        if (stack.querySelector('.dialog')) return;
+        blink();
+      } else {
+        status(T.status.ask); blink();
+      }
+      dialog(ask);
+      return;
+    }
+    // "Allow once": another ask, never the same one twice in a row. Late at night, bed first.
+    const late = now.getHours() >= 23 || now.getHours() < 5;
+    let ask = late && !askedNight ? T.night : null;
+    askedNight = askedNight || !!ask;
+    while (!ask || ask === lastAsk) ask = pool[Math.floor(Math.random() * pool.length)];
+    lastAsk = ask;
     status(T.status.ask); blink();
-    dialog(b.classList.contains('deny') ? T.later : asked);
+    dialog(ask);
   });
+  const pool = [...T.asks, ...T.more];
+  let lastAsk = null;
+  let askedNight = false;
 
   /* ---- Start ---- */
   resetScene();

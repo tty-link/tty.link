@@ -157,6 +157,10 @@
   .lang-ko .meter dt { font-family: 'IBM Plex Sans KR', sans-serif; }
   .meter dd { margin: 0; white-space: nowrap; font-size: clamp(16px, 2.8cqmin, 24px); font-weight: 600; color: #e9f4fa; font-variant-numeric: tabular-nums; }
   .meter dd.warm { color: #ffd166; }
+  /* The supply's mode light: CV while all is well, CC when it is holding the current at its limit. */
+  .mode { display: inline-block; margin-left: .4em; padding: 0 .35em; border-radius: 3px; font: 600 .85em/1.35 'Chivo Mono', monospace; font-style: normal; color: #6f8796; box-shadow: inset 0 0 0 1px #3a5262; }
+  .mode.cv { color: #7dff9a; box-shadow: inset 0 0 0 1px #3f7a53; }
+  .mode.cc { color: #fff; background: #e2342b; box-shadow: none; }
 
   .lit { transition: fill .2s, filter .2s; transform-box: fill-box; transform-origin: center; }
   .flow { opacity: 0; transition: opacity .3s; }
@@ -222,6 +226,10 @@
             <feGaussianBlur stdDeviation="3.2" result="b"/>
             <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
+          <radialGradient id="soot-fill">
+            <stop offset=".45" stop-color="#1d1020" stop-opacity=".75"/>
+            <stop offset="1" stop-color="#1d1020" stop-opacity="0"/>
+          </radialGradient>
           <radialGradient id="chipshine" cx=".3" cy=".25" r=".9">
             <stop offset="0" stop-color="#3a3d45"/>
             <stop offset="1" stop-color="#17181c"/>
@@ -280,7 +288,8 @@
         <!-- R2 -->
         <rect x="236" y="120" width="14" height="20" rx="3" fill="var(--gold)"/><rect x="330" y="120" width="14" height="20" rx="3" fill="var(--gold)"/>
         <rect x="252" y="114" width="76" height="32" rx="14" fill="#e6c79a" stroke="#b38f5c" stroke-width="2"/>
-        <g fill="none" stroke-width="7"><path d="M268 114 V146" stroke="#7a4a2b"/><path d="M284 114 V146" stroke="#1c1c1c"/><path d="M298 114 V146" stroke="#d0322b"/><path d="M314 114 V146" stroke="#c9a53a"/></g>
+        <!-- a zero-ohm part: a single black band, i.e. no resistance at all -->
+        <path d="M290 114 V146" stroke="#1c1c1c" stroke-width="9"/>
         <rect x="226" y="104" width="128" height="52" rx="8" fill="none" stroke="var(--silk)" stroke-width="1.6" opacity=".8"/>
 
         <!-- U1 -->
@@ -295,10 +304,14 @@
         <text x="500" y="246" text-anchor="middle" font-family="Chivo Mono, monospace" font-size="16" font-weight="600" fill="#9aa1ad">TTY-404</text>
         <text x="500" y="268" text-anchor="middle" font-family="Chivo Mono, monospace" font-size="11" fill="#6f7682">rev B 2026</text>
 
-        <!-- C7 -->
+        <!-- C7. The silkscreen "+" and the can's minus stripe sit on the same side:
+             it went in backwards, which is where the smoke comes from. -->
+        <circle id="soot" cx="664" cy="138" r="70" fill="url(#soot-fill)" opacity="0"/>
         <circle cx="660" cy="146" r="44" fill="none" stroke="var(--silk)" stroke-width="1.6" opacity=".8"/>
+        <path d="M703 99 V115 M695 107 H711" stroke="var(--silk)" stroke-width="2.4" stroke-linecap="round" opacity=".85"/>
         <circle id="c7" cx="660" cy="146" r="38" fill="#2b4a9b" stroke="#1a2f6b" stroke-width="3"/>
         <path d="M660 108 A38 38 0 0 1 698 146 L686 146 A26 26 0 0 0 660 120 Z" fill="#cfd8ef" opacity=".85"/>
+        <path d="M676 120 L683 127" stroke="#2b4a9b" stroke-width="3" stroke-linecap="round"/>
         <path d="M646 132 L674 160 M674 132 L646 160 M660 126 V166 M640 146 H680" stroke="#9fb2df" stroke-width="2.4"/>
 
         <!-- FC1: three tubes meeting in the middle -->
@@ -322,8 +335,8 @@
 
       <!-- silkscreen -->
       <p class="silk" style="left:36.25%; top:32.5%">
-        <span data-lang="en"><span class="ref">R2</span><span class="joke">resistor of patience</span></span>
-        <span data-lang="ko"><span class="ref">R2</span><span class="joke"><font-kku font="dunggeun" size="max(12px, 2.25cqi)">인내 저항</font-kku></span></span>
+        <span data-lang="en"><span class="ref">R2</span><span class="joke">resistor of patience, 0 Ω</span></span>
+        <span data-lang="ko"><span class="ref">R2</span><span class="joke"><font-kku font="dunggeun" size="max(12px, 2.25cqi)">인내 저항 0Ω</font-kku></span></span>
       </p>
       <p class="silk" style="left:82.5%; top:39.5%">
         <span data-lang="en"><span class="ref">C7</span><span class="joke">capacitor (emotional)</span></span>
@@ -364,7 +377,7 @@
   </section>
 
   <ul class="bom" data-lang="en">
-    <li><b>R2</b>resistor of patience</li>
+    <li><b>R2</b>resistor of patience, 0 Ω</li>
     <li><b>C7</b>capacitor (emotional)</li>
     <li><b>U1</b>chip on its shoulder</li>
     <li><b>FC1</b>flux capacitor, 1.21 GW</li>
@@ -372,7 +385,7 @@
     <li><b>D1–D4</b>morale</li>
   </ul>
   <ul class="bom" data-lang="ko">
-    <li><b>R2</b>인내 저항</li>
+    <li><b>R2</b>인내 저항 0Ω</li>
     <li><b>C7</b>감수성 풍부한 콘덴서</li>
     <li><b>U1</b>어깨에 힘 들어간 칩</li>
     <li><b>FC1</b>플럭스 콘덴서 1.21GW</li>
@@ -388,7 +401,7 @@
     </button>
     <dl class="meter">
       <div><dt data-lang="en">Voltage</dt><dt data-lang="ko">전압</dt><dd data-v>0.00 V</dd></div>
-      <div><dt data-lang="en">Current</dt><dt data-lang="ko">전류</dt><dd data-a>0.00 A</dd></div>
+      <div><dt data-lang="en">Current <i class="mode">OFF</i></dt><dt data-lang="ko">전류 <i class="mode">OFF</i></dt><dd data-a>0.00 A</dd></div>
       <div><dt data-lang="en">Smoke</dt><dt data-lang="ko">연기</dt><dd data-s>–</dd></div>
     </dl>
   </footer>
@@ -401,6 +414,7 @@
     watching: { en: 'watching…', ko: '지켜보는 중' },
     puff: { en: '1 small puff', ko: '아주 조금' },
     emotional: { en: 'C7 needed a moment', ko: 'C7이 잠깐 울컥함' },
+    quit: { en: 'trying to quit', ko: '금연 중' },
   };
   const board = document.getElementById('board');
   const svg = board.querySelector('svg');
@@ -415,6 +429,8 @@
   const vOut = document.querySelector('[data-v]');
   const aOut = document.querySelector('[data-a]');
   const sOut = document.querySelector('[data-s]');
+  const modeOut = document.querySelector('.mode');
+  const soot = document.getElementById('soot');
   let timers = [];
   let anims = [];
   const later = (ms, fn) => timers.push(setTimeout(fn, ms));
@@ -490,6 +506,11 @@
   size();
 
   /* ---- power ---- */
+  function mode(m) {
+    modeOut.className = 'mode' + (m ? ' ' + m : '');
+    modeOut.textContent = m === 'cc' ? 'CC' : m === 'cv' ? 'CV' : 'OFF';
+  }
+
   function reset() {
     timers.forEach(clearTimeout); timers = [];
     anims.forEach((a) => a.cancel()); anims = [];
@@ -500,9 +521,12 @@
     sw.setAttribute('aria-pressed', 'false');
     [pwr, ...leds].forEach((l) => light(l, '#3b2a4a'));
     flux.setAttribute('opacity', '0');
+    soot.setAttribute('opacity', '0');
+    leds.forEach((l) => { l.style.opacity = ''; });
     pulses.forEach((p) => { p.style.opacity = 0; });
     stamp.style.opacity = 0;
     vOut.textContent = '0.00 V'; aOut.textContent = '0.00 A'; sOut.textContent = '–'; sOut.classList.remove('warm');
+    mode(null);
   }
 
   function finalState() {
@@ -511,7 +535,9 @@
     light(pwr, '#7dff9a');
     leds.forEach((l, i) => light(l, ledOn[i]));
     flux.setAttribute('opacity', '1');
+    soot.setAttribute('opacity', '1');
     vOut.textContent = '3.30 V'; aOut.textContent = '0.42 A';
+    mode('cv');
     sOut.textContent = TTY.t(T.puff); sOut.classList.add('warm');
     stamp.style.opacity = 1;
   }
@@ -525,6 +551,7 @@
       light(pwr, '#7dff9a');
       count(vOut, 3.3, 'V', 600);
       count(aOut, 0.42, 'A', 900);
+      mode('cv');
       sOut.textContent = TTY.t(T.none);
       dashes.forEach((d) => anims.push(d.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: -66 }], { duration: 900, iterations: Infinity })));
       // One bright pulse races down each route, in the order the current would arrive.
@@ -544,7 +571,20 @@
       anims.push(flux.animate([{ opacity: .25 }, { opacity: 1 }], { duration: 160, iterations: Infinity, direction: 'alternate' }));
     });
     later(3100, () => { sOut.textContent = TTY.t(T.watching); });
-    later(3900, puff);
+    // The bench supply notices first: the current slams into its 0.50 A limit (CC), the
+    // voltage sags and the LEDs dim, then it all settles back as if nothing happened.
+    later(3900, () => {
+      puff();
+      mode('cc');
+      vOut.textContent = '2.71 V'; aOut.textContent = '0.50 A';
+      leds.forEach((l) => { l.style.opacity = .5; });
+      anims.push(soot.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1600, fill: 'forwards' }));
+    });
+    later(4700, () => {
+      mode('cv');
+      vOut.textContent = '3.30 V'; aOut.textContent = '0.42 A';
+      leds.forEach((l) => { l.style.opacity = ''; });
+    });
     later(4500, () => { sOut.textContent = TTY.t(T.puff); sOut.classList.add('warm'); });
     later(5500, () => {
       stamp.style.opacity = 1;
@@ -558,14 +598,19 @@
   }
 
   // A real switch: off stays off (dark board, meters at zero); on runs the test again.
+  // Left off for a while, the board is no longer smoking.
   sw.addEventListener('click', () => {
-    if (sw.getAttribute('aria-pressed') === 'true') reset();
-    else powerOn();
+    if (sw.getAttribute('aria-pressed') === 'true') {
+      reset();
+      later(2600, () => { sOut.textContent = TTY.t(T.quit); });
+    } else powerOn();
   });
   document.querySelector('.c7-hit').addEventListener('click', () => {
     if (!board.classList.contains('on')) return;
     if (!TTY.reduce) puff();
     sOut.textContent = TTY.t(T.emotional);
+    mode('cc');
+    later(600, () => mode('cv'));
   });
 
   TTY.onShow(() => setTimeout(powerOn, TTY.reduce ? 0 : 600));
