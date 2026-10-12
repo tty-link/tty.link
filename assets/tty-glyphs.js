@@ -11,8 +11,9 @@
  *
  * Units: x-height 1, baseline at 0, ascender -1.42, descender .42.
  * A part is an SVG path, "O cx cy r" for a ring, or "D cx cy" for a dot.
- * Classes: .w word, .g letter, .part stroke (.dot filled). The styles below are wrapped in
- * :where() so a page can override any of them.
+ * Classes: .w word, .g letter, .part stroke (.dot filled), inside a .tty-glyphs container.
+ * The styles below only reach inside that container (pages that load this file for the
+ * wordmark have their own .w or .part), and are wrapped in :where() so a page can override them.
  */
 (() => {
   if (window.TTYGlyphs) return;
@@ -45,12 +46,12 @@
 
   const style = document.createElement('style');
   style.textContent = [
-    ':where(.w){display:inline-block;margin-right:.46em;white-space:nowrap}',
-    ':where(.w:last-child){margin-right:0}',
-    ':where(.g){display:inline-block;width:calc((var(--w) + .24) * 1em);height:1.9em;margin-right:.04em;vertical-align:top;transform-origin:0 0}',
-    ':where(.g svg){display:block;width:100%;height:100%;overflow:visible}',
-    ':where(.part){fill:none;stroke:currentColor;stroke-width:var(--sw,.19);stroke-linecap:round;stroke-linejoin:round;transform-box:fill-box;transform-origin:center}',
-    ':where(.part.dot){fill:currentColor;stroke:none}',
+    ':where(.tty-glyphs .w){display:inline-block;margin-right:.46em;white-space:nowrap}',
+    ':where(.tty-glyphs .w:last-child){margin-right:0}',
+    ':where(.tty-glyphs .g){display:inline-block;width:calc((var(--w) + .24) * 1em);height:1.9em;margin-right:.04em;vertical-align:top;transform-origin:0 0}',
+    ':where(.tty-glyphs .g svg){display:block;width:100%;height:100%;overflow:visible}',
+    ':where(.tty-glyphs .part){fill:none;stroke:currentColor;stroke-width:var(--sw,.19);stroke-linecap:round;stroke-linejoin:round;transform-box:fill-box;transform-origin:center}',
+    ':where(.tty-glyphs .part.dot){fill:currentColor;stroke:none}',
     // The wordmark: a little extra tracking keeps it legible when small.
     ':where(.tty-wordmark){display:inline-block;line-height:1.9;--sw:.2}',
     ':where(.tty-wordmark .g){margin-right:.12em}',
@@ -91,6 +92,7 @@
   }
 
   function setWords(el, words) {
+    el.classList.add('tty-glyphs');
     el.replaceChildren(...words.map((word) => {
       if (word === '|') return document.createElement('br');
       if (word === '|n') return Object.assign(document.createElement('br'), { className: 'br-narrow' });
