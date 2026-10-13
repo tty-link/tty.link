@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gradient Descent Trail | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400;1,8..60,600&family=Gowun+Dodum&display=swap">
+<script src="https://font.tty.link/lib/font-kku.js" data-fonts="gothic dojang"></script>
+<style>
+  /* A national-park trail map for gradient descent. The mountain is a loss function, the
+     summit is where everyone starts, and in the fog each hiker only feels the slope underfoot.
+     Every path on the map is real gradient descent on the same function that paints it. */
+  :root {
+    --wood: #5a3b25;
+    --wood-dk: #3c2616;
+    --wood-lt: #73502f;
+    --cream: #f3ead3;
+    --paper: #f6efda;
+    --ink: #2c2318;
+    --ink-soft: #6b5a44;
+    --blue: #2f6fb5;
+    --green: #2e8b57;
+    --red: #d2452f;
+    --orange: #e38b1f;
+    --water: #7fb8c9;
+    --seal: #c5302a;
+    --gap: clamp(8px, 1.6cqmin, 16px);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    container: page / size;
+    position: relative;
+    overflow: hidden;
+    background: #9cc7dd;
+    color: var(--cream);
+    font-family: 'Overpass', 'Gowun Dodum', system-ui, sans-serif;
+  }
+  .lang-ko body { word-break: keep-all; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid #ffd84a; outline-offset: 2px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* ---- Sky behind the sign: daylight, then the sun starts to set at ten seconds ---- */
+  .sky { position: absolute; inset: 0; background: linear-gradient(#78b3da, #bfe0ec 62%, #d9ead8); }
+  .sky .dusk { position: absolute; inset: 0; background: linear-gradient(#6b6fa8, #e7928a 46%, #f6c98a 70%, #f3dfb0); opacity: 0; transition: opacity 7s ease-in-out; }
+  .sky .ridge { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 26%; }
+  .dusk-on .sky .dusk { opacity: 1; }
+  .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 7cqmin; background: linear-gradient(#55703f, #3e5530); }
+
+  /* ---- The sign: a wooden board with a small roof, standing on two posts ---- */
+  .board {
+    position: absolute;
+    inset: max(14px, 3.4cqmin) max(8px, 2.2cqmin) max(16px, 4.6cqmin);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: var(--gap);
+    padding: clamp(8px, 1.8cqmin, 20px) clamp(8px, 2cqmin, 22px) clamp(8px, 1.8cqmin, 20px);
+    border: clamp(5px, 1.1cqmin, 11px) solid var(--wood-dk);
+    border-radius: 4px;
+    background:
+      radial-gradient(120% 80% at 30% 20%, rgba(255, 220, 170, .10), transparent 60%),
+      repeating-linear-gradient(180deg, rgba(0, 0, 0, .07) 0 1px, transparent 1px 9px),
+      repeating-linear-gradient(180deg, rgba(255, 230, 190, .045) 0 2px, transparent 2px 23px),
+      linear-gradient(180deg, #5f3f27, var(--wood) 40%, #533620);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 225, 180, .14),
+      inset 0 2px 0 rgba(255, 225, 180, .18),
+      inset 0 -3px 8px rgba(0, 0, 0, .35),
+      0 10px 24px rgba(20, 12, 4, .45);
+  }
+  .board::before { /* the roof */
+    content: "";
+    position: absolute;
+    left: calc(-1 * clamp(10px, 2cqmin, 20px));
+    right: calc(-1 * clamp(10px, 2cqmin, 20px));
+    top: calc(-1 * clamp(5px, 1.1cqmin, 11px) - max(10px, 2.4cqmin));
+    height: max(10px, 2.4cqmin);
+    border-radius: 3px 3px 1px 1px;
+    background: repeating-linear-gradient(90deg, #3a2414 0 6px, #43291a 6px 7px), #3a2414;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, .35);
+  }
+  .post { position: absolute; bottom: 0; width: max(10px, 2.2cqmin); height: max(20px, 6cqmin); background: linear-gradient(90deg, #3a2414, #5b3b23 45%, #3a2414); }
+  .post.l { left: 18%; } .post.r { right: 18%; }
+  .bolt { position: absolute; width: max(6px, 1cqmin); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #c9b79a, #6f5d44 60%, #3a2c1d); box-shadow: 0 1px 1px rgba(0, 0, 0, .5); }
+  .bolt.tl { left: max(3px, .6cqmin); top: max(3px, .6cqmin); } .bolt.tr { right: max(3px, .6cqmin); top: max(3px, .6cqmin); }
+  .bolt.bl { left: max(3px, .6cqmin); bottom: max(3px, .6cqmin); } .bolt.br { right: max(3px, .6cqmin); bottom: max(3px, .6cqmin); }
+
+  /* ---- Header: park emblem (a nabla over a mountain), routed title ---- */
+  .head { display: flex; align-items: center; gap: clamp(8px, 1.6cqmin, 16px); min-width: 0; }
+  .emblem { flex: none; width: clamp(34px, 7cqmin, 64px); height: clamp(34px, 7cqmin, 64px); }
+  .titles { min-width: 0; }
+  .title {
+    font-weight: 800;
+    font-size: clamp(19px, 4.4cqmin, 42px);
+    line-height: 1.02;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--cream);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 230, 190, .18);
+  }
+  .title > font-kku { color: var(--cream); }
+  .sub { margin-top: .35em; font-size: clamp(11.5px, 1.85cqmin, 17px); font-weight: 600; letter-spacing: .06em; color: #e2d3ad; }
+  .lang-ko .sub { letter-spacing: .02em; font-family: 'Gowun Dodum', sans-serif; font-weight: 400; }
+
+  /* ---- Map column ---- */
+  .mapcol { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: clamp(6px, 1.2cqmin, 12px); min-height: 0; min-width: 0; }
+  .mapcell { position: relative; min-height: 0; min-width: 0; }
+  .map {
+    position: absolute;
+    left: 0; top: 0;
+    border-radius: 2px;
+    background: var(--paper);
+    box-shadow: 0 0 0 clamp(3px, .6cqmin, 6px) var(--paper), 0 0 0 calc(clamp(3px, .6cqmin, 6px) + 1.5px) var(--wood-dk), 0 4px 14px rgba(0, 0, 0, .45);
+    overflow: hidden;
+  }
+  .map > * { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .terrain { --rv: 120%; -webkit-mask-image: linear-gradient(#000 calc(var(--rv) - 14%), rgba(0, 0, 0, .28) var(--rv)); mask-image: linear-gradient(#000 calc(var(--rv) - 14%), rgba(0, 0, 0, .28) var(--rv)); }
+  .warm { background: linear-gradient(160deg, rgba(255, 170, 90, .0), rgba(255, 150, 80, .0)); mix-blend-mode: multiply; transition: background 7s; pointer-events: none; }
+  .dusk-on .warm { background: linear-gradient(160deg, rgba(255, 214, 165, .32), rgba(240, 168, 140, .26)); }
+  .fog { transition: opacity 1.4s ease-out; pointer-events: none; }
+  .fog.lifted { opacity: 0; }
+  .marks, .ink, .leaders { pointer-events: none; overflow: visible; }
+  .labels { pointer-events: none; }
+  .hit { z-index: 2; border: 0; padding: 0; background: transparent; cursor: crosshair; }
+  .hit:focus-visible { outline: 3px solid #ffd84a; outline-offset: -3px; }
+
+  .trail { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .trail.casing { stroke: rgba(255, 255, 255, .85); }
+  .leap { fill: none; stroke-linecap: round; }
+  .hk .disc { stroke: #fff; }
+  .hk .fig { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; }
+  .hk .shadow { fill: rgba(30, 30, 20, .35); }
+  .hk.gone { opacity: 0; transition: opacity .25s; }
+  .pin { opacity: 0; transition: opacity .5s; }
+  .pin.on { opacity: 1; }
+
+  /* Labels on the map are HTML so the type stays sharp whatever the canvas resolution. */
+  .lbl {
+    position: absolute;
+    left: 0; top: 0;
+    max-width: min(46cqmin, 250px);
+    padding: .28em .55em .22em;
+    border-radius: 3px;
+    background: rgba(248, 243, 228, .96);
+    color: var(--ink);
+    font-size: clamp(11px, 1.55cqmin, 14px);
+    font-weight: 600;
+    line-height: 1.25;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, .12), 0 2px 6px rgba(30, 20, 10, .22);
+    opacity: 0;
+    translate: 0 4px;
+    transition: opacity .35s, translate .35s;
+    white-space: normal;
+  }
+  .lbl.on { opacity: 1; translate: 0 0; }
+  /* The separator dot is drawn, centred: the font's own middle dot sits off to one side. */
+  .lbl .nw { white-space: nowrap; }
+  .lbl .nw.wrapped { display: block; } /* on a line of its own, the break is separator enough */
+  .lbl .nw.wrapped .sep { display: none; }
+  .lbl .sep { display: inline-block; width: .22em; height: .22em; margin: 0 .42em; border-radius: 50%; background: currentColor; vertical-align: middle; overflow: hidden; line-height: 0; -webkit-text-fill-color: transparent; }
+  .lbl.hide { display: none; }
+  .lbl b { font-weight: 800; }
+  .lbl i { display: block; margin-top: .15em; font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-weight: 400; font-size: 1.04em; color: #4a3f30; }
+  .lang-ko .lbl { font-weight: 400; font-family: 'Overpass', 'Gowun Dodum', sans-serif; }
+  .lang-ko .lbl b { font-weight: 700; }
+  .lang-ko .lbl i { font-family: 'Gowun Dodum', sans-serif; font-style: normal; font-size: .96em; }
+  .lbl.tag { border-left: 4px solid var(--c, var(--ink)); }
+  .lbl.herebox { padding: 0; background: none; box-shadow: none; }
+  .herebox .here { display: inline-block; padding: .28em .55em .22em; border-radius: 3px; background: #c8322b; color: #fff; box-shadow: 0 2px 6px rgba(30, 20, 10, .25); white-space: nowrap; }
+  .herebox .here b { font-weight: 800; }
+  .herebox .park { display: none; margin-top: 3px; padding: .28em .55em .22em; border-radius: 3px; border-left: 4px solid var(--blue); background: rgba(248, 243, 228, .96); box-shadow: 0 2px 6px rgba(30, 20, 10, .22); }
+  .herebox.parked .park { display: block; animation: drop .35s ease-out; }
+  /* On small maps the second line wraps to the width of the first, to keep the top edge free. */
+  .map.small .herebox { display: inline-grid; }
+  .map.small .herebox .park { width: 0; min-width: 100%; }
+  @keyframes drop { from { opacity: 0; transform: translateY(-4px); } }
+  @media (prefers-reduced-motion: reduce) { .herebox.parked .park { animation: none; } }
+  .lbl.sign {
+    padding: .3em .7em .25em;
+    background: linear-gradient(#6a4529, #573821);
+    color: var(--cream);
+    border: 1px solid #2f1d10;
+    box-shadow: inset 0 1px 0 rgba(255, 230, 190, .25), 0 2px 5px rgba(0, 0, 0, .35);
+    clip-path: polygon(0 0, calc(100% - .8em) 0, 100% 50%, calc(100% - .8em) 100%, 0 100%);
+    padding-right: 1.3em;
+    white-space: nowrap;
+  }
+  .lbl.nan { background: #2b1c14; color: #ffd9cc; border: 1.5px solid var(--red); white-space: nowrap; max-width: none; }
+  .lbl.nan b { color: #fff; }
+  .lbl.slip { max-width: min(44cqmin, 230px); background: #fff7c7; color: #3d3320; font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-weight: 400; rotate: -2deg; }
+  .lang-ko .lbl.slip { font-family: 'Gowun Dodum', sans-serif; font-style: normal; }
+  .lbl.place {
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    color: #33402a;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-weight: 600;
+    letter-spacing: .06em;
+    white-space: nowrap;
+    text-shadow: 0 0 2px #f6f1df, 0 0 2px #f6f1df, 0 0 4px #f6f1df;
+  }
+  .lang-ko .lbl.place { font-family: 'Gowun Dodum', sans-serif; font-style: normal; letter-spacing: .04em; font-weight: 400; }
+  .lbl.mini { padding: .14em .45em .1em; font-size: clamp(11px, 1.4cqmin, 13px); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* The stamp: pressed onto the global-minimum tag at the end. */
+  .stamp {
+    position: absolute;
+    left: 0; top: 0;
+    display: grid;
+    place-items: center;
+    padding: .35em .6em .3em;
+    border: .2em double var(--seal);
+    border-radius: .3em;
+    color: var(--seal);
+    font-weight: 800;
+    font-size: clamp(11px, 1.7cqmin, 16px);
+    letter-spacing: .08em;
+    line-height: 1.05;
+    text-align: center;
+    white-space: nowrap;
+    rotate: -11deg;
+    opacity: 0;
+    pointer-events: none;
+    background: rgba(255, 250, 236, .82);
+    box-shadow: 0 1px 4px rgba(40, 20, 10, .25);
+  }
+  .stamp.on { opacity: .92; }
+  .stamp > font-kku { color: var(--seal); }
+
+  /* ---- Controls: stride buttons and the momentum switch ---- */
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: clamp(5px, 1cqmin, 10px); min-width: 0; }
+  .steps { display: flex; border: 1px solid #2f1d10; border-radius: 4px; overflow: hidden; box-shadow: 0 1px 0 rgba(255, 225, 180, .15); }
+  .ctl {
+    min-height: 32px;
+    padding: .38em .75em .3em;
+    border: 0;
+    background: linear-gradient(#4a2f1b, #3d2616);
+    color: var(--cream);
+    font-size: clamp(12px, 1.6cqmin, 15px);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .steps .ctl + .ctl { border-left: 1px solid #2f1d10; }
+  .ctl[aria-pressed="true"] { background: var(--cream); color: var(--ink); box-shadow: inset 0 2px 3px rgba(0, 0, 0, .25); }
+  .ctl:hover { filter: brightness(1.12); }
+  .mom { display: inline-flex; align-items: center; gap: .45em; border: 1px solid #2f1d10; border-radius: 4px; }
+  .mom .lamp { width: .7em; height: .7em; border-radius: 50%; background: #2a1a0e; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6); }
+  .mom[aria-pressed="true"] { background: linear-gradient(#4a2f1b, #3d2616); color: var(--cream); box-shadow: none; }
+  .mom[aria-pressed="true"] .lamp { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+  .hint { flex: 1 1 12em; min-width: 0; font-size: clamp(11px, 1.45cqmin, 13.5px); color: #e4d4ae; font-style: italic; font-family: 'Source Serif 4', Georgia, serif; }
+  .lang-ko .hint { font-family: 'Gowun Dodum', sans-serif; font-style: normal; }
+
+  /* ---- Side column: legend (also the glossary), safety rules, elevation profile ---- */
+  .side { display: flex; flex-direction: column; gap: var(--gap); min-height: 0; min-width: 0; }
+  .panel {
+    padding: clamp(7px, 1.3cqmin, 13px) clamp(8px, 1.5cqmin, 15px);
+    border-radius: 2px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 0 0 1.5px var(--wood-dk), 0 3px 10px rgba(0, 0, 0, .35);
+  }
+  .panel h2, .rules h2 {
+    font-size: clamp(11px, 1.45cqmin, 13.5px);
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .panel h2 { color: var(--ink-soft); padding-bottom: .35em; border-bottom: 1px solid #d8ccae; }
+  .lang-ko .panel h2, .lang-ko .rules h2 { letter-spacing: .06em; font-family: 'Gowun Dodum', sans-serif; font-weight: 400; font-size: clamp(12px, 1.55cqmin, 14.5px); }
+  .legend ul { list-style: none; padding: 0; margin-top: .45em; display: grid; gap: clamp(2px, .5cqmin, 6px); }
+  .legend li { display: grid; grid-template-columns: 2.1em 1fr; align-items: center; gap: .5em; font-size: clamp(11.5px, 1.5cqmin, 14px); line-height: 1.2; opacity: 0; transition: opacity .4s; }
+  .legend li.on { opacity: 1; }
+  .legend li svg { width: 2.1em; height: 1.35em; }
+  .legend li b { font-weight: 800; }
+  .lang-ko .legend li { font-family: 'Gowun Dodum', sans-serif; }
+  .lang-ko .legend li b { font-weight: 400; color: #1c160e; text-decoration: underline 1px #c9b98f; text-underline-offset: 3px; }
+
+  .rules { padding: 0 .1em; opacity: 0; transition: opacity .5s; }
+  .rules.on { opacity: 1; }
+  .rules h2 { color: #f0dca8; display: flex; align-items: center; gap: .5em; }
+  .rules h2::before { content: ""; width: 1.1em; height: 1.1em; flex: none; background: #e9b437; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .rules ol { margin-top: .4em; padding-left: 0; list-style: none; display: grid; gap: .3em; font-size: clamp(11.5px, 1.5cqmin, 14px); line-height: 1.3; color: var(--cream); }
+  .lang-ko .rules ol { font-family: 'Gowun Dodum', sans-serif; }
+
+  .profile { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+  .profile .plot { position: relative; flex: 1 1 auto; min-height: 48px; margin-top: .3em; }
+  .profile svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .profile text { font-family: 'Overpass', 'Gowun Dodum', sans-serif; font-size: 11px; fill: var(--ink-soft); }
+  .profile .axis { stroke: #8a7a5f; stroke-width: 1; }
+  .profile .grid { stroke: #e3d8bd; stroke-width: 1; }
+  .profile .ln { fill: none; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  .profile .area { stroke: none; opacity: .1; }
+  .profile .nan { font-weight: 800; font-size: 12px; }
+
+  /* Narrow screens: the legend folds into a single line that cycles through its entries. */
+  .ticker { display: none; align-items: center; gap: .55em; min-height: 26px; padding: .25em .6em; border-radius: 3px; background: rgba(0, 0, 0, .18); font-size: clamp(11.5px, 3.3cqw, 13px); color: var(--cream); line-height: 1.2; cursor: pointer; border: 0; text-align: left; width: 100%; }
+  .ticker svg { flex: none; width: 2em; height: 1.3em; }
+  .ticker .dots { margin-left: auto; display: flex; gap: 3px; flex: none; }
+  .ticker .dots i { width: 5px; height: 5px; border-radius: 50%; background: rgba(243, 234, 211, .3); }
+  .ticker .dots i.on { background: var(--cream); }
+  .ticker b { font-weight: 800; }
+  .lang-ko .ticker { font-family: 'Gowun Dodum', sans-serif; }
+  .lang-ko .ticker b { font-weight: 400; text-decoration: underline 1px rgba(243, 234, 211, .5); text-underline-offset: 3px; }
+
+  /* ---- The ranger's note, taped on at the end ---- */
+  .ranger {
+    position: absolute;
+    z-index: 3;
+    right: clamp(10px, 2.4cqmin, 26px);
+    top: clamp(4px, 1cqmin, 12px);
+    width: clamp(170px, 25cqmin, 270px);
+    padding: .75em .9em .65em;
+    background: #fffbea;
+    color: #2d2a22;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(12px, 1.6cqmin, 15.5px);
+    line-height: 1.32;
+    rotate: 2.2deg;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .35);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .ranger::before { content: ""; position: absolute; left: 34%; top: -.65em; width: 32%; height: 1.3em; background: rgba(240, 230, 200, .7); rotate: -4deg; box-shadow: 0 1px 2px rgba(0, 0, 0, .1); }
+  .ranger .by { display: flex; align-items: center; justify-content: flex-end; gap: .4em; margin-top: .35em; font-size: .88em; color: #5a5040; }
+  .ranger .by svg { width: 1.7em; height: 1.1em; }
+  .lang-ko .ranger { font-family: 'Gowun Dodum', sans-serif; font-style: normal; line-height: 1.45; }
+  .ranger.on { opacity: 1; }
+
+  /* ---- Two columns when the stage is wide enough ---- */
+  @container page (min-width: 700px) and (min-aspect-ratio: 21/20) {
+    .board { grid-template-columns: minmax(0, 1fr) clamp(230px, 29cqw, 340px); grid-template-rows: auto minmax(0, 1fr); }
+    .head { grid-column: 1 / -1; padding-right: clamp(180px, 27cqmin, 290px); }
+    .mapcol { grid-row: 2; grid-column: 1; }
+    .side { grid-row: 2; grid-column: 2; }
+  }
+  /* Stacked: title, map, buttons, the legend line, the profile. */
+  @container page (max-width: 699.98px) or (max-aspect-ratio: 21/20) {
+    .side .ticker, .side .legend { order: 1; }
+    .side .profile { order: 2; }
+    .side .rules { order: 3; }
+    .side .legend, .side .rules { display: none; }
+    .ticker { display: flex; }
+    .profile { flex: none; height: calc(clamp(76px, 17cqh, 170px) + var(--extra, 0px)); padding-top: 5px; padding-bottom: 4px; }
+    .profile h2 { padding-bottom: .2em; font-size: 11px; }
+    .hint { flex-basis: 100%; }
+    .ranger { top: auto; right: clamp(6px, 2cqw, 14px); bottom: clamp(4px, 1.2cqh, 10px); width: min(56cqw, 250px); rotate: -2.5deg; font-size: clamp(12px, 3.3cqw, 14.5px); padding: .55em .75em .45em; }
+  }
+  /* Tall, narrow phones: the full legend comes back instead of the one-line version. */
+  @container page (max-width: 560px) and (min-height: 740px) {
+    .side .legend { display: block; }
+    .ticker { display: none; }
+    .legend ul { grid-template-columns: 1fr; gap: 1px; }
+  }
+  /* Tall portrait stages have room for the safety rules again. */
+  @container page (min-width: 561px) and (max-width: 699.98px) and (min-height: 860px), (max-width: 560px) and (min-height: 960px), (max-aspect-ratio: 21/20) and (min-width: 700px) and (min-height: 860px) {
+    .side .rules { display: block; }
+  }
+  @container page (max-height: 600px) and (max-width: 699.98px) {
+    .hint { display: none; }
+  }
+  @container page (max-height: 560px) and (max-width: 699.98px) {
+    .ranger { font-size: 12px; line-height: 1.25; width: min(54cqw, 210px); }
+    .ranger .by { display: none; }
+  }
+  /* Short, wide stages: the legend tightens so the profile keeps its room. */
+  @container page (min-width: 700px) and (min-aspect-ratio: 21/20) and (max-height: 700px) {
+    .legend ul { gap: 1px; }
+    .legend li { font-size: clamp(11px, 1.9cqh, 13px); }
+    .rules ol { font-size: clamp(11px, 1.9cqh, 13px); gap: .15em; }
+    .panel { padding-top: 6px; padding-bottom: 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true">
+  <i class="dusk"></i>
+  <svg class="ridge" viewBox="0 0 400 60" preserveAspectRatio="none"><path d="M0 40 L30 22 L52 34 L80 12 L108 30 L140 18 L170 34 L205 14 L236 28 L262 20 L300 36 L332 16 L360 30 L400 22 V60 H0 Z" fill="#5d7d63" opacity=".55"/><path d="M0 50 L40 36 L70 46 L110 32 L150 44 L190 34 L230 46 L270 30 L310 44 L350 36 L400 46 V60 H0 Z" fill="#46664a" opacity=".8"/></svg>
+</div>
+<div class="ground" aria-hidden="true"></div>
+<i class="post l" aria-hidden="true"></i><i class="post r" aria-hidden="true"></i>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-trail" viewBox="0 0 32 20"><path d="M2 14 C 9 4, 15 16, 22 8 S 28 6, 30 6" fill="none" stroke="#2e8b57" stroke-width="2.6" stroke-dasharray="0.1 4.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-summit" viewBox="0 0 32 20"><path d="M16 3 L23 15 H9 Z" fill="#2c2318"/><circle cx="16" cy="12" r="6.2" fill="none" stroke="#c8322b" stroke-width="1.8"/></symbol>
+    <symbol id="i-shelter" viewBox="0 0 32 20"><path d="M8 10 L16 3 L24 10 V17 H8 Z" fill="#8a4b2a" stroke="#2c2318" stroke-width="1.2" stroke-linejoin="round"/><rect x="14" y="11" width="4" height="6" fill="#f6efda"/></symbol>
+    <symbol id="i-railing" viewBox="0 0 32 20"><path d="M3 7 H29 M3 12 H29 M6 4 V17 M16 4 V17 M26 4 V17" stroke="#6b4a2b" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+    <symbol id="i-fog" viewBox="0 0 32 20"><path d="M3 8 H20 M8 12 H29 M4 16 H22" stroke="#9aa3a8" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="24" cy="7" r="3" fill="#b7bec2"/></symbol>
+    <symbol id="i-saddle" viewBox="0 0 32 20"><path d="M2 6 C 9 6, 11 14, 16 14 C 21 14, 23 6, 30 6" fill="none" stroke="#2c2318" stroke-width="2"/><path d="M16 14 v-6 M13 11 l3 -3 l3 3" fill="none" stroke="#c8322b" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-plateau" viewBox="0 0 32 20"><path d="M2 17 L8 7 H24 L30 17" fill="#c6d9a3" stroke="#2c2318" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 7 H22" stroke="#6f9a5c" stroke-width="2"/></symbol>
+  </defs>
+</svg>
+
+<main class="board" aria-labelledby="title">
+  <i class="bolt tl" aria-hidden="true"></i><i class="bolt tr" aria-hidden="true"></i><i class="bolt bl" aria-hidden="true"></i><i class="bolt br" aria-hidden="true"></i>
+  <header class="head">
+    <svg class="emblem" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="30" fill="#f3ead3"/>
+      <circle cx="32" cy="32" r="26.5" fill="none" stroke="#3c2616" stroke-width="1.6"/>
+      <path d="M10 44 L24 26 L31 34 L39 22 L54 44 Z" fill="#6f9a5c"/>
+      <path d="M39 22 L43.5 28.5 L40 27 L37 30 L35 28 Z" fill="#f3ead3"/>
+      <path d="M21 13 H43 L32 31 Z" fill="none" stroke="#3c2616" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M12 48 H52" stroke="#7fb8c9" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <div class="titles">
+      <h1 class="title" id="title"><span data-lang="en">Gradient Descent Trail</span><span data-lang="ko"><font-kku font="gothic" size="clamp(22px, 4.8cqmin, 44px)">경사 하강 탐방로</font-kku></span></h1>
+      <p class="sub"><span data-lang="en">Trail map · Loss Mountains National Park</span><span data-lang="ko">손실산 국립공원 탐방 안내도</span></p>
+    </div>
+  </header>
+
+  <section class="mapcol">
+    <div class="mapcell">
+      <div class="map">
+        <canvas class="terrain" aria-hidden="true"></canvas>
+        <div class="warm" aria-hidden="true"></div>
+        <svg class="marks" aria-hidden="true"></svg>
+        <canvas class="fog" aria-hidden="true"></canvas>
+        <svg class="ink" aria-hidden="true"></svg>
+        <svg class="leaders" aria-hidden="true"></svg>
+        <div class="labels"></div>
+        <button class="hit" type="button"></button>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="steps" role="group"></div>
+      <button class="ctl mom" type="button" aria-pressed="false"><span class="lamp" aria-hidden="true"></span><span class="mom-text"></span></button>
+      <p class="hint"><span data-lang="en">Tap the map to start a hiker there.</span><span data-lang="ko">지도를 누르면 그 자리에서 한 명 더 출발해요.</span></p>
+    </div>
+  </section>
+
+  <aside class="side">
+    <section class="panel legend" aria-labelledby="legend-h">
+      <h2 id="legend-h"><span data-lang="en">Legend</span><span data-lang="ko">범례</span></h2>
+      <ul></ul>
+    </section>
+    <section class="rules" aria-labelledby="rules-h">
+      <h2 id="rules-h"><span data-lang="en">Hiker safety</span><span data-lang="ko">탐방객 안전 수칙</span></h2>
+      <ol data-lang="en">
+        <li>1. Too long a stride and you skip the valley.</li>
+        <li>2. Too short and the sun sets first.</li>
+        <li>3. Flat is not the same as bottom.</li>
+      </ol>
+      <ol data-lang="ko">
+        <li>1. 보폭이 너무 크면 골짜기를 건너뜁니다.</li>
+        <li>2. 너무 작으면 해가 먼저 집니다.</li>
+        <li>3. 평평하다고 다 바닥은 아닙니다.</li>
+      </ol>
+    </section>
+    <section class="panel profile" aria-labelledby="profile-h">
+      <h2 id="profile-h"><span data-lang="en">Elevation profile = learning curve</span><span data-lang="ko">고도 단면 = 학습 곡선</span></h2>
+      <div class="plot"><svg role="img"></svg></div>
+    </section>
+    <button class="ticker" type="button"></button>
+  </aside>
+
+  <aside class="ranger" aria-hidden="true">
+    <p data-lang="en">On this mountain the summit is where you start. Every step down, you're learning.</p>
+    <p data-lang="ko">이 산은 정상이 출발점이에요. 내려가는 만큼 배우는 중입니다.</p>
+    <p class="by"><svg viewBox="0 0 34 22" aria-hidden="true"><path d="M3 15 Q17 19 31 15 L27 13 Q26 6 17 5 Q8 6 7 13 Z" fill="#8a6a3a" stroke="#4a3518" stroke-width="1.3"/><path d="M8 12 Q17 9.5 26 12" stroke="#4a3518" stroke-width="1.6" fill="none"/></svg><span data-lang="en">— Ranger</span><span data-lang="ko">— 레인저</span></p>
+  </aside>
+</main>
+<p class="sr" aria-live="polite"></p>
+
+<script>
+(() => {
+  const ko = TTY.lang === 'ko';
+  const $ = (s, r = document) => r.querySelector(s);
+  const NS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs, parent) => {
+    const el = document.createElementNS(NS, tag);
+    for (const k in attrs || {}) el.setAttribute(k, attrs[k]);
+    if (parent) parent.append(el);
+    return el;
+  };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const root = document.documentElement;
+
+  const S = TTY.t({
+    en: {
+      legend: [
+        ['trail', 'Trail', 'optimization path'],
+        ['summit', 'Summit', 'where you start (random init)'],
+        ['shelter', 'Shelter', 'checkpoint'],
+        ['railing', 'Railing', 'gradient clipping'],
+        ['fog', 'Fog', 'you only feel the slope underfoot'],
+        ['saddle', 'Saddle pass', 'slope zero, not the bottom'],
+        ['plateau', 'Plateau', 'vanishing gradient'],
+      ],
+      here: (v) => `<b>You are here</b><span class="nw"><span class="sep">·</span>loss ${v}</span>`,
+      sign: 'Minimum ↓ ? km (fog)',
+      parking: (v) => `<b>Still at the parking lot</b><span class="nw"><span class="sep">·</span>loss ${v}</span>`,
+      lake: (v) => `<b>Local-minimum lake<span class="nw"><span class="sep">·</span>${v}</span></b><i>— nice view, the next valley is deeper</i>`,
+      nan: '<b>Mount NaN</b> (elevation NaN m)',
+      rescue: 'Rescue advises: install a railing (gradient clipping)',
+      global: (v) => `<b>Global minimum (probably)<span class="nw"><span class="sep">·</span>${v}</span></b>`,
+      saddle: 'Saddle pass',
+      plateau: 'Plateau',
+      steps: ['step 0.002', 'step 0.08', 'step 1.1'],
+      stepsLabel: 'Stride (learning rate)',
+      momentum: 'momentum',
+      map: 'Trail map. Click a spot, or press Enter for a random one, to start a hiker who walks downhill with the stride you picked.',
+      axes: ['steps', 'loss'],
+      profile: 'Learning curves: loss against steps for each hiker.',
+      hikerAt: (v) => `New hiker finished at loss ${v}.`,
+    },
+    ko: {
+      legend: [
+        ['trail', '탐방로', '최적화 경로'],
+        ['summit', '정상', '출발점(무작위 초기값)'],
+        ['shelter', '대피소', '체크포인트'],
+        ['railing', '난간', '기울기 클리핑'],
+        ['fog', '안개', '발밑 기울기만 보임'],
+        ['saddle', '말안장 고개', '기울기 0, 바닥 아님'],
+        ['plateau', '평원', '기울기 소실'],
+      ],
+      here: (v) => `<b>현위치</b><span class="nw"><span class="sep">·</span>손실 ${v}</span>`,
+      sign: '최솟값 ↓ ?km (안개)',
+      parking: (v) => `<b>아직 주차장</b><span class="nw"><span class="sep">·</span>손실 ${v}</span>`,
+      lake: (v) => `<b>지역 최솟값 호수<span class="nw"><span class="sep">·</span>${v}</span></b><i>— 경치는 좋은데 옆 골짜기가 더 깊음</i>`,
+      nan: '<b>NaN봉</b> (해발 NaN m)',
+      rescue: '구조대 의견: 난간(기울기 클리핑) 설치 권고',
+      global: (v) => `<b>전역 최솟값(아마도)<span class="nw"><span class="sep">·</span>${v}</span></b>`,
+      saddle: '말안장 고개',
+      plateau: '평원',
+      steps: ['보폭 0.002', '보폭 0.08', '보폭 1.1'],
+      stepsLabel: '보폭(학습률)',
+      momentum: '관성',
+      map: '탐방 지도. 누른 자리(Enter는 아무 자리)에서 새 등산객이 지금 고른 보폭으로 내려갑니다.',
+      axes: ['걸음', '손실'],
+      profile: '등산객마다 걸음에 따른 손실을 그린 학습 곡선.',
+      hikerAt: (v) => `새 등산객이 손실 ${v}에서 멈췄어요.`,
+    },
+  });
+  const STAMP = TTY.t({ en: 'DESCENT COMPLETE', ko: '하산 완료' });
+
+  /* ================= The mountain =================
+     Map coordinates: x east, y south, the core square is 0..1 (wider stages show more of
+     the range on both sides). Gradient descent runs on parameters p = K·(x, y), so a
+     curvature k on the map is k / K² for the optimiser. Basins are quadratic bowls joined
+     with a soft minimum; high ground is flattened above CAP; peaks are added on top. */
+  const K = 5;
+  const SOFT = 0.06, CAP = 1.95, CAP_K = 6, CAP_SLOPE = 0.12;
+  const BOWLS = [
+    // The lake: a local minimum at 0.61. Across it the curvature is 52 / 25 = 2.08 per
+    // parameter, above 2 / 1.1 (so stride 1.1 bounces out) and far below 2 / 0.08.
+    { at: [0.42, 0.17], m: 0.60293, k: [40, 52], rot: 0 },
+    { at: [0.42, 0.17], m: 0.8, k: [9, 52], rot: 0 },        // its gentle approach from the summit
+    { at: [0.78, 0.64], m: 0.03981, k: [8, 52], rot: 63 },  // the deep valley, 0.04
+    { at: [0.75, 0.8], m: 0.6, k: [8, 8], rot: 0 },          // the valley's wide skirt
+  ].map((b) => ({ ...b, c: Math.cos(b.rot * Math.PI / 180), s: Math.sin(b.rot * Math.PI / 180) }));
+  const PEAKS = [
+    { at: [0.16, 0.185], h: 1.1753, s: 0.085 },  // the summit: tuned so the trailhead reads exactly 2.303 (= ln 10)
+    { at: [0.72, 0.05], h: 0.45, s: 0.07 },
+    { at: [1.02, 0.2], h: 0.6, s: 0.1 },
+    { at: [1.08, 0.9], h: 0.4, s: 0.1 },
+    { at: [0.47, 0.52], h: 0.3, s: 0.07 },
+    { at: [-0.15, 0.55], h: 0.4, s: 0.1 },
+  ];
+  const TERRACE = { at: [0.2, 0.74], r: 0.11, blend: 0.08, level: 1.75 }; // the plateau: dead flat inside r
+  function loss(x, y) {
+    let acc = 0;
+    for (const b of BOWLS) {
+      const dx = x - b.at[0], dy = y - b.at[1];
+      const a = dx * b.c + dy * b.s, q = -dx * b.s + dy * b.c;
+      acc += Math.exp(-(b.m + 0.5 * (b.k[0] * a * a + b.k[1] * q * q)) / SOFT);
+    }
+    let z = -SOFT * Math.log(acc);
+    const t = CAP_K * (z - CAP);
+    z -= (1 - CAP_SLOPE) * (t > 30 ? t : Math.log1p(Math.exp(t))) / CAP_K;
+    for (const p of PEAKS) z += p.h * Math.exp(-((x - p.at[0]) ** 2 + (y - p.at[1]) ** 2) / (2 * p.s * p.s));
+    const r = Math.hypot(x - TERRACE.at[0], y - TERRACE.at[1]);
+    if (r < TERRACE.r + TERRACE.blend) {
+      const u = (r - TERRACE.r) / TERRACE.blend;
+      const w = u <= 0 ? 1 : 1 - u * u * (3 - 2 * u);
+      z += w * (TERRACE.level - z);
+    }
+    return z;
+  }
+  // Gradient with respect to the parameters (central differences).
+  const H_STEP = 1e-4;
+  const lossP = (u, v) => loss(u / K, v / K);
+  const gradP = (u, v) => [
+    (lossP(u + H_STEP, v) - lossP(u - H_STEP, v)) / (2 * H_STEP),
+    (lossP(u, v + H_STEP) - lossP(u, v - H_STEP)) / (2 * H_STEP),
+  ];
+  /* One hike: p -= lr·∇L, or with momentum v = μ·v − lr·∇L; p += v. Off the map (or a loss
+     above 10) is NaN. Returns [{x, y, loss}], the last point NaN when it blew up. */
+  function descend(x0, y0, lr, mu, max, xmin, xmax) {
+    let u = x0 * K, v = y0 * K, vu = 0, vv = 0;
+    const out = [{ x: x0, y: y0, loss: lossP(u, v) }];
+    for (let i = 0; i < max; i++) {
+      const [gu, gv] = gradP(u, v);
+      if (mu) { vu = mu * vu - lr * gu; vv = mu * vv - lr * gv; u += vu; v += vv; }
+      else { u -= lr * gu; v -= lr * gv; }
+      const x = u / K, y = v / K, l = lossP(u, v);
+      if (!(y >= 0 && y <= 1 && x >= xmin && x <= xmax && l < 10)) { out.push({ x, y, loss: NaN }); return out; }
+      out.push({ x, y, loss: l });
+    }
+    if (lr < 0.01) return out; // the slow walker is stopped by sunset, not by arriving
+    // Drop the tail where the hiker is only shuffling on the spot.
+    let last = 0;
+    for (let i = out.length - 1; i > 0; i--) {
+      if (Math.hypot(out[i].x - out[i - 1].x, out[i].y - out[i - 1].y) > 0.0006) { last = i; break; }
+    }
+    return out.slice(0, last + 1);
+  }
+
+  const START = [0.1502, 0.1922];               // the trailhead, just off the top of the summit
+  const LAKE = [0.4237, 0.1705], VALLEY = [0.7797, 0.6394];
+  const SADDLE = [0.5514, 0.2246];              // gradient zero between lake and valley
+  const PLATEAU = TERRACE.at;
+  const SHELTERS = [[0.655, 0.43], [0.37, 0.63], [0.93, 0.36]];
+  const PARKING = [0.085, 0.235];
+  const fmt = (v, d = 2) => (Number.isFinite(v) ? v.toFixed(d) : 'NaN');
+
+  const COLORS = { blue: '#2f6fb5', green: '#2e8b57', red: '#d2452f', orange: '#e38b1f' };
+  const STRIDES = [0.002, 0.08, 1.1];
+
+  /* ================= Timeline (seconds) =================
+     Each hiker has its own pace: the three walk off together at 2 s; the long-strider leaps
+     (one leap every 0.27 s, so the 13th leap leaves the map at about 5.5 s); the careful
+     walker takes 0.2 s a step and settles in the lake at about 7.6 s; the slow one shuffles
+     80 steps by 10 s. The momentum hiker sets off at 10.5 s and runs (0.05 s a step). */
+  const LOOP = 22;
+  const AT = { reveal: 0.4, revealDur: 1.2, legend: 0.55, summit: 1.6, go: 2, dusk: 10, orangeShow: 10.2, orangeGo: 10.5, lift: 16.5, note: 17 };
+  const PACE = { blue: 0.1, green: 0.2, red: 0.27, orange: 0.05 };
+  const AUTO = {
+    blue: descend(START[0], START[1], 0.002, 0, 80, -0.6, 1.6),
+    green: descend(START[0], START[1], 0.08, 0, 160, -0.6, 1.6),
+    red: descend(START[0], START[1], 1.1, 0, 160, -0.6, 1.6),
+    orange: descend(START[0], START[1], 0.08, 0.9, 160, -0.6, 1.6),
+  };
+  const PROFILE_STEPS = 120, PROFILE_TOP = 2.5;
+
+  /* ================= Elements ================= */
+  const board = $('.board');
+  const cell = $('.mapcell');
+  const map = $('.map');
+  const terrain = $('.terrain');
+  const fogC = $('.fog');
+  const marks = $('.marks');
+  const ink = $('.ink');
+  const leaders = $('.leaders');
+  const labelsBox = $('.labels');
+  const hit = $('.hit');
+  const ranger = $('.ranger');
+  const live = $('.sr');
+  hit.setAttribute('aria-label', S.map);
+
+  // Legend rows and the folded legend line share their icons.
+  const icon = (id) => `<svg aria-hidden="true"><use href="#i-${id}"/></svg>`;
+  const legendItems = S.legend.map(([id, term, def]) => {
+    const li = document.createElement('li');
+    li.innerHTML = `${icon(id)}<span><b>${term}</b> = ${def}</span>`;
+    $('.legend ul').append(li);
+    return li;
+  });
+  const rules = $('.rules');
+  const ticker = $('.ticker');
+  let tick = 0;
+  function showTicker(i) {
+    tick = (i + S.legend.length) % S.legend.length;
+    const [id, term, def] = S.legend[tick];
+    ticker.innerHTML = `${icon(id)}<span><b>${term}</b> = ${def}</span><span class="dots" aria-hidden="true">${S.legend.map((_, k) => `<i${k === tick ? ' class="on"' : ''}></i>`).join('')}</span>`;
+    ticker.setAttribute('aria-label', `${term} = ${def}`);
+  }
+  showTicker(0);
+  ticker.addEventListener('click', () => { takeOver(); showTicker(tick + 1); });
+
+  // Stride buttons and the momentum switch.
+  const stepsGroup = $('.steps');
+  stepsGroup.setAttribute('aria-label', S.stepsLabel);
+  let stride = 1, momentum = false;
+  const strideBtns = S.steps.map((text, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ctl';
+    b.textContent = text;
+    b.setAttribute('aria-pressed', String(i === stride));
+    b.addEventListener('click', () => {
+      takeOver();
+      stride = i;
+      strideBtns.forEach((o, k) => o.setAttribute('aria-pressed', String(k === i)));
+    });
+    stepsGroup.append(b);
+    return b;
+  });
+  const momBtn = $('.mom');
+  $('.mom-text').textContent = S.momentum;
+  momBtn.addEventListener('click', () => {
+    takeOver();
+    momentum = !momentum;
+    momBtn.setAttribute('aria-pressed', String(momentum));
+  });
+
+  /* ================= View ================= */
+  let W = 0, Hh = 0, X0 = 0, X1 = 1, unit = 1; // map size in px, visible x range, marker scale
+  const px = (x) => (x - X0) / (X1 - X0) * W;
+  const py = (y) => y * Hh;
+
+  // Stacked layouts: a map cell taller than it is wide would leave bare wood around a square
+  // map, so that height is handed to the profile chart instead.
+  let extra = 0;
+  function fitMap() {
+    const cw = cell.clientWidth, ch = cell.clientHeight;
+    if (!cw || !ch) return false;
+    const stacked = getComputedStyle(board).gridTemplateColumns.split(' ').length < 2;
+    const want = stacked ? (ch > cw + 1 ? extra + ch - cw : ch < cw - 1 && extra ? Math.max(0, extra - (cw - ch)) : extra) : 0;
+    if (Math.abs(want - extra) > 1) { extra = want; board.style.setProperty('--extra', extra + 'px'); }
+    // At least the core square; at most 1.7 times as wide as tall.
+    let w = cw, h = ch;
+    if (w / h < 1) h = w;
+    if (w / h > 1.7) w = Math.round(h * 1.7);
+    w = Math.floor(w); h = Math.floor(h);
+    map.style.width = w + 'px';
+    map.style.height = h + 'px';
+    map.style.left = Math.round((cw - w) / 2) + 'px';
+    map.style.top = Math.round((ch - h) / 2) + 'px';
+    const changed = w !== W || h !== Hh;
+    W = w; Hh = h;
+    const A = W / Hh;
+    X0 = 0.5 - A / 2; X1 = 0.5 + A / 2;
+    unit = clamp(Math.min(W, Hh) / 520, 0.72, 1.25);
+    map.classList.toggle('small', W < 440);
+    for (const svg of [marks, ink, leaders]) svg.setAttribute('viewBox', `0 0 ${W} ${Hh}`);
+    return changed;
+  }
+
+  /* ---- The printed map: hypsometric tints, hill shading, contours every 0.125 ---- */
+  const RAMP = [[0, [63, 115, 70]], [0.35, [88, 136, 80]], [0.8, [111, 154, 92]], [1.3, [157, 188, 124]], [1.8, [198, 217, 163]], [2.25, [227, 236, 201]], [2.65, [241, 236, 216]]];
+  const rampAt = (v) => {
+    for (let i = 1; i < RAMP.length; i++) {
+      if (v <= RAMP[i][0]) {
+        const [a, ca] = RAMP[i - 1], [b, cb] = RAMP[i];
+        const t = clamp((v - a) / (b - a), 0, 1);
+        return ca.map((c, k) => c + (cb[k] - c) * t);
+      }
+    }
+    return RAMP[RAMP.length - 1][1];
+  };
+  const STEP_L = 0.125;
+  function drawTerrain() {
+    if (!W || !Hh) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const cw = Math.round(W * dpr), ch = Math.round(Hh * dpr);
+    terrain.width = cw; terrain.height = ch;
+    const g = terrain.getContext('2d');
+    const L = new Float32Array(cw * ch);
+    const sx = (X1 - X0) / cw, sy = 1 / ch;
+    // On dense screens the loss is sampled every other pixel and interpolated in between.
+    const st = dpr >= 1.5 ? 2 : 1;
+    const gw = Math.ceil(cw / st) + 1, gh = Math.ceil(ch / st) + 1;
+    const G = new Float32Array(gw * gh);
+    for (let j = 0; j < gh; j++) {
+      const y = (j * st + 0.5) * sy;
+      for (let i = 0; i < gw; i++) G[j * gw + i] = loss(X0 + (i * st + 0.5) * sx, y);
+    }
+    for (let j = 0; j < ch; j++) {
+      const j0 = Math.floor(j / st), tj = j / st - j0;
+      for (let i = 0; i < cw; i++) {
+        const i0 = Math.floor(i / st), ti = i / st - i0;
+        const a = G[j0 * gw + i0], b = G[j0 * gw + i0 + 1], c = G[(j0 + 1) * gw + i0], d = G[(j0 + 1) * gw + i0 + 1];
+        L[j * cw + i] = (a * (1 - ti) + b * ti) * (1 - tj) + (c * (1 - ti) + d * ti) * tj;
+      }
+    }
+    const band = new Int16Array(cw * ch);
+    for (let k = 0; k < L.length; k++) band[k] = Math.floor(L[k] / STEP_L);
+    const img = g.createImageData(cw, ch);
+    const d = img.data;
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let j = 0; j < ch; j++) {
+      for (let i = 0; i < cw; i++) {
+        const k = j * cw + i;
+        const l = L[k];
+        const x = X0 + (i + 0.5) * sx, y = (j + 0.5) * sy;
+        // light from the north-west
+        const gx = (L[j * cw + Math.min(cw - 1, i + 1)] - L[j * cw + Math.max(0, i - 1)]) / (2 * sx);
+        const gy = (L[Math.min(ch - 1, j + 1) * cw + i] - L[Math.max(0, j - 1) * cw + i]) / (2 * sy);
+        const shade = 1 + 0.13 * Math.tanh((gx + gy) / 14);
+        let c;
+        const inLake = l < 0.665 && Math.hypot(x - LAKE[0], y - LAKE[1]) < 0.12;
+        const inValley = l < 0.13 && Math.hypot(x - VALLEY[0], y - VALLEY[1]) < 0.25;
+        if (inLake || inValley) {
+          const depth = inLake ? (0.665 - l) / 0.06 : (0.13 - l) / 0.09;
+          c = [127 - 30 * depth, 184 - 22 * depth, 201 - 10 * depth];
+        } else {
+          c = rampAt((band[k] + 0.5) * STEP_L).map((v) => v * shade);
+        }
+        const n = (rnd() - 0.5) * 6;
+        d[k * 4] = c[0] + n; d[k * 4 + 1] = c[1] + n; d[k * 4 + 2] = c[2] + n; d[k * 4 + 3] = 255;
+      }
+    }
+    // contour lines where the band changes; every fourth (each 0.5 of loss) is an index contour
+    const lw = dpr >= 1.5 ? 1 : 0;
+    for (let j = 0; j < ch - 1; j++) {
+      for (let i = 0; i < cw - 1; i++) {
+        const k = j * cw + i;
+        const b = band[k], br = band[k + 1], bd = band[k + cw];
+        if (b === br && b === bd) continue;
+        const top = Math.max(b, br, bd);
+        const index = top % 4 === 0;
+        const water = (L[k] < 0.665 && Math.hypot(X0 + (i + 0.5) * sx - LAKE[0], (j + 0.5) * sy - LAKE[1]) < 0.12) || L[k] < 0.13;
+        const dark = water ? [52, 102, 128] : index ? [58, 66, 40] : [84, 98, 62];
+        const a = water ? 0.8 : index ? 0.85 : 0.55;
+        const paint = (kk) => { for (let c = 0; c < 3; c++) d[kk * 4 + c] = d[kk * 4 + c] * (1 - a) + dark[c] * a; };
+        paint(k);
+        if (index && lw) { paint(k + 1); paint(k + cw); }
+      }
+    }
+    g.putImageData(img, 0, 0);
+    // neatline
+    g.strokeStyle = 'rgba(44, 35, 24, .7)';
+    g.lineWidth = dpr;
+    g.strokeRect(dpr / 2, dpr / 2, cw - dpr, ch - dpr);
+  }
+
+  /* ---- Static map symbols (under the fog): shelters, parking, the summit triangle ---- */
+  function drawMarks() {
+    marks.replaceChildren();
+    const s = unit;
+    SHELTERS.forEach(([x, y]) => {
+      const g = mk('g', { transform: `translate(${px(x).toFixed(1)} ${py(y).toFixed(1)}) scale(${s})` }, marks);
+      mk('path', { d: 'M-8 2 L0 -6 L8 2 V9 H-8 Z', fill: '#8a4b2a', stroke: '#2c2318', 'stroke-width': 1.3, 'stroke-linejoin': 'round' }, g);
+      mk('rect', { x: -2, y: 3, width: 4, height: 6, fill: '#f6efda' }, g);
+    });
+    const p = mk('g', { transform: `translate(${px(PARKING[0]).toFixed(1)} ${py(PARKING[1]).toFixed(1)}) scale(${s})` }, marks);
+    mk('rect', { x: -7, y: -7, width: 14, height: 14, rx: 2.5, fill: '#2f5fa8', stroke: '#fff', 'stroke-width': 1.5 }, p);
+    mk('text', { x: 0, y: 4.6, 'text-anchor': 'middle', fill: '#fff', 'font-size': 12, 'font-weight': 800, 'font-family': 'Overpass, sans-serif' }, p).textContent = 'P';
+  }
+
+  /* ---- Fog: a cloud texture; cleared around each hiker and, more faintly, along the way ---- */
+  let fogTex = null, fogSeen = null;
+  function makeFog() {
+    const w = Math.max(1, Math.round(W)), h = Math.max(1, Math.round(Hh));
+    fogC.width = w; fogC.height = h;
+    fogTex = document.createElement('canvas');
+    fogTex.width = w; fogTex.height = h;
+    const g = fogTex.getContext('2d');
+    g.fillStyle = 'rgba(250, 251, 248, .5)';
+    g.fillRect(0, 0, w, h);
+    let seed = 11;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 70; i++) {
+      const x = rnd() * w, y = rnd() * h, r = (0.06 + rnd() * 0.16) * Math.max(w, h);
+      const grd = g.createRadialGradient(x, y, 0, x, y, r);
+      grd.addColorStop(0, `rgba(255, 255, 255, ${0.08 + rnd() * 0.14})`);
+      grd.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      g.fillStyle = grd;
+      g.fillRect(x - r, y - r, 2 * r, 2 * r);
+    }
+    fogSeen = document.createElement('canvas');
+    fogSeen.width = w; fogSeen.height = h;
+    // re-clear what every hiker has already walked through
+    hikers.forEach((hk) => { for (let i = 0; i <= hk.seenTo; i++) seeAt(hk.path[i]); });
+  }
+  function seeAt(p) {
+    if (!p || !Number.isFinite(p.loss) || !fogSeen) return;
+    const g = fogSeen.getContext('2d');
+    const x = px(p.x), y = py(p.y), r = 34 * unit;
+    const grd = g.createRadialGradient(x, y, 0, x, y, r);
+    grd.addColorStop(0, 'rgba(0, 0, 0, .5)');
+    grd.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    g.fillStyle = grd;
+    g.fillRect(x - r, y - r, 2 * r, 2 * r);
+  }
+  function drawFog() {
+    if (!fogTex) return;
+    const g = fogC.getContext('2d');
+    g.globalCompositeOperation = 'source-over';
+    g.clearRect(0, 0, fogC.width, fogC.height);
+    g.drawImage(fogTex, 0, 0);
+    g.globalCompositeOperation = 'destination-out';
+    g.drawImage(fogSeen, 0, 0);
+    hikers.forEach((hk) => {
+      if (!hk.visible || hk.gone) return;
+      const x = hk.sx, y = hk.sy, r = 58 * unit;
+      const grd = g.createRadialGradient(x, y, 0, x, y, r);
+      grd.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      grd.addColorStop(0.45, 'rgba(0, 0, 0, .9)');
+      grd.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      g.fillStyle = grd;
+      g.fillRect(x - r, y - r, 2 * r, 2 * r);
+    });
+    g.globalCompositeOperation = 'source-over';
+  }
+
+  /* ================= Labels =================
+     HTML tags pinned to map coordinates. Placement is greedy: each label tries its spots in
+     order and takes the first that stays inside the map and clear of labels already placed. */
+  const labels = [];
+  function label(cls, html, at, spots, prio, opts) {
+    const el = document.createElement('div');
+    el.className = 'lbl ' + cls;
+    el.innerHTML = html;
+    labelsBox.append(el);
+    const l = Object.assign({ el, at, spots, prio, on: false, leader: true }, opts || {});
+    labels.push(l);
+    return l;
+  }
+  function setLabel(l, on, text) {
+    if (text !== undefined) l.el.innerHTML = text;
+    l.on = on;
+    l.el.classList.toggle('on', on);
+    layoutLabels();
+    if (on && l.say) say(l.el.textContent);
+  }
+  /* A spot is [dx, dy, ax, ay]: the box corner at (ax, ay) of its size goes to the anchor
+     plus (dx, dy) px (scaled with the map). Named spots use the label's gap. */
+  const SPOT = {
+    above: (g) => [0, -g, 0.5, 1], below: (g) => [0, g, 0.5, 0],
+    right: (g) => [g, 0, 0, 0.5], left: (g) => [-g, 0, 1, 0.5],
+    ar: (g) => [g * 0.6, -g, 0, 1], al: (g) => [-g * 0.6, -g, 1, 1],
+    br: (g) => [g * 0.6, g, 0, 0], bl: (g) => [-g * 0.6, g, 1, 0],
+    center: () => [0, 0, 0.5, 0.5],
+  };
+  const overlap = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+  function layoutLabels() {
+    if (!W) return;
+    // Hikers' resting places are kept clear too, so no tag hides the hiker it is about.
+    const placed = hikers.filter((h) => h.visible && !h.nan).map((h) => {
+      const e = h.path[h.n], x = px(e.x), y = py(e.y), r = 12 * unit;
+      return { l: x - r, t: y - r, r: x + r, b: y + r };
+    });
+    leaders.replaceChildren();
+    const pad = 4;
+    [...labels].sort((a, b) => a.prio - b.prio).forEach((l) => {
+      l.el.classList.toggle('hide', !l.on);
+      if (!l.on) return;
+      // A value that wrapped to its own line drops its leading dot.
+      l.el.querySelectorAll('.nw').forEach((n) => {
+        n.classList.remove('wrapped');
+        const r = n.getBoundingClientRect(), b = n.closest('.park, .here, .lbl').getBoundingClientRect();
+        n.classList.toggle('wrapped', r.top - b.top > r.height * 0.8);
+      });
+      const at = typeof l.at === 'function' ? l.at() : l.at;
+      const a = [px(at[0]), py(at[1])];
+      const w = l.el.offsetWidth, h = l.el.offsetHeight;
+      const g = (l.gap || 12) * unit;
+      let best = null, bestCost = Infinity;
+      for (const s of l.spots) {
+        const [dx, dy, ax, ay] = typeof s === 'string' ? SPOT[s](g) : [s[0] * unit, s[1] * unit, s[2], s[3]];
+        let x = a[0] + dx - ax * w, y = a[1] + dy - ay * h;
+        const inside = x >= pad && y >= pad && x + w <= W - pad && y + h <= Hh - pad;
+        x = clamp(x, pad, W - pad - w);
+        y = clamp(y, pad, Hh - pad - h);
+        const box = { l: x, t: y, r: x + w, b: y + h };
+        let cost = placed.reduce((sum, p) => sum + overlap(box, p), 0) + (inside || l.clampOk ? 0 : 150);
+        if (cost < bestCost) { best = box; bestCost = cost; }
+        if (cost === 0) break;
+      }
+      if (l.optional && bestCost > 0) { l.el.classList.add('hide'); l.box = null; return; }
+      placed.push({ l: best.l - 3, t: best.t - 3, r: best.r + 3, b: best.b + 3 });
+      l.el.style.left = best.l.toFixed(1) + 'px';
+      l.el.style.top = best.t.toFixed(1) + 'px';
+      l.box = best;
+      // a thin leader from the spot to the tag when they drifted apart
+      if (l.leader) {
+        const cx = clamp(a[0], best.l, best.r), cy = clamp(a[1], best.t, best.b);
+        if (Math.hypot(cx - a[0], cy - a[1]) > 5) {
+          mk('line', { x1: a[0], y1: a[1], x2: cx, y2: cy, stroke: 'rgba(44, 35, 24, .75)', 'stroke-width': 1.2 }, leaders);
+        }
+        mk('circle', { cx: a[0], cy: a[1], r: 2.4 * unit, fill: l.dot || 'rgba(44, 35, 24, .85)' }, leaders);
+      }
+    });
+    placeStamp();
+  }
+
+  const L = {};
+  // Mount NaN is pinned where the long-strider left the map; the rescue slip goes up nearby.
+  const exitAt = () => [AUTO.red.exitX, 0];
+  L.nan = label('nan', S.nan, exitAt, [[14, 5, 0, 0], [-14, 5, 1, 0], [0, 5, 0.5, 0]], 2, { leader: false, say: true });
+  L.rescue = label('slip', S.rescue, exitAt, [[34, 36, 0, 0], [18, 36, 0, 0], [60, 44, 0, 0], [-18, 36, 1, 0], [0, 80, 0.5, 0]], 3, { leader: false, say: true });
+  /* The trailhead sign; the slow walker never really leaves it, so its "still at the parking
+     lot" line is added under the same sign rather than as a tag of its own. Priorities follow
+     the order labels appear, so a new tag finds room around the ones already up. */
+  L.here = label('herebox', `<div class="here">${S.here(fmt(loss(START[0], START[1]), 3))}</div><div class="park"></div>`, START,
+    [[0, -20, 0.5, 1], [6, -20, 1, 1], [-6, -20, 0, 1]], 0, { leader: false, clampOk: true });
+  L.sign = label('sign', S.sign, START, [[10, 24, 0, 0], [10, 50, 0, 0], [-10, 24, 1, 0]], 1, { leader: false });
+  L.lake = label('tag', '', LAKE, [[-30, 92, 0.5, 0], [0, 92, 0.5, 0], [-30, 130, 0.5, 0], [40, 60, 0, 0], [-60, 60, 1, 0]], 4, { say: true });
+  L.lake.el.style.setProperty('--c', COLORS.green);
+  L.valley = label('tag', '', VALLEY, [[0, 26, 0.5, 0], [-20, 26, 1, 0], [20, 26, 0, 0], [-24, 0, 1, 0.5], [24, 0, 0, 0.5]], 5, { say: true });
+  L.valley.el.style.setProperty('--c', COLORS.orange);
+  L.saddle = label('place', S.saddle, SADDLE, [[8, 10, 0, 0], [10, 0, 0, 0.5], [0, 12, 0.5, 0], [-8, 10, 1, 0], [8, -8, 0, 1]], 6, { optional: true });
+  L.plateau = label('place', S.plateau, PLATEAU, ['center', 'above', 'below'], 7, { leader: false, optional: true });
+
+  // The stamp sits on the global-minimum tag.
+  const stamp = document.createElement('div');
+  stamp.className = 'stamp';
+  stamp.setAttribute('aria-hidden', 'true');
+  if (ko) {
+    const k = document.createElement('font-kku');
+    k.setAttribute('font', 'dojang');
+    k.setAttribute('size', 'clamp(15px, 2.5cqmin, 24px)');
+    k.textContent = STAMP;
+    stamp.append(k);
+  } else {
+    stamp.textContent = STAMP;
+  }
+  labelsBox.append(stamp);
+  function placeStamp() {
+    const b = L.valley.box;
+    if (!b || !L.valley.on) return;
+    const w = stamp.offsetWidth, h = stamp.offsetHeight;
+    let x = b.l + (b.r - b.l) * 0.42, y = b.b - h * 0.18;
+    if (y + h > Hh - 4) y = b.t - h * 0.82; // no room below: lean on its top edge instead
+    x = clamp(x, 4, W - w - 4); y = clamp(y, 4, Hh - h - 4);
+    stamp.style.left = x.toFixed(1) + 'px';
+    stamp.style.top = y.toFixed(1) + 'px';
+  }
+
+  function say(text) {
+    // Story labels are read out on the first pass only; a visitor's own hikers always.
+    if (!autoplay || loops <= 1) live.textContent = text.trim();
+  }
+
+  /* ================= Hikers ================= */
+  const hikers = [];
+  const inkPin = mk('g', { class: 'pin' }, ink), inkTrails = mk('g', {}, ink), inkHikers = mk('g', {}, ink);
+  // The trailhead: the summit triangle with the red "you are here" ring.
+  function drawPin() {
+    inkPin.replaceChildren();
+    const g = mk('g', { transform: `translate(${px(START[0]).toFixed(1)} ${py(START[1]).toFixed(1)}) scale(${unit.toFixed(3)})` }, inkPin);
+    mk('circle', { r: 15, fill: 'rgba(200, 50, 43, .12)', stroke: '#c8322b', 'stroke-width': 2.2 }, g);
+    mk('circle', { r: 21, fill: 'none', stroke: '#c8322b', 'stroke-width': 1, 'stroke-dasharray': '2 3' }, g);
+    mk('path', { d: 'M0 -6 L6 5 H-6 Z', fill: '#2c2318', stroke: '#f6efda', 'stroke-width': 1.2, 'stroke-linejoin': 'round' }, g);
+  }
+  // A white hiker pictogram on a coloured disc, like a park sign.
+  const FIG = 'M1.2 -6.6 a1.9 1.9 0 1 0 0.01 0 M0.6 -3.6 L-0.4 1.2 L-2.8 6.2 M-0.4 1.2 L2 5.6 M0.4 -2.6 L3.2 -0.2 M3.6 -1.4 L4.6 6.4 M-1 -3.6 h-2.6 v4.4 h2.4';
+  function makeHiker(kind, path, pace, opts) {
+    const g = mk('g', { class: 'hk' });
+    const shadow = mk('ellipse', { class: 'shadow', rx: 7, ry: 2.6, cy: 9 }, g);
+    const body = mk('g', {}, g);
+    mk('circle', { class: 'disc', r: 9.5, fill: COLORS[kind], 'stroke-width': 1.8 }, body);
+    mk('path', { class: 'fig', d: FIG, 'stroke-width': 1.5 }, body);
+    const casing = mk('path', { class: 'trail casing' });
+    const trail = mk('path', { class: kind === 'red' && !opts.momentum ? 'leap' : 'trail', stroke: COLORS[kind] });
+    inkTrails.prepend(casing);
+    inkTrails.append(trail);
+    inkHikers.append(g);
+    const h = Object.assign({
+      kind, path, pace, g, body, shadow, trail, casing,
+      n: path.length - 1,
+      nan: !Number.isFinite(path[path.length - 1].loss),
+      appear: 0, t0: 0, visible: false, gone: false, done: false, seenTo: -1, shown: -1,
+      sx: px(path[0].x), sy: py(path[0].y),
+    }, opts);
+    h.leaps = h.leaps !== undefined ? h.leaps : kind === 'red' && !opts.momentum;
+    g.style.display = 'none';
+    hikers.push(h);
+    profileLine(h);
+    return h;
+  }
+  function removeHiker(h) {
+    [h.g, h.trail, h.casing, h.line, h.nanText].forEach((el) => el && el.remove());
+    if (h.tag) { h.tag.el.remove(); labels.splice(labels.indexOf(h.tag), 1); }
+    hikers.splice(hikers.indexOf(h), 1);
+    layoutLabels();
+  }
+  const easeStep = (t) => t * t * (3 - 2 * t);
+  // Where a hiker is at step i + f: walkers stride in a straight line, the long-strider jumps
+  // in an arc. Each arc bends to the same side of its own direction, so as the bounces go
+  // back and forth they land on alternate sides and the growing zigzag stays readable.
+  function arcCtrl(p, q, i) {
+    const ax = px(p.x), ay = py(p.y), bx = px(q.x), by = py(q.y);
+    const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy) || 1;
+    const bend = Math.min(0.24 * len, 60 * unit);
+    return [(ax + bx) / 2 - dy / len * bend, (ay + by) / 2 + dx / len * bend];
+  }
+  function posAt(h, i, f) {
+    const p = h.path[i], q = h.path[Math.min(i + 1, h.n)];
+    if (f <= 0 || i >= h.n) return [px(p.x), py(p.y)];
+    if (h.leaps) {
+      const [cx, cy] = arcCtrl(p, q, i);
+      const ax = px(p.x), ay = py(p.y), bx = px(q.x), by = py(q.y);
+      const u = 1 - f;
+      return [u * u * ax + 2 * u * f * cx + f * f * bx, u * u * ay + 2 * u * f * cy + f * f * by];
+    }
+    const e = easeStep(f);
+    return [px(p.x + (q.x - p.x) * e), py(p.y + (q.y - p.y) * e)];
+  }
+  function trailD(h, i, f) {
+    const pts = h.path;
+    const end = Math.min(i, h.n);
+    if (h.leaps) {
+      let d = `M${px(pts[0].x).toFixed(1)} ${py(pts[0].y).toFixed(1)}`;
+      for (let k = 0; k < end; k++) {
+        const [cx, cy] = arcCtrl(pts[k], pts[k + 1], k);
+        d += ` Q${cx.toFixed(1)} ${cy.toFixed(1)} ${px(pts[k + 1].x).toFixed(1)} ${py(pts[k + 1].y).toFixed(1)}`;
+      }
+      if (f > 0 && end < h.n) {
+        // the leap in progress, drawn up to the hiker (de Casteljau split of the arc)
+        const p = pts[end], q = pts[end + 1];
+        const [cx, cy] = arcCtrl(p, q, end);
+        const ax = px(p.x), ay = py(p.y);
+        const mx = ax + (cx - ax) * f, my = ay + (cy - ay) * f;
+        const [hx, hy] = posAt(h, end, f);
+        d += ` Q${mx.toFixed(1)} ${my.toFixed(1)} ${hx.toFixed(1)} ${hy.toFixed(1)}`;
+      }
+      return d;
+    }
+    let d = '';
+    for (let k = 0; k <= end; k++) d += (k ? ' L' : 'M') + px(pts[k].x).toFixed(1) + ' ' + py(pts[k].y).toFixed(1);
+    if (f > 0 && end < h.n) { const [hx, hy] = posAt(h, end, f); d += ` L${hx.toFixed(1)} ${hy.toFixed(1)}`; }
+    return d;
+  }
+  function styleTrail(h) {
+    const w = 2.6 * unit;
+    if (h.leaps) {
+      h.trail.setAttribute('stroke-width', (w * 0.9).toFixed(2));
+      h.trail.setAttribute('stroke-dasharray', `${(7 * unit).toFixed(1)} ${(5 * unit).toFixed(1)}`);
+      h.casing.setAttribute('stroke-width', '0');
+    } else {
+      h.trail.setAttribute('stroke-width', w.toFixed(2));
+      h.trail.setAttribute('stroke-dasharray', `0.1 ${(5.2 * unit).toFixed(1)}`);
+      h.casing.setAttribute('stroke-width', (w + 2.6).toFixed(2));
+      h.casing.setAttribute('stroke-dasharray', `0.1 ${(5.2 * unit).toFixed(1)}`);
+    }
+  }
+  function drawHiker(h, now) {
+    if (now < h.appear) { if (h.visible) { h.visible = false; h.g.style.display = 'none'; } return false; }
+    if (!h.visible) { h.visible = true; h.g.style.display = ''; styleTrail(h); }
+    const k = Math.max(0, (now - h.t0) / 1000 / h.pace);
+    let i = Math.min(Math.floor(k), h.n), f = i >= h.n ? 0 : k - i;
+    if (i >= h.n) i = h.n;
+    // the blow-up: the last leap carries the hiker off the map
+    const lastLeap = h.nan && i >= h.n - 1;
+    let [x, y] = posAt(h, i, f);
+    if (h.nan && i >= h.n) [x, y] = [px(h.path[h.n].x), py(h.path[h.n].y)];
+    h.sx = x; h.sy = y;
+    const lift = h.leaps && f > 0 ? Math.sin(Math.PI * f) : 0;
+    const bob = !h.leaps && f > 0 && i < h.n ? Math.abs(Math.sin(Math.PI * f)) * 1.6 : 0;
+    const s = unit * (1 + 0.35 * lift);
+    h.g.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+    h.body.setAttribute('transform', `translate(0 ${(-bob - lift * 10 * unit).toFixed(1)}) scale(${s.toFixed(3)})`);
+    h.shadow.setAttribute('transform', `scale(${unit.toFixed(3)})`);
+    h.shadow.setAttribute('opacity', (1 - 0.6 * lift).toFixed(2));
+    if (lastLeap) { h.gone = i >= h.n || f > 0.75; h.g.classList.toggle('gone', h.gone); }
+    h.trail.setAttribute('d', trailD(h, i, f));
+    if (!h.leaps) h.casing.setAttribute('d', h.trail.getAttribute('d'));
+    // fog clearing and the profile follow whole steps
+    const reached = Math.min(i, h.nan ? h.n - 1 : h.n);
+    while (h.seenTo < reached) seeAt(h.path[++h.seenTo]);
+    if (reached !== h.shown) { h.shown = reached; plotLine(h); }
+    const arrived = i >= h.n;
+    if (arrived && !h.done) { h.done = true; plotLine(h); if (h.onArrive) h.onArrive(h); }
+    return !arrived;
+  }
+
+  /* ================= Elevation profile = learning curve ================= */
+  const prof = $('.profile svg');
+  prof.setAttribute('aria-label', S.profile);
+  let PW = 0, PH = 0;
+  const PM = { l: 26, r: 8, t: 8, b: 16 };
+  const gx = (s) => PM.l + s / PROFILE_STEPS * (PW - PM.l - PM.r);
+  const gy = (v) => PM.t + (1 - v / PROFILE_TOP) * (PH - PM.t - PM.b);
+  let profGrid, profLines;
+  function layoutProfile() {
+    const box = prof.parentElement;
+    PW = box.clientWidth; PH = box.clientHeight;
+    if (!PW || !PH) return;
+    prof.setAttribute('viewBox', `0 0 ${PW} ${PH}`);
+    const small = PH < 90;
+    PM.t = small ? 4 : 8; PM.b = small ? 13 : 17; PM.l = 34;
+    if (!profGrid) {
+      profGrid = mk('g', {}, prof);
+      const defs = mk('defs', {}, prof);
+      const cp = mk('clipPath', { id: 'plotclip' }, defs);
+      profGrid.clip = mk('rect', {}, cp);
+      profLines = mk('g', { 'clip-path': 'url(#plotclip)' }, prof);
+      profLines.nan = mk('g', {}, prof);
+    }
+    profGrid.replaceChildren();
+    profGrid.clip.setAttribute('x', PM.l); profGrid.clip.setAttribute('y', PM.t - 1);
+    profGrid.clip.setAttribute('width', PW - PM.l - PM.r + 2); profGrid.clip.setAttribute('height', PH - PM.t - PM.b + 1);
+    const ticks = small ? [0, 1, 2] : [0, 0.5, 1, 1.5, 2, 2.5];
+    ticks.forEach((v) => {
+      mk('line', { class: 'grid', x1: PM.l, x2: PW - PM.r, y1: gy(v), y2: gy(v) }, profGrid);
+      if (v % 1 === 0) mk('text', { x: PM.l - 5, y: gy(v) + 3.5, 'text-anchor': 'end' }, profGrid).textContent = v;
+    });
+    mk('line', { class: 'axis', x1: PM.l, x2: PM.l, y1: PM.t, y2: PH - PM.b }, profGrid);
+    mk('line', { class: 'axis', x1: PM.l, x2: PW - PM.r, y1: PH - PM.b, y2: PH - PM.b }, profGrid);
+    [0, 40, 80, 120].forEach((s) => {
+      mk('line', { class: 'axis', x1: gx(s), x2: gx(s), y1: PH - PM.b, y2: PH - PM.b + 3 }, profGrid);
+      if (s && !small) mk('text', { x: gx(s), y: PH - PM.b + 13, 'text-anchor': 'middle' }, profGrid).textContent = s;
+    });
+    mk('text', { x: PW - PM.r, y: PH - PM.b - 4, 'text-anchor': 'end', 'font-style': 'italic' }, profGrid).textContent = S.axes[0];
+    const yl = mk('text', { x: 0, y: 0, 'text-anchor': 'middle', 'font-style': 'italic', transform: `translate(9 ${((PM.t + PH - PM.b) / 2).toFixed(1)}) rotate(-90)` }, profGrid);
+    yl.textContent = S.axes[1];
+    hikers.forEach(plotLine);
+  }
+  function profileLine(h) {
+    if (!profLines) return;
+    h.line = mk('path', { class: 'ln', stroke: COLORS[h.kind] }, profLines);
+  }
+  function plotLine(h) {
+    if (!h.line || !PW) return;
+    const end = h.shown;
+    if (end < 0) { h.line.setAttribute('d', ''); return; }
+    let d = '';
+    for (let s = 0; s <= end && s <= PROFILE_STEPS; s++) d += (s ? 'L' : 'M') + gx(s).toFixed(1) + ' ' + gy(h.path[s].loss).toFixed(1);
+    if (h.nan && h.done) {
+      // loss shoots off the top of the chart, and ends in NaN
+      const s = Math.min(h.n, PROFILE_STEPS);
+      d += `L${gx(s).toFixed(1)} ${(PM.t - 40).toFixed(1)}`;
+      if (!h.nanText) {
+        h.nanText = mk('text', { class: 'nan', 'text-anchor': 'start', fill: COLORS[h.kind] }, profLines.nan);
+        h.nanRow = profLines.nan.childElementCount - 1; // several blow-ups stack their NaNs
+      }
+      h.nanText.setAttribute('x', (gx(s) + 4).toFixed(1));
+      h.nanText.setAttribute('y', (PM.t + 10 + 12 * h.nanRow).toFixed(1));
+      h.nanText.textContent = 'NaN';
+    }
+    h.line.setAttribute('d', d);
+  }
+
+  /* ================= The story ================= */
+  AUTO.red.exitX = (() => {
+    const p = AUTO.red[AUTO.red.length - 2], q = AUTO.red[AUTO.red.length - 1];
+    const t = p.y / (p.y - q.y);
+    return p.x + (q.x - p.x) * t;
+  })();
+  AUTO.blue.end = AUTO.blue[AUTO.blue.length - 1];
+  AUTO.blue.end = [AUTO.blue.end.x, AUTO.blue.end.y];
+
+  let autoplay = true, loopStart = 0, loops = 0, fired = {}, idle = 0;
+  const story = {};
+  function resetStory(now) {
+    hikers.slice().forEach(removeHiker);
+    Object.values(L).forEach((l) => setLabel(l, false));
+    L.here.el.classList.remove('parked');
+    L.lake.el.innerHTML = '';
+    stamp.classList.remove('on');
+    ranger.classList.remove('on');
+    root.classList.remove('dusk-on');
+    fogC.classList.remove('lifted');
+    inkPin.classList.remove('on');
+    legendItems.forEach((li) => li.classList.remove('on'));
+    rules.classList.remove('on');
+    fired = {};
+    loopStart = now;
+    loops++;
+    if (fogSeen) fogSeen.getContext('2d').clearRect(0, 0, fogSeen.width, fogSeen.height);
+    story.blue = makeHiker('blue', AUTO.blue, PACE.blue, {
+      appear: now + AT.summit * 1000, t0: now + AT.go * 1000,
+      onArrive: () => {
+        const park = L.here.el.querySelector('.park');
+        park.innerHTML = S.parking(fmt(AUTO.blue[AUTO.blue.length - 1].loss));
+        L.here.el.classList.add('parked');
+        layoutLabels();
+        say(park.textContent);
+      },
+    });
+    story.green = makeHiker('green', AUTO.green, PACE.green, {
+      appear: now + AT.summit * 1000, t0: now + AT.go * 1000,
+      onArrive: () => setLabel(L.lake, true, S.lake(fmt(AUTO.green[AUTO.green.length - 1].loss))),
+    });
+    story.red = makeHiker('red', AUTO.red, PACE.red, {
+      appear: now + AT.summit * 1000, t0: now + AT.go * 1000,
+      onArrive: () => { setLabel(L.nan, true); setTimeout(() => { if (L.nan.on) setLabel(L.rescue, true); }, TTY.reduce ? 0 : 600); },
+    });
+    story.orange = null;
+  }
+  function spawnOrange(now, appear, go) {
+    story.orange = makeHiker('orange', AUTO.orange, PACE.orange, {
+      momentum: true, appear, t0: go,
+      onArrive: () => setLabel(L.valley, true, S.global(fmt(AUTO.orange[AUTO.orange.length - 1].loss))),
+    });
+  }
+  function storyAt(t, now) {
+    const once = (k, at, fn) => { if (!fired[k] && t >= at) { fired[k] = true; fn(); } };
+    if (t < AT.reveal) terrain.style.setProperty('--rv', '0%');
+    else if (t < AT.reveal + AT.revealDur + 0.3) terrain.style.setProperty('--rv', ((t - AT.reveal) / AT.revealDur * 114).toFixed(1) + '%');
+    else once('revealed', 0, () => terrain.style.setProperty('--rv', '120%'));
+    legendItems.forEach((li, i) => once('lg' + i, AT.legend + i * 0.13, () => li.classList.add('on')));
+    once('rules', AT.legend + legendItems.length * 0.13, () => rules.classList.add('on'));
+    once('summit', AT.summit, () => { inkPin.classList.add('on'); setLabel(L.here, true); setLabel(L.sign, true); });
+    once('dusk', AT.dusk, () => root.classList.add('dusk-on'));
+    once('orange', AT.orangeShow, () => spawnOrange(now, loopStart + AT.orangeShow * 1000, loopStart + AT.orangeGo * 1000));
+    once('lift', AT.lift, () => { fogC.classList.add('lifted'); setLabel(L.saddle, true); setLabel(L.plateau, true); });
+    once('note', AT.note, () => { ranger.classList.add('on'); stampDown(); thumpNote(); });
+    if (!TTY.reduce && t >= 2 && (Math.floor(t / 2.6) % S.legend.length) !== tick && autoplay) showTicker(Math.floor(t / 2.6));
+  }
+  function stampDown() {
+    stamp.classList.add('on');
+    placeStamp();
+    if (TTY.reduce) return;
+    stamp.animate([
+      { transform: 'scale(2.4)', opacity: 0, filter: 'blur(2px)' },
+      { transform: 'scale(.94)', opacity: .95, filter: 'blur(0)', offset: 0.7 },
+      { transform: 'scale(1)', opacity: .92 },
+    ], { duration: 420, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+    map.animate([{ transform: 'none' }, { transform: 'translateY(1.5px)' }, { transform: 'none' }], { duration: 260, delay: 300 });
+  }
+  function thumpNote() {
+    if (TTY.reduce) return;
+    ranger.animate([
+      { transform: 'translate(30%, -40%) rotate(16deg)', opacity: 0 },
+      { transform: 'translate(-1%, 1%) rotate(-1deg)', opacity: 1, offset: 0.75 },
+      { transform: 'none', opacity: 1 },
+    ], { duration: 650, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
+  }
+
+  /* ================= Visitors: tap the map, pick a stride ================= */
+  function takeOver() {
+    if (autoplay) {
+      autoplay = false;
+      // the story stops where it is; hikers already on their way finish their walk
+    }
+    clearTimeout(idle);
+    idle = setTimeout(() => {
+      autoplay = true;
+      if (TTY.reduce) return finalScene();
+      resetStory(performance.now());
+      wake();
+    }, 12000);
+  }
+  function dropHiker(x, y) {
+    takeOver();
+    if (hikers.length >= 5) removeHiker(hikers[0]);
+    const lr = STRIDES[stride];
+    const kind = momentum ? 'orange' : ['blue', 'green', 'red'][stride];
+    const path = descend(x, y, lr, momentum ? 0.9 : 0, 120, X0 - 0.005, X1 + 0.005);
+    const pace = momentum ? 0.06 : lr >= 1 ? 0.27 : lr < 0.01 ? 0.1 : 0.15;
+    const now = performance.now();
+    const h = makeHiker(kind, path, pace, {
+      momentum, user: true, appear: now, t0: now + (TTY.reduce ? -1e9 : 250),
+      onArrive: (hk) => {
+        const end = hk.path[hk.n];
+        const at = hk.nan ? [clamp(end.x, X0 + 0.02, X1 - 0.02), clamp(end.y, 0.01, 0.99)] : [end.x, end.y];
+        const v = fmt(end.loss);
+        hk.tag = label('tag mini', v, at, ['right', 'left', 'above', 'below'], 20, { gap: 13, dot: COLORS[hk.kind] });
+        hk.tag.el.style.setProperty('--c', COLORS[hk.kind]);
+        setLabel(hk.tag, true);
+        live.textContent = S.hikerAt(v);
+      },
+    });
+    seeAt(path[0]);
+    wake();
+    return h;
+  }
+  hit.addEventListener('click', (e) => {
+    if (!W) return;
+    let x, y;
+    if (!e.detail) { // keyboard: somewhere on the map, away from the very edge
+      x = X0 + 0.06 + Math.random() * (X1 - X0 - 0.12);
+      y = 0.06 + Math.random() * 0.88;
+    } else {
+      const r = map.getBoundingClientRect();
+      x = X0 + (e.clientX - r.left) / r.width * (X1 - X0);
+      y = (e.clientY - r.top) / r.height;
+    }
+    dropHiker(x, y);
+  });
+
+  /* ================= Frame loop ================= */
+  let raf = 0, running = false;
+  function frame(now) {
+    raf = 0;
+    if (autoplay && !TTY.reduce) {
+      const t = (now - loopStart) / 1000;
+      if (t >= LOOP) { resetStory(now); return wake(); }
+      storyAt(t, now);
+    }
+    let moving = false;
+    hikers.forEach((h) => { if (drawHiker(h, now)) moving = true; });
+    drawFog();
+    if (moving || (autoplay && !TTY.reduce)) raf = requestAnimationFrame(frame);
+  }
+  function wake() { if (!raf && running) raf = requestAnimationFrame(frame); }
+
+  // The final scene, for visitors who asked for less motion.
+  function finalScene() {
+    const now = performance.now();
+    resetStory(now - 1e7);
+    spawnOrange(now, -1e9, -1e9);
+    [story.blue, story.green, story.red].forEach((h) => { h.appear = -1e9; h.t0 = -1e9; });
+    terrain.style.setProperty('--rv', '120%');
+    legendItems.forEach((li) => li.classList.add('on'));
+    rules.classList.add('on');
+    setLabel(L.here, true); setLabel(L.sign, true);
+    inkPin.classList.add('on');
+    root.classList.add('dusk-on');
+    fogC.classList.add('lifted');
+    setLabel(L.saddle, true); setLabel(L.plateau, true);
+    hikers.forEach((h) => drawHiker(h, now));
+    setLabel(L.rescue, true);
+    ranger.classList.add('on');
+    stamp.classList.add('on');
+    layoutLabels();
+    drawFog();
+  }
+
+  /* ================= Layout ================= */
+  let redrawT = 0;
+  function relayout() {
+    const changed = fitMap();
+    if (!W) return;
+    layoutProfile();
+    if (changed) {
+      drawMarks();
+      drawPin();
+      makeFog();
+      clearTimeout(redrawT);
+      redrawT = setTimeout(drawTerrain, terrain.width ? 120 : 0);
+    }
+    layoutLabels();
+    const now = performance.now();
+    hikers.forEach((h) => { h.shown = -2; styleTrail(h); drawHiker(h, now); });
+    drawFog();
+  }
+  new ResizeObserver(relayout).observe(cell);
+  new ResizeObserver(layoutProfile).observe(prof.parentElement);
+
+  fitMap();
+  drawTerrain();
+  drawMarks();
+  drawPin();
+  makeFog();
+  layoutProfile();
+  if (TTY.reduce) {
+    finalScene();
+  } else {
+    terrain.style.setProperty('--rv', '0%');
+    drawFog();
+  }
+  TTY.onShow(() => {
+    running = true;
+    if (TTY.reduce) return;
+    resetStory(performance.now());
+    wake();
+  });
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(() => { layoutLabels(); TTY.ready(); });
+})();
+</script>
+</body>
+</html>

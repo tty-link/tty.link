@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Error Budget | tty.link</title>
+<script src="/pages/_kit.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Kalam:wght@400;700&display=swap">
+<script src="https://font.tty.link/lib/font-kku.js" data-fonts="neon pilgi"></script>
+<style>
+  /* A monitoring dashboard for one person. The service is "you", the objective is "okay 95% of
+     waking hours", and the other 5% is an error budget: time this month you are allowed to
+     spill, forget, mumble and rest. The dashboard would like you to spend it. */
+  :root {
+    --bg: #111217;
+    --panel: #181b1f;
+    --line: #2c3235;
+    --line-2: #23272c;
+    --ink: #ccccdc;
+    --ink-hi: #eef0f6;
+    --ink-2: #a1a6b2;
+    --ink-3: #6f7480;
+    --green: #73bf69;
+    --yellow: #fade2a;
+    --orange: #ff9830;
+    --red: #f2495c;
+    --blue: #5794f2;
+    --purple: #b877d9;
+    --paper: #f7f3e8;
+    --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    container: page / size;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', 'IBM Plex Sans KR', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .lang-ko body { font-family: 'IBM Plex Sans KR', 'Inter', system-ui, sans-serif; word-break: keep-all; }
+  button { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* ---------- Grid ---------- */
+  .dash {
+    --fs: clamp(11.5px, .627cqw + .904cqh, 14.5px);
+    --gap: clamp(6px, .9cqmin, 9px);
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, .82fr);
+    grid-template-areas:
+      "head head act"
+      "alert alert alert"
+      "obj gauge ops"
+      "burn burn inc"
+      "sli sli pm";
+    gap: var(--gap);
+    padding: var(--gap) calc(var(--gap) + 2px) calc(var(--gap) + 2px);
+    font-size: var(--fs);
+    line-height: 1.35;
+  }
+
+  /* ---------- Panels ---------- */
+  .panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    padding: .55em .8em .7em;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+  }
+  .ptitle {
+    display: flex;
+    align-items: center;
+    gap: .5em;
+    min-height: 1.6em;
+    font-size: .92em;
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .ptitle .meta { margin-left: auto; font-weight: 400; color: var(--ink-2); font-size: .92em; }
+  .pbody { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; transition: opacity .35s ease; }
+
+  /* Loading: a grey skeleton and the thin bar dashboards draw while a query runs. */
+  .panel::after {
+    content: "";
+    position: absolute;
+    inset: 2.3em .8em .8em;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #1e2126 0%, #272b31 40%, #1e2126 80%) 0 0 / 220% 100%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+  }
+  .panel::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent) 0 0 / 40% 100% no-repeat;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .panel.loading::after { opacity: 1; animation: shimmer 1.3s linear infinite; }
+  .panel.loading::before { opacity: 1; animation: scan 1s linear infinite; }
+  .panel.loading .pbody { opacity: 0; }
+  @keyframes shimmer { to { background-position: -220% 0; } }
+  @keyframes scan { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+
+  /* ---------- Header: the status page band ---------- */
+  .head {
+    grid-area: head;
+    container: head / inline-size;
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    min-width: 0;
+    min-height: clamp(40px, 6.4cqh, 56px);
+    padding: .35em .9em .35em .75em;
+    background: linear-gradient(90deg, rgba(250, 222, 42, .09), transparent 46%), #15171b;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--yellow);
+    border-radius: 2px;
+    transition: border-color .4s ease, background .4s ease;
+  }
+  .head.lit {
+    background: linear-gradient(90deg, rgba(115, 191, 105, .12), transparent 52%), #0d0f12;
+    border-left-color: var(--green);
+  }
+  .crumb { display: flex; flex-direction: column; gap: .1em; min-width: 0; flex: none; }
+  .crumb .path { font-size: .8em; color: var(--ink-2); white-space: nowrap; }
+  .crumb h1 { font-size: 1.02em; font-weight: 600; color: var(--ink-hi); white-space: nowrap; }
+  .status { display: flex; align-items: center; gap: .6em; flex: none; min-width: 0; padding-left: 1em; border-left: 1px solid var(--line); }
+  .sdot { flex: none; width: .72em; height: .72em; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 0 3px rgba(250, 222, 42, .18); }
+  .lit .sdot { background: var(--green); box-shadow: 0 0 0 3px rgba(115, 191, 105, .2), 0 0 12px rgba(115, 191, 105, .8); }
+  .stext { font-size: 1.04em; font-weight: 500; color: var(--ink-hi); white-space: nowrap; }
+  .stext .dim { color: var(--yellow); }
+  .neon { display: flex; align-items: center; line-height: 1; white-space: nowrap; }
+  .neon-en {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: clamp(19px, 3.2cqh, 27px);
+    letter-spacing: .01em;
+    color: #effff0;
+    text-shadow: 0 0 .04em #fff, 0 0 .14em #9dffa0, 0 0 .34em #4fd96b, 0 0 .7em #1f8f3a;
+  }
+  /* font-kku neon: glow is each jamo's color, the tube is the stroke color. */
+  .neon-ko [part~="jamo"] { color: #6dff86; -webkit-text-stroke-color: #c9ffc6; }
+
+  .uptime { display: flex; align-items: center; gap: .55em; flex: 0 1 auto; margin-left: auto; min-width: 0; overflow: hidden; }
+  .bars { display: flex; gap: 2px; height: 1.9em; flex: none; }
+  .bars .d { width: clamp(3px, .36cqw, 5px); border-radius: 1px; background: var(--green); opacity: .9; }
+  /* The header shares its row with the buttons: the uptime label goes first, then the bars. */
+  @container head (max-width: 700px) { .uptime .pct { display: none; } }
+  @container head (max-width: 560px) { .uptime { display: none; } }
+  .bars .d.minor { background: var(--yellow); }
+  .bars .d.major { background: var(--orange); }
+  .bars .d.future { background: #2a2e34; }
+  .bars .d.today { outline: 1px solid rgba(255, 255, 255, .55); outline-offset: 1px; }
+  .uptime .pct { font-size: .84em; color: var(--ink-2); white-space: nowrap; line-height: 1.25; }
+  .uptime .pct b { display: block; font-weight: 500; color: var(--ink-hi); font-size: 1.1em; }
+
+  /* ---------- Actions ---------- */
+  .actions { grid-area: act; position: relative; display: flex; align-items: center; justify-content: flex-end; gap: .5em; min-width: 0; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45em;
+    min-height: 36px;
+    padding: 0 .95em;
+    border: 1px solid #3a3f47;
+    border-radius: 2px;
+    background: #22252b;
+    color: var(--ink-hi);
+    font-weight: 500;
+    font-size: .98em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .1s;
+  }
+  .btn:hover { background: #2a2e35; border-color: #4a5059; }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .btn.go { background: #1b6f45; border-color: #24915b; }
+  .btn.go:hover { background: #20804f; }
+  .btn svg { width: 1.05em; height: 1.05em; flex: none; }
+
+  .toast {
+    position: absolute;
+    right: 0;
+    top: calc(100% + var(--gap) + 2px);
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: .5em;
+    padding: .5em .85em;
+    border-radius: 2px;
+    background: #16351f;
+    border: 1px solid #2c6b3a;
+    border-left: 3px solid var(--green);
+    color: var(--ink-hi);
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
+    opacity: 0;
+    translate: 0 -6px;
+    pointer-events: none;
+    transition: opacity .25s ease, translate .25s ease;
+  }
+  .toast.on { opacity: 1; translate: 0 0; }
+  .toast:empty { display: none; }
+  .toast .ok { color: var(--green); font-weight: 700; }
+
+  /* ---------- Alert strip ---------- */
+  .alert {
+    grid-area: alert;
+    display: flex;
+    align-items: center;
+    gap: .6em;
+    min-width: 0;
+    min-height: 2.25em;
+    padding: .3em .8em;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--line);
+    border-radius: 2px;
+    background: var(--panel);
+    color: var(--ink-2);
+    font-size: .95em;
+    transition: background .3s ease, border-color .3s ease, color .3s ease;
+  }
+  .alert .ico { flex: none; width: 1.1em; height: 1.1em; }
+  .alert .tag { flex: none; font: 700 .78em/1 var(--mono); letter-spacing: .04em; padding: .3em .45em; border-radius: 2px; background: #22262b; color: var(--ink-2); }
+  .alert .msg { min-width: 0; }
+  .alert.idle .ico { color: var(--green); }
+  .alert.fire, .alert.policy { background: #3a161c; border-color: #6e2430; border-left-color: var(--red); color: var(--ink-hi); }
+  .alert.fire .tag, .alert.policy .tag { background: var(--red); color: #1b0b0e; }
+  .alert.fire .ico, .alert.policy .ico { color: var(--red); animation: blink 1s steps(2, start) infinite; }
+  .alert.ok { background: #15301e; border-color: #2a5c35; border-left-color: var(--green); color: var(--ink-hi); }
+  .alert.ok .tag { background: var(--green); color: #0d1f10; }
+  .alert.ok .ico { color: var(--green); }
+  .alert.refill { background: #142540; border-color: #26467a; border-left-color: var(--blue); color: var(--ink-hi); }
+  .alert.refill .tag { background: var(--blue); color: #0b1528; }
+  .alert.refill .ico { color: var(--blue); }
+  @keyframes blink { to { opacity: .25; } }
+
+  /* ---------- Objective ---------- */
+  .obj { grid-area: obj; }
+  .big { display: flex; align-items: baseline; gap: .3em; margin-top: .15em; color: var(--ink-hi); line-height: 1; }
+  .big .word { font-size: clamp(1.25em, 2.8cqh, 1.9em); font-weight: 600; color: var(--green); }
+  .big .num { font: 500 clamp(2.1em, 6.6cqh, 3.7em)/1 var(--mono); letter-spacing: -.02em; }
+  .cur { margin-top: .5em; color: var(--ink-2); font-size: .92em; }
+  .cur .mono { color: var(--ink-hi); }
+  .cur .chk { color: var(--green); }
+  .cur .low { color: var(--orange); }
+  .why { margin-top: .35em; color: var(--ink-2); font-size: .88em; }
+  .foot {
+    margin-top: auto;
+    padding-top: .6em;
+    border-top: 1px dashed var(--line);
+    color: var(--ink-3);
+    font-size: .86em;
+    line-height: 1.4;
+    transition: color .8s ease, text-shadow .8s ease;
+  }
+  .foot .who { white-space: nowrap; }
+  .foot.lit { color: var(--ink-hi); }
+  .foot.lit .who { color: var(--yellow); }
+
+  /* ---------- Gauge ---------- */
+  .gaugep { grid-area: gauge; }
+  .gaugep .pbody { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: center; gap: .3em .8em; }
+  .gauge { display: block; width: 100%; height: 100%; max-height: 100%; min-height: 0; overflow: visible; }
+  .g-track { fill: none; stroke: #262a30; stroke-width: 16; }
+  .g-val { fill: none; stroke: var(--green); stroke-width: 16; transition: stroke .4s ease; }
+  .g-thr { fill: none; stroke-width: 3.2; }
+  .g-n { font: 500 27px var(--mono); fill: var(--ink-hi); }
+  .g-u { font: 500 14px 'Inter', 'IBM Plex Sans KR', sans-serif; fill: var(--ink-2); }
+  .lang-ko .g-u { font-family: 'IBM Plex Sans KR', sans-serif; font-size: 13.5px; }
+  .g-pct { font: 500 12.5px var(--mono); fill: var(--ink-2); }
+  .lang-ko .g-pct { font-family: 'IBM Plex Sans KR', var(--mono); }
+  .g-end { font: 400 9px var(--mono); fill: var(--ink-3); }
+  .stats { display: grid; gap: .5em; align-content: center; min-width: 0; }
+  .stat { min-width: 0; }
+  .stat .k { display: block; color: var(--ink-2); font-size: .84em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat .v { display: block; color: var(--ink-hi); font: 500 1.12em/1.2 var(--mono); white-space: nowrap; }
+  .stat .v.hot { color: var(--red); }
+  .stat .v .x { color: var(--ink-2); font-size: .8em; }
+  .stat.obj-mini, .stat.leftv { display: none; }
+  .g-big { display: none; font: 600 42px var(--mono); fill: var(--ink-hi); }
+  .gaugep .foot { display: none; grid-column: 1 / -1; }
+
+  /* ---------- On call & policy ---------- */
+  .ops { grid-area: ops; gap: .2em; }
+  .ops .pbody { justify-content: space-between; gap: .5em; }
+  .row { display: flex; align-items: center; gap: .45em; flex-wrap: wrap; color: var(--ink-hi); }
+  .av { display: inline-grid; place-items: center; width: 1.7em; height: 1.7em; border-radius: 50%; background: #2b4a7f; color: #dbe7ff; font: 700 .78em/1 var(--mono); flex: none; }
+  .av.cat { background: #3b2e47; color: #e8d5f5; }
+  .av.cat svg { width: 1.2em; height: 1.2em; }
+  .row .dim { color: var(--ink-2); }
+  .pol { color: var(--ink); font-size: .95em; }
+  .esc { color: var(--ink-2); font-size: .88em; }
+  .pill { display: inline-flex; align-items: center; gap: .35em; padding: .15em .5em; border-radius: 999px; font: 500 .78em/1.3 'Inter', 'IBM Plex Sans KR', sans-serif; background: rgba(115, 191, 105, .15); color: var(--green); margin-left: auto; }
+  .pill::before { content: ""; width: .5em; height: .5em; border-radius: 50%; background: currentColor; }
+  .pill.on { background: rgba(242, 73, 92, .18); color: #ff7383; }
+  .ops .sub { display: flex; flex-direction: column; gap: .25em; }
+  .ops .sub + .sub { padding-top: .5em; border-top: 1px solid var(--line-2); }
+
+  /* ---------- Burn-down ---------- */
+  .burnp { grid-area: burn; }
+  .legend { display: flex; gap: .9em; margin-left: auto; font-weight: 400; font-size: .86em; color: var(--ink-2); }
+  .legend .k { display: inline-flex; align-items: center; gap: .4em; }
+  .legend .sw { width: 1.3em; height: 0; border-top: 2px solid var(--blue); }
+  .legend .sw.ideal { border-top: 2px dashed #8a909c; }
+  .legend .sw.today { width: .8em; height: .8em; border: 0; background: rgba(87, 148, 242, .28); }
+  .burn { display: block; width: 100%; flex: 1; min-height: 0; overflow: visible; }
+  .burn .grid line { stroke: #24282e; stroke-width: 1; }
+  .burn .ax { font: 400 10.5px var(--mono); fill: var(--ink-2); }
+  .lang-ko .burn .ax { font-family: var(--mono), 'IBM Plex Sans KR'; }
+  .b-ideal { fill: none; stroke: #8a909c; stroke-width: 1.5; stroke-dasharray: 5 4; }
+  .b-area { fill: url(#burnFill); }
+  .b-line { fill: none; stroke: var(--blue); stroke-width: 2; stroke-linejoin: round; }
+  .b-today { fill: rgba(87, 148, 242, .14); }
+  .b-todayl { stroke: rgba(87, 148, 242, .7); stroke-width: 1; stroke-dasharray: 2 2; }
+  .b-tlabel { font: 600 10.5px 'Inter', 'IBM Plex Sans KR', sans-serif; fill: #a9c6f8; }
+  .b-now { fill: var(--blue); stroke: var(--panel); stroke-width: 2; }
+  .b-now.hot { fill: var(--red); }
+  .b-hair { stroke: #c9ccd4; stroke-width: 1; stroke-dasharray: 3 3; }
+  .tip {
+    position: absolute;
+    z-index: 4;
+    padding: .4em .6em;
+    border-radius: 2px;
+    background: #22252b;
+    border: 1px solid #3a3f47;
+    color: var(--ink-hi);
+    font-size: .86em;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .45);
+  }
+  .tip .k { color: var(--ink-2); }
+
+  /* The sticky note: it lands where the month's future is, never over today. */
+  .note {
+    position: absolute;
+    z-index: 3;
+    top: 2.6em;
+    right: 1.4em;
+    width: min(46%, 15.5em);
+    padding: .75em .9em .85em;
+    background: #fdf0a6;
+    color: #3b3420;
+    font-family: 'Kalam', cursive;
+    font-size: 1.04em;
+    line-height: 1.25;
+    rotate: 2.5deg;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .45), inset 0 -10px 18px rgba(170, 140, 30, .12);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .note::before { content: ""; position: absolute; left: 34%; top: -.55em; width: 32%; height: 1.1em; background: rgba(255, 255, 255, .45); rotate: -4deg; }
+  .note.left { right: auto; left: 3.6em; top: auto; bottom: 2.4em; rotate: -2deg; }
+  .note b { font-weight: 700; }
+  .lang-ko .note { padding: .6em .8em .7em; }
+  .note .ink { color: #3b3420; }
+  .note .ln + .ln { margin-top: .25em; }
+  .note.on { opacity: 1; }
+
+  /* ---------- Incidents ---------- */
+  .incp { grid-area: inc; }
+  .incp .count { margin-left: auto; font: 500 .82em/1.4 var(--mono); padding: 0 .5em; border-radius: 999px; background: #262a30; color: var(--ink); }
+  .list { position: relative; flex: 1; min-height: 0; overflow: hidden; padding: 0; list-style: none; }
+  .inc {
+    --c: var(--blue);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "sev ttl at" ". det det";
+    align-items: baseline;
+    gap: .1em .6em;
+    padding: .5em 0 .5em;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .inc.s1 { --c: var(--red); }
+  .inc.s2 { --c: var(--orange); }
+  .inc.s3 { --c: var(--yellow); }
+  .inc.s4 { --c: var(--blue); }
+  .inc .sev { grid-area: sev; display: inline-flex; align-items: center; gap: .4em; font: 600 .8em/1 var(--mono); color: var(--ink-hi); padding: .28em .45em; border-radius: 2px; background: color-mix(in srgb, var(--c) 16%, #1b1e23); }
+  .inc .sev::before { content: ""; width: .6em; height: .6em; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 30%, transparent); }
+  .inc .ttl { grid-area: ttl; color: var(--ink-hi); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inc .at { grid-area: at; color: var(--ink-2); font: 400 .86em var(--mono); }
+  .inc .det { grid-area: det; color: var(--ink-2); font-size: .88em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inc .dur { display: none; }
+  .inc.new { animation: slidein .5s cubic-bezier(.2, .8, .2, 1); }
+  .inc.new .sev { animation: flash 1.6s ease; }
+  @keyframes slidein { from { opacity: 0; transform: translateY(-.8em); } }
+  @keyframes flash { 0%, 40% { box-shadow: 0 0 0 2px var(--c); } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+  /* ---------- SLIs ---------- */
+  .slip { grid-area: sli; }
+  .slis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .6em; flex: 1; min-height: 0; }
+  .sli { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: .1em .1em 0 .6em; border-left: 1px solid var(--line-2); }
+  .sli:first-child { border-left: 0; padding-left: 0; }
+  .sli .k { color: var(--ink-2); font-size: .86em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sli .v { color: var(--ink-hi); font: 500 1.28em/1.25 var(--mono); white-space: nowrap; }
+  .sli .v .u { font-family: 'Inter', 'IBM Plex Sans KR', sans-serif; font-size: .7em; color: var(--ink-2); margin-left: .1em; }
+  .sli .t { font-size: .78em; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sli .t.warn { color: var(--yellow); }
+  .sli .t.good { color: var(--green); }
+  .spark { display: block; width: 100%; flex: 1; min-height: 14px; max-height: 3.4em; margin-top: .25em; }
+  .spark .a { opacity: .18; }
+  .spark .l { fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+
+  /* ---------- Postmortem ---------- */
+  .pmp { grid-area: pm; overflow: visible; z-index: 2; }
+  .empty { color: var(--ink-3); font-size: .9em; margin-top: .3em; }
+  .pm {
+    position: absolute;
+    z-index: 3;
+    left: .5em;
+    right: .4em;
+    top: .35em;
+    bottom: .3em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: .2em;
+    padding: .55em 1em .6em;
+    background:
+      repeating-linear-gradient(180deg, transparent 0 1.55em, rgba(87, 120, 180, .12) 1.55em calc(1.55em + 1px)),
+      var(--paper);
+    color: #23324f;
+    rotate: -1.6deg;
+    border-radius: 1px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .5), 0 1px 0 rgba(0, 0, 0, .2);
+    visibility: hidden;
+    opacity: 0;
+  }
+  .pm::before { content: ""; position: absolute; left: 50%; top: -.6em; width: 4.4em; height: 1.2em; translate: -50% 0; background: rgba(255, 255, 255, .5); rotate: 2deg; box-shadow: 0 1px 2px rgba(0, 0, 0, .1); }
+  .pm.on { visibility: visible; opacity: 1; }
+  .pmp:has(.pm.on) > .ptitle { visibility: hidden; }
+  .pm-k { display: flex; align-items: center; gap: .5em; font: 600 .76em/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: #7a6f55; }
+  .lang-ko .pm-k { font-family: 'IBM Plex Sans KR', sans-serif; letter-spacing: .02em; }
+  .pm-k .id { margin-left: auto; color: #a3977a; letter-spacing: 0; }
+  .pm-l { font-family: 'Kalam', cursive; font-size: clamp(1.02em, 2.3cqh, 1.3em); line-height: 1.22; color: #23324f; }
+  .pm-l b { font-weight: 700; }
+  .pm-l .pen { color: #23324f; }
+  .lang-ko .pm-l { line-height: 1.1; }
+  .pm-l.swap { animation: inkin .7s ease; }
+  @keyframes inkin { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+
+  /* ---------- Two columns (tablets, narrow windows) ---------- */
+  @container page (max-width: 720px) {
+    .dash {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto;
+      grid-template-areas:
+        "head head"
+        "gauge obj"
+        "burn burn"
+        "inc pm"
+        "sli sli"
+        "ops ops"
+        "act act";
+    }
+    /* The alert strip has no row of its own here: it slides over the header, and a resolved
+       alert slides away again so the header can be read. */
+    .alert {
+      position: absolute;
+      z-index: 7;
+      top: var(--gap);
+      left: calc(var(--gap) + 2px);
+      right: calc(var(--gap) + 2px);
+      min-height: clamp(40px, 6.4cqh, 56px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .45);
+    }
+    .alert.idle, .alert.gone { opacity: 0; pointer-events: none; transition: opacity .6s ease; }
+    .crumb { display: none; }
+    .status { padding-left: 0; border-left: 0; }
+    .actions { justify-content: stretch; }
+    .actions .btn { flex: 1; min-height: 42px; }
+    .toast { top: auto; bottom: calc(100% + 8px); left: 50%; right: auto; translate: -50% 6px; }
+    .toast.on { translate: -50% 0; }
+    .gauge { height: clamp(84px, 15cqh, 140px); }
+    .list { flex: none; }
+    .inc:nth-child(n + 4) { display: none; }
+    /* The card sits in the flow here, so the panel is exactly as tall as the card (reserved
+       before it lands; the title and the empty state wait underneath). */
+    .pmp > .ptitle { position: absolute; top: .45em; left: .8em; }
+    .pmp > .pbody { position: absolute; top: 2.1em; left: .8em; right: .8em; }
+    .pm { position: relative; inset: auto; margin: .15em 0 .05em -.1em; justify-content: flex-start; }
+    .slis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .sli:nth-child(n + 4) { display: none; }
+    .spark { height: 1.8em; flex: none; }
+    .ops .pbody { flex-direction: row; gap: 1.2em; }
+    .ops .sub { flex: 1; min-width: 0; }
+    .ops .sub + .sub { padding: 0 0 0 1.2em; border-top: 0; border-left: 1px solid var(--line-2); }
+    .esc { display: none; }
+  }
+  /* The kit's links sit in the bottom-right corner when a page is opened on its own: on wide
+     layouts the postmortem panel ends above them. */
+  @container page (min-width: 721px) {
+    html:not(.embedded) .pmp { margin-bottom: 40px; }
+  }
+  @container page (min-width: 721px) and (max-height: 600px) {
+    html:not(.embedded) .pm-k { display: none; }
+  }
+  /* The kit's ":)" button sits in the bottom-right corner when a page is opened on its own. */
+  @media (max-width: 600px) {
+    html:not(.embedded) .actions { padding-right: 42px; }
+  }
+
+  /* ---------- One column (phones) ---------- */
+  @container page (max-width: 460px) {
+    .dash {
+      --fs: clamp(11.5px, 3.1cqw, 12.5px);
+      --gap: 6px;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+      grid-template-areas: "head" "gauge" "burn" "inc" "pm" "act";
+      padding: 6px 7px 7px;
+    }
+    .head { min-height: 40px; padding: .3em .7em; }
+    .alert { top: 6px; left: 7px; right: 7px; min-height: 40px; }
+    .obj, .slip, .ops { display: none; }
+    .stat.obj-mini, .stat.leftv { display: block; }
+    .stat.budget, .stat.burnr, .stat.spent { display: none; }
+    .stat.leftv .v { font-size: 1.3em; }
+    .g-v, .g-pct { display: none; }
+    .g-big { display: inline; }
+    .gaugep .pbody { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: .1em .7em; }
+    .gauge { height: clamp(66px, 13.5cqh, 100px); }
+    .gaugep .ptitle .meta { display: none; }
+    .stats { gap: .3em; }
+    .gaugep .foot { display: block; margin-top: .15em; padding-top: .3em; font-size: .84em; line-height: 1.3; }
+    .panel { padding: .4em .65em .5em; }
+    .ptitle { min-height: 1.45em; }
+    .legend .k.today { display: none; }
+    .inc { grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "at sev ttl dur"; padding: .24em 0; }
+    .inc .sev { padding: .2em .4em; }
+    .inc .det { display: none; }
+    .inc .dur { display: block; grid-area: dur; color: var(--ink-2); font: 400 .86em var(--mono); }
+    .pm { padding: .35em .85em .4em; gap: .1em; }
+    .pm-l { font-size: 1.04em; }
+    .note { width: min(54%, 13em); top: 1.7em; right: .5em; font-size: .86em; line-height: 1.2; padding: .4em .6em .45em; }
+    /* Late in the month a phone chart has no empty corner below the line: cover the past instead. */
+    .note.left { left: 46px; top: 1.7em; bottom: auto; }
+    .lang-ko .note { padding: .35em .55em .4em; }
+  }
+  /* Taller phones get the two SLIs back (sleep and walk), then the on-call line. */
+  @container page (max-width: 460px) and (min-height: 580px) {
+    .dash { grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto; grid-template-areas: "head" "gauge" "burn" "inc" "pm" "sli" "act"; }
+    .slip { display: flex; }
+    .slis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sli:nth-child(n + 2):not(:last-child) { display: none; }
+    .sli:last-child { display: grid; border-left: 1px solid var(--line-2); padding-left: .6em; }
+    .sli { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: .6em; }
+    .sli .k { grid-column: 1; }
+    .sli .v { grid-column: 1; font-size: 1.12em; }
+    .sli .t { display: none; }
+    .sli .spark { grid-column: 2; grid-row: 1 / 3; height: 2.2em; margin: 0; align-self: center; }
+  }
+  @container page (max-width: 460px) and (min-height: 660px) {
+    .dash { grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto auto; grid-template-areas: "head" "gauge" "burn" "inc" "pm" "sli" "ops" "act"; }
+    .ops { display: flex; }
+    .ops.panel { padding: .35em .65em; }
+    .ops .pbody { flex-direction: column; gap: .15em; }
+    .ops .sub { flex-direction: row; align-items: center; gap: .5em; }
+    .ops .sub + .sub { padding: 0; border: 0; }
+    .ops .ptitle { min-height: 0; font-size: .9em; color: var(--ink-2); }
+    .ops .pill { display: none; }
+    .ops .pol { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  }
+
+  /* Narrow or short desktop grids: the objective panel drops its explainer line first. */
+  @container page (min-width: 721px) and (max-width: 900px) and (max-height: 720px) { .why { display: none; } }
+  @container page (min-width: 721px) and (max-height: 560px) { .why { display: none; } }
+
+  /* Wide but short (laptop stage in landscape): trim the vertical padding. */
+  @container page (min-width: 721px) and (max-height: 700px) {
+    .panel { padding: .4em .75em .5em; }
+    .inc { padding: .36em 0; }
+    .foot { padding-top: .4em; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel.loading::after, .panel.loading::before { animation: none; }
+    .alert .ico { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="dash" id="dash">
+
+  <header class="head" id="head">
+    <div class="crumb">
+      <p class="path">
+        <span data-lang="en">Dashboards / Reliability / you</span>
+        <span data-lang="ko">대시보드 / 안정성 / 나</span>
+      </p>
+      <h1>
+        <span data-lang="en">Your Error Budget</span>
+        <span data-lang="ko">나의 에러 버짓</span>
+      </h1>
+    </div>
+    <div class="status" role="status" aria-live="polite">
+      <i class="sdot" aria-hidden="true"></i>
+      <p class="stext" id="stext">
+        <span data-lang="en">Service: you · <span class="dim">Mostly operational</span></span>
+        <span data-lang="ko">서비스: 나 · <span class="dim">대체로 정상 운영 중</span></span>
+      </p>
+      <p class="neon" id="neon" hidden></p>
+    </div>
+    <div class="uptime" aria-hidden="true">
+      <div class="bars" id="bars"></div>
+      <p class="pct"><b class="mono" id="upPct">97.9%</b><span id="upLabel"></span></p>
+    </div>
+  </header>
+
+  <div class="actions" id="actions">
+    <button type="button" class="btn" id="logBtn">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6 15 14H1z" fill="none" stroke="#ff9830" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 6.2v3.6M8 11.4v.6" stroke="#ff9830" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span data-lang="en">Log incident</span><span data-lang="ko">사건 기록</span>
+    </button>
+    <button type="button" class="btn go" id="restBtn">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6h8v4.2A3.3 3.3 0 0 1 7.7 13.5h-1.4A3.3 3.3 0 0 1 3 10.2z" fill="none" stroke="#bdf5c4" stroke-width="1.5"/><path d="M11 7h1a1.6 1.6 0 0 1 0 3.2h-1" fill="none" stroke="#bdf5c4" stroke-width="1.5"/><path d="M5.4 1.5c-.6.9.6 1.4 0 2.6M8.2 1.5c-.6.9.6 1.4 0 2.6" fill="none" stroke="#bdf5c4" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <span data-lang="en">Take 30 minutes</span><span data-lang="ko">30분 쉬기</span>
+    </button>
+    <p class="toast" id="toast" role="status" aria-live="polite"></p>
+  </div>
+
+  <div class="alert idle" id="alert" role="status" aria-live="polite">
+    <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path id="alertGlyph" d="M5.2 8.2 7.2 10.2 10.9 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <b class="tag" id="alertTag">OK</b>
+    <p class="msg" id="alertMsg"></p>
+  </div>
+
+  <section class="panel obj loading" aria-labelledby="objT">
+    <h2 class="ptitle" id="objT"><span data-lang="en">This month's objective</span><span data-lang="ko">이번 달 목표</span></h2>
+    <div class="pbody">
+      <p class="big"><span class="word"><span data-lang="en">okay</span><span data-lang="ko">괜찮음</span></span><span class="num" id="objNum">95%</span></p>
+      <p class="cur" id="objCur"></p>
+      <p class="why">
+        <span data-lang="en">Error budget: the other 5% of waking hours (16&nbsp;h&nbsp;a&nbsp;day).</span>
+        <span data-lang="ko">에러 버짓: 깨어 있는 시간(하루 16시간)의 나머지 5%.</span>
+      </p>
+      <p class="foot" id="foot">
+        <span data-lang="en">* “100% is the wrong reliability target for basically everything.” <span class="who">— Google SRE book</span></span>
+        <span data-lang="ko">* “100%는 거의 모든 것에 틀린 목표다” <span class="who">— 구글 SRE 책</span></span>
+      </p>
+    </div>
+  </section>
+
+  <section class="panel gaugep loading" aria-labelledby="gaugeT">
+    <h2 class="ptitle" id="gaugeT"><span data-lang="en">Error budget left</span><span data-lang="ko">남은 에러 버짓</span><span class="meta mono" id="gaugeMeta"></span></h2>
+    <div class="pbody">
+      <svg class="gauge" id="gauge" viewBox="0 0 200 118" role="img" aria-labelledby="gaugeT gaugeDesc">
+        <desc id="gaugeDesc"></desc>
+        <g id="thr"></g>
+        <path class="g-track" d="M24 106 A76 76 0 0 1 176 106"/>
+        <path class="g-val" id="gVal" d="M24 106 A76 76 0 0 1 176 106" pathLength="100" stroke-dasharray="0 100"/>
+        <text class="g-v" x="100" y="88" text-anchor="middle" id="gNum"></text>
+        <text class="g-pct" x="100" y="111" text-anchor="middle" id="gPct"></text>
+        <text class="g-big" x="100" y="102" text-anchor="middle" id="gBig"></text>
+      </svg>
+      <div class="stats">
+        <p class="stat leftv"><span class="k" data-lang="en">Left</span><span class="k" data-lang="ko">남음</span><span class="v" id="sLeft"></span></p>
+        <p class="stat obj-mini"><span class="k" data-lang="en">Objective</span><span class="k" data-lang="ko">목표</span><span class="v"><span data-lang="en">okay 95%</span><span data-lang="ko">괜찮음 95%</span></span></p>
+        <p class="stat budget"><span class="k" data-lang="en">Budget this month</span><span class="k" data-lang="ko">이번 달 버짓</span><span class="v" id="sBudget"></span></p>
+        <p class="stat spent"><span class="k" data-lang="en">Spent so far</span><span class="k" data-lang="ko">지금까지 씀</span><span class="v" id="sSpent"></span></p>
+        <p class="stat burnr"><span class="k" data-lang="en">Burn rate (1 h)</span><span class="k" data-lang="ko">번 레이트 (1시간)</span><span class="v" id="sBurn"></span></p>
+      </div>
+      <p class="foot" id="footMini">
+        <span data-lang="en">* “100% is the wrong reliability target for basically everything.” <span class="who">— Google SRE book</span></span>
+        <span data-lang="ko">* “100%는 거의 모든 것에 틀린 목표다” <span class="who">— 구글 SRE 책</span></span>
+      </p>
+    </div>
+  </section>
+
+  <section class="panel ops loading" aria-labelledby="opsA opsB">
+    <div class="pbody">
+      <div class="sub">
+        <h2 class="ptitle" id="opsA"><span data-lang="en">On call</span><span data-lang="ko">당직</span></h2>
+        <p class="row">
+          <i class="av" aria-hidden="true" data-lang="en">YOU</i><i class="av" aria-hidden="true" data-lang="ko">나</i>
+          <span data-lang="en">you</span><span data-lang="ko">나</span>
+          <span class="dim">·</span>
+          <span class="dim" data-lang="en">Backup:</span><span class="dim" data-lang="ko">백업:</span>
+          <i class="av cat" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3 3.5 5.6 6h4.8L13 3.5V9c0 2.6-2.2 4.5-5 4.5S3 11.6 3 9z" fill="currentColor"/><circle cx="6.1" cy="8.6" r=".8" fill="#3b2e47"/><circle cx="9.9" cy="8.6" r=".8" fill="#3b2e47"/></svg></i>
+          <span data-lang="en">the cat</span><span data-lang="ko">고양이</span>
+        </p>
+        <p class="esc">
+          <span data-lang="en">Escalation: you → the cat → a nap</span>
+          <span data-lang="ko">에스컬레이션: 나 → 고양이 → 낮잠</span>
+        </p>
+      </div>
+      <div class="sub">
+        <h2 class="ptitle" id="opsB"><span data-lang="en">Budget policy</span><span data-lang="ko">버짓 정책</span><b class="pill" id="policyPill"></b></h2>
+        <p class="pol">
+          <span data-lang="en">When it runs out, freeze new commitments; only rest ships</span>
+          <span data-lang="ko">다 쓰면 새 일 벌이기 동결, 쉬기만 배포</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel burnp loading" aria-labelledby="burnT">
+    <h2 class="ptitle" id="burnT">
+      <span data-lang="en">Budget burn-down</span><span data-lang="ko">버짓 소진 그래프</span>
+      <span class="legend" aria-hidden="true">
+        <span class="k"><i class="sw"></i><span data-lang="en">left</span><span data-lang="ko">남은 버짓</span></span>
+        <span class="k"><i class="sw ideal"></i><span data-lang="en">ideal</span><span data-lang="ko">이상적 소진</span></span>
+        <span class="k today"><i class="sw today"></i><span data-lang="en">today</span><span data-lang="ko">오늘</span></span>
+      </span>
+    </h2>
+    <div class="pbody">
+      <svg class="burn" id="burn" role="img" aria-labelledby="burnT burnDesc">
+        <desc id="burnDesc"></desc>
+        <defs>
+          <linearGradient id="burnFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#5794f2" stop-opacity=".32"/>
+            <stop offset="1" stop-color="#5794f2" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <g class="grid" id="bGrid"></g>
+        <rect class="b-today" id="bToday"/>
+        <line class="b-todayl" id="bTodayL"/>
+        <text class="b-tlabel" id="bTLabel"></text>
+        <path class="b-ideal" id="bIdeal"/>
+        <path class="b-area" id="bArea"/>
+        <path class="b-line" id="bLine" pathLength="1"/>
+        <g id="bAnn"></g>
+        <line class="b-hair" id="bHair" visibility="hidden"/>
+        <circle class="b-now" id="bNow" r="4"/>
+      </svg>
+      <div class="tip" id="tip" hidden></div>
+      <div class="note" id="note" aria-hidden="true">
+        <p data-lang="en"><b>Budgets are meant to be spent.</b> If you have lots left, you tried too hard.</p>
+        <div data-lang="ko">
+          <p class="ln"><font-kku font="pilgi" size="1.1em" class="ink">버짓은 쓰라고 있는 것.</font-kku></p>
+          <p class="ln"><font-kku font="pilgi" size="1.1em" class="ink">남기면 너무 애쓴 거예요.</font-kku></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel incp loading" aria-labelledby="incT">
+    <h2 class="ptitle" id="incT"><span data-lang="en">Incidents</span><span data-lang="ko">사건 기록</span><span class="count" id="incCount">0</span></h2>
+    <div class="pbody">
+      <ol class="list" id="list"></ol>
+    </div>
+  </section>
+
+  <section class="panel slip loading" aria-labelledby="sliT">
+    <h2 class="ptitle sr" id="sliT"><span data-lang="en">Indicators (SLIs)</span><span data-lang="ko">지표 (SLI)</span></h2>
+    <div class="pbody">
+      <div class="slis" id="slis"></div>
+    </div>
+  </section>
+
+  <section class="panel pmp loading" aria-labelledby="pmT">
+    <h2 class="ptitle" id="pmT"><span data-lang="en">Postmortems</span><span data-lang="ko">회고</span></h2>
+    <div class="pbody">
+      <p class="empty" id="pmEmpty"><span data-lang="en">None yet. Incidents still settling.</span><span data-lang="ko">아직 없음. 사건 정리 중.</span></p>
+    </div>
+    <article class="pm" id="pm" aria-labelledby="pmK">
+      <p class="pm-k" id="pmK"><span data-lang="en">Postmortem (blameless)</span><span data-lang="ko">회고 (비난 없음)</span><span class="id mono" id="pmId"></span></p>
+      <p class="pm-l" id="pmRoot"></p>
+      <p class="pm-l" id="pmPrev"></p>
+      <p class="pm-l" id="pmBlame"></p>
+    </article>
+  </section>
+</main>
+<p class="sr" id="say" aria-live="polite"></p>
+
+<script>
+(() => {
+  const ko = TTY.lang === 'ko';
+  const $ = (id) => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+
+  /* ---------- The month, in minutes ----------
+     Budget = days in month × 16 waking hours × 5%. Past days spent 1.4% of their waking time
+     (a quiet 13.4 minutes a day); today spends whatever today's incidents cost. */
+  const NOW = new Date();
+  const Y = NOW.getFullYear();
+  const MO = NOW.getMonth();
+  const D = NOW.getDate();
+  const N = new Date(Y, MO + 1, 0).getDate();
+  const WAKE = 16 * 60;
+  const DAY_START = 7 * 60;
+  const BUDGET = N * WAKE * 0.05;
+  const PER_DAY = WAKE * 0.014;
+  const PAST = (D - 1) * PER_DAY;
+  const ISO = `${Y}-${String(MO + 1).padStart(2, '0')}-${String(D).padStart(2, '0')}`;
+  const MONTH_EN = NOW.toLocaleDateString('en-US', { month: 'short' });
+
+  /* ---------- Copy ---------- */
+  const L = TTY.t({
+    en: {
+      h: ' h', m: ' m', min: (n) => `${n} min`,
+      left: 'left', alertIdle: 'Alerts · none firing',
+      fire: 'Burn rate 14.4× (1 h window) · cause: Monday 9 a.m., three meetings back to back',
+      ok: 'Resolved · had lunch',
+      policy: 'Budget exhausted · policy in effect: new commitments frozen, today we ship only going home',
+      refill: 'Your budget refills on the 1st.',
+      toast: 'Budget spent. Well done.',
+      tags: { idle: 'OK', fire: 'FIRING', ok: 'RESOLVED', policy: 'POLICY', refill: 'INFO' },
+      today: 'Today',
+      cur: (p, ok) => `Current <span class="mono">${p}%</span> · ${ok ? '<span class="chk">✓</span> within objective' : '<span class="low">▼</span> below objective, burning fast'}`,
+      upLabel: 'okay this month', count: (n) => `${n} today`,
+      pill: ['Not triggered', 'In effect'],
+      root: ['Root cause:', 'being human.'], blame: ['Blame:', 'none.'],
+      prev: ['Prevention:', 'snacks, an early night.'],
+      dayLabel: (d) => (d === 1 ? `${MONTH_EN} 1` : String(d)),
+      tipDay: (d) => `${MONTH_EN} ${d}`, tipIdeal: 'ideal',
+      gaugeDesc: (l, p) => `${l} of error budget left, ${p}% of this month's budget.`,
+      burnDesc: 'Remaining error budget per day this month, against an ideal straight-line burn. Today is marked.',
+      target: (s) => `target 7 h${s ? ' ✓' : ''}`,
+      sli: ['Sleep', 'Water', 'Laughs', 'Friends texted', 'Walk'],
+      units: ['', ' cups', '', '', ' min'],
+      subs: ['', 'glasses', 'and counting', 'reply pending', 'daily'],
+    },
+    ko: {
+      h: '시간', m: '분', min: (n) => `${n}분`,
+      left: '남음', alertIdle: '경보 · 울리는 것 없음',
+      fire: '번 레이트 14.4배 (1시간 창) · 원인: 월요일 오전 9시 회의 세 개 연속',
+      ok: '해결됨 · 점심 먹음',
+      policy: '버짓 소진 · 정책 발동: 새 일 벌이기 동결, 오늘 배포할 것은 퇴근뿐',
+      refill: '다음 달 1일에 버짓이 다시 차요.',
+      toast: '버짓 사용 완료. 잘했어요.',
+      tags: { idle: '정상', fire: '경보', ok: '해결', policy: '정책', refill: '안내' },
+      today: '오늘',
+      cur: (p, ok) => `현재 <span class="mono">${p}%</span> · ${ok ? '<span class="chk">✓</span> 목표 안' : '<span class="low">▼</span> 목표 밑, 빨리 쓰는 중'}`,
+      upLabel: '이번 달 괜찮음', count: (n) => `오늘 ${n}건`,
+      pill: ['대기', '발동'],
+      root: '근본 원인: 사람이라서.', blame: '누구 탓: 없음.',
+      prev: '재발 방지: 간식, 일찍 자기.',
+      dayLabel: (d) => (d === 1 ? `${MO + 1}월 1일` : `${d}일`),
+      tipDay: (d) => `${MO + 1}월 ${d}일`, tipIdeal: '이상적',
+      gaugeDesc: (l, p) => `남은 에러 버짓 ${l}, 이번 달 버짓의 ${p}%.`,
+      burnDesc: '이번 달 날마다 남은 에러 버짓과 이상적인 직선 소진. 오늘이 표시되어 있다.',
+      target: (s) => `목표 7시간${s ? ' ✓' : ''}`,
+      sli: ['수면', '물', '웃음', '연락한 친구', '산책'],
+      units: ['', '컵', '번', '명', '분'],
+      subs: ['', '잔', '세는 중', '답장 기다림', '하루'],
+    },
+  });
+
+  // Today's four incidents (autoplay). t = minutes after midnight.
+  const DAY = [
+    { sev: 4, t: 9 * 60 + 12, min: 4, en: ['Spilled coffee', 'recovered in 4 min'], ko: ['커피 쏟음', '복구 4분'] },
+    { sev: 3, t: 11 * 60 + 30, min: 26, en: ['Replied all', "rollback: 'Correction' email · 26 min"], ko: ["'전체 회신'으로 보냄", "롤백: '정정합니다' 메일 · 26분"] },
+    { sev: 3, t: 14 * 60 + 5, min: 18, en: ['Talked to self, unmuted', '18 min'], ko: ['음소거 안 된 채 혼잣말', '18분'] },
+    { sev: 2, t: 16 * 60 + 40, min: 45, en: ['Closed without saving', 'recovered: autosave · 45 min'], ko: ['저장 안 하고 닫음', '복구: 자동 저장 · 45분'] },
+  ].map((x) => ({ sev: x.sev, t: x.t, min: x.min, title: TTY.t(x)[0], det: TTY.t(x)[1] }));
+
+  // The visitor's "Log incident" pack: [title, prevention].
+  const PACK = [
+    { sev: 4, min: 6, en: ['Left the umbrella behind', 'a spare umbrella at work.'], ko: ['우산 놓고 옴', '재발 방지: 회사에 우산 하나 더.'] },
+    { sev: 3, min: 20, en: ['Got the meeting time wrong', 'two calendar alerts.'], ko: ['회의 시간 착각', '재발 방지: 알림 두 번 맞추기.'] },
+    { sev: 4, min: 2, en: ["Sent 'thnaks'", 'reread before sending.'], ko: ["'넵'을 '냅'으로 보냄", '재발 방지: 보내기 전에 한 번 읽기.'] },
+    { sev: 2, min: 50, en: ['Off by one day on a deadline', `write dates as ${ISO}.`], ko: ['마감 날짜 하루 착각', `재발 방지: 날짜는 ${ISO}처럼.`] },
+    { sev: 4, min: 1, en: ['Wrong-way elevator button', 'none. Enjoyed the ride.'], ko: ['엘리베이터에서 반대 방향 버튼', '재발 방지: 없음. 구경 잘 함.'] },
+    { sev: 3, min: 15, en: ['Called someone the wrong name', 'name tags for everyone.'], ko: ['이름 잘못 부름', '재발 방지: 모두에게 이름표.'] },
+    { sev: 4, min: 5, en: ['Let the second coffee go cold', 'smaller cups.'], ko: ['커피 두 잔째 잊고 식힘', '재발 방지: 작은 컵으로.'] },
+    { sev: 3, min: 12, en: ['Shared the wrong window', 'close tabs before sharing.'], ko: ['화면 공유 중 다른 창', '재발 방지: 공유 전에 탭 정리.'] },
+  ].map((x) => ({ sev: x.sev, min: x.min, title: TTY.t(x)[0], prev: TTY.t(x)[1] }));
+
+  /* ---------- Formatting ---------- */
+  const hm = (min) => {
+    const m = Math.max(0, Math.round(min));
+    return { h: Math.floor(m / 60), m: m % 60 };
+  };
+  const fmtHM = (min) => {
+    const { h, m } = hm(min);
+    return h ? `${h}${L.h} ${m}${L.m}` : `${m}${L.m}`;
+  };
+  const clock = (t) => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+
+  /* ---------- State ---------- */
+  const fresh = () => ({ events: [], prev: null, sleep: 400, walk: 18 });
+  let S = fresh();
+  let packAt = 0;
+  let exhausted = false;
+  const spentToday = () => S.events.reduce((a, e) => a + e.min, 0);
+  const leftNow = () => Math.max(0, BUDGET - PAST - spentToday());
+  const nextTime = (gap) => Math.min((S.events.length ? S.events[S.events.length - 1].t : 16 * 60 + 40) + gap, 22 * 60 + 55);
+
+  /* ---------- Header: uptime bars ---------- */
+  const bars = $('bars');
+  for (let d = 1; d <= N; d++) {
+    const b = document.createElement('i');
+    b.className = 'd' + (d > D ? ' future' : d === D ? ' today' : (d * 7) % 9 === 4 ? ' minor' : '');
+    bars.append(b);
+  }
+  $('upLabel').textContent = L.upLabel;
+  function paintToday() {
+    const worst = Math.min(5, ...S.events.filter((e) => e.sev).map((e) => e.sev));
+    bars.children[D - 1].className = 'd today' + (worst <= 2 ? ' major' : worst <= 4 ? ' minor' : '');
+    // Waking minutes so far this month (today counts at least up to the last thing that happened).
+    const nowMin = NOW.getHours() * 60 + NOW.getMinutes();
+    const lastT = S.events.length ? S.events[S.events.length - 1].t + 20 : 0;
+    const todayUp = Math.min(WAKE, Math.max(nowMin - DAY_START, lastT - DAY_START, 10 * 60));
+    const sli = 100 * (1 - (PAST + spentToday()) / ((D - 1) * WAKE + todayUp));
+    const p = Math.max(0, sli).toFixed(1);
+    $('upPct').textContent = p + '%';
+    $('objCur').innerHTML = L.cur(p, sli >= 95);
+  }
+
+  /* ---------- Gauge ---------- */
+  const gVal = $('gVal');
+  const gNum = $('gNum');
+  const gPct = $('gPct');
+  // Threshold ring: red under 10%, orange to 25%, yellow to 50%, green above.
+  const arc = (r, f0, f1) => {
+    const p = (f) => [100 - r * Math.cos(Math.PI * f), 106 - r * Math.sin(Math.PI * f)];
+    const [x0, y0] = p(f0);
+    const [x1, y1] = p(f1);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  };
+  [[0, .1, 'var(--red)'], [.1, .25, 'var(--orange)'], [.25, .5, 'var(--yellow)'], [.5, 1, 'var(--green)']].forEach(([a, b, c]) => {
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('class', 'g-thr');
+    p.setAttribute('d', arc(91, a + (a ? .006 : 0), b - (b < 1 ? .006 : 0)));
+    p.style.stroke = c;
+    $('thr').append(p);
+  });
+  const colorFor = (f) => (f > .5 ? 'var(--green)' : f > .25 ? 'var(--yellow)' : f > .1 ? 'var(--orange)' : 'var(--red)');
+  let shown = 0;
+  let tween = 0;
+  function drawGauge(v) {
+    shown = v;
+    const f = Math.max(0, Math.min(1, v / BUDGET));
+    gVal.setAttribute('stroke-dasharray', `${(f * 100).toFixed(2)} 100`);
+    gVal.style.stroke = colorFor(f);
+    const { h, m } = hm(v);
+    gNum.innerHTML = `<tspan class="g-n">${h}</tspan><tspan class="g-u" dx="2">${L.h.trim()}</tspan><tspan class="g-n" dx="${ko ? 5 : 8}">${m}</tspan><tspan class="g-u" dx="2">${L.m.trim()}</tspan>`;
+    const pct = Math.round(f * 100);
+    gPct.textContent = `${pct}% ${L.left}`;
+    $('gBig').textContent = `${pct}%`;
+    $('sLeft').textContent = fmtHM(v);
+    $('sSpent').textContent = fmtHM(BUDGET - v);
+    $('gaugeDesc').textContent = L.gaugeDesc(fmtHM(v), pct);
+  }
+  function setGauge(target, ms = 700) {
+    cancelAnimationFrame(tween);
+    if (TTY.reduce || ms <= 0) { drawGauge(target); return; }
+    const from = shown;
+    const t0 = performance.now();
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / ms);
+      const e = 1 - Math.pow(1 - k, 3);
+      drawGauge(from + (target - from) * e);
+      if (k < 1) tween = requestAnimationFrame(step);
+    };
+    tween = requestAnimationFrame(step);
+  }
+  $('sBudget').textContent = fmtHM(BUDGET);
+  $('gaugeMeta').textContent = TTY.t({ en: `SLO 95% · ${N} d`, ko: `SLO 95% · ${N}일` });
+  function setBurn(hot) {
+    const v = $('sBurn');
+    v.innerHTML = hot ? '14.4<span class="x">×</span>' : '0.3<span class="x">×</span>';
+    v.classList.toggle('hot', hot);
+    $('bNow').classList.toggle('hot', hot);
+  }
+
+  /* ---------- Burn-down chart ---------- */
+  const burn = $('burn');
+  let geo = null;
+  function drawBurn() {
+    const W = burn.clientWidth;
+    const H = burn.clientHeight;
+    if (!W || !H) return;
+    burn.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const pad = { l: ko ? 42 : 34, r: 8, t: 16, b: 18 };
+    const x = (d) => pad.l + (d / N) * (W - pad.l - pad.r);
+    const y = (min) => pad.t + (1 - min / BUDGET) * (H - pad.t - pad.b);
+    geo = { W, H, pad, x, y };
+
+    // Grid every 6 hours, day labels every week.
+    let g = '';
+    const top = BUDGET / 60;
+    const plotH = H - pad.t - pad.b;
+    const every = plotH < 56 ? 24 : plotH < 100 ? 12 : 6;
+    for (let hr = 0; hr <= top; hr += every) {
+      const yy = y(hr * 60).toFixed(1);
+      g += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${yy}" y2="${yy}"/>`;
+      g += `<text class="ax" x="${pad.l - 6}" y="${(+yy + 3.5).toFixed(1)}" text-anchor="end">${hr}${L.h.trim()}</text>`;
+    }
+    const step = W < 420 ? 14 : 7;
+    for (let d = 1; d <= N; d += step) {
+      g += `<text class="ax" x="${x(d - .5).toFixed(1)}" y="${H - 4}" text-anchor="${d === 1 ? 'start' : 'middle'}">${L.dayLabel(d)}</text>`;
+    }
+    $('bGrid').innerHTML = g;
+
+    // Today's column.
+    const tx0 = x(D - 1);
+    const tx1 = x(D);
+    const bt = $('bToday');
+    bt.setAttribute('x', tx0.toFixed(1));
+    bt.setAttribute('y', pad.t);
+    bt.setAttribute('width', Math.max(3, tx1 - tx0).toFixed(1));
+    bt.setAttribute('height', Math.max(0, H - pad.t - pad.b));
+    const tl = $('bTodayL');
+    tl.setAttribute('x1', tx1.toFixed(1)); tl.setAttribute('x2', tx1.toFixed(1));
+    tl.setAttribute('y1', pad.t - 2); tl.setAttribute('y2', H - pad.b);
+    const lab = $('bTLabel');
+    lab.textContent = L.today;
+    lab.setAttribute('x', ((tx0 + tx1) / 2).toFixed(1));
+    lab.setAttribute('y', pad.t - 4);
+    lab.setAttribute('text-anchor', D < 3 ? 'start' : D > N - 2 ? 'end' : 'middle');
+
+    $('bIdeal').setAttribute('d', `M${x(0)} ${y(BUDGET)} L${x(N)} ${y(0)}`);
+    drawLine();
+  }
+  const frac = (t) => Math.max(0, Math.min(1, (t - DAY_START) / WAKE));
+  function drawLine() {
+    if (!geo) return;
+    const { x, y, H, pad } = geo;
+    let left = BUDGET - PAST;
+    let d = `M${x(0).toFixed(1)} ${y(BUDGET).toFixed(1)} L${x(D - 1).toFixed(1)} ${y(left).toFixed(1)}`;
+    let ann = '';
+    S.events.forEach((e) => {
+      const ex = x(D - 1 + frac(e.t));
+      d += ` L${ex.toFixed(1)} ${y(left).toFixed(1)}`;
+      left -= e.min;
+      d += ` L${ex.toFixed(1)} ${y(Math.max(0, left)).toFixed(1)}`;
+      const c = e.sev ? ['', 'var(--red)', 'var(--orange)', 'var(--yellow)', 'var(--blue)'][e.sev] : 'var(--green)';
+      ann += `<path d="M${ex.toFixed(1)} ${H - pad.b} l-3.2 5 h6.4z" fill="${c}"/>`;
+    });
+    left = Math.max(0, left);
+    const last = S.events.length ? S.events[S.events.length - 1].t + 12 : DAY_START;
+    const endX = x(D - 1 + Math.max(.02, frac(last)));
+    d += ` L${endX.toFixed(1)} ${y(left).toFixed(1)}`;
+    $('bLine').setAttribute('d', d);
+    $('bArea').setAttribute('d', `${d} L${endX.toFixed(1)} ${y(0).toFixed(1)} L${x(0).toFixed(1)} ${y(0).toFixed(1)} Z`);
+    $('bAnn').innerHTML = ann;
+    const now = $('bNow');
+    now.setAttribute('cx', endX.toFixed(1));
+    now.setAttribute('cy', y(left).toFixed(1));
+    placeNote();
+  }
+  new ResizeObserver(() => { drawBurn(); fitList(); }).observe(burn);
+  $('burnDesc').textContent = L.burnDesc;
+
+  // Hover: crosshair and a tooltip with that day's budget, like any dashboard.
+  const tip = $('tip');
+  const hair = $('bHair');
+  const leftAtEndOf = (d) => (d < D ? BUDGET - d * PER_DAY : d === D ? leftNow() : null);
+  burn.addEventListener('pointermove', (e) => {
+    if (!geo || e.pointerType !== 'mouse') return;
+    const r = burn.getBoundingClientRect();
+    const px = e.clientX - r.left;
+    const { pad, x, y, W, H } = geo;
+    const d = Math.max(1, Math.min(N, Math.ceil(((px - pad.l) / (W - pad.l - pad.r)) * N)));
+    const cx = x(d - .5);
+    hair.setAttribute('x1', cx); hair.setAttribute('x2', cx);
+    hair.setAttribute('y1', pad.t); hair.setAttribute('y2', H - pad.b);
+    hair.setAttribute('visibility', 'visible');
+    const v = leftAtEndOf(d);
+    const ideal = BUDGET * (1 - d / N);
+    tip.innerHTML = `<b>${L.tipDay(d)}</b>${d === D ? ` · ${L.today}` : ''}<br>` +
+      (v !== null ? `<span class="mono">${fmtHM(v)}</span> ${L.left}<br>` : '') +
+      `<span class="k">${L.tipIdeal} <span class="mono">${fmtHM(ideal)}</span></span>`;
+    tip.hidden = false;
+    const tw = tip.offsetWidth;
+    tip.style.left = Math.min(W - tw - 4, Math.max(4, cx + 10)) + 'px';
+    tip.style.top = Math.max(0, Math.min(H - tip.offsetHeight, (v !== null ? y(v) : y(ideal)) - tip.offsetHeight - 8)) + 'px';
+  });
+  burn.addEventListener('pointerleave', () => { tip.hidden = true; hair.setAttribute('visibility', 'hidden'); });
+
+  // The note covers the month's future, so it moves to the empty lower left late in the month.
+  const note = $('note');
+  function placeNote() {
+    note.classList.toggle('left', D / N > .55);
+  }
+
+  /* ---------- Incidents ---------- */
+  const list = $('list');
+  function incidentRow(e) {
+    const li = document.createElement('li');
+    li.className = `inc s${e.sev}`;
+    li.innerHTML = '<span class="sev"></span><span class="ttl"></span><time class="at mono"></time><span class="det"></span><span class="dur mono"></span>';
+    li.querySelector('.sev').textContent = `SEV-${e.sev}`;
+    li.querySelector('.ttl').textContent = e.title;
+    li.querySelector('.at').textContent = clock(e.t);
+    li.querySelector('.det').textContent = e.det || L.min(e.min);
+    li.querySelector('.dur').textContent = L.min(e.min);
+    return li;
+  }
+  function renderList(fresh) {
+    const incs = S.events.filter((e) => e.sev).slice().reverse();
+    list.replaceChildren(...incs.map((e, i) => {
+      const li = incidentRow(e);
+      if (fresh && i === 0 && !TTY.reduce) li.classList.add('new');
+      return li;
+    }));
+    $('incCount').textContent = L.count(incs.length);
+    fitList();
+  }
+  function fitList() {
+    const box = list.clientHeight;
+    [...list.children].forEach((li) => { li.hidden = false; });
+    if (getComputedStyle(list).flexGrow === '0') return;
+    [...list.children].forEach((li) => { if (li.offsetTop + li.offsetHeight > box + 1) li.hidden = true; });
+  }
+  new ResizeObserver(fitList).observe(list);
+
+  /* ---------- SLIs ---------- */
+  const SPARK = [
+    [412, 390, 445, 380, 428, 365, 400],
+    [4, 6, 5, 3, 6, 4, 5],
+    [8, 15, 9, 11, 20, 7, 12],
+    [0, 2, 1, 0, 3, 0, 1],
+    [25, 10, 32, 0, 40, 22, 18],
+  ];
+  const slis = $('slis');
+  const sliEls = L.sli.map((k, i) => {
+    const el = document.createElement('div');
+    el.className = 'sli';
+    el.innerHTML = `<span class="k"></span><span class="v"></span><span class="t"></span>
+      <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path class="a"/><path class="l"/></svg>`;
+    el.querySelector('.k').textContent = k;
+    slis.append(el);
+    return el;
+  });
+  function sliValue(i) {
+    if (i === 0) return S.sleep;
+    if (i === 4) return S.walk;
+    return SPARK[i][6];
+  }
+  function drawSLI(i, v = sliValue(i)) {
+    const el = sliEls[i];
+    const vEl = el.querySelector('.v');
+    if (i === 0) {
+      const { h, m } = hm(v);
+      vEl.innerHTML = `${h}<span class="u">${L.h.trim()}</span> ${m}<span class="u">${L.m.trim()}</span>`;
+    } else {
+      vEl.innerHTML = `${Math.round(v)}<span class="u">${L.units[i]}</span>`;
+    }
+    const t = el.querySelector('.t');
+    const met = S.sleep >= 420;
+    t.textContent = i === 0 ? L.target(met) : L.subs[i];
+    t.className = 't' + (i === 0 ? (met ? ' good' : ' warn') : '');
+    const data = SPARK[i].slice(0, 6).concat(sliValue(i));
+    const lo = Math.min(...data) * (i === 0 ? .96 : 0);
+    const hi = Math.max(...data) * 1.08 || 1;
+    const pts = data.map((dv, k) => `${(k / (data.length - 1) * 100).toFixed(1)} ${(28 - (dv - lo) / (hi - lo) * 25).toFixed(1)}`);
+    const color = i === 0 ? (met ? 'var(--green)' : 'var(--yellow)') : ['', 'var(--blue)', 'var(--purple)', 'var(--blue)', 'var(--green)'][i];
+    const l = el.querySelector('.l');
+    l.setAttribute('d', 'M' + pts.join(' L'));
+    l.style.stroke = color;
+    const a = el.querySelector('.a');
+    a.setAttribute('d', `M0 30 L${pts.join(' L')} L100 30Z`);
+    a.style.fill = color;
+  }
+
+  /* ---------- Postmortem card ---------- */
+  const pm = $('pm');
+  const kkuLine = (text) => {
+    const k = document.createElement('font-kku');
+    k.setAttribute('font', 'pilgi');
+    k.setAttribute('size', 'clamp(15px, 2.35cqh, 20px)');
+    k.className = 'pen';
+    k.textContent = text;
+    return k;
+  };
+  const enLine = ([label, rest]) => {
+    const f = document.createDocumentFragment();
+    const b = document.createElement('b');
+    b.textContent = label;
+    f.append(b, ' ' + rest);
+    return f;
+  };
+  let pmPrevText = '';
+  function writePM(prev) {
+    $('pmRoot').replaceChildren(ko ? kkuLine(L.root) : enLine(L.root));
+    $('pmBlame').replaceChildren(ko ? kkuLine(L.blame) : enLine(L.blame));
+    setPrev(prev, false);
+  }
+  // The prevention line is rebuilt (font-kku keeps its own spans), and we remember what we wrote.
+  function setPrev(prev, animate = true) {
+    const text = prev || (ko ? L.prev : L.prev[1]);
+    if (text === pmPrevText) return;
+    pmPrevText = text;
+    const el = $('pmPrev');
+    el.replaceChildren(ko ? kkuLine(text) : enLine([L.prev[0], text]));
+    if (animate && !TTY.reduce) { el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); }
+  }
+  function showPM(animate) {
+    if (pm.classList.contains('on')) return;
+    pm.classList.add('on');
+    $('pmEmpty').hidden = true;
+    $('pmId').textContent = `#${String(MO + 1).padStart(2, '0')}${String(D).padStart(2, '0')}`;
+    if (animate && !TTY.reduce) {
+      pm.animate([
+        { transform: 'translate(8%, -38%) rotate(-9deg) scale(1.06)', opacity: 0, boxShadow: '0 30px 40px rgba(0,0,0,.2)' },
+        { transform: 'translate(0, 2%) rotate(.6deg) scale(1)', opacity: 1, offset: .75 },
+        { transform: 'none', opacity: 1 },
+      ], { duration: 800, easing: 'cubic-bezier(.2, .8, .3, 1)' });
+    }
+  }
+  function hidePM() {
+    pm.classList.remove('on');
+    $('pmEmpty').hidden = false;
+  }
+
+  /* ---------- Note, footnote ---------- */
+  function showNote(animate) {
+    if (note.classList.contains('on')) return;
+    note.classList.add('on');
+    $('foot').classList.add('lit');
+    $('footMini').classList.add('lit');
+    if (animate && !TTY.reduce) {
+      note.animate([
+        { transform: 'translateY(-14px) rotate(-6deg) scale(1.08)', opacity: 0 },
+        { transform: 'none', opacity: 1 },
+      ], { duration: 600, easing: 'cubic-bezier(.2, .9, .3, 1.15)' });
+    }
+  }
+
+  /* ---------- Header: status → neon ---------- */
+  const head = $('head');
+  const neon = $('neon');
+  function goNeon(animate) {
+    if (head.classList.contains('lit')) return;
+    const swap = () => {
+      head.classList.add('lit');
+      $('stext').hidden = true;
+      neon.hidden = false;
+      if (ko) {
+        const k = document.createElement('font-kku');
+        k.setAttribute('font', 'neon');
+        k.setAttribute('size', 'clamp(22px, 3.9cqh, 32px)');
+        k.className = 'neon-ko';
+        k.textContent = '괜찮아요';
+        neon.replaceChildren(k);
+      } else {
+        const s = document.createElement('b');
+        s.className = 'neon-en';
+        s.textContent = 'All systems: okay';
+        neon.replaceChildren(s);
+      }
+    };
+    if (!animate || TTY.reduce) { swap(); return; }
+    head.animate([{ opacity: 1 }, { opacity: .25 }, { opacity: 1 }, { opacity: .4 }, { opacity: .9 }, { opacity: .15 }, { opacity: 1 }],
+      { duration: 650, easing: 'steps(1, end)' });
+    setTimeout(swap, 380);
+    // the tube catches: a short flicker after it has lit
+    setTimeout(() => neon.animate([{ opacity: 1 }, { opacity: .35 }, { opacity: 1 }, { opacity: .6 }, { opacity: 1 }], { duration: 420, delay: 300, easing: 'steps(1, end)' }), 400);
+  }
+  function unNeon() {
+    head.classList.remove('lit');
+    $('stext').hidden = false;
+    neon.hidden = true;
+    neon.replaceChildren();
+  }
+
+  /* ---------- Alert strip & toast ---------- */
+  const alertEl = $('alert');
+  const GLYPH = {
+    ok: 'M5.2 8.2 7.2 10.2 10.9 6',
+    bang: 'M8 4.6v4.2M8 11v.4',
+    info: 'M8 7.4v4M8 5v.3',
+  };
+  let goneT = 0;
+  function setAlert(kind, quiet) {
+    clearTimeout(goneT);
+    alertEl.className = 'alert ' + kind;
+    // Narrow layouts lay the strip over the header; a resolved alert gets out of the way.
+    if (kind === 'ok') {
+      if (quiet) alertEl.classList.add('gone');
+      else goneT = setTimeout(() => alertEl.classList.add('gone'), 3200);
+    }
+    $('alertTag').textContent = L.tags[kind];
+    $('alertMsg').textContent = kind === 'idle' ? L.alertIdle : L[kind];
+    $('alertGlyph').setAttribute('d', kind === 'fire' || kind === 'policy' ? GLYPH.bang : kind === 'refill' ? GLYPH.info : GLYPH.ok);
+    setBurn(kind === 'fire');
+    if (kind !== 'idle' && !quiet && !TTY.reduce) alertEl.animate([{ transform: 'translateY(-6px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 320, easing: 'ease-out' });
+  }
+  const toast = $('toast');
+  let toastT = 0;
+  function showToast() {
+    toast.innerHTML = `<span class="ok" aria-hidden="true">✓</span>${L.toast}`;
+    toast.classList.add('on');
+    clearTimeout(toastT);
+    toastT = setTimeout(() => toast.classList.remove('on'), 2400);
+  }
+
+  /* ---------- Policy pill ---------- */
+  function setPolicy(on) {
+    const p = $('policyPill');
+    p.textContent = L.pill[on ? 1 : 0];
+    p.classList.toggle('on', on);
+  }
+
+  /* ---------- Rendering everything from state ---------- */
+  function renderAll(ms) {
+    setGauge(leftNow(), ms);
+    drawLine();
+    renderList(false);
+    sliEls.forEach((_, i) => drawSLI(i));
+    paintToday();
+  }
+
+  /* ---------- Actions on the state ---------- */
+  function addIncident(inc, auto) {
+    const e = { sev: inc.sev, min: inc.min, title: inc.title, det: inc.det, t: auto ? inc.t : nextTime(25) };
+    S.events.push(e);
+    setGauge(leftNow());
+    drawLine();
+    renderList(true);
+    paintToday();
+    if (!auto) {
+      setPrev(inc.prev);
+      // Read out what the visitor just logged (the list itself is not a live region, so the
+      // autoplay does not talk over itself every 24 seconds).
+      $('say').textContent = `SEV-${e.sev} ${e.title}, ${L.min(e.min)}. ${fmtHM(leftNow())} ${L.left}.`;
+    }
+  }
+  function rest() {
+    S.events.push({ min: 30, t: nextTime(30) });
+    // Half an hour of rest: a short nap and a short walk (up to a point).
+    S.sleep = Math.min(S.sleep + 10, 510);
+    S.walk = Math.min(S.walk + 10, 90);
+    setGauge(leftNow());
+    drawLine();
+    drawSLI(0);
+    drawSLI(4);
+    paintToday();
+    if (leftNow() > 0) showToast();
+  }
+  let policyT = 0;
+  function checkExhausted() {
+    if (leftNow() > 0) return;
+    exhausted = true;
+    toast.classList.remove('on');
+    setPolicy(true);
+    setAlert('policy');
+    clearTimeout(policyT);
+    policyT = setTimeout(() => setAlert('refill'), 3000);
+  }
+  // After the policy scene, the next press puts the month back as it was.
+  function refill() {
+    exhausted = false;
+    clearTimeout(policyT);
+    S = fresh();
+    DAY.forEach((e) => S.events.push(Object.assign({}, e)));
+    packAt = 0;
+    setPolicy(false);
+    setAlert('ok');
+    setPrev(null);
+    renderAll(900);
+  }
+
+  /* ---------- Autoplay (24 s) ----------
+     0 s skeleton → panels fill and count up · 3/4.5/6/7.5 s incidents · 9 s burn-rate alert ·
+     11.5 s resolved · 12.5 s postmortem card · 16 s note + footnote · 18 s neon · 24 s again. */
+  const PANELS = ['.obj', '.gaugep', '.ops', '.burnp', '.incp', '.slip', '.pmp'].map((s) => document.querySelector(s));
+  const timers = [];
+  const at = (s, fn) => timers.push(setTimeout(fn, s * 1000));
+  let playing = false;
+  let resumeT = 0;
+
+  function countUp(el, to, fmt, ms) {
+    if (TTY.reduce) { el.textContent = fmt(to); return; }
+    const t0 = performance.now();
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / ms);
+      el.textContent = fmt(to * (1 - Math.pow(1 - k, 3)));
+      if (k < 1 && playing) requestAnimationFrame(step);
+      else el.textContent = fmt(to);
+    };
+    requestAnimationFrame(step);
+  }
+  function countSLI(ms) {
+    const t0 = performance.now();
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / ms);
+      const e = 1 - Math.pow(1 - k, 3);
+      sliEls.forEach((_, i) => drawSLI(i, sliValue(i) * e));
+      if (k < 1 && playing) requestAnimationFrame(step);
+      else sliEls.forEach((_, i) => drawSLI(i));
+    };
+    requestAnimationFrame(step);
+  }
+  function loadPanel(p, animate) {
+    p.classList.remove('loading');
+    if (!animate) return;
+    if (p.matches('.obj')) countUp($('objNum'), 95, (v) => Math.round(v) + '%', 900);
+    if (p.matches('.gaugep')) setGauge(leftNow(), 1300);
+    if (p.matches('.slip')) countSLI(1000);
+    if (p.matches('.burnp')) {
+      $('bLine').animate([{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }], { duration: 1200, easing: 'ease-in-out' });
+      $('bArea').animate([{ opacity: 0 }, { opacity: 0, offset: .4 }, { opacity: 1 }], { duration: 1400 });
+      $('bNow').animate([{ opacity: 0 }, { opacity: 0, offset: .85 }, { opacity: 1 }], { duration: 1300 });
+    }
+  }
+
+  function reset() {
+    timers.splice(0).forEach(clearTimeout);
+    clearTimeout(policyT);
+    exhausted = false;
+    S = fresh();
+    packAt = 0;
+    pmPrevText = '';
+    writePM(null);
+    hidePM();
+    note.classList.remove('on');
+    $('foot').classList.remove('lit');
+    $('footMini').classList.remove('lit');
+    unNeon();
+    toast.classList.remove('on');
+    setAlert('idle');
+    setPolicy(false);
+    PANELS.forEach((p) => p.classList.add('loading'));
+    cancelAnimationFrame(tween);
+    drawGauge(0);
+    $('objNum').textContent = '0%';
+    drawLine();
+    renderList(false);
+    sliEls.forEach((_, i) => drawSLI(i, 0));
+    paintToday();
+  }
+
+  function play() {
+    clearTimeout(resumeT);
+    reset();
+    playing = true;
+    PANELS.forEach((p, i) => at(.25 + i * .17, () => loadPanel(p, true)));
+    DAY.forEach((inc, i) => at([3, 4.5, 6, 7.5][i], () => addIncident(inc, true)));
+    at(9, () => setAlert('fire'));
+    at(11.5, () => setAlert('ok'));
+    at(12.5, () => showPM(true));
+    at(16, () => showNote(true));
+    at(18, () => goNeon(true));
+    at(24, play);
+  }
+
+  // The final scene, all at once: used for reduced motion and when a visitor takes over.
+  function settle() {
+    timers.splice(0).forEach(clearTimeout);
+    playing = false;
+    PANELS.forEach((p) => p.classList.remove('loading'));
+    $('objNum').textContent = '95%';
+    const have = S.events.length;
+    DAY.slice(have).forEach((e) => S.events.push(Object.assign({}, e)));
+    if (S.events.length !== have) renderList(false);
+    renderAll(have === DAY.length ? 0 : 500);
+    if (!alertEl.classList.contains('ok')) setAlert('ok', true);
+    showPM(false);
+    showNote(false);
+    goNeon(false);
+  }
+
+  function interact(fn) {
+    if (playing) settle();
+    if (exhausted) refill();
+    else fn();
+    if (!TTY.reduce) {
+      clearTimeout(resumeT);
+      resumeT = setTimeout(play, 12000);
+    }
+  }
+  $('logBtn').addEventListener('click', () => interact(() => {
+    addIncident(PACK[packAt++ % PACK.length], false);
+    checkExhausted();
+  }));
+  $('restBtn').addEventListener('click', () => interact(() => {
+    rest();
+    checkExhausted();
+  }));
+
+  /* ---------- Start ---------- */
+  reset();
+  if (TTY.reduce) settle();
+  TTY.onShow(() => { if (!TTY.reduce) play(); });
+  const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
+  Promise.all([loaded, document.fonts.ready]).then(() => requestAnimationFrame(TTY.ready));
+})();
+</script>
+</body>
+</html>
