@@ -10,13 +10,35 @@
  *                  page's script, before the load and the fonts.
  *   TTY.drawn      a promise, settled once the page has loaded with its fonts (at most 2.5 s
  *                  after the kit starts). A timeline whose first second matters, or that
- *                  measures text, waits for it: TTY.onShow(() => TTY.drawn.then(play)).
+ *                  measures text, waits for it: TTY.onPlay(play) (the same as
+ *                  TTY.onShow(() => TTY.drawn.then(play)), and it marks 'tty-play').
  *                  On the home stage it has nearly always settled by the time the page is shown.
+ *   TTY.onPlay(fn) TTY.onShow, then TTY.drawn, then fn: the start for a timeline whose first
+ *                  second matters or that measures text. Marks 'tty-play' (below).
+ *   TTY.timeline(fn, { punch }) a timeline a visitor can pause but never break: fn(t) awaits
+ *                  t.at(ms) / t.wait(ms) in autoplay time, which stands still while the visitor is
+ *                  busy; a run that was stopped or started again never resumes; with TTY.reduce every
+ *                  wait resolves at once, so it ends on the autoplay's own last scene. See below.
+ *   TTY.readMs(text, min) how long a line must stay fully shown to be read, in ms: Korean 8 letters
+ *                  a second (spaces not counted), English 3 words a second, never under min (2000)
+ *   TTY.busy(ms)   the visitor is doing something: every timeline stands still for ms (2500).
+ *                  The visitor's own pointerdown and keydown already call it.
  *   TTY.ready()    tell the home page this page has drawn and can be shown
- *   TTY.hold(ms)   ask the home page to keep this page up a little longer (someone is playing)
+ *   TTY.hold(ms)   ask the home page to keep this page up a little longer (someone is playing).
+ *                  Every pointerdown and keydown already sends TTY.hold(12000); call it only to ask
+ *                  for longer.
  *
  * Markup for one language only goes in an element with data-lang="en" or data-lang="ko";
  * the other language's elements are removed before the page draws.
+ *
+ * For the page checker, which counts a page's time from its start and judges its copy:
+ *   performance marks  'tty-show' when the page is first on screen (onShow runs, or the home page
+ *                  shows it) and 'tty-play' when a timeline starts (TTY.onPlay, TTY.timeline).
+ *                  Time 0 is the first 'tty-play', else 'tty-show', else DOMContentLoaded.
+ *   data-tty-line  on the copy that carries the joke: "punch", "setup" or "tag" (set it in JS too
+ *                  when a line is built at run time); "title" on a title that is not an h1–h3;
+ *                  "decor" on lettering inside a prop that is not meant to be read (a fridge
+ *                  screen, a coin). None of these change how the page looks or plays.
  */
 (() => {
   const params = new URLSearchParams(location.search);
@@ -58,13 +80,28 @@
   ]).then(() => {});
   let shown = !embedded;
   const showQueue = [];
+  // 'tty-show': the moment the page is first on screen (see the top). Marked once.
+  let marked = false;
+  const markShown = () => {
+    if (marked) return;
+    marked = true;
+    try { performance.mark('tty-show'); } catch (e) { /* old browsers */ }
+  };
   const TTY = {
     lang,
     embedded,
     reduce: matchMedia('(prefers-reduced-motion: reduce)').matches,
     t: (pair) => (pair[lang] !== undefined ? pair[lang] : pair.en),
+    // How long a line must stay fully shown to be read, in ms. Korean: letters without spaces / 8 a
+    // second; English: words / 3 a second; never under `min`. say(line, TTY.readMs(line)), not 1800.
+    readMs: (text, min = 2000) => {
+      const s = String(text == null ? '' : text).replace(/<[^>]*>/g, ' ');
+      const n = /[\uac00-\ud7a3]/.test(s) ? s.replace(/\s/g, '').length / 8
+        : s.split(/\s+/).filter((w) => /[A-Za-z0-9]/.test(w)).length / 3;
+      return Math.max(min, Math.ceil(n * 1000));
+    },
     onShow(fn) {
-      if (shown) setTimeout(fn, 0);
+      if (shown) setTimeout(() => { markShown(); fn(); }, 0);
       else showQueue.push(fn);
     },
     drawn,
@@ -73,10 +110,102 @@
   };
   window.TTY = TTY;
 
+  // ---- timelines a visitor can pause but never break ---------------------------------------------
+  // Time the visitor spends touching or typing does not count as autoplay time: their pointerdown
+  // or keydown makes the page "busy" for 2.5 s (TTY.busy(ms) for longer), and timelines stand still
+  // while it is busy. Events a page dispatches itself (an autoplay "tap") do not count.
+  let busyStart = 0, busyEnd = 0, busyDone = 0;
+  const busyUpTo = (t) => busyDone + Math.max(0, Math.min(t, busyEnd) - busyStart);
+  const timelines = new Set();
+  const busy = (ms) => {
+    const now = performance.now();
+    if (now > busyEnd) { busyDone += busyEnd - busyStart; busyStart = now; }
+    busyEnd = Math.max(busyEnd, now + (ms || 2500));
+    timelines.forEach((run) => run.held());
+  };
+  ['pointerdown', 'keydown'].forEach((type) => addEventListener(type, (e) => { if (e.isTrusted) busy(); }, { capture: true, passive: true }));
+  TTY.busy = busy;
+
+  // const play = TTY.timeline(async (t) => {
+  //   await t.at(800); show(cat);        // 0.8 s of autoplay after the start
+  //   await t.wait(1200); show(bubble);  // 1.2 s after the step before
+  //   await fetchSomething(); if (!t.live()) return;   // any other await: check live()
+  // }, { punch: 14.8 });
+  // TTY.onPlay(play.start);             // or play.start() from a reset; play.stop() when the visitor takes over for good
+  //
+  // · at(ms) and wait(ms) count autoplay time, so a tap delays the autoplay instead of racing it.
+  //   at() is measured from the start, so one late step does not push every later step back.
+  // · A stopped run (stop(), or start() again) never resumes: its pending at()/wait() never resolve,
+  //   so an old run cannot write over a new run or over what the visitor made.
+  // · With TTY.reduce every at()/wait() resolves at once: the run ends on the same last scene the
+  //   autoplay ends on. Draw that scene, not a separate one (give animations TTY.reduce ? 0 : ms).
+  //   t.now() is then the autoplay time those waits reached, so a loop that runs until t.now() passes
+  //   a time ends as it does in autoplay. A loop that never ends (a ticker) is stopped after 5000 such
+  //   waits; give it its own TTY.reduce branch.
+  // · { punch } is when the punch lands, in seconds of autoplay: while it is still to come, a pause
+  //   asks the home page (TTY.hold) for enough time that it still lands with 3 s to read it.
+  // · t.live() is false once the run is stopped, t.now() is its autoplay time so far (ms);
+  //   play.live() is true from start() until stop().
+  // · start() marks 'tty-play' (performance.mark), the page's time 0 for the checker.
+  TTY.timeline = (fn, opts = {}) => {
+    let current = null;
+    const control = {
+      start() {
+        if (current) current.stop();
+        const t0 = performance.now(), b0 = busyUpTo(t0);
+        const clock = (now = performance.now()) => now - t0 - (busyUpTo(now) - b0);
+        // With TTY.reduce no time passes: `reached` is the autoplay time the waits have jumped to.
+        let alive = true, skipped = 0, reached = 0;
+        const autoplay = () => (TTY.reduce ? reached : clock());
+        const run = {
+          stop() { alive = false; timelines.delete(run); },
+          held() {
+            if (!alive || !opts.punch) return;
+            const now = performance.now(), left = opts.punch * 1000 - autoplay();
+            if (left > 0) TTY.hold(left + (busyEnd - now) + 3000);
+          },
+        };
+        const until = (target) => new Promise((resolve) => {
+          const step = () => {
+            if (!alive) return; // stopped: never resolves
+            if (TTY.reduce) {
+              if (++skipped > 5000) run.stop();
+              else { reached = Math.max(reached, target); resolve(); }
+              return;
+            }
+            const left = target - clock();
+            if (left <= 0) resolve();
+            else setTimeout(step, Math.min(Math.max(left, 4), 50));
+          };
+          step();
+        });
+        const t = {
+          at: (ms) => until(ms),
+          wait: (ms) => until(autoplay() + ms),
+          live: () => alive,
+          now: autoplay,
+        };
+        current = run;
+        timelines.add(run);
+        try { performance.mark('tty-play'); } catch (e) { /* old browsers */ }
+        Promise.resolve().then(() => fn(t)).catch((e) => setTimeout(() => { throw e; }));
+        return t;
+      },
+      stop() { if (current) current.stop(); },
+      live: () => !!current && timelines.has(current),
+    };
+    control.start = control.start.bind(control);
+    return control;
+  };
+  // onShow, then wait for the fonts (TTY.drawn): for a timeline whose first second matters or that
+  // measures text. Marks 'tty-play' when fn starts.
+  TTY.onPlay = (fn) => TTY.onShow(() => drawn.then(() => { try { performance.mark('tty-play'); } catch (e) { /* */ } fn(); }));
+
   addEventListener('message', (event) => {
     if (event.origin !== location.origin || !event.data || event.data.source !== 'tty-home') return;
     if (event.data.type === 'show' && !shown) {
       shown = true;
+      markShown();
       showQueue.splice(0).forEach((fn) => fn());
     }
   });
