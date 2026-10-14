@@ -13,7 +13,7 @@
   /* Flat-pack instructions for happiness: an exploded view of the word, parts lettered and
      listed, then the parts click together and the parts list counts down to zero. In Korean
      the parts are jamo, which is exactly how Hangul is built. And, as with every flat pack,
-     one little bag turns up at the end anyway. */
+     one little bag turns up at the end anyway; tap it and its part goes on the end of the word. */
   :root {
     --paper: #fbfaf7;
     --ink: #1c1c1f;
@@ -49,12 +49,16 @@
   /* Header: product name and the promise. */
   .head { grid-area: head; display: flex; flex-wrap: wrap; align-items: baseline; gap: .4em 1.2em; border-bottom: 2px solid var(--ink); padding-bottom: 2cqmin; }
   .product { font-size: clamp(26px, 7cqmin, 64px); font-weight: 700; letter-spacing: .02em; line-height: 1; }
-  .lang-ko .product { line-height: 1; }
+  .lang-ko .product { line-height: 1; display: flex; align-items: baseline; gap: .3em; }
+  /* The Korean model name: 행복 spelled the flat-pack way, ä for ㅐ. */
+  .model { font-family: 'Jost', sans-serif; font-weight: 700; font-size: .62em; letter-spacing: .03em; }
   .promise { font-size: clamp(14px, 2.6cqmin, 22px); color: #4a4945; }
 
   /* Parts list. */
   .parts { grid-area: parts; align-self: center; display: grid; gap: 1.6cqmin; font-size: clamp(13px, 2.3cqmin, 19px); }
-  .parts-title { font-weight: 700; font-size: 1.05em; }
+  /* A plain label, so a bit under the list: no line with a joke in it (the bag's note, the captions,
+     the notes, "Nothing left over.") is ever smaller than it. */
+  .parts-title { font-weight: 700; font-size: max(10.5px, .9em); }
   .part { display: grid; grid-template-columns: 2.2em 3.2em 1fr; align-items: center; gap: .6em; }
   .tag {
     display: grid;
@@ -76,6 +80,7 @@
   .part { transition: opacity .3s ease; }
   .part.used { opacity: .38; }
   .aside { margin-top: .6cqmin; padding-top: 1.4cqmin; border-top: 1px dashed var(--line); color: #5b5a56; font-size: .92em; line-height: 1.45; }
+  .aside .ln { display: block; }
   /* The one-line hint: under the notes here, beside "Parts" on a phone (away from the corner
      links of a page opened on its own). It shows once the first assembly is done. */
   .hint { color: var(--blue); font-size: .88em; line-height: 1.3; opacity: 0; transition: opacity .6s ease; }
@@ -92,6 +97,14 @@
   .letters .dot { fill: var(--ink); stroke: none; }
   .letters .p:not(.dot) { fill: none; stroke: var(--ink); stroke-width: 24; stroke-linecap: round; stroke-linejoin: round; transform-box: fill-box; transform-origin: center; }
   .word font-kku, .icon font-kku { color: var(--ink); }
+  /* Korean: 행복, and room after it for the spare part once someone fits it (see fitSpare). */
+  .hbrow { display: flex; align-items: flex-end; }
+  .kk { position: absolute; visibility: hidden; }
+  .hbrow.fitted .kk { position: static; visibility: visible; margin-left: .06em; }
+  .letters .smile { visibility: hidden; }
+  .letters .smile .bowl { fill: none; stroke: var(--ink); stroke-width: 24; stroke-linecap: round; }
+  .letters .smile .hit { fill: transparent; stroke: none; } /* the whole smile takes the tap */
+  .letters.fitted .smile { visibility: visible; }
   .overlay { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
   .overlay .guide { stroke: var(--blue); stroke-width: 1.5; stroke-dasharray: 5 5; fill: none; }
   .overlay .lead { stroke: var(--blue); stroke-width: 1.5; fill: none; }
@@ -109,37 +122,53 @@
     flex-direction: column;
     align-items: flex-end;
     gap: .5em;
-    font-size: clamp(11px, 1.9cqmin, 16px);
+    font-size: clamp(13px, 2.3cqmin, 19px);
     line-height: 1.3;
     visibility: hidden;
   }
   .spare.on { visibility: visible; }
+  /* The bag is a button: tap it to fit the spare part (see fitSpare). */
   .bag {
     position: relative;
     display: grid;
     place-items: center;
     width: clamp(72px, 13cqmin, 120px);
     aspect-ratio: 1.15;
-    padding-top: 14%;
+    padding: 14% 0 0;
     border: 2px solid var(--ink);
     border-radius: 6% 6% 14% 14% / 8% 8% 16% 16%;
     background: rgba(255, 255, 255, .7);
+    color: var(--ink);
+    font: inherit;
+    cursor: pointer;
+    container-type: inline-size; /* the ㅋㅋ inside is sized to the bag */
   }
-  /* the zip, and the hole it hangs from */
-  .bag::before { content: ""; position: absolute; left: 6%; right: 6%; top: 13%; height: 5%; border-block: 2px solid var(--ink); }
+  .bag:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+  /* the zip, and the hole it hangs from; the zip opens when the part is taken out */
+  .bag::before { content: ""; position: absolute; left: 6%; right: 6%; top: 13%; height: 5%; border-block: 2px solid var(--ink); transition: top .25s ease, height .25s ease; }
+  .bag.open::before { top: 8%; height: 15%; }
   .bag::after { content: ""; position: absolute; left: 50%; top: 4%; width: 9%; aspect-ratio: 1; translate: -50% 0; border: 2px solid var(--ink); border-radius: 50%; }
-  .bag svg { width: 66%; height: auto; overflow: visible; }
-  .bag svg * { fill: none; stroke: var(--ink); stroke-width: 6; stroke-linecap: round; }
+  .bag svg { width: 50%; height: auto; overflow: visible; }
+  .bag svg * { fill: none; stroke: var(--ink); stroke-width: 24; stroke-linecap: round; }
   .bag svg .dot { fill: var(--ink); stroke: none; }
   .bag font-kku { color: var(--ink); }
+  .bag.empty .in { visibility: hidden; }
   .spare-note { display: grid; grid-template-columns: auto auto; gap: .45em; align-items: start; white-space: nowrap; }
   .spare-note .tag { width: 1.7em; height: 1.7em; margin-top: -.1em; }
+  /* the note's two lines come one after the other: the count, then the comeback */
+  .spare-note { opacity: 0; transition: opacity .4s ease; }
+  .spare-note .l1, .spare-note .l2 { display: block; }
+  .spare-note .l2 { opacity: 0; transition: opacity .4s ease; }
+  .spare-note.on, .spare-note .l2.on { opacity: 1; }
 
-  /* Step 3: what each part is for. */
+  /* What each part is for: each line shows as its part clicks home. */
   .captions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15em), 1fr)); gap: 1.2cqmin 3cqi; padding-top: 1.6cqmin; font-size: clamp(12px, 2.1cqmin, 18px); }
-  .cap { display: grid; grid-template-columns: auto 1fr; gap: .6em; align-items: center; line-height: 1.3; opacity: 0; }
+  .cap { display: grid; grid-template-columns: auto 1fr; gap: .6em; align-items: center; line-height: 1.3; opacity: 0; translate: 0 .4em; transition: opacity .38s ease, translate .38s cubic-bezier(.3, 1.4, .5, 1); }
+  .cap.out { opacity: 1; translate: 0 0; }
   .cap .tag { width: 1.7em; height: 1.7em; }
   .lang-ko .captions { grid-template-columns: repeat(auto-fit, minmax(min(100%, 11em), 1fr)); }
+  /* The notes from the parts list, again: used only by the short-stage ticker (see below). */
+  .cap.cap-aside { display: none; }
 
   /* Steps along the bottom: a real sequence, so numbered. */
   .steps { grid-area: steps; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2cqi; font-size: clamp(12px, 2.2cqmin, 18px); }
@@ -148,6 +177,14 @@
   .step.on { color: var(--ink); }
   .step.on b { background: var(--ink); border-color: var(--ink); color: var(--paper); }
   .step.done b { background: var(--sun); border-color: var(--ink); color: var(--ink); }
+  /* "Nothing left over." gets a highlighter stroke the moment step 3 lights up: the promise. */
+  .step mark {
+    color: inherit;
+    padding: 0 .12em;
+    background: linear-gradient(transparent 30%, var(--sun) 30%, var(--sun) 92%, transparent 92%) left / 0% 100% no-repeat;
+    transition: background-size .4s ease-out;
+  }
+  .step mark.on { background-size: 100% 100%; }
 
   @container (max-width: 620px) {
     .layout {
@@ -159,31 +196,62 @@
     .parts { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 1cqmin 3cqi; font-size: 12px; }
     .part .count { white-space: nowrap; }
     .parts-title, .aside { grid-column: 1 / -1; }
-    .aside { display: none; }
+    /* the two notes on one line under the parts */
+    .aside { display: flex; flex-wrap: wrap; gap: 0 1.2em; margin-top: 0; padding-top: .9cqmin; font-size: 11.5px; }
+    .aside .ln { display: inline; }
     .parts-title { grid-row: 1; }
-    .hint { grid-row: 1; grid-column: 1 / -1; justify-self: end; align-self: center; font-size: 11.5px; text-align: right; }
+    .hint { grid-row: 1; grid-column: 1 / -1; justify-self: end; align-self: center; font-size: clamp(11.5px, 2.1cqmin, 14px); text-align: right; }
     .part { grid-template-columns: auto auto 1fr; justify-items: start; gap: .35em; }
     .icon { height: 1.8em; }
     .icon svg { width: 1.9em; height: 1.7em; }
-    .steps { font-size: 11px; gap: 1.6cqi; }
+    .steps { font-size: clamp(11.5px, 2.2cqmin, 15px); gap: 1.6cqi; }
+    /* the last English step has the longest label: a wider column keeps it to two lines */
+    .lang-en .steps { grid-template-columns: 1fr 1fr 1.35fr; }
     .step span { line-height: 1.15; }
-    .captions { grid-template-columns: 1fr 1fr; font-size: 11.5px; gap: 1cqmin 3cqi; }
+    .captions { grid-template-columns: 1fr 1fr; font-size: clamp(11.5px, 2.1cqmin, 14px); gap: 1cqmin 3cqi; }
     /* Phones: under the word, the note beside the bag. */
-    .spare { top: auto; bottom: 0; flex-direction: row-reverse; align-items: flex-end; font-size: 11px; }
-    .bag { width: 58px; }
+    .spare { top: auto; bottom: 0; flex-direction: row-reverse; align-items: flex-end; font-size: clamp(13px, 2.5cqmin, 17px); }
+    .bag { width: clamp(58px, 13cqmin, 96px); }
   }
-  /* A short phone stage (358×396 in the home page): the word comes first. The step-3 captions
-     give way, and the bag lands in a strip of its own under the word instead of on it. */
+  /* A short phone stage (358×396 in the home page): the word comes first, and the bag lands in a
+     strip of its own under the word instead of on it. There is no room for the notes and the
+     captions as blocks, so they come one line at a time at the top of the drawing, where the
+     parts flew in step 1 (empty once it is built): the notes as step 3 lights up, the captions
+     after the bag (Korean two at a time, English three of them one at a time; see TICKER). */
   @container (max-width: 620px) and (max-height: 480px) {
-    .captions { display: none; }
-    .word { padding-bottom: 56px; }
-    /* and the English word smaller and low in its box: most of its parts fly up, and need room */
-    .word svg.letters { max-height: 70%; align-self: end; }
+    .aside { display: none; }
+    /* the ticker's own strip on top (room for two lines in English, where the notes can wrap on
+       a 328 px stage; one in Korean), the bag's below; the parts of step 1 still fly into both
+       (the overlay covers the whole box) */
+    .word { padding: 34px 0 56px; }
+    .lang-ko .word { padding-top: 17px; }
+    /* and the English word low in its box: most of its parts fly up, and need room */
+    .word svg.letters { align-self: end; }
+    .hbrow { align-self: end; }
+    .captions { position: absolute; left: 0; right: 0; top: 0; z-index: 2; padding: 0; gap: 2px 3cqi; font-size: 12px; grid-template-columns: 1fr; pointer-events: none; }
+    .lang-ko .captions { grid-template-columns: 1fr 1fr; }
+    .cap, .cap.cap-aside { display: none; }
+    .cap.now { display: grid; opacity: 1; translate: 0 0; animation: cap-in .35s ease-out; }
+    .cap.cap-aside.now { display: block; grid-column: 1 / -1; color: #5b5a56; }
   }
+  /* The smallest stage (328×288, the home page on a 360×520 phone): no ticker, no spec line,
+     the parts list in three columns (English without its icons), so the word still has room. */
+  @container (max-width: 620px) and (max-height: 300px) {
+    .word, .lang-ko .word { padding: 0 0 50px; }
+    .bag { width: 52px; }
+    .captions, .promise { display: none; }
+    .parts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5cqmin 2cqi; font-size: 11px; }
+    .lang-en .part .icon { display: none; }
+  }
+  @keyframes cap-in { from { opacity: 0; translate: 0 .35em; } }
   /* Opened on its own, the tty.link links sit at the bottom right; keep the steps above them. */
   html:not(.embedded) .sheet { padding-bottom: max(clamp(14px, 4cqmin, 40px), 54px); }
   @media (max-width: 600px) { html:not(.embedded) .sheet { padding-bottom: 46px; } }
-  @media (prefers-reduced-motion: reduce) { .cap, .hint { opacity: 1; } .hint { transition: none; } .spare { visibility: visible; } }
+  @media (prefers-reduced-motion: reduce) {
+    .cap, .hint, .spare-note, .spare-note .l2 { opacity: 1; translate: none; transition: none; animation: none; }
+    .spare { visibility: visible; }
+    .step mark { background-size: 100% 100%; transition: none; }
+  }
 </style>
 </head>
 <body>
@@ -191,9 +259,9 @@
   <div class="layout">
     <header class="head">
       <h1 class="product" data-lang="en">HÄPPY</h1>
-      <h1 class="product" data-lang="ko"><font-kku font="sebul" size="1em">행복 조립 설명서</font-kku></h1>
-      <p class="promise" data-lang="en">Happiness is assembled from small parts.</p>
-      <p class="promise" data-lang="ko">행복은 작은 조각들로 조립됩니다.</p>
+      <h1 class="product" data-lang="ko"><span class="model">HÄNGBOK</span><font-kku font="sebul" size="1em">행복 조립 설명서</font-kku></h1>
+      <p class="promise" data-lang="en">Assembly time: about 20 min. Allow a lifetime.</p>
+      <p class="promise" data-lang="ko">조립 시간: 약 20분. 넉넉히 잡으면 평생.</p>
     </header>
 
     <section class="parts" aria-label="Parts">
@@ -204,7 +272,7 @@
       <div class="part" data-lang="en" data-type="b"><span class="tag">b</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="6" y1="20" x2="34" y2="20"/></svg></span><span class="count">Crossbar <b>×2</b></span></div>
       <div class="part" data-lang="en" data-type="c"><span class="tag">c</span><span class="icon"><svg viewBox="0 0 40 40"><line x1="10" y1="36" x2="30" y2="4"/></svg></span><span class="count">Slant <b>×4</b></span></div>
       <div class="part" data-lang="en" data-type="d"><span class="tag">d</span><span class="icon"><svg viewBox="0 0 40 40"><path d="M8 6 H18 A14 14 0 0 1 18 34 H8"/></svg></span><span class="count">Bowl <b>×2</b></span></div>
-      <div class="part" data-lang="en" data-type="e"><span class="tag">e</span><span class="icon"><svg viewBox="0 0 40 40"><circle cx="12" cy="20" r="4" style="fill:var(--ink);stroke:none"/><circle cx="28" cy="20" r="4" style="fill:var(--ink);stroke:none"/></svg></span><span class="count">Dot <b>×2</b></span></div>
+      <div class="part" data-lang="en" data-type="e"><span class="tag">e</span><span class="icon"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="4" style="fill:var(--ink);stroke:none"/></svg></span><span class="count">Dot <b>×2</b></span></div>
       <!-- Korean parts: the six jamo of 행복. -->
       <div class="part" data-lang="ko" data-type="a"><span class="tag">a</span><span class="icon"><font-kku font="malang" size="1.5em">ㅎ</font-kku></span><span class="count">초성 <b>×1</b></span></div>
       <div class="part" data-lang="ko" data-type="b"><span class="tag">b</span><span class="icon"><font-kku font="malang" size="1.5em">ㅐ</font-kku></span><span class="count">중성 <b>×1</b></span></div>
@@ -212,9 +280,10 @@
       <div class="part" data-lang="ko" data-type="d"><span class="tag">d</span><span class="icon"><font-kku font="malang" size="1.5em">ㅂ</font-kku></span><span class="count">초성 <b>×1</b></span></div>
       <div class="part" data-lang="ko" data-type="e"><span class="tag">e</span><span class="icon"><font-kku font="malang" size="1.5em">ㅗ</font-kku></span><span class="count">중성 <b>×1</b></span></div>
       <div class="part" data-lang="ko" data-type="f"><span class="tag">f</span><span class="icon"><font-kku font="malang" size="1.5em">ㄱ</font-kku></span><span class="count">종성 <b>×1</b></span></div>
-      <p class="aside" data-lang="en">Screws: 0. We checked twice.<br>Tools: none. A friend helps.</p>
-      <p class="aside" data-lang="ko">나사: 0개. 두 번 확인했어요.<br>공구: 필요 없음. 친구가 있으면 좋아요.</p>
-      <p class="hint" id="assemble-hint"><span data-lang="en">Tap the drawing to build it again.</span><span data-lang="ko">그림을 누르면 처음부터 다시 조립해요.</span></p>
+      <p class="aside" data-lang="en"><span class="ln">Screws: 0. We checked twice.</span> <span class="ln">Tools: none. A friend helps.</span></p>
+      <p class="aside" data-lang="ko"><span class="ln">나사: 0개. 두 번 확인했어요.</span> <span class="ln">공구: 필요 없음. 친구 1명 권장.</span></p>
+      <!-- One line on what to tap: the bag once it has dropped, the drawing once the spare is in. -->
+      <p class="hint" id="assemble-hint"><span data-lang="en">Tap the bag to fit the spare part.</span><span data-lang="ko">봉투를 눌러 남은 부품을 끼워 보세요.</span></p>
     </section>
 
     <section class="diagram" aria-label="Exploded view">
@@ -241,28 +310,36 @@
           <!-- Two dots, last out of the box: they go on the A. -->
           <circle class="p dot" data-type="e" cx="170" cy="-6" r="11" data-x="-60" data-y="40" data-r="0"/>
           <circle class="p dot" data-type="e" cx="204" cy="-6" r="11" data-x="70" data-y="56" data-r="0"/>
+          <!-- The spare from the bag, once someone fits it: two dots and a bowl on its side, as
+               tall as the letters, eyes well apart over a wider mouth and the whole face tipped
+               10° like a sticker, so it reads as a face and not as a ü. The drawing widens to make
+               room for it (viewBox to FITTED_BOX); the hit box is the bag's drawing box too. -->
+          <g class="smile"><rect class="hit" x="580" y="36" width="112" height="128"/><g transform="rotate(-10 636 100)"><circle class="dot" cx="610" cy="54" r="11"/><circle class="dot" cx="662" cy="54" r="11"/><path class="bowl" d="M596 100 V108 A40 40 0 0 0 676 108 V100"/></g></g>
         </svg>
-        <font-kku class="hb" data-lang="ko" font="malang" size="1em">행복</font-kku>
+        <span class="hbrow" data-lang="ko"><font-kku class="hb" font="malang" size="1em">행복</font-kku><font-kku class="kk" font="malang" size="1em" aria-hidden="true">ㅋㅋ</font-kku></span>
         <svg class="overlay" aria-hidden="true"></svg>
         <div class="spare">
-          <div class="bag" aria-hidden="true">
-            <!-- English: two dots and a bowl, loose, which happen to be a smile. -->
-            <svg data-lang="en" viewBox="0 0 60 44"><circle class="dot" cx="17" cy="9" r="5.5"/><circle class="dot" cx="43" cy="9" r="5.5"/><path d="M8 22 V26 A14 14 0 0 0 52 26 V22"/></svg>
-            <font-kku data-lang="ko" font="malang" size="2.6em">ㅋㅋ</font-kku>
-          </div>
-          <p class="spare-note" data-lang="en"><span class="tag">f</span><span>Left over: 1 smile.<br>Some assembly required.</span></p>
-          <p class="spare-note" data-lang="ko"><span class="tag">g</span><span>남은 부품: ㅋ ×2<br>남는 건 ㅋㅋ뿐</span></p>
+          <button class="bag" type="button">
+            <!-- English: two dots and a bowl, loose, which happen to be a smile. The very parts that
+                 get fitted after the Y (same units, same strokes, same box as g.smile's hit box). -->
+            <svg class="in" data-lang="en" viewBox="580 36 112 128" aria-hidden="true"><g transform="rotate(-10 636 100)"><circle class="dot" cx="610" cy="54" r="11"/><circle class="dot" cx="662" cy="54" r="11"/><path class="bowl" d="M596 100 V108 A40 40 0 0 0 676 108 V100"/></g></svg>
+            <font-kku class="in" data-lang="ko" font="malang" size="46cqi" aria-hidden="true">ㅋㅋ</font-kku>
+          </button>
+          <p class="spare-note" data-lang="en"><span class="tag">f</span><span><span class="l1">Left over: 1 smile.</span><span class="l2">Some assembly required.</span></span></p>
+          <p class="spare-note" data-lang="ko"><span class="tag">g</span><span><span class="l1">남은 부품: ㅋ ×2</span><span class="l2">남는 건 ㅋㅋ뿐</span></span></p>
         </div>
       </div>
       <div class="captions">
+        <p class="cap cap-aside" data-lang="en">Screws: 0. We checked twice. Tools: none. A friend helps.</p>
+        <p class="cap cap-aside" data-lang="ko">나사: 0개. 두 번 확인했어요. 공구: 필요 없음. 친구 1명 권장.</p>
         <p class="cap" data-lang="en"><span class="tag">a</span><span>Upright: stand by someone.</span></p>
-        <p class="cap" data-lang="en"><span class="tag">b</span><span>Crossbar: holds two sides together.</span></p>
-        <p class="cap" data-lang="en"><span class="tag">c</span><span>Slant: lean on each other. See A.</span></p>
+        <p class="cap" data-lang="en"><span class="tag">b</span><span>Crossbar: without it, H is just two I's.</span></p>
+        <p class="cap" data-lang="en"><span class="tag">c</span><span>Slant: lean on each other. See&nbsp;A.</span></p>
         <p class="cap" data-lang="en"><span class="tag">d</span><span>Bowl: room for a big smile.</span></p>
         <p class="cap" data-lang="en"><span class="tag">e</span><span>Dots: make it sound Swedish.</span></p>
         <p class="cap" data-lang="ko"><span class="tag">a</span><span>ㅎ: “하하”의 ㅎ</span></p>
         <p class="cap" data-lang="ko"><span class="tag">b</span><span>ㅐ: “애썼어”의 ㅐ</span></p>
-        <p class="cap" data-lang="ko"><span class="tag">c</span><span>ㅇ: 동그랗게 웃는 입</span></p>
+        <p class="cap" data-lang="ko"><span class="tag">c</span><span>ㅇ: “응, 여기 있어”의 ㅇ</span></p>
         <p class="cap" data-lang="ko"><span class="tag">d</span><span>ㅂ: “밥은 먹었어?”의 ㅂ</span></p>
         <p class="cap" data-lang="ko"><span class="tag">e</span><span>ㅗ: “오, 왔어?”의 ㅗ</span></p>
         <p class="cap" data-lang="ko"><span class="tag">f</span><span>ㄱ: “괜찮아”의 ㄱ</span></p>
@@ -272,7 +349,7 @@
     <ol class="steps" aria-label="Steps">
       <li class="step"><b>1</b><span data-lang="en">Check the parts</span><span data-lang="ko">부품 확인</span></li>
       <li class="step"><b>2</b><span data-lang="en">Put them together</span><span data-lang="ko">조립하기</span></li>
-      <li class="step"><b>3</b><span data-lang="en">Enjoy. Nothing left over.</span><span data-lang="ko">즐기기. 남는 부품 없음.</span></li>
+      <li class="step"><b>3</b><span data-lang="en">Enjoy. <mark>Nothing left over.</mark></span><span data-lang="ko">즐기기. <mark>남는 부품 없음.</mark></span></li>
     </ol>
   </div>
 </main>
@@ -581,28 +658,186 @@
     const strip = parseFloat(cs.paddingBottom); // the bag's own strip, on a short stage only
     const h = r.height - parseFloat(cs.paddingTop) - strip;
     // A short stage keeps the word a little smaller, so the jamo flung up by about .4 em still
-    // have room under the header rule (fit() stops them there anyway).
-    host.style.fontSize = (strip ? Math.max(48, Math.min(h * .53, r.width * .34)) : Math.max(60, Math.min(h * .62, r.width * .34))) + 'px';
+    // have room under the header rule (fit() stops them there anyway); the ticker's strip on top
+    // (padding-top) is left out of h but is room for them too.
+    host.style.fontSize = (strip ? Math.max(36, Math.min(h * .6, r.width * .34)) : Math.max(60, Math.min(h * .62, r.width * .34))) + 'px';
   }
+
+  /* ---- The spare part ----
+     After the bag drops, tapping it fits what is inside onto the end of the word: the smile after
+     HÄPPY (the drawing widens to make room), ㅋㅋ after 행복 (the word slides left). The note then
+     says nothing is left over, really. A rebuild (tap anywhere else on the drawing) undoes it. */
+  const bag = spare.querySelector('.bag');
+  const bagIn = bag.querySelector('.in');
+  const noteEl = spare.querySelector('.spare-note');
+  const lines = [spare.querySelector('.l1'), spare.querySelector('.l2')];
+  const noteText = lines[0].parentElement;
+  const showLine = (i) => (i ? lines[1] : noteEl).classList.add('on');
+  const NOTE = {
+    before: lines.map((l) => l.textContent),
+    after: TTY.t({ en: ['Left over: none.', 'Really, this time.'], ko: ['남은 부품: 0개', '이번엔 진짜.'] }),
+  };
+  const HINT = {
+    bag: TTY.t({ en: 'Tap the bag to fit the spare part.', ko: '봉투를 눌러 남은 부품을 끼워 보세요.' }),
+    again: TTY.t({ en: 'Tap the drawing to build it again.', ko: '그림을 누르면 처음부터 다시 조립해요.' }),
+  };
+  const letters = document.querySelector('.letters');
+  const smile = letters && letters.querySelector('.smile');
+  const BOX = letters && letters.getAttribute('viewBox');
+  const FITTED_BOX = '-6 -26 698 206'; // room for the smile after the Y
+  const row = document.querySelector('.hbrow');
+  const kk = document.querySelector('.kk');
+  let landed = false; // the bag is down and can be tapped
+  let fitted = false;
+  let widen = 0;
+  const syncHint = () => { hint.textContent = landed && !fitted ? HINT.bag : HINT.again; };
+
+  // ㅋㅋ after 행복: as big as it can be, up to half the word's size, inside the drawing's box.
+  function sizeKK() {
+    if (!ko) return;
+    const hs = parseFloat(host.style.fontSize) || parseFloat(getComputedStyle(host).fontSize);
+    kk.style.fontSize = '100px';
+    const perPx = kk.getBoundingClientRect().width / 100;
+    const room = word.getBoundingClientRect().width - host.getBoundingClientRect().width - 16;
+    kk.style.fontSize = Math.max(12, Math.min(hs * .5, room / (perPx || 1))) + 'px';
+  }
+
+  function unfit() {
+    fitted = false;
+    landed = false;
+    cancelAnimationFrame(widen);
+    bag.classList.remove('open', 'empty');
+    bag.getAnimations({ subtree: true }).forEach((a) => a.cancel());
+    lines.forEach((l, i) => { l.textContent = NOTE.before[i]; });
+    noteText.style.minWidth = '';
+    noteEl.classList.remove('on');
+    lines[1].classList.remove('on');
+    if (!ko) { letters.setAttribute('viewBox', BOX); letters.classList.remove('fitted'); smile.style.visibility = ''; }
+    else { row.getAnimations().forEach((a) => a.cancel()); row.classList.remove('fitted'); kk.style.visibility = ''; }
+  }
+
+  /* The note once the part is in is shorter ("Really, this time."), and the bag sits at the right:
+     left to itself the note's box would shrink to the right, and the spot the visitor just tapped
+     (say "Some" of "Some assembly required.") would fall through to the drawing and rebuild it,
+     erasing the part they fitted. So the box keeps the width of the first note, and the new lines
+     start where the old ones did. Measured with the first note's lines, again on every resize. */
+  function keepNoteWidth() {
+    noteText.style.minWidth = '';
+    lines.forEach((l, i) => { l.textContent = NOTE.before[i]; });
+    noteText.style.minWidth = noteText.getBoundingClientRect().width + 'px';
+    lines.forEach((l, i) => { l.textContent = NOTE.after[i]; });
+  }
+
+  function fitSpare() {
+    if (!landed || fitted) return;
+    fitted = true; // (the home page keeps the page up: _kit.js asks it to on every tap and key)
+    const from = bagIn.getBoundingClientRect();
+    let target;
+    if (!ko) {
+      // Measure where the smile will be once the drawing has widened, then widen it gradually.
+      letters.setAttribute('viewBox', FITTED_BOX);
+      letters.classList.add('fitted');
+      smile.style.visibility = 'hidden';
+      target = smile.querySelector('.hit').getBoundingClientRect(); // the bag's drawing box, scaled
+      letters.setAttribute('viewBox', BOX);
+      const w0 = 592, w1 = 698, t0 = performance.now();
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / 450), e = 1 - (1 - k) ** 3;
+        letters.setAttribute('viewBox', `-6 -26 ${w0 + (w1 - w0) * e} 206`);
+        if (k < 1) widen = requestAnimationFrame(step);
+      };
+      if (TTY.reduce) letters.setAttribute('viewBox', FITTED_BOX); else widen = requestAnimationFrame(step);
+    } else {
+      sizeKK();
+      const before = host.getBoundingClientRect();
+      row.classList.add('fitted');
+      kk.style.visibility = 'hidden';
+      const after = host.getBoundingClientRect();
+      target = kk.getBoundingClientRect();
+      if (!TTY.reduce) row.animate([{ translate: `${before.left - after.left}px 0` }, { translate: '0 0' }], { duration: 450, easing: 'cubic-bezier(.3, 0, .2, 1)' });
+    }
+    const land = () => {
+      bag.classList.add('empty');
+      (ko ? kk : smile).style.visibility = '';
+      keepNoteWidth();
+      showLine(0); showLine(1);
+      syncHint();
+    };
+    bag.classList.add('open');
+    if (TTY.reduce) return land();
+    // What was in the bag flies out to its place on the word.
+    const s = Math.min(target.width / from.width, target.height / from.height);
+    const dx = target.left + target.width / 2 - (from.left + from.width / 2);
+    const dy = target.top + target.height / 2 - (from.top + from.height / 2);
+    bagIn.animate([
+      { transform: 'none' },
+      { transform: `translate(${dx * .5}px, ${dy * .5 - 40}px) scale(${(1 + s) / 2}) rotate(-12deg)`, offset: .5 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${s})` },
+    ], { duration: 650, delay: 180, easing: 'cubic-bezier(.4, 0, .3, 1)', fill: 'backwards' }).finished.then(land, () => {});
+  }
+  // The bag and its note: a tap anywhere on them fits the part, and never reaches the drawing's
+  // rebuild (the bag's own Enter and Space are clicks too, and come up through here).
+  spare.addEventListener('click', (e) => { e.stopPropagation(); fitSpare(); });
+  // The fitted part is the visitor's: tapping it only nudges it, it never starts a rebuild.
+  [smile, kk].forEach((n) => n && n.addEventListener('click', (e) => {
+    if (!fitted) return;
+    e.stopPropagation();
+    if (!TTY.reduce) n.animate([{ translate: '0 0' }, { translate: '0 -6%' }, { translate: '0 0' }], { duration: 300, easing: 'ease-out' });
+  }));
 
   /* ---- The sequence ---- */
   let timers = [];
   let running = null;
   const later = (fn, ms) => timers.push(setTimeout(fn, ms));
   const setStep = (n) => steps.forEach((s, i) => { s.classList.toggle('on', i === n); s.classList.toggle('done', i < n); });
+  const marks = [...document.querySelectorAll('.step mark')];
+  // Captions by part letter. Elsewhere each shows as its part clicks home (.out); on a short
+  // stage the ticker shows them after the notes (the .now ones, see the CSS), a few at a time,
+  // each for as long as it takes to read (8 Korean characters or 3 English words a second).
+  // Korean: three pairs. English: five lines will not fit before 16 s, so only the three with
+  // a joke in them, one at a time. The last stays up.
+  const capOf = {};
+  const tagged = caps.filter((c) => !c.classList.contains('cap-aside'));
+  tagged.forEach((c) => { capOf[c.querySelector('.tag').textContent] = c; });
+  const asideCap = caps.find((c) => c.classList.contains('cap-aside'));
+  const TICKER = TTY.t({
+    en: { show: [['b'], ['c'], ['e']], ms: [2600, 2400] },
+    ko: { show: [['a', 'b'], ['c', 'd'], ['e', 'f']], ms: [2500, 3000] },
+  });
+  const ticker = TICKER.show.map((tags) => tags.map((t) => capOf[t]));
+  const showNow = (list) => caps.forEach((c) => c.classList.toggle('now', list.includes(c)));
+
+  // When things happen, in ms after play() starts.
+  const STEP2 = ko ? 1900 : 2500; // English waits for its two dots, out at about 2 s
+  const GAP = ko ? 110 : 80; // between parts sliding home (English has 15 of them)
+  const AFTER_DROP = { note: 650, comeback: 2000, ticker: 2500, hint: 3000 };
 
   function play() {
     timers.forEach(clearTimeout);
     timers = [];
     if (running) running.forEach((a) => a.cancel());
     running = [];
+    unfit();
     sizeWord();
     if (!collect()) return setTimeout(play, 120);
 
-    caps.forEach((c) => { c.getAnimations().forEach((a) => a.cancel()); c.style.opacity = TTY.reduce ? 1 : 0; });
     spare.getAnimations({ subtree: true }).forEach((a) => a.cancel());
     spare.classList.toggle('on', TTY.reduce);
-    if (TTY.reduce) { parts.forEach((p) => place(p, 0)); Object.keys(stock).forEach((t) => setLeft(t, 0)); overlay.replaceChildren(); setStep(2); return; }
+    caps.forEach((c) => c.classList.toggle('out', TTY.reduce));
+    marks.forEach((m) => m.classList.toggle('on', TTY.reduce));
+    if (TTY.reduce) {
+      parts.forEach((p) => place(p, 0));
+      Object.keys(stock).forEach((t) => setLeft(t, 0));
+      overlay.replaceChildren();
+      setStep(2);
+      showNow(ticker[ticker.length - 1]);
+      showLine(0); showLine(1);
+      landed = true;
+      syncHint();
+      return;
+    }
+    showNow([]);
+    syncHint();
     restock();
 
     // 1. Lay out: the parts appear apart, the guides draw in, callouts pop.
@@ -621,41 +856,51 @@
     });
     groups.forEach((g, i) => running.push(g.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 500 + i * 60, fill: 'backwards' })));
 
-    // 2. Put together: guides go, each part slides home with a little click.
+    // 2. Put together: guides go, each part slides home with a little click, the parts list
+    //    counts it off, and the first part of each kind brings its caption.
     later(() => {
       setStep(1);
       groups.forEach((g) => g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: 'forwards' }));
       parts.forEach((p, i) => {
-        const a = p.el.animate(frames(p), { duration: 620, delay: 220 + i * 110, easing: 'cubic-bezier(.5, 0, .25, 1.25)', fill: 'backwards' });
+        const a = p.el.animate(frames(p), { duration: 620, delay: 220 + i * GAP, easing: 'cubic-bezier(.5, 0, .25, 1.25)', fill: 'backwards' });
         running.push(a);
-        later(() => place(p, 0), 220 + i * 110);
-        later(() => { ticks(p); setLeft(p.tag, stock[p.tag].left - 1); }, 220 + i * 110 + 560);
+        later(() => place(p, 0), 220 + i * GAP);
+        later(() => {
+          ticks(p);
+          setLeft(p.tag, stock[p.tag].left - 1);
+          if (capOf[p.tag]) capOf[p.tag].classList.add('out');
+        }, 220 + i * GAP + 560);
       });
-    }, 2900);
+    }, STEP2);
 
-    // 3. Enjoy: what each part is for.
-    const doneAt = 2900 + 220 + parts.length * 110 + 700;
+    // 3. Enjoy. "Nothing left over." gets its highlighter stroke, and nothing else moves.
+    const doneAt = STEP2 + 220 + parts.length * GAP + 700;
     later(() => {
       overlay.replaceChildren();
       setStep(2);
-      word.animate([{ scale: '1' }, { scale: '1.04' }, { scale: '1' }], { duration: 420, easing: 'ease-out' });
-      caps.forEach((c, i) => c.animate([{ opacity: 0, translate: '0 .4em' }, { opacity: 1, translate: '0 0' }],
-        { duration: 380, delay: i * 140, easing: 'cubic-bezier(.3, 1.4, .5, 1)', fill: 'forwards' }));
+      marks.forEach((m) => m.classList.add('on'));
     }, doneAt);
+    // (short stage: the parts-list notes, "Screws: 0. We checked twice.", at the top)
+    later(() => showNow([asideCap]), doneAt + 450);
 
-    // 4. "Nothing left over." Then a little bag drops in anyway.
+    // 4. Then a little bag drops in anyway. Its note comes a line at a time.
+    const drop = doneAt + 2000;
     later(() => {
       spare.classList.add('on');
-      spare.querySelector('.bag').animate([
+      bag.animate([
         { transform: 'translateY(-120%) rotate(-14deg)', opacity: 0 },
         { transform: 'translateY(6%) rotate(5deg)', opacity: 1, offset: .62 },
         { transform: 'translateY(-3%) rotate(-2deg)', offset: .82 },
         { transform: 'none' },
       ], { duration: 700, easing: 'cubic-bezier(.5, 0, .5, 1)', fill: 'backwards' });
-      spare.querySelector('.spare-note').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 650, fill: 'backwards' });
-    }, doneAt + 1700);
-    // Once it is all built, the hint says it can be built again (and stays).
-    later(() => hint.classList.add('on'), doneAt + 1700 + 1050);
+    }, drop);
+    later(() => { landed = true; }, drop + 700);
+    later(() => showLine(0), drop + AFTER_DROP.note);
+    later(() => showLine(1), drop + AFTER_DROP.comeback);
+    let at = drop + AFTER_DROP.ticker;
+    ticker.forEach((list, k) => { later(() => showNow(list), at); at += TICKER.ms[k] || 0; });
+    // The hint says what to tap now (and stays).
+    later(() => { syncHint(); hint.classList.add('on'); }, drop + AFTER_DROP.hint);
   }
 
   // The drawing restarts the assembly: tap it, or focus it and press Enter or Space.
@@ -664,6 +909,7 @@
   diagram.tabIndex = 0;
   diagram.setAttribute('aria-label', TTY.t({ en: 'Exploded view', ko: '분해도' }));
   diagram.setAttribute('aria-describedby', 'assemble-hint');
+  bag.setAttribute('aria-label', TTY.t({ en: 'Bag of spare parts', ko: '남은 부품 봉투' }));
   if (TTY.reduce) hint.classList.add('on');
   diagram.addEventListener('click', play);
   diagram.addEventListener('keydown', (e) => {
@@ -676,6 +922,8 @@
     clearTimeout(resized);
     resized = setTimeout(() => {
       sizeWord();
+      if (fitted) sizeKK();
+      if (fitted && bag.classList.contains('empty')) keepNoteWidth();
       if (steps[0].classList.contains('on')) { collect(); parts.forEach((p) => place(p, 1)); drawGuides(); }
     }, 150);
   }).observe(word);

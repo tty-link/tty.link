@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap">
-<!-- Pixelify Sans draws 5 exactly like S (Lv.405 read as Lv.40S); Tiny5 lends the page its 5 and nothing else. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiny5&text=5&display=swap">
+<!-- Pixelify Sans draws 5 like S, 2 like 8 and B like G at small sizes and a bold C like O (Lv.405 read as Lv.40S, Lv.512 as Lv.518, 11 GB as 11 GG, Coffee as Ooffee); Tiny5 lends the page its 5, 2, B and C and nothing else. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiny5&text=25BC&display=swap">
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="pixel"></script>
 <script src="https://font.tty.link/lib/font-kku-fx.js"></script>
 <script>
@@ -43,7 +43,8 @@
     --dialog-h: clamp(118px, 29cqh, 236px);
   }
   html, body { height: 100%; margin: 0; }
-  body { overflow: hidden; background: var(--sky-3); color: var(--navy); font-family: 'Tiny5', 'Pixelify Sans', system-ui, sans-serif; }
+  /* Pixelify Sans joins fi, fl and ff into one glyph that reads as A ("fixed" came out "Axed"). */
+  body { overflow: hidden; background: var(--sky-3); color: var(--navy); font-family: 'Tiny5', 'Pixelify Sans', system-ui, sans-serif; font-variant-ligatures: none; }
   button { font: inherit; color: inherit; }
 
   .game { position: fixed; inset: 0; container-type: size; overflow: hidden; user-select: none; -webkit-user-select: none; }
@@ -132,6 +133,10 @@
     visibility: hidden;
   }
   .menu.open { visibility: visible; }
+  /* The moves' column is kept only while DEV is asked what to do. The rest of the time the
+     lines have the whole box: at 648px wide the empty column left them a third of it, and a
+     long line such as the HEISENBUG's last one ran out of the box. */
+  .dialog:not(.asking) .menu { display: none; }
   .menu button {
     position: relative;
     padding: .25em 0 .25em 1.1em;
@@ -258,20 +263,22 @@
   const L = TTY.t({
     en: {
       // A different bug each battle. hold: a line after the super-effective hit (the bug is left
-      // on 1 HP); log: what console.log does to it instead of printing; lv: a number climbs.
+      // on 1 HP); log: what console.log does to it instead of printing; reboot: what a restart
+      // does to it instead of confusing it (a leak really is emptied, for now); lv: a number climbs.
       species: [
         { id: 'bug', name: 'BUG', lv: '404', appear: 'A wild BUG appeared!', fixed: 'The wild BUG was fixed.\nDEV gained a quiet afternoon.' },
-        { id: 'off', name: 'OFF-BY-ONE', lv: '405', appear: 'A wild OFF-BY-ONE appeared!', hold: 'OFF-BY-ONE endured the hit!\nDEV changed <= to <.', fixed: 'The wild OFF-BY-ONE was fixed.\nDEV gained a quiet afternoon.' },
+        { id: 'off', name: 'OFF-BY-ONE', lv: '405', appear: 'A wild OFF-BY-ONE appeared!', hold: 'OFF-BY-ONE hung on with 1 HP!\nDEV changed <= to <.', fixed: 'The wild OFF-BY-ONE was fixed.\nDEV gained a quiet afternoon.' },
         { id: 'heisen', name: 'HEISENBUG', lv: '??', appear: 'A wild HEISENBUG appeared!', log: ['DEV used console.log!', 'HEISENBUG vanished while watched!', '…and came back once the logs were gone.'], fixed: 'The wild HEISENBUG was fixed.\nAt least, nobody has seen it since.' },
-        { id: 'leak', name: 'MEMORY LEAK', lv: 512, appear: 'A wild MEMORY LEAK appeared!', fixed: 'The wild MEMORY LEAK was fixed.\nDEV got 11 GB of RAM back.' },
+        { id: 'leak', name: 'MEMORY LEAK', lv: 512, appear: 'A wild MEMORY LEAK appeared!', reboot: 'MEMORY LEAK is back to Lv.512.\nFor now.', fixed: 'The wild MEMORY LEAK was fixed.\nDEV got 11 GB of RAM back.' },
       ],
       ask: 'What will DEV do?',
       moves: [['log', 'console.log'], ['duck', 'Ask the duck'], ['stash', 'git stash & run'], ['reboot', 'Off and on']],
       log: ['DEV used console.log!', 'It printed "here".\nThen "here 2".', 'It’s not very effective…'],
-      duck: ['DEV called the RUBBER DUCK!', 'DEV explained the code to the duck,\nline by line…', '…and spotted the bug halfway through!', 'It’s super effective!'],
-      stash: ['DEV stashed everything and ran!', 'Got away safely…', '…but the BUG will still be here on Monday.'],
-      reboot: ['DEV turned it off and on again.', '…', 'It works?!', 'Nobody knows why.\nThe BUG is confused!'],
-      back: 'DEV came back.\nBugs don’t leave on their own.',
+      duck: ['Go! RUBBER DUCK!', 'DEV explained the code to the duck,\nline by line…', '…and spotted the bug halfway through!', 'It’s super effective!'],
+      // Lines that take the species' name are functions of it.
+      stash: ['DEV stashed everything and ran!', 'Got away safely…', (n) => `…but ${n} will still be here on Monday.`],
+      reboot: ['DEV used Off and on!', '…', 'It works?!', (n) => `Nobody knows why.\n${n} is confused!`],
+      back: (n) => `Monday morning.\n${n} was right where DEV left it.`,
       // Run away three times in a row and the bug, left alone, evolves.
       glow: (n) => `Left alone, ${n} began to glow…`,
       evolving: (n) => `What? ${n} is evolving!`,
@@ -285,15 +292,15 @@
         { id: 'bug', name: '버그', lv: '404', appear: '앗! 야생의 버그가 나타났다!', fixed: '야생의 버그를 고쳤다!\n평화로운 오후를 얻었다.' },
         { id: 'off', name: '오프바이원', lv: '405', appear: '앗! 야생의 오프바이원이 나타났다!', hold: '오프바이원은 HP 1로 버텼다!\n개발자는 <=를 <로 고쳤다.', fixed: '야생의 오프바이원을 고쳤다!\n평화로운 오후를 얻었다.' },
         { id: 'heisen', name: '하이젠버그', lv: '??', appear: '앗! 야생의 하이젠버그가 나타났다!', log: ['개발자의 console.log!', '지켜보자 하이젠버그가 사라졌다!', '…로그를 지우자 다시 나타났다.'], fixed: '야생의 하이젠버그를 고쳤다!\n…적어도 그 뒤로 본 사람은 없다.' },
-        { id: 'leak', name: '메모리 누수', lv: 512, appear: '앗! 야생의 메모리 누수가 나타났다!', fixed: '야생의 메모리 누수를 고쳤다!\nRAM 11GB를 되찾았다.' },
+        { id: 'leak', name: '메모리 누수', lv: 512, appear: '앗! 야생의 메모리 누수가 나타났다!', reboot: '메모리 누수가 Lv.512로 돌아왔다.\n…당분간은.', fixed: '야생의 메모리 누수를 고쳤다!\nRAM 11GB를 되찾았다.' },
       ],
       ask: '개발자는 무엇을 할까?',
       moves: [['log', 'console.log'], ['duck', '오리에게 묻기'], ['stash', 'stash 하고 튀기'], ['reboot', '껐다 켜기']],
       log: ['개발자의 console.log!', '"여기"가 찍혔다.\n"여기2"도 찍혔다.', '효과가 별로인 듯하다…'],
-      duck: ['개발자는 고무 오리를 불렀다!', '오리에게 코드를\n한 줄씩 설명했다…', '…설명하다가 버그를 찾았다!', '효과가 굉장했다!'],
-      stash: ['개발자는 전부 stash 하고 도망쳤다!', '무사히 도망쳤다…', '…버그는 월요일에도 기다리고 있을 것이다.'],
-      reboot: ['개발자는 껐다 켰다.', '…', '된다?!', '아무도 이유를 모른다.\n버그는 혼란에 빠졌다!'],
-      back: '개발자는 돌아왔다.\n버그는 저절로 사라지지 않는다.',
+      duck: ['가랏! 고무 오리!', '오리에게 코드를\n한 줄씩 설명하는데…', '…절반쯤에서 버그가 보였다!', '효과가 굉장했다!'],
+      stash: ['개발자는 전부 stash 하고 도망쳤다!', '무사히 도망쳤다…', (n) => `…${n}${batchim(n) ? '은' : '는'} 월요일에도 기다리고 있을 것이다.`],
+      reboot: ['개발자의 껐다 켜기!', '…', '된다?!', (n) => `아무도 이유를 모른다.\n${n}${batchim(n) ? '은' : '는'} 혼란에 빠졌다!`],
+      back: (n) => `월요일 아침.\n${n}${batchim(n) ? '은' : '는'} 두고 간 자리에 그대로 있었다.`,
       glow: (n) => `혼자 남은 ${n}${batchim(n) ? '이' : '가'} 빛나기 시작했다…`,
       evolving: (n) => `어라…? ${n}의 모습이…!`,
       evolved: (n) => `${n}${batchim(n) ? '은' : '는'} 기능(FEATURE)으로 진화했다!`,
@@ -472,12 +479,22 @@
   // A MEMORY LEAK keeps growing until it is fixed: a level a quarter second, and a bit bigger.
   let leaking = 0;
   let level = 0;
+  let growth = null;
   function startLeak() {
     level = sp.lv;
+    foeLv.textContent = 'Lv.' + level;
     leaking = setInterval(() => { foeLv.textContent = 'Lv.' + (++level); }, 250);
-    anim(bug, [{ scale: '1' }, { scale: '1.18' }], { duration: 18000, easing: 'steps(12)', fill: 'forwards' });
+    growth = anim(bug, [{ scale: '1' }, { scale: '1.18' }], { duration: 18000, easing: 'steps(12)', fill: 'forwards' });
   }
   const stopLeak = () => { clearInterval(leaking); leaking = 0; };
+  // Turned off and on again, a leak really is empty: its first level and size.
+  function emptyLeak() {
+    stopLeak();
+    if (growth) growth.cancel();
+    growth = null;
+    level = sp.lv;
+    foeLv.textContent = 'Lv.' + level;
+  }
 
   L.moves.forEach(([id, label]) => {
     const b = document.createElement('button');
@@ -548,11 +565,14 @@
     el.style.left = x; el.style.top = y;
     field.append(el);
     anim(el, [{ translate: '0 30%', opacity: 0 }, { translate: '0 0', opacity: 1 }], { duration: 260, easing: 'steps(3)' });
-    setTimeout(() => {
-      const a = anim(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'steps(2)' });
-      if (a) a.finished.then(() => el.remove()); else el.remove();
-    }, hold);
+    if (hold) setTimeout(() => unpop(el), hold);
     return el;
+  }
+  // Takes a pop away (one made with no hold stays until this).
+  function unpop(el) {
+    if (!el.isConnected) return;
+    const a = anim(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'steps(2)' });
+    if (a) a.finished.then(() => el.remove()); else el.remove();
   }
   // A pop just over a sprite's head (the duck's "Quack."), inside the field and never under
   // DEV's info box, which is drawn over the field.
@@ -566,6 +586,7 @@
     if (x + w > info.left - f.left && x < info.right - f.left) y = Math.min(y, info.top - f.top - h - 4);
     el.style.left = x + 'px';
     el.style.top = Math.max(4, y) + 'px';
+    return el;
   }
 
   /* ---------- The duck's spot ---------- */
@@ -606,17 +627,18 @@
       await type(said[0]);
       await sleep(300);
       // On a phone the bug's info box reaches past the middle, so the log lines start lower and
-      // further right (and still below the tty.link links pinned to the top right).
-      const narrow = field.clientWidth <= 640;
+      // just right of it (and still below the tty.link links pinned to the top right).
+      const fw = field.clientWidth, narrow = fw <= 640;
+      const x0 = narrow ? Math.max(fw * .62, $('.foe-info').getBoundingClientRect().right - field.getBoundingClientRect().left + 6) : fw * .58;
       for (let i = 0; i < 3; i++) {
-        pop(L.logs[i], (narrow ? 62 + i * 6 : 58 + i * 7) + '%', (narrow ? 15 + i * 9 : 8 + i * 9) + '%', 1500);
+        pop(L.logs[i], `${Math.round(x0 + fw * i * (narrow ? .06 : .07))}px`, (narrow ? 15 + i * 9 : 8 + i * 9) + '%', 1500);
         await sleep(260);
       }
       await sleep(500);
       if (sp.log) {
         // Watched, the HEISENBUG is simply not there.
         bug.style.visibility = 'hidden';
-        await lines([said[1]], 900);
+        await lines([said[1]], 1100);
         bug.style.visibility = '';
         await lines([said[2]]);
         return;
@@ -631,9 +653,15 @@
       duck.style.opacity = 1;
       anim(duck, [{ translate: '0 -160%', opacity: 1 }, { translate: '0 8%', offset: .7 }, { translate: '0 -6%', offset: .85 }, { translate: '0 0' }], { duration: 650, easing: 'steps(8)' });
       await sleep(700);
-      popOver(L.quack, duck, 900);
+      // The duck's one word stays up while DEV explains, and goes just before the bug is found.
+      const quack = popOver(L.quack, duck, 0);
       await sleep(700);
-      await lines([L.duck[1]], 900);
+      await type(L.duck[1]);
+      say.classList.add('waiting');
+      await sleep(500);
+      unpop(quack);
+      await sleep(500);
+      say.classList.remove('waiting');
       await type(L.duck[2]);
       await sleep(300);
       anim($('.flash'), [{ opacity: 0 }, { opacity: .9 }, { opacity: 0 }], { duration: 300, easing: 'steps(3)' });
@@ -641,14 +669,15 @@
       setHp(sp.hold ? 1 : 0);
       stopLeak();
       await sleep(1000);
-      await lines([L.duck[3]], 700);
+      // OFF-BY-ONE's next line takes the place of this one, so it stays a little longer there.
+      await lines([L.duck[3]], sp.hold ? 1200 : 700);
       if (sp.hold) {
         // The OFF-BY-ONE survives on exactly one HP, until the loop is fixed.
         await type(sp.hold);
         await sleep(300);
         blink(bug, 2);
         setHp(0);
-        await sleep(700);
+        await sleep(450);
       }
       anim(bug, [{ translate: '-50% 0', opacity: 1 }, { translate: '-50% 45%', opacity: 0 }], { duration: 700, easing: 'steps(7)', fill: 'forwards' });
       if (TTY.reduce) bug.style.opacity = 0;
@@ -672,20 +701,34 @@
         await glimmer();
         await lines([L.glow(sp.name)], 1100);
       } else {
-        await lines(L.stash.slice(1), 1100);
+        await lines([L.stash[1], L.stash[2](sp.name)], 1100);
       }
+      // Cut to Monday: DEV is back, and so is everything DEV left.
       anim(dev, [{ translate: '-260% 0' }, { translate: '-50% 0' }], { duration: 600, easing: 'steps(6)', fill: 'forwards' });
       await sleep(600);
-      await lines([L.back], 1300);
+      await lines([L.back(sp.name)], 1300);
     },
     async reboot() {
       await type(L.reboot[0]);
       anim($('.dark'), [{ opacity: 0 }, { opacity: 1, offset: .15 }, { opacity: 1, offset: .8 }, { opacity: 0 }], { duration: 1500, easing: 'steps(4)' });
-      await sleep(1600);
+      // (Dark from about 0.4 s to 1.5 s: the easing is steps(4) over the whole run.)
+      await sleep(600);
+      // The one bug a restart really fixes: in the dark the MEMORY LEAK is back to where it began.
+      if (sp.reboot) emptyLeak();
+      await sleep(1000);
       await lines(L.reboot.slice(1, 3), 700);
+      if (sp.reboot) {
+        // "…for now": it starts climbing again as soon as that is said.
+        await type(sp.reboot);
+        startLeak();
+        say.classList.add('waiting');
+        await sleep(1500);
+        say.classList.remove('waiting');
+        return;
+      }
       pop('?', '68%', '10%', 1800);
       anim(bug, [{ rotate: '0deg' }, { rotate: '-8deg' }, { rotate: '8deg' }, { rotate: '0deg' }], { duration: 500, iterations: 3, easing: 'steps(4)' });
-      await lines([L.reboot[3]], 1300);
+      await lines([L.reboot[3](sp.name)], 1300);
     },
   };
 
@@ -732,51 +775,70 @@
   /* ---------- Turn loop ---------- */
   let waiting = null;
   let autoTimer = 0;
+  let autoRun = 0; // every new plan for the cursor calls off the one already walking
+  let autoMove = 'duck'; // where the cursor goes on its own in this menu
+  let autoHold = 0; // ms the home page is asked to keep this page up when the cursor picks the duck
+  let autoPicked = false; // the last move was the cursor's own, not the visitor's
   let byKeyboard = false; // the last move was chosen from the keyboard: focus the next menu
   const dialog = $('.dialog');
   const cursorTo = (b) => buttons.forEach((x) => x.classList.toggle('on', x === b));
+  const button = (id) => buttons.find((x) => x.dataset.move === id);
   // While a move has keyboard focus, the visitor is choosing: the cursor does not move on its own.
+  // (The mouse only puts it off: see the menu's mouse handlers.)
   const steering = () => menu.contains(document.activeElement);
   // Nobody playing? Then the cursor walks to the duck, as anyone wise would.
   function autopilot(resolve, after) {
     clearTimeout(autoTimer);
+    const run = ++autoRun;
+    const still = () => waiting === resolve && run === autoRun && !steering();
     autoTimer = setTimeout(async () => {
-      if (waiting !== resolve || steering()) return;
+      if (!still()) return;
       cursorTo(null);
       await sleep(240);
-      if (waiting !== resolve || steering()) return;
-      cursorTo(buttons[1]);
+      if (!still()) return;
+      cursorTo(button(autoMove));
       await sleep(520);
-      if (waiting !== resolve || steering()) return;
-      choose('duck');
+      if (!still()) return;
+      // A duck that comes after another move would win after the home page has moved on.
+      if (autoMove === 'duck' && autoHold) TTY.hold(autoHold);
+      choose(autoMove, true);
     }, after);
   }
-  function openMenu(autoAfter) {
+  function openMenu(autoAfter, move, hold = 0) {
     menu.classList.add('open');
     dialog.classList.add('choosing');
     cursorTo(buttons[0]);
+    autoMove = move;
+    autoHold = hold;
     return new Promise((resolve) => {
       waiting = resolve;
       if (byKeyboard) buttons[0].focus();
       autopilot(resolve, autoAfter);
     });
   }
-  function choose(id) {
+  function choose(id, auto = false) {
     if (!waiting) return;
     clearTimeout(autoTimer);
-    const b = buttons.find((x) => x.dataset.move === id);
+    autoRun++;
+    autoPicked = auto;
+    const b = button(id);
     byKeyboard = steering() && document.activeElement.matches(':focus-visible');
     cursorTo(b);
     b.classList.add('pressed');
     setTimeout(() => b.classList.remove('pressed'), 140);
     const done = waiting;
     waiting = null;
-    setTimeout(() => { menu.classList.remove('open'); dialog.classList.remove('choosing'); done(id); }, 180);
+    setTimeout(() => { menu.classList.remove('open'); dialog.classList.remove('choosing', 'asking'); done(id); }, 180);
   }
   menu.setAttribute('aria-label', TTY.t({ en: 'Pick a move.', ko: '기술을 골라 보세요.' }));
   menu.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) choose(b.dataset.move); });
   // One ▶: the mouse and keyboard focus both move the same cursor.
   menu.addEventListener('mouseover', (e) => { const b = e.target.closest('button'); if (b && waiting) cursorTo(b); });
+  // A mouse moving over the moves is someone choosing: the ▶ comes back under it (it may have
+  // set off for the duck), and the cursor waits until the mouse has been still for 6 s (it may
+  // have been left there), or 3 s after it leaves the moves.
+  menu.addEventListener('mousemove', (e) => { if (!waiting || steering()) return; const b = e.target.closest('button'); if (b) cursorTo(b); autopilot(waiting, 6000); });
+  menu.addEventListener('mouseleave', () => { if (waiting && !steering()) autopilot(waiting, 3000); });
   menu.addEventListener('focusin', (e) => { const b = e.target.closest('button'); if (b && waiting) { clearTimeout(autoTimer); cursorTo(b); } });
   menu.addEventListener('focusout', (e) => { if (waiting && !menu.contains(e.relatedTarget)) autopilot(waiting, 4200); });
   // The arrow keys walk the 2×2 grid.
@@ -796,7 +858,9 @@
     bug.style.opacity = ''; bug.style.visibility = ''; duck.style.opacity = 0;
     dim.getAnimations().forEach((a) => a.cancel());
     field.classList.remove('evolving');
+    dialog.classList.remove('asking');
     stashes = 0;
+    autoPicked = false;
     put('');
     sp = nextSpecies();
     SPRITES.bug(sp.id).paint(bug);
@@ -817,12 +881,18 @@
     anim($('.me'), [{ translate: '-120cqw 0' }, { translate: '0 0' }], { duration: 900, delay: 350, easing: 'steps(10)', fill: 'backwards' });
     await sleep(1350);
     if (sp.id === 'leak') startLeak();
-    await lines([sp.appear], 800);
+    // The setup line stays up 2 s (A wild BUG appeared!) before the question replaces it.
+    await lines([sp.appear], 1250);
     let first = true;
     for (;;) {
+      dialog.classList.add('asking');
       await type(L.ask);
       // The first menu waits about 3.8 s (with the hint) before the cursor picks the duck itself.
-      const id = await openMenu(first ? 3000 : 4200);
+      // Against a HEISENBUG it tries console.log first (watch it vanish), and 2 s into the next
+      // menu goes for the duck. A duck picked after the first menu asks the home page for the
+      // time it takes to win and to read the last line (TTY.hold keeps at least that much left):
+      // the last line is typed about 12.5 s after the pick, 15.7 s against OFF-BY-ONE.
+      const id = await openMenu(first ? 3000 : autoPicked ? 2000 : 4200, first && sp.log ? 'log' : 'duck', first ? 0 : sp.hold ? 19000 : 16000);
       first = false;
       if (id !== 'stash') stashes = 0;
       const result = await MOVES[id]();

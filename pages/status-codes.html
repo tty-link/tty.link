@@ -12,10 +12,11 @@
 <style>
   /* A station departure board, except every line is an HTTP status code read kindly.
      The code and its reason phrase arrive on real split flaps: each flap is four halves,
-     the old top folds down, the new bottom falls into place. Each visit runs seven codes:
-     200, 418, 429 and 503 always, plus three of the others (on the home page's stage, just
-     those four). Where the real response carries a header (Retry-After, Location), the board
-     prints it above the kind words. */
+     the old top folds down, the new bottom falls into place. The first day runs the four
+     regulars, 200, 418, 429 and 503; on 503 the board takes its own advice and switches its
+     flaps off. Left on, it wakes up to a new day: the four regulars plus three of the others.
+     Where the real response carries a header (Retry-After, Location), the board prints it
+     above the kind words. */
   :root {
     --hall: #d8d2c4;
     --board: #121418;
@@ -190,6 +191,13 @@
       .msg .hdr { margin-bottom: 1cqi; }
     }
   }
+  /* Opened on its own on a screen that squat, the board also gives 48px to the bottom strip:
+     less air again, so that under 429 and 503 in Korean the current row still shows. */
+  @media (min-aspect-ratio: 3/4) and (max-height: 440px) {
+    @container (max-width: 620px) {
+      html:not(.embedded) .now { padding: 2.4cqi 4cqi 1.6cqi; gap: 2cqi; }
+    }
+  }
   @media (prefers-reduced-motion: reduce) { .clock i { animation: none; } }
 </style>
 </head>
@@ -222,31 +230,37 @@
   // on narrow boards). hdr: the header the real response would carry.
   const POOL = [
     { code: '100', reason: 'CONTINUE', en: 'Go on. I’m listening.', ko: '계속 말해요. 듣고 있어요.', note: { en: 'Now boarding', ko: '탑승 중' } },
-    { code: '101', reason: 'SWITCHING PROTOCOLS', en: 'Try another way. Keep the connection.', ko: '방법을 바꿔도 연결은 그대로예요.', note: { en: 'Change here', ko: '환승' } },
+    { code: '101', reason: 'SWITCHING PROTOCOLS', en: 'Try another way. Stay on the line.', ko: '방법을 바꿔도 연결은 그대로예요.', note: { en: 'Change here', ko: '환승' } },
     { code: '200', reason: 'OK', en: 'You’re doing fine.', ko: '지금 잘하고 있어요.', note: { en: 'On time', ko: '정시' }, always: true },
     { code: '201', reason: 'CREATED', en: 'You made something today.', ko: '오늘도 하나 만들었네요.', note: { en: 'Arrived', ko: '도착' } },
     { code: '202', reason: 'ACCEPTED', en: 'It’s in. Results can take a while.', ko: '접수됐어요. 결과는 천천히 와요.', note: { en: 'Expected later', ko: '도착 예정' } },
-    { code: '204', reason: 'NO CONTENT', en: 'It’s okay to say nothing.', ko: '아무 말 안 해도 괜찮아요.', note: { en: 'Quiet car', ko: '조용한 칸' } },
+    { code: '204', reason: 'NO CONTENT', en: 'It’s okay to say nothing.', ko: '아무 말 안 해도 괜찮아요.', note: { en: 'Quiet car', ko: '회송' } },
     { code: '206', reason: 'PARTIAL CONTENT', en: 'Some of it is enough for today.', ko: '오늘은 조금만 해도 돼요.', note: { en: 'Runs part way', ko: '단축 운행' } },
     { code: '302', reason: 'FOUND', en: 'Took the long way. Still got home.', ko: '멀리 돌아도 집에는 닿아요.', note: { en: 'Diverted', ko: '우회 운행' }, hdr: 'Location: /home' },
     { code: '304', reason: 'NOT MODIFIED', en: 'You don’t have to change to be liked.', ko: '안 바뀌어도 이미 좋아요.', note: { en: 'As scheduled', ko: '변경 없음' } },
-    { code: '418', reason: 'I’M A TEAPOT', en: 'Take a tea break.', ko: '차 한잔하고 가요.', note: { en: 'Tea stop', ko: '찻집 정차' }, always: true },
+    { code: '418', reason: 'I’M A TEAPOT', en: 'No coffee. Have some tea.', ko: '커피는 안 돼요.\n차 한잔하고 가요.', note: { en: 'Tea stop', ko: '찻집 정차' }, always: true },
     { code: '429', reason: 'TOO MANY REQUESTS', en: 'Rest. The world will retry.', ko: '잠깐 쉬어요. 세상은 알아서 재시도해요.', note: { en: 'Delayed: resting', ko: '지연: 휴식 중' }, tone: 'late', hdr: 'Retry-After: 600', always: true },
     { code: '503', reason: 'SERVICE UNAVAILABLE', en: 'You’re allowed to be offline.', ko: '오프라인이어도 괜찮아요.', note: { en: 'Off today', ko: '오늘 운휴' }, tone: 'off', hdr: 'Retry-After: 86400', always: true },
   ];
-  // Today's timetable: the four regulars and three others, in code order. The home page's
-  // stage shows a page for about twenty seconds, so there the board runs a short program of
-  // just the four regulars (200, 418, 429, 503) and lingers on the last one.
-  const SHORT = TTY.embedded;
+  // The day's timetable, in code order. The first day is just the four regulars (200, 418,
+  // 429, 503): the home page's stage shows a page for about twenty seconds, and 503 is where the
+  // board switches itself off. Left on (opened on its own, or held on the home stage), it wakes up
+  // to a new day, and every day after that adds three of the others, picked afresh.
   const others = POOL.filter((c) => !c.always);
-  for (let k = others.length - 1; k > 0; k--) {
-    const j = Math.floor(Math.random() * (k + 1));
-    [others[k], others[j]] = [others[j], others[k]];
+  function timetable(day) {
+    const pick = others.slice();
+    for (let k = pick.length - 1; k > 0; k--) {
+      const j = Math.floor(Math.random() * (k + 1));
+      [pick[k], pick[j]] = [pick[j], pick[k]];
+    }
+    const extras = day === 1 ? [] : pick.slice(0, 3);
+    return POOL.filter((c) => c.always || extras.includes(c));
   }
-  const extras = SHORT ? [] : others.slice(0, 3);
-  const CODES = POOL.filter((c) => c.always || extras.includes(c));
-  const HOLD = 3900;
-  const LAST_HOLD = SHORT ? HOLD + 2500 : HOLD;
+  let day = 1;
+  let CODES = timetable(day);
+  const HOLD = 3200;      // after a code's flaps stop, until the next code
+  const OFF_AFTER = 2400; // after 503's flaps stop, until the board switches its flaps off
+  const OFF_FOR = 4500;   // dark, until the next day (on the home stage the page has gone by then)
   const DIGITS = '0123456789';
   const LETTERS = " ABCDEFGHIJKLMNOPQRSTUVWXYZ’";
   const board = document.querySelector('.board');
@@ -266,14 +280,18 @@
   setInterval(tickClock, 15000);
 
   /* ---- Rows ---- */
-  CODES.forEach((c, i) => {
-    const li = document.createElement('li');
-    const reason = c.reason.charAt(0) + c.reason.slice(1).toLowerCase().replace("i’m", "I’m");
-    li.innerHTML = `<b>${c.code}</b><span>${c.reason === 'OK' ? 'OK' : reason}</span><span class="note ${c.tone || ''}"></span>`;
-    li.querySelector('.note').textContent = TTY.t(c.note);
-    rowsBox.append(li);
-  });
-  const rows = [...rowsBox.children];
+  let rows = [];
+  function buildRows() {
+    rowsBox.replaceChildren(...CODES.map((c) => {
+      const li = document.createElement('li');
+      const reason = c.reason.charAt(0) + c.reason.slice(1).toLowerCase().replace("i’m", "I’m");
+      li.innerHTML = `<b>${c.code}</b><span>${c.reason === 'OK' ? 'OK' : reason}</span><span class="note ${c.tone || ''}"></span>`;
+      li.querySelector('.note').textContent = TTY.t(c.note);
+      return li;
+    }));
+    rows = [...rowsBox.children];
+  }
+  buildRows();
   // A short board cuts the list at its bottom edge; a row that would only half show is left blank.
   function trimRows() {
     const bottom = board.getBoundingClientRect().bottom;
@@ -332,19 +350,26 @@
     }
   }
 
-  // The opening gag: on the first 200 the last code flap goes one too far (201), gives a little
-  // start, and since a drum only turns forward, has to go all the way round to get back to 0.
-  // The kind words arrive while it does.
-  async function fumble(f, delay) {
+  // The opening gag: the first code on a blank board (200 when the page opens, the first code
+  // of each new day after that) has its last flap go one too far: 200 lands on 201. It stands
+  // there, tries to turn back, twice, and since a drum only turns forward, gives up and goes all
+  // the way round. The kind words arrive while it stands on the wrong digit.
+  async function fumble(f, delay, target) {
     await sleep(delay);
-    await flip(f, '0', 74);
-    await flip(f, '1', 150);
-    await f.animate([{ transform: 'none' }, { transform: 'translateY(-4%) rotate(-3deg)' }, { transform: 'translateY(-2%) rotate(3deg)' }, { transform: 'none' }],
-      { duration: 380, easing: 'ease-in-out' }).finished;
-    await sleep(160);
-    for (const d of '234567890') await flip(f, d, d === '0' ? 150 : 74);
+    const goal = DIGITS.indexOf(target);
+    for (let d = 0; d <= goal; d++) await flip(f, DIGITS[d], 74);
+    await flip(f, DIGITS[(goal + 1) % 10], 150);
+    await sleep(400);
+    const top = f.querySelector('.t');
+    for (let k = 0; k < 2; k++) {
+      await top.animate([{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(58deg)', filter: 'brightness(.75)' }, { transform: 'rotateX(0deg)' }],
+        { duration: 220, easing: 'ease-out' }).finished;
+    }
+    await f.animate([{ transform: 'none' }, { transform: 'translateY(-10%)' }, { transform: 'none' }], { duration: 200, easing: 'ease-out' }).finished;
+    await sleep(200);
+    for (let s = 2; s < 10; s++) await flip(f, DIGITS[(goal + s) % 10], 60);
+    await flip(f, target, 180);
   }
-  let opening = true;
 
   let wide = true;
   function layoutReason(text) {
@@ -406,9 +431,13 @@
   /* ---- Cycle ---- */
   let index = -1;
   let timer = 0;
-  let busy = false;
+  let busy = false;    // flaps are turning
+  let pending = false; // tapped while they turned: go on as soon as they stop
+  let dark = false;    // 503 has switched the flaps off
   async function show(i) {
     clearTimeout(timer);
+    pending = false;
+    dark = false;
     index = i;
     const c = CODES[i];
     rows.forEach((r, j) => {
@@ -427,9 +456,8 @@
     }
     busy = true;
     msg.style.opacity = '.0';
-    const fumbling = opening && c.code === '200' && codeBox.lastChild.dataset.ch === ' ';
-    opening = false;
-    const jobs = [...codeBox.children].map((f, k) => (fumbling && k === 2 ? fumble(f, k * 90) : spin(f, c.code[k], DIGITS, k * 90)));
+    const fumbling = codeBox.lastChild.dataset.ch === ' ';
+    const jobs = [...codeBox.children].map((f, k) => (fumbling && k === 2 ? fumble(f, k * 90, c.code[k]) : spin(f, c.code[k], DIGITS, k * 90)));
     const lines = layoutReason(c.reason);
     [...reasonBox.children].forEach((row, r) => [...row.children].forEach((f, k) => jobs.push(spin(f, lines[r][k], LETTERS, 160 + k * 38 + r * 120))));
     await sleep(500);
@@ -437,9 +465,42 @@
     setMessage(c, true);
     await Promise.all(jobs);
     busy = false;
-    timer = setTimeout(() => show((index + 1) % CODES.length), index === CODES.length - 1 ? LAST_HOLD : HOLD);
+    if (pending) return advance();
+    timer = setTimeout(c.code === '503' ? switchOff : advance, c.code === '503' ? OFF_AFTER : HOLD);
   }
-  const next = () => { if (!busy) show((index + 1) % CODES.length); };
+  // 503: the board takes its own advice. Every flap folds once to its blank card, in a sweep from
+  // the right; the header, the kind words and the "Off today" row stay up.
+  async function switchOff() {
+    busy = true;
+    dark = true;
+    const box = board.getBoundingClientRect();
+    await Promise.all([...codeBox.children, ...reasonBox.querySelectorAll('.flap')].map((f) => {
+      if (f.dataset.ch === ' ') return null;
+      const r = f.getBoundingClientRect();
+      return sleep(((box.right - r.right) / box.width) * 700).then(() => flip(f, ' ', 150));
+    }));
+    busy = false;
+    if (pending) return advance();
+    timer = setTimeout(advance, OFF_FOR);
+  }
+  // After the day's last code (503) comes a new day with a new timetable.
+  function advance() {
+    if (index < CODES.length - 1) return show(index + 1);
+    day += 1;
+    CODES = timetable(day);
+    buildRows();
+    return show(0);
+  }
+  // The board opens on 200 OK. With reduced motion nothing turns over on its own, so the board
+  // shows the day's last word at once: 503, a day off.
+  const first = TTY.reduce ? CODES.length - 1 : 0;
+  let started = false;
+  const start = () => { if (!started) { started = true; show(first); } };
+  const next = () => {
+    if (!started) start();
+    else if (busy) pending = true;
+    else advance();
+  };
   board.addEventListener('click', next);
   // The board is focusable: Enter or Space does what a tap does.
   board.addEventListener('keydown', (e) => {
@@ -448,24 +509,26 @@
     next();
   });
 
+  // Crossing the wide/narrow line rebuilds the reason flaps and redraws the current code at once.
+  // Before the first code (the home stage loads a page at full window size, then shrinks it to the
+  // stage) and while the board is dark, the flaps stay blank.
   let lastWide = null;
   addEventListener('resize', () => {
     const w = board.clientWidth > 620;
     if (w === lastWide) return;
     lastWide = w;
     buildReason();
-    const c = CODES[index < 0 ? first : index];
-    const lines = layoutReason(c.reason);
+    if (index < 0) return;
+    const c = CODES[index];
+    const lines = layoutReason(dark ? '' : c.reason);
     [...reasonBox.children].forEach((row, r) => [...row.children].forEach((f, k) => setFace(f, lines[r][k])));
     setMessage(c, false);
   });
   lastWide = wide;
 
-  // The board opens on 200 OK; any 1xx codes today come round at the end. With reduced motion
-  // nothing turns over on its own, so the board shows its last word at once: 503, a day off.
-  const first = CODES.findIndex((c) => c.code === (TTY.reduce ? '503' : '200'));
-  if (TTY.reduce) show(first);
-  else TTY.onShow(() => show(first));
+  // The first second is the gag, so it waits for the fonts (on the home stage they are in by then).
+  if (TTY.reduce) start();
+  else TTY.onShow(() => TTY.drawn.then(start));
 
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);

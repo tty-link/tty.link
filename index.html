@@ -369,9 +369,14 @@
     for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
     return a;
   };
-  // A shuffled bag: every page once before any repeats, never the same page twice in a row.
+  // A shuffled bag: every page once before any repeats, never the same page twice in a row, and
+  // never two pages of one "family" (pages/index.json: pages that share a motif) back to back
+  // while the bag still holds something else.
+  const kin = (a, b) => !!(a && b && a.family && b.family && a.family.some((f) => b.family.includes(f)));
   function pick() {
-    if (!bag.length) bag = shuffle(pages.filter((p) => !current || p.id !== current.page.id));
+    if (!bag.length) bag = shuffle(rotation().filter((p) => !current || p.id !== current.page.id));
+    const last = current && current.page;
+    for (let i = bag.length - 1; i >= 0; i--) if (!kin(last, bag[i])) return bag.splice(i, 1)[0];
     return bag.pop() || pages[0];
   }
   // A page can ask to open the visit at certain times ("when" in pages/index.json), in the
@@ -395,11 +400,18 @@
   // four) a page whose "when" fits the moment goes first instead (Friday afternoon, late at night …),
   // and "opener" pages, whose joke lands in the first seconds, are twice as likely in the draw.
   const TIMELY_CHANCE = 0.25;
+  // "skip" uses the same conditions as "when": while it fits, the page stays out of the rotation and
+  // the first-page draw (a day its joke would be out of place). A shared #link still opens it.
+  const rotation = () => {
+    const now = new Date();
+    const kept = pages.filter((p) => !fits(p.skip, now));
+    return kept.length ? kept : pages;
+  };
   const any = (list) => list[Math.floor(Math.random() * list.length)];
   function first() {
-    const timely = pages.filter((p) => fits(p.when, new Date()));
+    const timely = rotation().filter((p) => fits(p.when, new Date()));
     if (timely.length && Math.random() < TIMELY_CHANCE) return any(timely);
-    return any(pages.flatMap((p) => (p.opener ? [p, p] : [p])));
+    return any(rotation().flatMap((p) => (p.opener ? [p, p] : [p])));
   }
   const titleOf = (page) => (page.title && (page.title[lang] || page.title.en)) || page.id;
   const secondsOf = (page) => (page.seconds || DEFAULT_SECONDS) * 1000;

@@ -13,8 +13,9 @@
   /* A good day as a commit graph, drawn the way a metro map is: coloured lines, stations,
      interchanges where branches merge back. A train runs the day from wake-up to the tag.
      Each branch has its own little train: the lunch train and the main train reach the lunch
-     merge at the same moment and bump (the day's only conflict), then couple up and go on
-     together; the walk train joins at the walk merge without a bump. */
+     merge at the same moment and bump (the day's only conflict: main had a cookie at 11:00,
+     the branch had lunch and cake, both changed the stomach), then couple up and go on
+     together; the walk train joins at the walk merge without a bump, to a green tick. */
   :root {
     --paper: #f5f4ef;
     --ink: #1d1d22;
@@ -48,6 +49,7 @@
   .top { display: flex; justify-content: space-between; align-items: start; gap: 3cqmin; }
   .top h1 { font-weight: 800; font-size: clamp(26px, 6.4cqmin, 64px); line-height: .95; letter-spacing: -.02em; font-variation-settings: 'opsz' 96; }
   .top p { margin-top: .5em; font-size: clamp(14px, 2.4cqmin, 21px); font-weight: 500; color: var(--muted); }
+  .top p .short { display: none; }
   .lang-ko .top p { font-family: 'Gowun Dodum', sans-serif; }
   /* dunggeun is drawn from a jamo sheet; a hairline shadow on both sides gives the headline weight */
   .top .bold { color: var(--ink); filter: drop-shadow(.018em 0 0 currentColor) drop-shadow(-.018em 0 0 currentColor); }
@@ -62,7 +64,8 @@
     font-size: 15px;
     cursor: pointer;
   }
-  .replay:hover { background: var(--ink); color: #fff; }
+  /* (only where there is a real pointer: on a phone a tapped button would stay black) */
+  @media (hover: hover) { .replay:hover { background: var(--ink); color: #fff; } }
   .lang-ko .replay { font-family: 'Gowun Dodum', sans-serif; }
 
   .map { display: grid; place-items: center; min-height: 0; container-type: size; }
@@ -81,30 +84,50 @@
     font-size: 1.75cqw;
     line-height: 1.22;
   }
-  .label .time { display: block; font-family: 'Martian Mono', monospace; font-weight: 500; font-size: .74em; color: var(--muted); letter-spacing: .02em; }
+  .label .time { display: block; font-family: 'Martian Mono', monospace; font-weight: 500; font-size: max(.74em, min(10px, .9em)); color: var(--muted); letter-spacing: .02em; }
   .label .msg { display: block; font-weight: 700; }
-  .label .type { font-family: 'Martian Mono', monospace; font-weight: 700; font-size: .78em; color: var(--c, var(--main)); }
-  .label .diff { display: block; margin-top: .2em; font-family: 'Martian Mono', monospace; font-weight: 500; font-size: .7em; color: var(--muted); }
+  .label .type { font-family: 'Martian Mono', monospace; font-weight: 700; font-size: max(.78em, min(10px, .9em)); color: var(--c, var(--main)); }
+  .label .diff { display: block; margin-top: .2em; font-family: 'Martian Mono', monospace; font-weight: 500; font-size: max(.7em, min(10px, .85em)); color: var(--muted); }
   .label .nw { white-space: nowrap; }
   .label .diff.alarm { color: var(--conflict); font-weight: 700; }
   .label .diff.fixed { color: var(--main); font-weight: 700; }
+  /* once resolved, the conflict stays on the label, struck out, above its resolution */
+  .label .diff .was { display: block; color: var(--muted); font-weight: 500; text-decoration: line-through var(--conflict); text-decoration-thickness: max(1px, .08em); }
+  /* the lunch merge's two lines carry the joke: larger than the other diffs, 11 px wherever the
+     label is big enough for it (the conflict fits one line of its 25% label from 1000 x 800 up;
+     on 868 x 633 the English one folds before "stomach") */
+  .label.knot .diff { font-size: max(.74em, min(11px, .85em)); }
   .label.tag .msg { display: inline-block; padding: .25em .6em; background: var(--ink); color: #fff; border-radius: .4em; }
   .label.tag .type { color: #8ff0b6; }
   .label.tag .text { margin-left: .35em; }
-  /* The tall map is drawn small on phones (about 250 px wide on a 358 x 396 stage): the labels
-     keep a floor of 10.5 px (times and the conflict line 9 px), and the map sits at the left so
-     they can run on into the room beside it (--spare, set by the script). */
+  /* The tall map is drawn small on phones (about 250 x 310 px on a 358 x 396 stage): the labels
+     keep a floor of 10.5 px (times and prefixes 10 px, the lunch merge's two lines 11 px, set
+     close so its three-line label still clears 12:40 and 15:00), and the map sits at the left so
+     they can run on into the room beside it (--spare, set by the script). Only a few diffs are
+     shown there: the lunch merge (conflict and resolution), the dessert's "0 tests" and "shipped".
+     Where the map fills the width (the 328 and 312 px stages of narrow phones) there is no room
+     beside it and a label gets about 215 px: the lunch merge's two lines and the tag stay on one
+     line each (nowrap) instead of folding into their neighbours. */
   .rig.portrait { justify-self: start; }
-  .portrait .label { font-size: max(3.7cqw, 10.5px); }
-  .portrait .label .time { display: inline; margin-right: .5em; font-size: max(.74em, 9px); }
-  .portrait .label .type { font-size: max(.78em, 9px); }
+  .portrait .label { font-size: max(3.3cqw, 10.5px); line-height: 1.18; }
+  .portrait .label .time { display: inline; margin-right: .5em; font-size: max(.74em, 10px); }
+  .portrait .label .type { font-size: max(.78em, 10px); }
   .portrait .label .msg { display: inline; }
   .portrait .label .diff { display: none; }
-  .portrait .label.knot .diff { display: block; font-size: max(.7em, 9px); }
+  .portrait .label.knot .diff, .portrait .label.always .diff { display: block; margin-top: .1em; font-size: max(.74em, 10px); }
+  .portrait .label.knot .diff { font-size: max(.8em, 11px); line-height: 1.1; margin-top: 0; white-space: nowrap; }
+  .portrait .label.tag .diff { display: inline; margin: 0 0 0 .5em; font-size: max(.74em, 10px); }
+  .portrait .label.tag { white-space: nowrap; }
+  /* short screens: the subtitle shrinks to one short line (it sets up the bump), the legend goes.
+     The button and the gap beside it give up a few px so the English line stays one line on the
+     328 px stage of a 360 px phone (it needs 167 px). */
   @container (max-height: 640px) {
+    .top { gap: 2cqmin; }
     .top h1 { font-size: clamp(22px, 5.6cqmin, 40px); }
-    .top p { display: none; }
-    .replay { min-height: 34px; padding: 0 12px; font-size: 13px; }
+    .top p { margin-top: .2em; font-size: 13px; }
+    .top p .long { display: none; }
+    .top p .short { display: inline; }
+    .replay { min-height: 34px; padding: 0 10px; font-size: 13px; }
     .page .legend { display: none; }
   }
 
@@ -126,7 +149,7 @@
     <div>
       <h1 data-lang="en">Today, merged.</h1>
       <h1 data-lang="ko" aria-label="오늘, 머지 완료."><font-kku class="bold" font="dunggeun" size="clamp(22px, 6.8cqmin, 68px)">오늘, 머지 완료.</font-kku></h1>
-      <p data-lang="en">A day with zero conflicts. Well, almost.</p>
+      <p data-lang="en"><span class="long">A day with zero conflicts. Well, almost.</span><span class="short">Zero conflicts. Well, almost.</span></p>
       <p data-lang="ko">충돌 하나 없던 하루. 음, 거의요.</p>
     </div>
     <button class="replay" type="button"><span data-lang="en">Replay the day</span><span data-lang="ko">하루 다시 보기</span></button>
@@ -168,13 +191,15 @@
     { id: 'wake', line: 'main', time: '07:00', type: 'feat:', en: 'wake up without an alarm', ko: '알람 없이 기상', diff: ['+8h sleep, −3 snoozes', '+수면 8시간, −스누즈 3번'] },
     { id: 'coffee', line: 'main', time: '07:40', type: 'fix:', en: 'coffee temperature regression', ko: '커피 온도 회귀 버그', diff: ['+3°C, −1 sigh', '+3°C, −한숨 1'] },
     { id: 'plants', line: 'main', time: '09:10', type: 'chore:', en: 'water the plants', ko: '화분에 물 주기', diff: ['3 pots changed, +500 ml', '화분 3개 변경, +500ml'] },
+    // main touches the stomach while the lunch branch is out: that is what makes 13:10 a real conflict
+    { id: 'cookie', line: 'main', time: '11:00', type: 'feat:', en: 'one cookie before lunch', ko: '점심 전에 쿠키 하나', diff: ['+1 cookie', '+쿠키 1'] },
     { id: 'lunch', line: 'lunch', time: '12:00', type: 'feat:', en: 'lunch with friends', ko: '친구들이랑 점심', diff: ['+3 friends', '+친구 3명'] },
-    { id: 'dessert', line: 'lunch', time: '12:40', type: 'feat:', en: 'extra dessert (not in spec)', ko: '디저트 추가 (기획에 없음)', diff: ['+1 cake, 0 tests', '+케이크 1, 테스트 0'] },
+    { id: 'dessert', line: 'lunch', time: '12:40', type: 'feat:', en: 'extra dessert (not in spec)', ko: '디저트 추가 (기획에 없음)', diff: ['+1 cake, 0 tests', '+케이크 1, 테스트 0'], always: true },
     { id: 'merge-lunch', line: 'main', swap: 'lunch', time: '13:10', type: 'Merge', git: "branch 'lunch-with-friends'", diff: ['Accept Both Changes', '두 변경 사항 모두 수락'], conflict: ['CONFLICT (content): stomach', 'CONFLICT (content): 배'] },
     { id: 'walk', line: 'walk', time: '15:00', type: 'refactor:', en: 'replace doomscrolling with a walk', ko: '둠스크롤링을 산책으로 교체', diff: ['−47 min feed, +6,214 steps', '−피드 47분, +6,214걸음'] },
     { id: 'merge-walk', line: 'main', swap: 'walk', time: '15:40', type: 'Merge', git: "branch 'go-outside'", diff: ['+2 dogs petted', '+강아지 2마리 쓰다듬음'] },
-    { id: 'docs', line: 'main', time: '17:20', type: 'docs:', en: 'tell someone they did great', ko: '동료에게 잘했다고 말하기', diff: ['+1 compliment', '+칭찬 1'] },
-    { id: 'revert', line: 'main', time: '19:30', type: 'revert:', en: '“skip dinner”', ko: '“저녁 거르기”', diff: ['+1 proper dinner', '+제대로 된 저녁 1끼'] },
+    { id: 'docs', line: 'main', time: '17:20', type: 'docs:', en: 'tell someone they did great', ko: '잘했다고 말해 주기', diff: ['+1 compliment', '+칭찬 1'] },
+    { id: 'revert', line: 'main', time: '19:30', type: 'revert:', en: '“push dinner to next sprint”', ko: '“저녁은 다음 스프린트에”', diff: ['+1 proper dinner', '+제대로 된 저녁 1끼'], fold: ['+1 proper', '+제대로 된'] },
     { id: 'tag', line: 'main', tag: true, time: '22:30', type: 'v1.0', en: 'a good day', ko: '좋은 하루', diff: ['shipped', '배포 완료'] },
   ];
 
@@ -190,31 +215,43 @@
       // [x, y, side, max label width in % of the map]. Stations on a row are 14–16% apart, so
       // their labels are kept narrower than that. The evening labels hang under the lower line,
       // where nothing else is, so they never meet the morning labels in the middle band.
+      // 15:40 is wide enough for its git message on one line, so it stands one line lower under
+      // 11:00; 17:20 sits 165 units from 19:30, whose diff folds (see `fold`) rather than run
+      // into it, and short of the walk merge's tick at x 521.
       at: {
         wake: [110, 200, 'below', 13.5], coffee: [260, 200, 'below', 13.5], plants: [410, 200, 'below', 13.5],
+        cookie: [600, 200, 'below', 12],
         lunch: [580, 110, 'above-end'], dessert: [680, 110, 'above-start'],
-        'merge-lunch': [800, 200, 'below', 20],
+        // wide enough for "CONFLICT (content): stomach" on one line (Martian Mono is .7 em a
+        // character), short of the loop at x 933
+        'merge-lunch': [800, 200, 'below', 25],
         walk: [710, 540, 'below'],
-        'merge-walk': [560, 450, 'above'], docs: [420, 450, 'below', 12.8], revert: [280, 450, 'below', 13.5], tag: [120, 450, 'below', 15],
+        'merge-walk': [560, 450, 'above', 23], docs: [445, 450, 'below', 12.8], revert: [280, 450, 'below', 13.5], tag: [120, 450, 'below', 15],
       },
       bonk: [14, -46], // where the "!" goes, from the lunch junction
+      tick: [-14, 46], // and the clean merge's tick, from the walk junction (under the line, clear of 15:40)
       car: 1.15, // train size
     },
     portrait: {
       w: 600, h: 760,
+      // Stations are spaced for their labels at the 10.5 px floor: on a 358 x 396 stage one line
+      // needs about 45 units between neighbours and the three-line lunch merge about 95 either
+      // side. On narrower stages (328 px wide, 312 px on a fold phone's cover screen) the longer
+      // labels (07:40, 15:00, 17:20, 19:30) wrap to two lines, hence the wider gaps around them.
       lines: {
         main: 'M70 20 V712',
-        lunch: 'M70 174 L150 226 V306 L70 352',
-        walk: 'M70 394 L150 440 V474 L70 520',
+        lunch: 'M70 152 L150 204 V322 L70 368',
+        walk: 'M70 410 L150 456 V510 L70 534',
       },
       at: {
-        wake: [70, 36], coffee: [70, 94], plants: [70, 152],
-        lunch: [150, 242], dessert: [150, 296],
-        'merge-lunch': [70, 370],
-        walk: [150, 457],
-        'merge-walk': [70, 538], docs: [70, 596], revert: [70, 654], tag: [70, 712],
+        wake: [70, 26], coffee: [70, 84], plants: [70, 136], cookie: [70, 181],
+        lunch: [150, 226], dessert: [150, 290],
+        'merge-lunch': [70, 388],
+        walk: [150, 484],
+        'merge-walk': [70, 548], docs: [70, 593], revert: [70, 654], tag: [70, 712],
       },
       bonk: [-50, -20],
+      tick: [-50, -20],
       car: 1.45, // the tall map is drawn small; the trains are drawn larger on it
     },
   };
@@ -269,10 +306,13 @@
       stationsG.append(st);
 
       const label = document.createElement('div');
-      label.className = 'label' + (c.tag ? ' tag' : '') + (c.conflict ? ' knot' : '');
+      label.className = 'label' + (c.tag ? ' tag' : '') + (c.conflict ? ' knot' : '') + (c.always ? ' always' : '');
       label.style.setProperty('--c', COLORS[c.line === 'main' && c.swap ? c.swap : c.line]);
-      // a diff wraps between its parts, never inside one
-      const diff = c.diff[ko ? 1 : 0].split(', ').map((part) => `<span class="nw">${part}</span>`).join(', ');
+      // a diff wraps between its parts, never inside one; a one-part diff with a `fold` may also
+      // wrap after that much (19:30's runs into 17:20 on small landscape stages otherwise)
+      const whole = c.diff[ko ? 1 : 0], fold = c.fold && c.fold[ko ? 1 : 0];
+      const parts = fold ? [fold, whole.slice(fold.length + 1)] : whole.split(', ');
+      const diff = parts.map((part) => `<span class="nw">${part}</span>`).join(fold ? ' ' : ', ');
       label.innerHTML = `<span class="time">${c.time}</span><span class="msg"><span class="type">${c.type}</span> <span class="text"></span></span><span class="diff">${diff}</span>`;
       const text = label.querySelector('.text');
       if (c.git) {
@@ -293,10 +333,10 @@
       }
       const px = (x / L.w) * 100, py = (y / L.h) * 100;
       if (portrait) {
-        label.style.left = (190 / L.w * 100) + '%';
+        label.style.left = (176 / L.w * 100) + '%';
         label.style.top = py + '%';
         label.style.transform = 'translateY(-50%)';
-        label.style.setProperty('--w', 'calc(68% + var(--spare, 0px))');
+        label.style.setProperty('--w', 'calc(70% + var(--spare, 0px))'); // from 29.3% into the page's right margin
       } else {
         const gap = (c.tag ? 32 : 26) / L.h * 100;
         label.style.left = px + '%';
@@ -344,10 +384,19 @@
     return built;
   }
 
-  // The lunch merge: red while the conflict is open, then git's resolution in green.
+  // The lunch merge: red while the conflict is open; then the conflict stays, struck out, with
+  // the resolution in green under it, so the finished map still tells the whole joke.
   const setKnot = (it, open) => {
     const d = it.label.querySelector('.diff');
-    d.textContent = (open ? it.c.conflict : it.c.diff)[ko ? 1 : 0];
+    const conflict = it.c.conflict[ko ? 1 : 0];
+    d.replaceChildren();
+    if (!open) {
+      const was = document.createElement('span');
+      was.className = 'was';
+      was.textContent = conflict;
+      d.append(was);
+    }
+    d.append(open ? conflict : it.c.diff[ko ? 1 : 0]);
     d.className = 'diff ' + (open ? 'alarm' : 'fixed');
     it.st.classList.toggle('conflict', open);
   };
@@ -358,11 +407,12 @@
      label says CONFLICT. After HOLD_MS the conflict is resolved (a green tick, "Accept Both
      Changes"), the lunch train couples on behind and the day goes on at its old pace. The walk
      train leaves at its fork and arrives just as there is room behind the lunch car, so that
-     merge needs no stop. At the terminus the whole train fades and the tag takes a bow. */
+     merge needs no stop: a green tick straight away, no "!". At the terminus the whole train
+     fades and the tag takes a bow. */
   // (in map units for a car of scale 1; play() scales them with the layout's car size)
   const GAP_1 = 38;         // centre to centre of coupled cars
   const MORNING_MS = 2400;  // from the start to the bump at the lunch merge
-  const HOLD_MS = 1300;     // the trains wait at the conflict this long
+  const HOLD_MS = 2000;     // the trains wait at the conflict this long (the CONFLICT line is read here)
   const DURATION = 7600;    // the pace of the whole day (the afternoon runs on it)
   const NOSE_1 = 14;        // the main train stops this far before the junction
   const STOP_BACK_1 = 27;   // and the lunch train this far before it, on its own line
@@ -433,9 +483,22 @@
     // the afternoon: the old pace of the day, picked up where the train stopped
     const t0 = tGo - unease(stopLen / b.mainLen) * DURATION;
     const timeAt = (len) => t0 + unease(Math.min(1, len / b.mainLen)) * DURATION;
-    let lunchOut = null, walkOut = null, walkIn = null, bumped = false, going = false, lunchAt = null;
+    let lunchOut = null, walkOut = null, walkIn = null, bumped = false, going = false, lunchAt = null, clean = false;
     trains.lunch.style.visibility = trains.walk.style.visibility = 'hidden';
     put(trains.main, pose(lines.main, 0));
+    // The walk merge, the tag beat: the same badge as the lunch merge's, but green from the
+    // start and a size smaller. No stop, no "!".
+    const cleanTick = () => {
+      const p = lines.walk.getPointAtLength(totals.walk);
+      bonk.getAnimations().forEach((a) => a.cancel());
+      bonk.setAttribute('transform', `translate(${p.x + b.L.tick[0]} ${p.y + b.L.tick[1]}) scale(${carScale * .8})`);
+      $('.bonk .star').style.fill = 'var(--main)';
+      $('.bonk .bang').style.opacity = 0;
+      $('.bonk .tick').style.opacity = 1;
+      bonk.setAttribute('opacity', 1);
+      $('.bonk .pop').animate([{ transform: 'scale(0) rotate(-30deg)' }, { transform: 'scale(1.2) rotate(6deg)', offset: .6 }, { transform: 'scale(1) rotate(0)' }], { duration: 340, easing: 'cubic-bezier(.2, .9, .3, 1.3)' });
+      bonk.animate([{ opacity: 1 }, { opacity: 1, offset: .75 }, { opacity: 0 }], { duration: 1400, fill: 'forwards' });
+    };
 
     const frame = (now) => {
       if (me !== run) return;
@@ -487,10 +550,12 @@
         }
         if (walkOut !== null) {
           const f = clamp01((now - walkOut) / (walkIn - walkOut));
-          const l = totals.walk * f;
+          // quick out of the fork, easing into the coupling: 15:00 comes up before 15:40 does
+          const l = totals.walk * (f + .6 * f * (1 - f));
           draw('walk', l);
           popBranch('walk', l);
           put(trains.walk, f < 1 ? pose(lines.walk, l) : pose(lines.main, len - 2 * GAP));
+          if (f >= 1 && !clean) { clean = true; cleanTick(); }
         }
       }
       if (len < b.mainLen - .5) requestAnimationFrame(frame);
@@ -506,9 +571,11 @@
     requestAnimationFrame(frame);
   }
 
-  // How much room the tall map leaves beside it, for its labels.
-  const map = $('.map');
-  const spare = () => rig.style.setProperty('--spare', Math.max(0, map.clientWidth - rig.offsetWidth - 2) + 'px');
+  // How much room the tall map leaves beside it, for its labels, and half the page's right margin
+  // on top: where the map fills the width (a 360 px phone's 328 px stage) the labels would get
+  // only 70 % of the map, and 13:10's branch name and 17:20 wrapped there.
+  const map = $('.map'), pageEl = $('.page');
+  const spare = () => rig.style.setProperty('--spare', Math.max(0, map.clientWidth - rig.offsetWidth - 2) + Math.round(parseFloat(getComputedStyle(pageEl).paddingRight) / 2) + 'px');
   // (both: the map changes size with the window, the map drawing when it switches layout)
   if (window.ResizeObserver) { const ro = new ResizeObserver(spare); ro.observe(map); ro.observe(rig); }
 

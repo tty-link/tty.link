@@ -73,6 +73,7 @@
   .lang-ko .title { line-height: 1; }
   .sub { margin-top: 1cqi; font-size: 2.7cqi; color: var(--chalk-dim); }
   .cup { width: 10cqi; flex: none; overflow: visible; }
+  .cup .mug { transform-box: fill-box; transform-origin: 20% 95%; } /* sip() tips the cup from its base; the saucer stays */
   .cup path, .cup line { fill: none; stroke: var(--pink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
   /* Steam that is still loading: eight spokes, one step at a time, like any spinner. */
   .cup .spinner line { stroke-width: 4; }
@@ -136,6 +137,9 @@
   .screen .rung { opacity: .72; }
   .screen .sum { font-size: 1.3em; line-height: .8; }
   .screen font-kku { color: var(--lcd); }
+  /* The till can be tapped to pay; it pays the way it adds. */
+  .pos { cursor: pointer; outline-offset: .5cqi; }
+  .pos:focus-visible { outline: 2px dashed var(--yellow); }
   .pos.blink .sum { animation: blink .32s steps(1) 3; }
   @keyframes blink { 50% { opacity: 0; } }
 
@@ -207,7 +211,9 @@
     .price { font-size: 4.3cqi; }
     .lang-ko .price { font-size: 4.5cqi; }
     .desc, .lang-ko .desc { font-size: 3.9cqi; }
-    .say { min-height: 11cqi; margin-top: 2.4cqi; }
+    /* Room for three lines from the start (the longest answers wrap to three here), so the
+       board does not grow, and jump, when a longer answer or the latte's sip comes in. */
+    .say { min-height: 18cqi; margin-top: 2.4cqi; }
     .say b { font-size: 3.8cqi; }
     .answer, .lang-ko .answer { font-size: 4.3cqi; }
     .nudge { left: 4.6cqi; bottom: 1.4cqi; font-size: 3.9cqi; }
@@ -269,18 +275,20 @@
       <svg class="cup write" viewBox="0 0 80 88" aria-hidden="true">
         <!-- The steam is a loading spinner: this coffee is pending too. It turns into steam when
              the Async Latte resolves, and back into a spinner when another one is ordered. -->
-        <g class="spinner">
-          <line x1="36" y1="11" x2="36" y2="2"/>
-          <line x1="41.7" y1="13.3" x2="48" y2="7" opacity=".18"/>
-          <line x1="44" y1="19" x2="53" y2="19" opacity=".24"/>
-          <line x1="41.7" y1="24.7" x2="48" y2="31" opacity=".32"/>
-          <line x1="36" y1="27" x2="36" y2="36" opacity=".42"/>
-          <line x1="30.3" y1="24.7" x2="24" y2="31" opacity=".54"/>
-          <line x1="28" y1="19" x2="19" y2="19" opacity=".68"/>
-          <line x1="30.3" y1="13.3" x2="24" y2="7" opacity=".84"/>
+        <g class="mug"><!-- sip() tips this; the saucer stays put -->
+          <g class="spinner">
+            <line x1="36" y1="11" x2="36" y2="2"/>
+            <line x1="41.7" y1="13.3" x2="48" y2="7" opacity=".18"/>
+            <line x1="44" y1="19" x2="53" y2="19" opacity=".24"/>
+            <line x1="41.7" y1="24.7" x2="48" y2="31" opacity=".32"/>
+            <line x1="36" y1="27" x2="36" y2="36" opacity=".42"/>
+            <line x1="30.3" y1="24.7" x2="24" y2="31" opacity=".54"/>
+            <line x1="28" y1="19" x2="19" y2="19" opacity=".68"/>
+            <line x1="30.3" y1="13.3" x2="24" y2="7" opacity=".84"/>
+          </g>
+          <g class="steam"><path d="M29 38 Q25 30 30 23 Q35 16 31 8" pathLength="1"/><path d="M43 38 Q39 30 44 23 Q49 16 45 8" pathLength="1"/></g>
+          <path d="M14 46 H58 V62 Q58 80 36 80 Q14 80 14 62 Z"/><path d="M58 50 Q72 50 70 60 Q68 68 58 66"/>
         </g>
-        <g class="steam"><path d="M29 38 Q25 30 30 23 Q35 16 31 8" pathLength="1"/><path d="M43 38 Q39 30 44 23 Q49 16 45 8" pathLength="1"/></g>
-        <path d="M14 46 H58 V62 Q58 80 36 80 Q14 80 14 62 Z"/><path d="M58 50 Q72 50 70 60 Q68 68 58 66"/>
         <line x1="8" y1="84" x2="66" y2="84"/>
       </svg>
     </header>
@@ -290,8 +298,8 @@
       <li class="special">
         <div class="card">
           <div class="seal" aria-hidden="true">
-            <span data-lang="en">Chef's<br>pick</span>
-            <span class="two" data-lang="ko"><font-kku font="dojang" size="3.4cqi">강력</font-kku><font-kku font="dojang" size="3.4cqi">추천</font-kku></span>
+            <span data-lang="en">Tested<br>in prod</span>
+            <span class="two" data-lang="ko"><font-kku font="dojang" size="3.4cqi">고객</font-kku><font-kku font="dojang" size="3.4cqi">검증</font-kku></span>
           </div>
           <div class="card-text">
             <p class="card-label" data-lang="en">Today's special</p>
@@ -313,8 +321,8 @@
         </div>
       </div>
     </div>
-    <p class="nudge" data-lang="en" aria-hidden="true">Tap a drink to order.</p>
-    <p class="nudge" data-lang="ko" aria-hidden="true">메뉴를 눌러 주문해 보세요.</p>
+    <p class="nudge" data-lang="en" aria-hidden="true">Tap a drink to order. Seconds welcome.</p>
+    <p class="nudge" data-lang="ko" aria-hidden="true">메뉴를 눌러 주문하세요. 같은 걸 또 시켜도 돼요.</p>
   </div>
   <div class="ledge" aria-hidden="true"><i class="stick w"></i><i class="stick p"></i><i class="stick y"></i><i class="eraser"></i></div>
 </main>
@@ -325,17 +333,17 @@
   // say: the barista's answers, in turn, each time that drink is ordered again.
   // val: the price as the till sees it, a real JavaScript value (see charge()).
   const MENU = [
-    { en: ['Espresso (sync)', '3.00', 'Blocks until ready.'], ko: ['에스프레소 (동기)', '3,000', '다 나올 때까지 아무것도 못 해요.'], val: { en: 3.00, ko: 3000 },
+    { en: ['Espresso (sync)', '3.00', 'Blocks until ready.'], ko: ['에스프레소(동기)', '3,000', '다 나올 때까지 아무것도 못 해요.'], val: { en: 3.00, ko: 3000 },
       say: [{ en: 'One espresso. Everyone behind you is now waiting too.', ko: '에스프레소 나왔습니다. 뒤에 계신 분들도 같이 기다리셨어요.' },
             { en: "Another? I'm waiting on the grinder, and the grinder's waiting on me.", ko: '한 잔 더요? 저는 그라인더를, 그라인더는 저를 기다리고 있어요.' }] },
-    { en: ['Async Latte', 'Promise<4.50>', 'Arrives eventually.'], ko: ['비동기 라테', 'Promise<4,500>', '언젠가는 나옵니다.'], val: { en: Promise.resolve(4.50), ko: Promise.resolve(4500) },
+    { en: ['Async Latte', 'Promise<4.50>', 'Arrives eventually.'], ko: ['비동기 라테', 'Promise<4500>', '언젠가는 나옵니다.'], val: { en: Promise.resolve(4.50), ko: Promise.resolve(4500) },
       say: [{ en: "Order received. We'll call you back.", ko: '주문 받았어요. 진동벨 울리면 오세요.' }] },
     { en: ['Null Tea', 'null', "There's nothing in it."], ko: ['널 티', 'null', '컵 안에 아무것도 없어요.'], val: { en: null, ko: null },
-      say: [{ en: 'Here you go. (Hands you nothing, very carefully.)', ko: '여기 있습니다. (빈 컵을 아주 조심스럽게 건넨다)' },
-            { en: "Milk? Cannot read properties of null (reading 'milk').", ko: "우유 넣어 드릴까요? Cannot read properties of null (reading 'milk')" }] },
+      say: [{ en: 'Here you go. (Hands you nothing, very carefully.)', ko: '여기 있습니다. (아무것도 아닌 걸 아주 조심스럽게 건넨다)' },
+            { en: "Milk? Cannot read properties of null (reading 'milk')", ko: "우유 넣어 드릴까요? Cannot read properties of null (reading 'milk')" }] },
     { en: ['Recursive Refill', 'n + 1', 'See: Recursive Refill.'], ko: ['재귀 리필', 'n + 1', "'재귀 리필'을 참고하세요."], val: { en: 'n + 1', ko: 'n + 1' },
-      say: [{ en: 'One Recursive Refill, which comes with one Recursive Refill, which comes with…', ko: '재귀 리필 하나요, 재귀 리필 하나 추가요, 재귀 리필 하나 추가요…' },
-            { en: 'Sorry, the cup stack overflowed.', ko: '죄송해요, 컵 스택이 넘쳤어요.' }] },
+      say: [{ en: 'One Recursive Refill, which comes with one Recursive Refill, which comes with…', ko: '재귀 리필 하나요. 재귀 리필이 든 재귀 리필이 든 재귀 리필이 든…' },
+            { en: 'Sorry. Maximum cup stack size exceeded.', ko: '죄송해요. Maximum cup stack size exceeded.' }] },
     { en: ['Cold Brew Cache', '2.00', 'Served stale, twice as fast.'], ko: ['콜드브루 캐시', '2,000', '좀 오래됐지만 두 배 빨라요.'], val: { en: 2.00, ko: 2000 },
       say: [{ en: "That's yesterday's. For today's, do a hard refresh.", ko: '어제 내린 거예요. 오늘 걸 원하시면 강력 새로고침 하세요.' },
             { en: "One fresh brew, coming up. …Huh. Yesterday's again.", ko: '새로 내려 드릴게요. …어, 또 어제 거네요.' }] },
@@ -347,14 +355,25 @@
             { en: "Spilled? We'll fix that in the next hotfix.", ko: '쏟으셨어요? 다음 핫픽스에서 고칠게요.' }] },
   ];
   // The Async Latte really is asynchronous: it turns up a while later, whatever is going on.
+  // Nobody comes for it, so a moment later the barista has a sip (the tag after the punchline).
   const ASYNC = 1;
   const LATTE = {
-    wait: 6000,
+    wait: 5500,
     pending: { en: "Still pending. Awaiting it won't make it faster.", ko: '아직 대기 중이에요. await 하셔도 안 빨라져요.' },
     resolved: { en: 'One Async Latte, resolved! …Hello?', ko: '(지이잉) 비동기 라테 나왔습니다! …손님?' },
+    sip: { en: '(Sips it.)', ko: '(홀짝)' },
   };
   const SPECIAL = 6;
   const PROMPT = { en: 'Tap a drink to order.', ko: '메뉴를 눌러 주문해 보세요.' };
+  // Tapping the till pays, by the same JavaScript that added the bill up.
+  const PAY = {
+    none: { en: 'Nothing to pay yet. Pick a drink first.', ko: '아직 계산할 게 없어요. 메뉴부터 골라 주세요.' },
+    declined: [{ en: 'Card declined. Reason: NaN is not a number.', ko: '카드 승인이 거절됐어요. 사유: NaN은 숫자가 아님.' },
+               { en: 'Tried it again. Still NaN. Cash?', ko: '다시 긁어 봐도 NaN이에요. 현금 있으세요?' }],
+    paid: { en: 'Paid, {sum}. Receipt printed to the console.', ko: '{sum}원 결제됐습니다. 영수증은 콘솔에 출력해 드렸어요.' },
+    declinedTag: { en: 'DECLINED', ko: '승인 거절' },
+    paidTag: { en: 'PAID', ko: '결제 완료' },
+  };
 
   const menu = document.querySelector('.menu');
   const say = document.querySelector('.say .answer');
@@ -438,18 +457,27 @@
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
   /* ---- Ordering ---- */
+  // The barista's line is typed out; every new answer replaces the one before and stops its
+  // typing. `said` counts the answers, so a late follow-up can tell whether its line is still
+  // up. `readUntil` is when a visitor's latest answer will have been typed and read.
   let typing = 0;
-  function answer(text) {
+  let said = 0;
+  let readUntil = 0;
+  function answer(text, { append = false, visitor = false } = {}) {
     clearInterval(typing);
     board.classList.add('ordered'); // the first line (the prompt) is gone: the hint takes over
-    say.textContent = '';
-    if (TTY.reduce) { say.textContent = text; return; }
-    let i = 0;
-    const chars = [...text];
-    typing = setInterval(() => {
-      say.textContent += chars[i++];
-      if (i >= chars.length) clearInterval(typing);
-    }, ko ? 55 : 32);
+    if (!append) { said++; say.textContent = ''; }
+    const chars = [...(append ? ' ' + text : text)];
+    const ms = ko ? 55 : 32;
+    if (visitor) readUntil = performance.now() + chars.length * ms + 2500;
+    if (TTY.reduce) { say.textContent += chars.join(''); return Promise.resolve(); }
+    return new Promise((done) => {
+      let i = 0;
+      typing = setInterval(() => {
+        say.textContent += chars[i++];
+        if (i >= chars.length) { clearInterval(typing); done(); }
+      }, ms);
+    });
   }
   function wiggle(li) {
     li.classList.remove('wiggle');
@@ -463,16 +491,52 @@
   const rung = pos.querySelector('.rung');
   const sum = pos.querySelector('.sum');
   let total = 0;
+  let billed = false; // something has been rung up since the last payment
   const money = (n) => (ko ? n.toLocaleString('ko-KR') : n.toFixed(2));
   sum.textContent = money(total);
-  function charge(i) {
-    total += Number(MENU[i].val[TTY.lang]);
-    rung.textContent = '+ ' + MENU[i][TTY.lang][1];
-    sum.textContent = money(total);
+  function blink() {
     pos.classList.remove('blink');
     void pos.offsetWidth;
     pos.classList.add('blink');
   }
+  function charge(i) {
+    total += Number(MENU[i].val[TTY.lang]);
+    billed = true;
+    rung.textContent = '+ ' + MENU[i][TTY.lang][1];
+    sum.textContent = money(total);
+    blink();
+  }
+  // Hangul on the display is font-kku pixel, like "어서 오세요"; VT323 has no Hangul.
+  function showRung(text) {
+    if (!ko) { rung.textContent = text; return; }
+    const k = document.createElement('font-kku');
+    k.setAttribute('font', 'pixel');
+    k.setAttribute('size', '1em');
+    k.textContent = text;
+    rung.replaceChildren(k);
+  }
+  // Paying goes by the same arithmetic: a NaN bill is declined, a number is paid and the
+  // till starts a new bill. Tapping an empty till only gets a word from the barista: the
+  // regulars still order, once that answer has been read (yieldToVisitor in play()).
+  let declines = 0;
+  function pay() {
+    if (!billed) { answer(TTY.t(PAY.none), { visitor: true }); return; }
+    touched = true;
+    if (Number.isNaN(total)) {
+      showRung(TTY.t(PAY.declinedTag));
+      answer(TTY.t(PAY.declined[declines++ % PAY.declined.length]), { visitor: true });
+    } else {
+      showRung(TTY.t(PAY.paidTag));
+      answer(TTY.t(PAY.paid).replace('{sum}', money(total)), { visitor: true });
+      total = 0;
+      billed = false;
+    }
+    blink();
+  }
+  pos.tabIndex = 0;
+  pos.setAttribute('role', 'button');
+  pos.addEventListener('click', pay);
+  pos.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pay(); } });
 
   // The cup's steam is a loading spinner until an Async Latte resolves; then it is just steam.
   const cup = document.querySelector('.cup');
@@ -484,23 +548,52 @@
         { duration: 600, delay: i * 120, easing: 'ease-out', fill: 'backwards' }));
     }
   }
+  // Nobody came for the latte, so the barista has a sip: the cup tips up off its saucer and back.
+  function sip() {
+    if (TTY.reduce) return;
+    cup.querySelector('.mug').animate([
+      { rotate: '0deg', translate: '0 0' },
+      { rotate: '-24deg', translate: '0 -14%', offset: .35 },
+      { rotate: '-24deg', translate: '0 -14%', offset: .7 },
+      { rotate: '0deg', translate: '0 0' },
+    ], { duration: 1200, easing: 'ease-in-out' });
+  }
 
   const asked = MENU.map(() => 0);
-  let latte = 0;
-  function order(i) {
+  let latte = 0;            // the pending Async Latte's timer, 0 when none
+  let regularsLatte = false; // that latte was ordered by the regulars (autoplay)
+  function order(i, visitor = false) {
     wiggle(rows[i]);
     if (i === ASYNC) {
-      if (latte) { answer(TTY.t(LATTE.pending)); return; }
+      if (latte) { answer(TTY.t(LATTE.pending), { visitor }); return; }
       serve(false);
-      latte = setTimeout(() => { latte = 0; wiggle(rows[ASYNC]); serve(true); answer(TTY.t(LATTE.resolved)); }, LATTE.wait);
+      regularsLatte = !visitor;
+      latte = setTimeout(arrive, LATTE.wait);
     }
     charge(i);
     const says = MENU[i].say;
-    answer(TTY.t(says[asked[i]++ % says.length]));
+    answer(TTY.t(says[asked[i]++ % says.length]), { visitor });
+  }
+  // The latte turns up when it is ready and takes over the barista's line, even mid-sentence
+  // if the visitor ordered it. The regulars' latte waits until a visitor's own answer has been
+  // read, so autoplay never talks over someone who is playing.
+  function arrive() {
+    const wait = regularsLatte ? readUntil - performance.now() : 0;
+    if (wait > 0) { latte = setTimeout(arrive, wait); return; }
+    latte = 0;
+    wiggle(rows[ASYNC]);
+    serve(true);
+    const typed = answer(TTY.t(LATTE.resolved));
+    const mine = said;
+    typed.then(() => pause(1100)).then(() => {
+      if (said !== mine) return; // someone ordered in the meantime: their answer stays
+      answer(TTY.t(LATTE.sip), { append: true });
+      sip();
+    });
   }
   rows.forEach((li, i) => {
-    li.addEventListener('click', () => { touched = true; order(i); });
-    li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touched = true; order(i); } });
+    li.addEventListener('click', () => { touched = true; order(i, true); });
+    li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touched = true; order(i, true); } });
   });
 
   // A pink chalk ring around today's special.
@@ -535,49 +628,61 @@
       lines.forEach((l) => { l.classList.remove('write'); l.classList.add('written'); });
       ring();
       // Without motion the story is told by its last frame: the regulars' Async Latte is on
-      // the till (Total: NaN) and has just arrived (steam instead of the spinner).
+      // the till (Total: NaN), has just arrived (steam instead of the spinner) and nobody
+      // came for it.
       charge(ASYNC);
       serve(true);
-      answer(TTY.t(LATTE.resolved));
+      answer(TTY.t(LATTE.resolved) + ' ' + TTY.t(LATTE.sip));
       return;
     }
     // The cup goes up with the title: its steam is a loading spinner, the first joke.
     write(document.querySelector('.cup'), 600);
-    await write(document.querySelector('.title'), 700);
-    await write(document.querySelector('.sub'), 500);
+    await write(document.querySelector('.title'), 650);
+    await write(document.querySelector('.sub'), 450);
     for (const li of rows) {
-      await write(li.querySelector('.line1'), 330);
+      await write(li.querySelector('.line1'), 220);
       const desc = li.querySelector('.desc');
-      if (desc.getClientRects().length) await write(desc, 260);
+      if (desc.getClientRects().length) await write(desc, 150);
       else { desc.classList.remove('write'); desc.classList.add('written'); } // not shown on a short stage
     }
     await write(document.querySelector('.say b'), 300);
-    say.textContent = TTY.t(PROMPT);
+    // A visitor who got an answer already (an order, or a word at the till) keeps it.
+    if (!board.classList.contains('ordered')) say.textContent = TTY.t(PROMPT);
 
     // The card is taped up, the stamp comes down on it, then the ring goes round the drink.
-    await pause(200);
+    await pause(150);
     card.animate([{ opacity: 0, translate: '0 -3cqi', rotate: '-6deg' }, { opacity: 1, translate: '0 0', rotate: '3deg' }],
       { duration: 520, easing: 'cubic-bezier(.2, .9, .3, 1.2)', fill: 'forwards' });
-    await pause(650);
+    await pause(600);
     seal.animate([
       { opacity: 0, transform: 'scale(2.4)', filter: 'blur(2px)' },
       { opacity: .95, transform: 'scale(.94)', filter: 'blur(0)', offset: .7 },
       { opacity: .9, transform: 'scale(1)' },
     ], { duration: 420, easing: 'cubic-bezier(.5, 0, .9, .4)', fill: 'forwards' });
     card.animate([{ scale: '1' }, { scale: '.97' }, { scale: '1' }], { duration: 260, delay: 300 });
-    await pause(700);
-    ring().animate([{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }], { duration: 900, easing: 'ease-in-out', fill: 'both' });
+    await pause(600);
+    ring().animate([{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }], { duration: 800, easing: 'ease-in-out', fill: 'both' });
 
-    // If nobody orders, the regulars do: an Async Latte, then something else, and then the
-    // latte turns up after it.
-    await pause(1400);
-    if (!touched) order(ASYNC);
-    await pause(2600);
-    if (!touched) order([3, 2, 4, 5][Math.floor(Math.random() * 4)]);
+    // If nobody orders, the regulars do: an Async Latte, then the ringed special, and then
+    // the latte turns up after it. Always this order, so every visitor sees the same story.
+    // A visitor's answer (a word at an empty till) is read first: autoplay waits, it does not stop.
+    // If that pushed the latte back, the home stage is asked to stay up for the rest of the story
+    // (latte 5.5 s, punchline, sip, time to read it): the kit's own hold on the tap ends too soon.
+    const yieldToVisitor = async () => {
+      let waited = false;
+      while (performance.now() < readUntil) { waited = true; await pause(readUntil - performance.now()); }
+      return waited;
+    };
+    await pause(900);
+    const late = await yieldToVisitor();
+    if (!touched) { if (late) TTY.hold(13000); order(ASYNC); }
+    await pause(2200);
+    await yieldToVisitor();
+    if (!touched) order(SPECIAL);
   }
 
   addEventListener('resize', () => { fit(); if (overlay.firstChild) ring(); });
-  TTY.onShow(() => setTimeout(play, 300));
+  TTY.onShow(() => setTimeout(play, 150));
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
 })();

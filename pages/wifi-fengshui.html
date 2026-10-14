@@ -98,7 +98,9 @@
   }
 
   /* ---- The plan: three stacked SVGs (ink map / walls / movable things) + paper tags ---- */
-  .planwrap { position: relative; container-type: size; min-height: 0; display: grid; place-items: center; }
+  /* Above the ledger: on phones the opening close-up spills over the remedy button, and its 凶 seal
+     must not end up under it (the lens takes no pointer, so the button still works). */
+  .planwrap { position: relative; z-index: 3; container-type: size; min-height: 0; display: grid; place-items: center; }
   .plan {
     position: relative;
     container: plan / inline-size;
@@ -196,7 +198,10 @@
   .tag.call .dot { display: inline-block; width: .55em; height: .55em; margin-right: .35em; border-radius: 50%; background: var(--jade); vertical-align: .05em; }
   .tag.call.down { color: var(--red); }
   .tag.call.down .dot { background: var(--red); animation: blink 1s steps(2, start) infinite; }
+  .tag.call.back { color: var(--jade-deep); font-weight: 600; }
   @keyframes blink { to { visibility: hidden; } }
+  /* Phones: the plan is too small for the laptop's slip (it lands on the seal and the labels), so the
+     study's line in the ledger carries the call instead: drops, frozen, back. */
   .plan[data-dense="lo"] .tag.call { display: none; }
   .bibo {
     position: absolute;
@@ -230,7 +235,8 @@
     position: absolute;
     display: grid;
     place-items: center;
-    padding: 1.2cqi 1.4cqi;
+    width: max-content;   /* near the plan's edge, shrink-to-fit would squeeze it narrower than its words */
+    padding: max(1.2cqi, 3px) max(1.4cqi, 5px);
     border: .55cqi solid var(--red);
     border-radius: .8cqi .5cqi 1cqi .6cqi;
     color: var(--red);
@@ -243,7 +249,8 @@
   }
   .seal.on { opacity: .9; }
   .seal .en-seal { font: 900 clamp(20px, 8cqi, 64px)/1 'Noto Serif KR', serif; letter-spacing: .04em; }
-  .seal .en-small { display: block; margin-top: .6cqi; font: 600 clamp(8px, 2cqi, 15px)/1 'EB Garamond', serif; letter-spacing: .18em; text-align: center; }
+  /* The words an English reader can read on the seals stay at 10 px or more, also on a phone. */
+  .seal .en-small { display: block; margin-top: .6cqi; font: 600 clamp(10px, 2cqi, 15px)/1 'EB Garamond', serif; letter-spacing: .14em; text-align: center; white-space: nowrap; }
   .lang-en .seal { background: rgba(179, 38, 30, .06); }
 
   /* The opening close-up: a detail bubble pulled out of the shoe cabinet by the front door,
@@ -272,7 +279,8 @@
     position: absolute;
     display: grid;
     place-items: center;
-    padding: .9cqi 1.5cqi 1.1cqi;
+    width: max-content;
+    padding: max(.9cqi, 3px) max(1.5cqi, 6px) max(1.1cqi, 4px);
     border-radius: 1cqi .7cqi 1.3cqi .8cqi;
     background: var(--red);
     box-shadow: inset 0 0 0 .5cqi rgba(247, 240, 222, .9), inset 0 0 0 .9cqi var(--red), 0 2px 6px rgba(80, 20, 10, .3);
@@ -284,7 +292,7 @@
   }
   .cl-seal.on { opacity: .95; }
   .cl-seal .big { font: 900 clamp(28px, 11cqi, 84px)/1 'Noto Serif KR', serif; }
-  .cl-seal .small { display: block; margin-top: .5cqi; font: 700 clamp(9px, 2.1cqi, 16px)/1 'EB Garamond', serif; letter-spacing: .16em; text-align: center; }
+  .cl-seal .small { display: block; margin-top: .5cqi; font: 700 clamp(10px, 2.1cqi, 16px)/1 'EB Garamond', serif; letter-spacing: .12em; text-align: center; white-space: nowrap; }
 
   /* ---- Ledger ---- */
   .sec-h {
@@ -326,7 +334,7 @@
   .room.v0, .room.v1 { background: repeating-linear-gradient(-45deg, rgba(179, 38, 30, .13) 0 1.5px, transparent 1.5px 6px); }
   .room.v1 { background: repeating-linear-gradient(-45deg, rgba(179, 38, 30, .08) 0 1px, transparent 1px 7px); }
   .room .rn { font-weight: 600; min-width: 3.1em; }
-  .lang-ko .room .rn { font-weight: 700; min-width: 2.4em; }
+  .lang-ko .room .rn { font-weight: 700; min-width: 2.2em; }
   .room .db { font-variant-numeric: lining-nums tabular-nums; text-align: right; white-space: nowrap; }
   .room .db b { font-weight: 600; font-size: 1.08em; }
   .room .db small { margin-left: .2em; font-size: .7em; color: var(--soft); letter-spacing: .04em; }
@@ -340,7 +348,8 @@
   .room.v3 .vd font-kku, .room.v2 .vd font-kku { filter: hue-rotate(172deg) saturate(.5) brightness(.78); }
   .room .nt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--red); }
   .room .nt[hidden] { display: block; visibility: hidden; }
-  .room .nt-l { display: none; }
+  .room .nt.ok { color: var(--jade-deep); font-weight: 600; }
+  .room .nt-l, .room .nt-xs { display: none; }
   .room .db small { display: none; }
   .room .vd { grid-column: 4; }
   .room.jitter .db b { color: #8a4b0f; }
@@ -362,7 +371,8 @@
 
   .comment {
     min-height: 2.64em;
-    font-size: clamp(14px, 2.1cqmin, 22px);
+    text-wrap: pretty;   /* no lone last word ("node.") on the second line */
+    font-size: clamp(14px, 2.5cqmin, 22px);
     line-height: 1.32;
     font-style: italic;
     font-weight: 500;
@@ -485,6 +495,21 @@
     .sub { font-size: 11px; }
     .room { min-height: 23px; }
     .comment { font-size: 14px; min-height: 2.64em; }
+  }
+  /* The smallest stage (328 × 288 on a 360 × 520 phone): without this the plan got no height at all
+     and its slips and seal floated over the ledger. The rules and the neighbours make room. */
+  @container page (max-width: 699px) and (max-height: 340px) {
+    .rules, .strays { display: none; }
+  }
+  /* The 328 px stage (360 × 640 and 360 × 520 phones on the home page): the study's note had only
+     25–30 px and showed as "froz…" / "화…" / "잘 …", the kitchen's as "→ jitt…". The notes get
+     10 px and, where that is still too long, a shorter word (callNote[2], jitterXs). */
+  @container page (max-width: 340px) {
+    .room { column-gap: 4px; }
+    .room .nt { font-size: 10px; }
+    .room .nt-s { display: none; }
+    .room .nt-xs { display: inline; }
+    .lang-ko .room .rn { min-width: 2em; }
   }
 
   /* Before the show starts, the plan is blank paper. */
@@ -656,25 +681,32 @@
       sumWord: ['inauspicious', 'mixed', 'auspicious', 'excellent'],
       comments: {
         entry: 'The entrance is where energy enters, not where it stays.',
-        water: 'Water at your front is good fortune for people, bad fortune for routers. Water drinks 2.4 GHz.',
-        high: 'High and central. This is the spot.',
-        microwave: 'The microwave runs at 2.45 GHz, right next door to 2.4 GHz Wi-Fi. Move to 5 GHz to avoid it.',
-        mesh: 'Where the land is weak, build it up. (Mesh.)',
+        water: 'Water in front: good fortune for people, bad reception for routers. Water drinks 2.4 GHz.',
+        high: 'High and central: the spot.',
+        highStudy: 'High and central: the spot. Except for the study.',
+        highBut: (rooms) => `High and central: the spot. Except for the ${rooms.join(' and the ')}.`,
+        microwave: 'Kitchen fire stirs the 2.4 GHz energy.',
+        mesh: 'Where the land was weak, the ancients raised a pagoda. We buy a mesh node.',
         metal: 'Metal turns energy away. Behind a fridge or a mirror is bad luck.',
-        wall: 'Pressed to a wall, half the energy goes into the wall. Bring it to the middle.',
-        center: 'Central is good. Lift it up and it is the spot.',
+        wall: 'Against an outside wall, half the energy leaks outdoors. Bring it in.',
+        center: 'Central is good. Now lift it up.',
         far: 'Too far from the middle. The far rooms go hungry.',
+        numbers: 'By the book, bad luck. By the numbers, fine. I’ll go with the numbers.',
       },
+      roomNoun: { living: 'living room', bedroom: 'bedroom', study: 'study', kitchen: 'kitchen', bath: 'bathroom' },
       installer: 'Where the installer left it',
-      onCall: 'on a video call',
-      callDrops: 'calls drop',
-      callDropsShort: 'drops',
+      // The laptop in the study: what the call sounds like at each level of the study's energy.
+      call: { hear: 'Can you hear me…?', frozen: 'You’re frozen.', on: 'on a video call', back: 'Oh, you’re back!' },
+      // The study's note in the ledger, [long, short, and for the 328 px stage if shorter still].
+      callNote: { hear: ['calls drop', 'drops'], frozen: ['video frozen', 'frozen'], back: ['call’s back', 'back'] },
       jitter: '→ jittery',
+      jitterXs: 'jittery',
       running: 'Running',
+      ding: 'Ding!',
       rules: [
         'Place it high and central; energy spreads in every direction.',
         'Keep away from water and metal: fish tanks, fridges, the back of mirrors.',
-        'One concrete wall cuts the energy to a tenth (about −10 dB or more).',
+        'One concrete wall cuts the energy to under a tenth (over 10 dB).',
         '2.4 GHz travels far but is crowded; 5 GHz is fast but weak through walls.',
         'On 2.4 GHz, channels 1, 6 and 11 never collide.',
         'Stand one antenna up and lay one down.',
@@ -703,34 +735,39 @@
       sumWord: ['흉', '소흉', '길', '대길'],
       comments: {
         entry: '현관은 기가 들어오는 곳이지 머무는 곳이 아니다.',
-        water: '배산임수는 사람에게 명당, 공유기에겐 흉당. 물은 2.4GHz를 머금는다.',
-        high: '높고 가운데. 명당이다.',
-        microwave: '전자레인지 2.45GHz. 와이파이 2.4GHz와 같은 동네. 5GHz로 옮겨 타면 피함.',
-        mesh: '기운이 모자란 곳에는 비보를 세운다.(메시)',
+        water: '배산임수는 사람에겐 명당, 공유기에겐 흉당. 물은 2.4GHz를 머금는다.',
+        high: '높고 한가운데다. 명당이다.',
+        highStudy: '높고 한가운데다. 명당이다. 서재만 빼고.',
+        highBut: (rooms) => `높고 한가운데다. 명당이다. ${rooms.join('·')}만 빼고.`,
+        microwave: '부엌 화기(火氣)가 2.4GHz를 흔든다.',
+        mesh: '옛사람은 기운이 모자란 땅에 탑을 세웠다. 우리는 메시를 산다.',
         metal: '쇠는 기를 튕겨 낸다. 냉장고·거울 뒤는 흉.',
-        wall: '벽에 붙이면 기의 절반이 벽으로 간다. 가운데로.',
-        center: '가운데는 좋다. 높이만 올리면 명당.',
+        wall: '바깥벽에 붙이면 기의 절반이 집 밖으로 샌다. 안으로.',
+        center: '가운데는 좋다. 이제 높이 올려라.',
         far: '가운데에서 멀다. 먼 방은 기가 모자란다.',
+        numbers: '비결로는 흉한데 숫자로는 길하다. 숫자를 따른다.',
       },
+      roomNoun: { living: '거실', bedroom: '안방', study: '서재', kitchen: '주방', bath: '욕실' },
       installer: '설치 기사님이 두고 간 자리',
-      onCall: '화상 회의 중',
-      callDrops: '화상 회의 끊김',
-      callDropsShort: '회의 끊김',
+      call: { hear: '제 말 들리세요…?', frozen: '화면이 멈췄어요', on: '화상 회의 중', back: '잘 들려요!' },
+      callNote: { hear: ['화상 회의 끊김', '회의 끊김'], frozen: ['화면 멈춤', '화면 멈춤', '멈춤'], back: ['다시 잘 들림', '잘 들림'] },
       jitter: '→ 흔들림',
+      jitterXs: '→ 흔들림',
       running: '가동 중',
+      ding: '띵!',
       rules: [
         '높고 가운데에 둔다. 기는 사방으로 퍼진다.',
         '물과 쇠를 멀리한다. 어항·냉장고·거울 뒤는 흉.',
-        '콘크리트 벽 하나에 기운이 열에 하나로 꺾인다(약 -10dB 이상).',
+        '콘크리트 벽 하나에 기운이 열에 하나 밑으로 꺾인다(10dB 넘게).',
         '2.4GHz는 멀리 가나 붐비고, 5GHz는 빠르나 벽에 약하다.',
         '2.4GHz는 1·6·11 세 길이 서로 부딪히지 않는다.',
-        '안테나는 하나는 세우고 하나는 눕힌다.',
+        '안테나는 하나 세우고 하나 눕힌다.',
         '모자란 곳은 비보한다(메시·중계기).',
       ],
       strays: [['옆집아님_2G', 1, -62], ['비번은공유기뒷면', 6, -66], ['5층_공유기_만지지마', 6, -71], ['FREE_WIFI_진짜무료아님', 1, -78], ['우리집아님_5G', 36, -80]],
       ch: '',
       needle: '패철 바늘: 11번 길(옆집이 안 쓰는 길).',
-      raise: '비보 세우기',
+      raise: '비보 세우기(메시)',
       take: '비보 거두기',
       hint: ['공유기를 끌어 자리를 옮겨 보세요.', '공유기를 끌어 옮겨 보세요'],
       nextRule: '다음 비결',
@@ -810,7 +847,7 @@
     }
     return t1 > t0;
   }
-  const nearWall = (x, y, r) => DRAW_WALLS.some(([x1, y1, x2, y2]) => {
+  const nearWall = (x, y, r, walls = DRAW_WALLS) => walls.some(([x1, y1, x2, y2]) => {
     const vx = x2 - x1, vy = y2 - y1;
     const k = clamp(((x - x1) * vx + (y - y1) * vy) / (vx * vx + vy * vy || 1), 0, 1);
     return Math.hypot(x - (x1 + vx * k), y - (y1 + vy * k)) < r;
@@ -1064,7 +1101,8 @@
   at(tagInstaller, 11.05, 1.32);
   at(tagMicro, 6.18, 1.96);
   at(tagCall, 2.0, 1.48);
-  tagCall.querySelector('.txt').textContent = L.onCall;
+  const tagCallTxt = tagCall.querySelector('.txt');
+  tagCallTxt.textContent = L.call.on;
   pieces.push(tagCall);
   at(bibo, 4.45, 3.32);
   at(seal, 7.2, 0.15);
@@ -1216,10 +1254,10 @@
   ROOMS.forEach((r) => {
     const li = document.createElement('li');
     li.className = 'room';
-    li.innerHTML = '<span class="rn"></span><span class="db"><b>—</b><small>dBm</small></span><span class="nt" hidden><span class="nt-l"></span><span class="nt-s"></span></span><span class="vd"></span>';
+    li.innerHTML = '<span class="rn"></span><span class="db"><b>—</b><small>dBm</small></span><span class="nt" hidden><span class="nt-l"></span><span class="nt-s"></span><span class="nt-xs"></span></span><span class="vd"></span>';
     li.querySelector('.rn').textContent = L.rooms[r.id];
     roomsList.append(li);
-    rows[r.id] = { li, db: li.querySelector('.db b'), vd: li.querySelector('.vd'), nt: li.querySelector('.nt'), ntL: li.querySelector('.nt-l'), ntS: li.querySelector('.nt-s'), level: -1, num: null, anim: 0 };
+    rows[r.id] = { li, db: li.querySelector('.db b'), vd: li.querySelector('.vd'), nt: li.querySelector('.nt'), ntL: li.querySelector('.nt-l'), ntS: li.querySelector('.nt-s'), ntXs: li.querySelector('.nt-xs'), level: -1, num: null, anim: 0 };
   });
   const sum = document.createElement('li');
   sum.className = 'sum';
@@ -1280,6 +1318,7 @@
     micro: false,
     lastMoved: 'router',
     final: false,      // autoplay: summary and seal allowed
+    callBack: false,   // autoplay: the study's call may say "you're back" (the tag beat)
   };
   let mode = 'auto';
   let devScale = 1;
@@ -1449,6 +1488,7 @@
       row.db.textContent = '—';
       row.vd.replaceChildren();
       row.nt.hidden = true;
+      row.nt.classList.remove('ok');
       row.li.classList.remove('v0', 'v1', 'v2', 'v3', 'jitter');
       seatV[r.id].textContent = '';
       hatchEls[r.id].setAttribute('opacity', 0);
@@ -1465,12 +1505,31 @@
     clearTimeout(busyTimer);
     busyTimer = setTimeout(() => { if (!dragging && !state.micro) verdictsSec.setAttribute('aria-busy', 'false'); }, ms);
   }
+  // The client's video call in the study follows the study's energy: dropping, frozen, fine, and
+  // "back" once it has been bad and comes good again (in the show, only at the tag beat).
+  let callWasDown = false;
+  let callNow = 'on';
+  function callState(lvStudy) {
+    if (lvStudy === 0) return 'hear';
+    if (lvStudy === 1) return 'frozen';
+    return callWasDown && (mode === 'manual' || state.callBack) ? 'back' : 'on';
+  }
+  function setCall(cs) {
+    if (cs === callNow) return;
+    callNow = cs;
+    tagCallTxt.textContent = L.call[cs];
+    tagCall.classList.toggle('down', cs === 'hear' || cs === 'frozen');
+    tagCall.classList.toggle('back', cs === 'back');
+    if (cs === 'back' && animateNow()) tagCall.animate([{ transform: 'scale(1.35)' }, { transform: 'scale(.95)', offset: .6 }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+  }
   let readGen = 0;
   function readout(stagger = 0) {
     const gen = ++readGen;
     if (animateNow()) quietFor(stagger * ROOMS.length + 800);
     const values = roomValues();
     lastValues = values;
+    const cs = callState(level(values.study));
+    if (cs === 'hear' || cs === 'frozen') callWasDown = true;
     ROOMS.forEach((r, i) => {
       const v = values[r.id];
       const lv = level(v);
@@ -1481,9 +1540,15 @@
         setStamp(row, lv);
         const jitter = r.id === 'kitchen' && state.micro;
         row.li.classList.toggle('jitter', jitter);
-        const note = jitter ? [L.jitter, L.jitter] : r.id === 'study' && lv === 0 ? [L.callDrops, L.callDropsShort] : null;
-        if (note) { row.ntL.textContent = note[0]; row.ntS.textContent = note[1]; }
+        const note = jitter ? [L.jitter, L.jitter, L.jitterXs] : r.id === 'study' ? L.callNote[cs] : null;
+        const was = row.nt.hidden ? '' : row.ntS.textContent;
+        if (note) { row.ntL.textContent = note[0]; row.ntS.textContent = note[1]; row.ntXs.textContent = note[2] || note[1]; }
         row.nt.hidden = !note;
+        row.nt.classList.toggle('ok', r.id === 'study' && cs === 'back');
+        if (note && note[1] !== was && r.id === 'study' && cs === 'back' && animateNow()) {
+          row.nt.animate([{ opacity: 0, transform: 'translateY(40%)' }, { opacity: 1, transform: 'none' }], { duration: 360, easing: 'ease-out' });
+          row.li.animate([{ backgroundColor: 'rgba(79, 138, 122, .3)' }, { backgroundColor: 'rgba(79, 138, 122, 0)' }], { duration: 1100, easing: 'ease-out' });
+        }
         seatV[r.id].textContent = minus(v);
         seatV[r.id].setAttribute('class', 'seat-v' + (lv <= 1 ? ' bad' : lv === 3 ? ' good' : ''));
         hatchEls[r.id].setAttribute('fill', lv === 0 ? 'url(#hatch-bad)' : 'url(#hatch-mixed)');
@@ -1492,7 +1557,7 @@
       if (stagger && animateNow()) setTimeout(apply, i * stagger); else apply();
     });
     const lvAll = overall(values);
-    tagCall.classList.toggle('down', level(values.study) === 0);
+    setCall(cs);
     const showSum = mode === 'manual' || state.final;
     sum.classList.toggle('on', showSum);
     sum.classList.toggle('good', lvAll >= 2);
@@ -1522,25 +1587,47 @@
   }
 
   // The geomancer's comment, brushed in. Korean is written in butgeul.
+  // A key is a comment name, or 'highBut:study,bath' for "the spot, except for those rooms".
   let commentKey = null;
+  function commentText(key) {
+    const [name, rooms] = key.split(':');
+    if (name !== 'highBut') return L.comments[name];
+    // Mostly the study alone (about 79% of the shelf on a 0.01 m grid). Near the bookshelf wall (y ≤ 3.43) and at
+    // the right end (x ≥ 6.91) the bedroom falls short too; along the front edge (y ≥ 3.81, x 5.51–5.80) the
+    // bathroom does; the left-front corner (x < 5.75) suits every room. One arrow press up from the show's spot
+    // (6.2, 3.62) already gives "the bedroom and the study".
+    return rooms === 'study' ? L.comments.highStudy : L.comments.highBut(rooms.split(',').map((id) => L.roomNoun[id]));
+  }
   function setComment(key) {
     if (key === commentKey) return;
     commentKey = key;
     if (!key) { commentEl.replaceChildren(); return; }
-    const text = L.comments[key];
-    if (ko) commentEl.replaceChildren(kk('butgeul', 'clamp(15px, 2.3cqmin, 24px)', text, 'kk-ink'));
+    const text = commentText(key);
+    if (ko) commentEl.replaceChildren(kk('butgeul', 'clamp(15px, 2.6cqmin, 24px)', text, 'kk-ink'));
     else commentEl.textContent = text;
     if (!TTY.reduce) commentEl.animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 900, easing: 'cubic-bezier(.4, 0, .3, 1)' });
   }
-  // Which comment fits where the router sits.
+  // What the old rules say about where the router sits.
+  const OUTER = DRAW_WALLS.filter((w) => w[4] === 'ext');
   function spotKind(p) {
     if (inBox(p.x, p.y, ENTRY)) return 'entry';
     if (inBox(p.x, p.y, OBJ.tank, .7)) return 'water';
     if (inBox(p.x, p.y, OBJ.fridge, .6) || inBox(p.x, p.y, OBJ.mirror, .5) || inBox(p.x, p.y, OBJ.vanity, .5)) return 'metal';
     if (inBox(p.x, p.y, OBJ.shelf, .05)) return 'high';
-    if (nearWall(p.x, p.y, .45)) return 'wall';
+    if (nearWall(p.x, p.y, .45, OUTER)) return 'wall';
     if (Math.hypot(p.x - CENTER.x, p.y - CENTER.y) < 2.4) return 'center';
     return 'far';
+  }
+  // ...and what the numbers say. The rules and the numbers never contradict each other on the page:
+  // a spot the rules call bad but every room likes gets "by the numbers, fine"; the bookshelf is
+  // "the spot" only for the rooms it actually reaches.
+  const BAD_BY_THE_BOOK = ['entry', 'water', 'metal', 'wall', 'far'];
+  function commentFor(p, values) {
+    const kind = spotKind(p);
+    const lvAll = overall(values);
+    if (BAD_BY_THE_BOOK.includes(kind) && lvAll >= 2) return 'numbers';
+    if (kind === 'high' && lvAll < 2) return 'highBut:' + ROOMS.map((r) => r.id).filter((id) => level(values[id]) < 2).join(',');
+    return kind;
   }
 
   function setMeshButton() {
@@ -1552,26 +1639,33 @@
   const sparkDots = [];
   for (let i = 0; i < 46; i++) sparkDots.push(el('circle', { class: 'spark', r: .028, opacity: 0 }, sparks));
   const sparkRnd = rng(245);
-  let microTimer = 0, microLeft = 150;
+  // Someone warms up the last two seconds of a coffee: 0:02, 0:01, ding.
+  let microTimer = 0, dingTimer = 0, microLeft = 2;
+  const clock = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   function microOn() {
     state.micro = true;
-    microLeft = 150;
+    microLeft = 2;
     mw.classList.add('mw-on');
-    mwText.textContent = '2:30';
-    tagMicro.textContent = `${L.running} 2:30`;
+    mwText.textContent = clock(microLeft);
+    tagMicro.textContent = `${L.running} ${clock(microLeft)}`;
     tagMicro.classList.add('on');
     clearInterval(microTimer);
+    clearTimeout(dingTimer);
     microTimer = setInterval(() => {
       microLeft--;
-      const t = `${Math.floor(microLeft / 60)}:${String(microLeft % 60).padStart(2, '0')}`;
-      mwText.textContent = t;
-      tagMicro.textContent = `${L.running} ${t}`;
+      mwText.textContent = clock(microLeft);
+      if (microLeft > 0) { tagMicro.textContent = `${L.running} ${clock(microLeft)}`; return; }
+      clearInterval(microTimer);
+      tagMicro.textContent = L.ding;
+      if (!TTY.reduce) tagMicro.animate([{ transform: 'scale(1.3)' }, { transform: 'none' }], { duration: 260, easing: 'ease-out' });
+      dingTimer = setTimeout(microOff, 400);
     }, 1000);
     noise = new Float32Array(NX * NY);
     readout();
     kick();
   }
   function microOff() {
+    clearTimeout(dingTimer);
     if (!state.micro) return;
     state.micro = false;
     clearInterval(microTimer);
@@ -1671,16 +1765,17 @@
       const isPath = s.tagName === 'path';
       const len = isPath && !s.hasAttribute('pathLength') ? s.getTotalLength() : 1;
       s.animate([{ strokeDasharray: `${len} ${len}`, strokeDashoffset: len, opacity: 0 }, { opacity: 1, offset: .04 }, { strokeDasharray: `${len} ${len}`, strokeDashoffset: 0, opacity: 1 }],
-        { duration: 520, delay: 60 + i * 26, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'backwards' });
+        { duration: 440, delay: 40 + i * 19, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'backwards' });
     });
-    const after = 60 + strokes.length * 26 + 200;
+    // Everything settles by about 1.6 s, before the close-up opens: the seal at 2.46 s lands alone.
+    const after = 40 + strokes.length * 19 + 120;
     pieces.forEach((p, i) => {
       p.classList.remove('unseen');
-      if (!TTY.reduce) p.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: after + (i % 24) * 18, fill: 'backwards' });
+      if (!TTY.reduce) p.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: after + (i % 24) * 9, fill: 'backwards' });
     });
     if (!TTY.reduce) {
-      dial.animate([{ transform: 'rotate(-400deg)' }, { transform: 'rotate(12deg)', offset: .78 }, { transform: 'rotate(-4deg)', offset: .9 }, { transform: 'rotate(0deg)' }], { duration: 1700, easing: 'cubic-bezier(.25, .7, .3, 1)' });
-      needle.animate([{ transform: `rotate(${NEEDLE_TO + 140}deg)` }, { transform: `rotate(${NEEDLE_TO - 30}deg)`, offset: .55 }, { transform: `rotate(${NEEDLE_TO + 12}deg)`, offset: .8 }, { transform: `rotate(${NEEDLE_TO}deg)` }], { duration: 1900, easing: 'ease-out' });
+      dial.animate([{ transform: 'rotate(-400deg)' }, { transform: 'rotate(12deg)', offset: .78 }, { transform: 'rotate(-4deg)', offset: .9 }, { transform: 'rotate(0deg)' }], { duration: 1450, easing: 'cubic-bezier(.25, .7, .3, 1)' });
+      needle.animate([{ transform: `rotate(${NEEDLE_TO + 140}deg)` }, { transform: `rotate(${NEEDLE_TO - 30}deg)`, offset: .55 }, { transform: `rotate(${NEEDLE_TO + 12}deg)`, offset: .8 }, { transform: `rotate(${NEEDLE_TO}deg)` }], { duration: 1550, easing: 'ease-out' });
       compass.animate([{ opacity: 0, scale: .85 }, { opacity: 1, scale: 1 }], { duration: 500, easing: 'ease-out' });
     }
   }
@@ -1698,6 +1793,9 @@
     hideCloseup();
     tagInstaller.classList.remove('under-lens');
     state.final = false;
+    state.callBack = false;
+    callWasDown = false;
+    setCall('on');
     state.mesh.on = false;
     showDevice(state.mesh, false);
     setMeshButton();
@@ -1729,7 +1827,7 @@
     drawIn();
 
     // 1.6 s: before anything else, a close-up of the shoe cabinet: the router among the shoes,
-    // and at 2.5 s a big red 凶 / 흉 seal on it.
+    // and at 2.46 s a big red 凶 / 흉 seal on it. Until 2.9 s that seal is the only thing that lands.
     if (!await until(1600, mine)) return;
     openCloseup(mine);
 
@@ -1739,38 +1837,42 @@
     drawDevice(state.router);
     pop(state.router.pop);
     tagInstaller.classList.add('on');
-    spreadFrom(state.router);
-    readout(140);
-    setComment('entry');
 
-    // 6.0 s: the close-up goes back into the cabinet. 6.5 s: behind the fish tank.
-    if (!await until(6000, mine)) return;
+    // 2.9 s: once the seal has settled, the ink spreads and the verdicts follow it in.
+    if (!await until(2900, mine)) return;
+    spreadFrom(state.router);
+    setComment('entry');
+    if (!await until(3200, mine)) return;
+    readout(140);
+
+    // 4.5 s: the close-up goes back into the cabinet. 4.95 s: behind the fish tank (6.25 s), so the
+    // entrance line has its 3.3 s (10 words) and the water line its 5 s (15 words) before 11.3 s.
+    if (!await until(4500, mine)) return;
     closeCloseup();
-    if (!await until(6500, mine)) return;
+    if (!await until(4950, mine)) return;
     tagInstaller.classList.remove('on');
-    await carryTo(SPOT.tank);
+    await carryTo(SPOT.tank, { dur: 1300 });
     if (!live(mine)) return;
     spreadFrom(state.router);
     readout(90);
     setComment('water');
 
-    // 11 s: up on the bookshelf, in the middle of the flat.
-    if (!await until(11000, mine)) return;
-    await carryTo(SPOT.shelf, { lift: 1 });
+    // 10.0 s: up on the bookshelf, in the middle of the flat (11.3 s). The spot, but for the study.
+    if (!await until(10000, mine)) return;
+    await carryTo(SPOT.shelf, { lift: 1, dur: 1300 });
     if (!live(mine)) return;
     spreadFrom(state.router);
     readout(90);
-    setComment('high');
+    chooseComment();
 
-    // 14.5 s: someone heats leftovers.
-    if (!await until(14500, mine)) return;
+    // 14.45 s: someone warms up a coffee for two seconds; ding at 16.45.
+    if (!await until(14450, mine)) return;
     microOn();
     setComment('microwave');
-    if (!await until(16500, mine)) return;
-    microOff();
 
-    // 17.5 s: a remedy in the study doorway, and the seal.
-    if (!await until(17500, mine)) return;
+    // 17.0 s: a remedy in the study doorway; 17.6 s the seal.
+    if (!await until(17000, mine)) return;
+    microOff();
     state.mesh.on = true;
     state.mesh.x = SPOT.mesh.x; state.mesh.y = SPOT.mesh.y;
     showDevice(state.mesh, true);
@@ -1782,8 +1884,13 @@
     spreadFrom(state.mesh, 900);
     readout(60);
     setComment('mesh');
-    if (!await until(18100, mine)) return;
+    if (!await until(17600, mine)) return;
     state.final = true;
+    readout();
+
+    // 19.0 s (tag): the client's call comes back.
+    if (!await until(19000, mine)) return;
+    state.callBack = true;
     readout();
 
     if (!await until(22000, mine)) return;
@@ -1822,6 +1929,9 @@
     drawDevice(state.router); drawDevice(state.mesh);
     setMeshButton();
     state.final = true;
+    // The study was down before the remedy; the last scene is the call coming back.
+    state.callBack = true;
+    callWasDown = true;
     bibo.classList.add('on');
     settleMap();
     readout();
@@ -1840,7 +1950,7 @@
   }
   function chooseComment() {
     if (state.mesh.on && state.lastMoved === 'mesh') setComment('mesh');
-    else setComment(spotKind(state.router));
+    else setComment(commentFor(state.router, lastValues || roomValues()));
   }
   function toPlan(e) {
     const r = plan.getBoundingClientRect();
@@ -1908,7 +2018,7 @@
   /* ================= Sizes that follow the plan's size on screen ================= */
   function fit() {
     const w = plan.getBoundingClientRect().width;
-    if (!w) return;
+    if (!w) { plan.dataset.dense = 'lo'; return; }
     const pxm = w / VB.w;               // screen px per metre
     const u = (px) => (px / pxm).toFixed(4) + 'px';
     const vars = {

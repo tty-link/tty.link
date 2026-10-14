@@ -44,9 +44,10 @@
   :focus-visible { outline: 3px solid #ffd84a; outline-offset: 2px; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-  /* ---- Sky behind the sign: daylight, then the sun starts to set at ten seconds ---- */
+  /* ---- Sky behind the sign: daylight, then the sun sets from six seconds (down by ten, when the
+     slow walker is reported still at the parking lot) ---- */
   .sky { position: absolute; inset: 0; background: linear-gradient(#78b3da, #bfe0ec 62%, #d9ead8); }
-  .sky .dusk { position: absolute; inset: 0; background: linear-gradient(#6b6fa8, #e7928a 46%, #f6c98a 70%, #f3dfb0); opacity: 0; transition: opacity 7s ease-in-out; }
+  .sky .dusk { position: absolute; inset: 0; background: linear-gradient(#6b6fa8, #e7928a 46%, #f6c98a 70%, #f3dfb0); opacity: 0; transition: opacity 4s ease-in-out; }
   .sky .ridge { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 26%; }
   .dusk-on .sky .dusk { opacity: 1; }
   .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 7cqmin; background: linear-gradient(#55703f, #3e5530); }
@@ -105,6 +106,8 @@
   }
   .title > font-kku { color: var(--cream); }
   .sub { margin-top: .35em; font-size: clamp(11.5px, 1.85cqmin, 17px); font-weight: 600; letter-spacing: .06em; color: #e2d3ad; }
+  /* The separator dot is drawn, centred: the font's own middle dot sits off to one side. */
+  .sep { display: inline-block; width: .22em; height: .22em; margin: 0 .42em; border-radius: 50%; background: currentColor; vertical-align: middle; overflow: hidden; line-height: 0; -webkit-text-fill-color: transparent; }
   .lang-ko .sub { letter-spacing: .02em; font-family: 'Gowun Dodum', sans-serif; font-weight: 400; }
 
   /* ---- Map column ---- */
@@ -120,10 +123,10 @@
   }
   .map > * { position: absolute; inset: 0; width: 100%; height: 100%; }
   .terrain { --rv: 120%; -webkit-mask-image: linear-gradient(#000 calc(var(--rv) - 14%), rgba(0, 0, 0, .28) var(--rv)); mask-image: linear-gradient(#000 calc(var(--rv) - 14%), rgba(0, 0, 0, .28) var(--rv)); }
-  .warm { background: linear-gradient(160deg, rgba(255, 170, 90, .0), rgba(255, 150, 80, .0)); mix-blend-mode: multiply; transition: background 7s; pointer-events: none; }
-  .dusk-on .warm { background: linear-gradient(160deg, rgba(255, 214, 165, .32), rgba(240, 168, 140, .26)); }
-  .fog { transition: opacity 1.4s ease-out; pointer-events: none; }
-  .fog.lifted { opacity: 0; }
+  /* Sunset light lies over the fog too: fog at dusk glows. */
+  .warm { background: linear-gradient(160deg, rgba(255, 170, 90, .0), rgba(255, 150, 80, .0)); mix-blend-mode: multiply; transition: background 4s; pointer-events: none; }
+  .dusk-on .warm { background: linear-gradient(160deg, rgba(255, 214, 165, .5), rgba(240, 168, 140, .4)); }
+  .fog { pointer-events: none; }
   .marks, .ink, .leaders { pointer-events: none; overflow: visible; }
   .labels { pointer-events: none; }
   .hit { z-index: 2; border: 0; padding: 0; background: transparent; cursor: crosshair; }
@@ -135,7 +138,14 @@
   .hk .disc { stroke: #fff; }
   .hk .fig { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; }
   .hk .shadow { fill: rgba(30, 30, 20, .35); }
-  .hk.gone { opacity: 0; transition: opacity .25s; }
+  .hk.gone { opacity: 0; } /* off the map: the flyer above the sign takes over from here */
+  /* The long-strider back at the summit after the blow-up: same stride, no checkpoint. */
+  .ghost { opacity: .55; animation: ghost-in .6s ease-out; }
+  @keyframes ghost-in { from { opacity: 0; } }
+  /* Off the edge of the map and over the sign: a layer of its own, clipped to the page. */
+  .fly { position: absolute; inset: 0; z-index: 6; overflow: clip; pointer-events: none; }
+  .fly > div { position: absolute; left: 0; top: 0; width: 24px; height: 24px; margin: -12px 0 0 -12px; }
+  .fly svg { display: block; width: 100%; height: 100%; overflow: visible; }
   .pin { opacity: 0; transition: opacity .5s; }
   .pin.on { opacity: 1; }
 
@@ -158,11 +168,9 @@
     white-space: normal;
   }
   .lbl.on { opacity: 1; translate: 0 0; }
-  /* The separator dot is drawn, centred: the font's own middle dot sits off to one side. */
   .lbl .nw { white-space: nowrap; }
   .lbl .nw.wrapped { display: block; } /* on a line of its own, the break is separator enough */
   .lbl .nw.wrapped .sep { display: none; }
-  .lbl .sep { display: inline-block; width: .22em; height: .22em; margin: 0 .42em; border-radius: 50%; background: currentColor; vertical-align: middle; overflow: hidden; line-height: 0; -webkit-text-fill-color: transparent; }
   .lbl.hide { display: none; }
   .lbl b { font-weight: 800; }
   .lbl i { display: block; margin-top: .15em; font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-weight: 400; font-size: 1.04em; color: #4a3f30; }
@@ -179,13 +187,19 @@
   .herebox .here { display: inline-block; padding: .28em .55em .22em; border-radius: 3px; background: #c8322b; color: #fff; box-shadow: 0 2px 6px rgba(30, 20, 10, .25); white-space: nowrap; }
   .herebox .here b { font-weight: 800; }
   .herebox .park { display: none; margin-top: 3px; padding: .28em .55em .22em; border-radius: 3px; border-left: 4px solid var(--blue); background: rgba(248, 243, 228, .96); box-shadow: 0 2px 6px rgba(30, 20, 10, .22); }
-  .herebox.parked .park { display: block; animation: drop .35s ease-out; }
+  .herebox.parked .park { display: block; animation: drop .35s ease-out; text-align: left; }
+  /* On a wide map the parking line goes under the middle of the sign, so the sign itself only rises. */
+  .map:not(.tiny) .herebox.parked { text-align: center; }
   /* On small maps the second line wraps to the width of the first, to keep the top edge free. */
   .map.small .herebox { display: inline-grid; }
   .map.small .herebox .park { width: 0; min-width: 100%; }
   /* On a tiny map the parking line keeps its room from the start, so nothing moves when it comes. */
   .map.tiny .herebox .park { display: block; visibility: hidden; }
   .map.tiny .herebox.parked .park { visibility: visible; }
+  /* "Sun's down, ..." needs a third line there, which pushed the punchline's tag off the valley: on a
+     tiny map the line is the short one, and the sunset is the colour of the map itself. */
+  .herebox .park .tw, .map.tiny .herebox .park .dw { display: none; }
+  .map.tiny .herebox .park .tw { display: inline; }
   @keyframes drop { from { opacity: 0; transform: translateY(-4px); } }
   @media (prefers-reduced-motion: reduce) { .herebox.parked .park { animation: none; } }
   .lbl.sign {
@@ -198,11 +212,15 @@
     padding-right: 1.3em;
     white-space: nowrap;
   }
+  /* The same signpost pointing west (the end-of-trail one, when the east edge has no room). */
+  .map.tiny .lbl.sign { padding-top: .2em; padding-bottom: .15em; } /* 2 px thinner: room between the tags at the end */
+  .lbl.short .s1, .lbl.shorter .s2 { display: none; } /* the end signpost, shortened to fit a tiny map */
+  .lbl.sign.west { clip-path: polygon(.8em 0, 100% 0, 100% 100%, .8em 100%, 0 50%); padding-left: 1.3em; padding-right: .7em; }
   .lbl.nan { background: #2b1c14; color: #ffd9cc; border: 1.5px solid var(--red); white-space: nowrap; max-width: none; }
   .lbl.nan .alt { white-space: nowrap; }
   .map.tiny .lbl.nan .alt { display: block; } /* "Mount NaN / (elevation NaN m)" on two lines */
   .lbl.nan b { color: #fff; }
-  .lbl.slip { max-width: min(44cqmin, 230px); background: #fff7c7; color: #3d3320; font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-weight: 400; rotate: -2deg; }
+  .lbl.slip { max-width: min(46cqmin, 230px); background: #fff7c7; color: #3d3320; font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-weight: 400; rotate: -2deg; }
   .lang-ko .lbl.slip { font-family: 'Gowun Dodum', sans-serif; font-style: normal; }
   .lbl.place {
     padding: 0;
@@ -268,6 +286,14 @@
   .mom .lamp { width: .7em; height: .7em; border-radius: 50%; background: #2a1a0e; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6); }
   .mom[aria-pressed="true"] { background: linear-gradient(#4a2f1b, #3d2616); color: var(--cream); box-shadow: none; }
   .mom[aria-pressed="true"] .lamp { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+  /* Each stride wears its hiker's colour, so the three on the map can be told apart by stride. */
+  .ctl .dot { display: inline-block; width: .62em; height: .62em; margin-right: .38em; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .85); vertical-align: .02em; }
+  /* While the story plays, all three strides are walking at once: no button shows as picked, and the
+     momentum lamp lights only when the orange hiker sets off. The visitor's own pick is kept and
+     comes back the moment they touch anything. */
+  .story-ui .steps .ctl[aria-pressed="true"] { background: linear-gradient(#4a2f1b, #3d2616); color: var(--cream); box-shadow: none; }
+  .story-ui .mom .lamp { background: #2a1a0e; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6); }
+  .story-ui .mom.lit .lamp { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
   .hint { flex: 1 1 12em; min-width: 0; font-size: clamp(11px, 1.45cqmin, 13.5px); color: #e4d4ae; font-style: italic; font-family: 'Source Serif 4', Georgia, serif; }
   .lang-ko .hint { font-family: 'Gowun Dodum', sans-serif; font-style: normal; }
 
@@ -388,8 +414,10 @@
     .profile { height: calc(clamp(58px, 15cqh, 170px) + var(--extra, 0px)); }
     .ticker .dots { display: none; } /* room for each entry on one line */
   }
-  @container page (max-height: 460px) and (max-width: 340px) {
-    .lang-en .ctl .pre { display: none; } /* "step 0.002 | 0.08 | 1.1": the group says what they are */
+  /* Narrow stages keep the buttons on one row: "stride ● 0.002 | ● 0.08 | ● 1.1" (the group's name
+     and the hikers' colours say what the other two are). */
+  @container page (max-width: 480px) {
+    .lang-en .ctl .pre { display: none; }
   }
   /* Short, wide stages: the legend tightens so the profile keeps its room. */
   @container page (min-width: 700px) and (min-aspect-ratio: 21/20) and (max-height: 700px) {
@@ -434,7 +462,7 @@
     </svg>
     <div class="titles">
       <h1 class="title" id="title"><span data-lang="en">Gradient Descent Trail</span><span data-lang="ko"><font-kku font="gothic" size="clamp(22px, 4.8cqmin, 44px)">경사 하강 탐방로</font-kku></span></h1>
-      <p class="sub"><span data-lang="en">Trail map · Loss Mountains National Park</span><span data-lang="ko">손실산 국립공원 탐방 안내도</span></p>
+      <p class="sub"><span data-lang="en">Trail map<span class="sep">·</span>Loss Mountains National Park</span><span data-lang="ko">손실산 국립공원 탐방 안내도</span></p>
     </div>
   </header>
 
@@ -442,9 +470,9 @@
     <div class="mapcell">
       <div class="map">
         <canvas class="terrain" aria-hidden="true"></canvas>
-        <div class="warm" aria-hidden="true"></div>
         <svg class="marks" aria-hidden="true"></svg>
         <canvas class="fog" aria-hidden="true"></canvas>
+        <div class="warm" aria-hidden="true"></div>
         <svg class="ink" aria-hidden="true"></svg>
         <svg class="leaders" aria-hidden="true"></svg>
         <div class="labels"></div>
@@ -468,7 +496,7 @@
       <ol data-lang="en">
         <li>1. Too long a stride and you skip the valley.</li>
         <li>2. Too short and the sun sets first.</li>
-        <li>3. Flat is not the same as bottom.</li>
+        <li>3. Flat doesn't mean you've hit bottom.</li>
       </ol>
       <ol data-lang="ko">
         <li>1. 보폭이 너무 크면 골짜기를 건너뜁니다.</li>
@@ -484,8 +512,8 @@
   </aside>
 
   <aside class="ranger">
-    <p data-lang="en">On this mountain the summit is where you start. Every step down, you're learning.</p>
-    <p data-lang="ko">이 산은 정상이 출발점이에요. 내려가는 만큼 배우는 중입니다.</p>
+    <p data-lang="en">Take your summit photo before you set off. On this mountain, every step down is learning.</p>
+    <p data-lang="ko">정상 인증샷은 출발할 때 찍으세요. 이 산은 내려갈수록 배우는 산이에요.</p>
     <p class="by"><svg viewBox="0 0 34 22" aria-hidden="true"><path d="M3 15 Q17 19 31 15 L27 13 Q26 6 17 5 Q8 6 7 13 Z" fill="#8a6a3a" stroke="#4a3518" stroke-width="1.3"/><path d="M8 12 Q17 9.5 26 12" stroke="#4a3518" stroke-width="1.6" fill="none"/></svg><span data-lang="en">— Ranger</span><span data-lang="ko">— 레인저</span></p>
   </aside>
 </main>
@@ -518,14 +546,20 @@
       ],
       here: (v) => `<b>You are here</b><span class="nw"><span class="sep">·</span>loss ${v}</span>`,
       sign: 'Minimum ↓ ? km (fog)',
-      parking: (v) => `<b>Still at the parking lot</b><span class="nw"><span class="sep">·</span>loss ${v}</span>`,
-      lake: (v) => `<b>Local-minimum lake<span class="nw"><span class="sep">·</span>${v}</span></b><i>— nice view, the next valley is deeper</i>`,
+      // the same sign at the end; on a tiny map it can lose "(fog)", then "Minimum" (see fit())
+      signEnd: '<span class="s2">Minimum </span>↓ ? km<span class="s1"> (fog)</span>',
+      parking: (v) => `<b><span class="dw">Sun's down, still at the parking lot</span><span class="tw">Still at the parking lot</span></b><span class="nw"><span class="sep">·</span>loss ${v}</span>`,
+      lake: (v) => `<b>Local-minimum lake<span class="nw"><span class="sep">·</span>${v}</span></b><i>— nice view, but rumor has it the next valley is deeper</i>`,
       nan: '<b>Mount NaN</b> <span class="alt">(elevation NaN m)</span>',
-      rescue: 'Rescue advises: install a railing (gradient clipping)',
+      // the count goes up every round: the long-strider flies off every time
+      nth: (n) => (n < 11 ? ['', '', '', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'][n] : n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th')),
+      // the request is one unbroken line of its own (it wrapped as "Please put up a / railing.")
+      rescue: (nth) => `Rescue: ${nth} one today. <span class="nw">Please put up a railing.</span>`,
+      retry: '<b>Back to the top</b><i>— no checkpoint, stride&nbsp;still&nbsp;1.1</i>',
       global: (v) => `<b>Global minimum<span class="nw"><span class="sep">·</span>${v}</span></b><i class="maybe">(probably)</i>`,
       saddle: 'Saddle pass',
       plateau: 'Plateau',
-      steps: ['step 0.002', 'step 0.08', 'step 1.1'],
+      steps: ['stride 0.002', 'stride 0.08', 'stride 1.1'],
       stepsLabel: 'Stride (learning rate)',
       momentum: 'momentum',
       map: 'Trail map. Click a spot, or press Enter for a random one, to start a hiker who walks downhill with the stride you picked.',
@@ -546,10 +580,14 @@
       ],
       here: (v) => `<b>현위치</b><span class="nw"><span class="sep">·</span>손실 ${v}</span>`,
       sign: '최솟값 ↓ ?km (안개)',
-      parking: (v) => `<b>아직 주차장</b><span class="nw"><span class="sep">·</span>손실 ${v}</span>`,
-      lake: (v) => `<b>지역 최솟값 호수<span class="nw"><span class="sep">·</span>${v}</span></b><i>— 경치는 좋은데 옆 골짜기가 더 깊음</i>`,
+      signEnd: '<span class="s2">최솟값 </span>↓ ?km<span class="s1"> (안개)</span>',
+      parking: (v) => `<b><span class="dw">해 졌는데 </span>아직 주차장</b><span class="nw"><span class="sep">·</span>손실 ${v}</span>`,
+      lake: (v) => `<b>지역 최솟값 호수<span class="nw"><span class="sep">·</span>${v}</span></b><i>— 경치는 좋은데, 옆 골짜기가 더 깊다는 소문</i>`,
       nan: '<b>NaN봉</b> <span class="alt">(해발 NaN m)</span>',
-      rescue: '구조대 의견: 난간(기울기 클리핑) 설치 권고',
+      // a no-break space: '세 / 번째예요' must not split
+      nth: (n) => (n < 11 ? ['', '', '', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉', '열'][n] + '\u00a0' : String(n)),
+      rescue: (nth) => `구조대: 오늘만 벌써 ${nth}번째예요. <span class="nw">난간 좀 달아 주세요.</span>`,
+      retry: '<b>처음부터 다시</b><i>— 체크포인트 없음, 보폭&nbsp;1.1&nbsp;그대로</i>',
       global: (v) => `<b>전역 최솟값<span class="nw"><span class="sep">·</span>${v}</span></b><i class="maybe">(아마도)</i>`,
       saddle: '말안장 고개',
       plateau: '평원',
@@ -654,7 +692,11 @@
      walker takes 0.2 s a step and settles in the lake at about 7.6 s; the slow one shuffles
      80 steps by 10 s. The momentum hiker sets off at 10.5 s and runs (0.05 s a step). */
   const LOOP = 22;
-  const AT = { reveal: 0.4, revealDur: 1.2, legend: 0.55, summit: 1.6, go: 2, dusk: 10, orangeShow: 10.2, orangeGo: 10.5, lift: 16.5, stamp: 17, maybe: 18.2 };
+  /* After Mount NaN the long-strider is back at the summit (retry 8.6 s: no checkpoint, same
+     stride); the sun is down by the time the slow walker is reported at 10 s; after the pencilled
+     "(probably)", the opening signpost turns up again at the edge of the fog that never lifts. */
+  const AT = { reveal: 0.4, revealDur: 1.2, legend: 0.55, summit: 1.6, go: 2, dusk: 6, signDown: 7, retry: 8.6, orangeShow: 10.2, orangeGo: 10.5, lift: 16.5, stamp: 17, maybe: 18.2, edge: 19.8 };
+  const LIFT_MS = 1400;
   const PACE = { blue: 0.1, green: 0.2, red: 0.27, orange: 0.05 };
   const AUTO = {
     blue: descend(START[0], START[1], 0.002, 0, 80, -0.6, 1.6),
@@ -709,6 +751,8 @@
   }
   // The legend line keeps the height of its longest entry. Otherwise the map above it resizes (its
   // terrain redrawn, its tags moved) whenever an entry wraps to a second line on a narrow stage.
+  // Measured unrounded and rounded up: offsetHeight rounds 34.44 down to 34, and the two-line entries
+  // then still pushed the map from 240 to 239 px tall and back every few entries.
   function fitTicker() {
     const had = withHint;
     withHint = getComputedStyle(hintLine).display === 'none';
@@ -717,15 +761,32 @@
     if (!ticker.offsetParent) { showTicker(tick); return; }
     const keep = tick;
     let tallest = 0;
-    for (let i = 0; i < tickerItems().length; i++) { showTicker(i); tallest = Math.max(tallest, ticker.offsetHeight); }
+    for (let i = 0; i < tickerItems().length; i++) { showTicker(i); tallest = Math.max(tallest, ticker.getBoundingClientRect().height); }
     showTicker(keep);
-    ticker.style.minHeight = tallest + 'px';
+    ticker.style.minHeight = Math.ceil(tallest - 0.01) + 'px';
   }
   fitTicker();
   addEventListener('resize', fitTicker);
-  ticker.addEventListener('click', () => { takeOver(); showTicker(tick + 1); });
+  // Two columns: the ranger's note is taped over the legend's corner, and on short boards (868 x 633, the
+  // home stage of a 1280 x 720 window) it hid the top of the first entry. The entries start below it, as
+  // long as the elevation profile under them keeps a readable height (not on 800 x 450, say).
+  const legendList = $('.legend ul'), ranger = $('.ranger'), plotBox = $('.profile .plot');
+  function fitRanger() {
+    legendList.style.marginTop = '';
+    if (getComputedStyle(ranger).display === 'none' || !legendList.offsetParent) return;
+    const over = ranger.getBoundingClientRect().bottom - legendList.getBoundingClientRect().top + 3;
+    if (over <= 0) return;
+    legendList.style.marginTop = `calc(.45em + ${Math.ceil(over)}px)`;
+    if (plotBox.getBoundingClientRect().height < 120) legendList.style.marginTop = '';
+  }
+  fitRanger();
+  addEventListener('resize', fitRanger);
+  // Paging through the legend line only holds its own turning for a while; the story goes on.
+  let tickerHold = 0;
+  ticker.addEventListener('click', () => { tickerHold = performance.now() + 5000; showTicker(tick + 1); });
 
-  // Stride buttons and the momentum switch.
+  // Stride buttons and the momentum switch. Picking one does not stop the story either: it only
+  // sets what the next hiker dropped on the map will do.
   const stepsGroup = $('.steps');
   stepsGroup.setAttribute('aria-label', S.stepsLabel);
   let stride = 1, momentum = false;
@@ -733,13 +794,15 @@
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'ctl';
-    // The word before the number ("step", "보폭") can be dropped on the narrowest stages from the
-    // second button on; the group's name still says what the numbers are.
+    // The word before the number ("stride", "보폭") can be dropped on the narrowest stages from the
+    // second button on; the group's name still says what the numbers are. The dot is the colour
+    // of the story hiker who walks with that stride.
     const [word, num] = text.split(' ');
-    b.innerHTML = i ? `<span class="pre">${word} </span>${num}` : text;
+    const dot = `<i class="dot" style="--c: ${COLORS[['blue', 'green', 'red'][i]]}" aria-hidden="true"></i>`;
+    b.innerHTML = i ? `<span class="pre">${word} </span>${dot}${num}` : `${word} ${dot}${num}`;
     b.setAttribute('aria-pressed', String(i === stride));
     b.addEventListener('click', () => {
-      takeOver();
+      setStoryUI(false);
       stride = i;
       strideBtns.forEach((o, k) => o.setAttribute('aria-pressed', String(k === i)));
     });
@@ -749,10 +812,16 @@
   const momBtn = $('.mom');
   $('.mom-text').textContent = S.momentum;
   momBtn.addEventListener('click', () => {
-    takeOver();
+    setStoryUI(false);
     momentum = !momentum;
     momBtn.setAttribute('aria-pressed', String(momentum));
   });
+  // The controls as the story shows them (see .story-ui): on from each new round until the visitor
+  // touches a control or the map.
+  function setStoryUI(on) {
+    board.classList.toggle('story-ui', on);
+    if (!on) momBtn.classList.remove('lit');
+  }
 
   /* ================= View ================= */
   let W = 0, Hh = 0, X0 = 0, X1 = 1, unit = 1; // map size in px, visible x range, marker scale
@@ -781,7 +850,9 @@
     map.style.left = Math.round((cw - w) / 2) + 'px';
     map.style.top = Math.round((ch - h) / 2) + 'px';
     const changed = w !== W || h !== Hh;
-    if (changed) labels.forEach((l) => { l.box = null; l.gaveWay = false; });
+    // Tags are laid out afresh only when the map really changes size: a pixel either way (a rounding)
+    // used to reset them all, and an extra that had given way popped back up in the middle of the end.
+    if (Math.abs(w - W) > 2 || Math.abs(h - Hh) > 2) labels.forEach((l) => { l.box = null; l.gaveWay = false; });
     W = w; Hh = h;
     const A = W / Hh;
     X0 = 0.5 - A / 2; X1 = 0.5 + A / 2;
@@ -891,20 +962,30 @@
       mk('path', { d: 'M-8 2 L0 -6 L8 2 V9 H-8 Z', fill: '#8a4b2a', stroke: '#2c2318', 'stroke-width': 1.3, 'stroke-linejoin': 'round' }, g);
       mk('rect', { x: -2, y: 3, width: 4, height: 6, fill: '#f6efda' }, g);
     });
-    const p = mk('g', { transform: `translate(${px(PARKING[0]).toFixed(1)} ${py(PARKING[1]).toFixed(1)}) scale(${s})` }, marks);
+    // The parking sign's "P" never goes under 10 px on screen (12 user units × at least 0.84).
+    const p = mk('g', { transform: `translate(${px(PARKING[0]).toFixed(1)} ${py(PARKING[1]).toFixed(1)}) scale(${Math.max(s, 0.84).toFixed(3)})` }, marks);
     mk('rect', { x: -7, y: -7, width: 14, height: 14, rx: 2.5, fill: '#2f5fa8', stroke: '#fff', 'stroke-width': 1.5 }, p);
     mk('text', { x: 0, y: 4.6, 'text-anchor': 'middle', fill: '#fff', 'font-size': 12, 'font-weight': 800, 'font-family': 'Overpass, sans-serif' }, p).textContent = 'P';
   }
 
-  /* ---- Fog: a cloud texture; cleared around each hiker and, more faintly, along the way ---- */
-  let fogTex = null, fogSeen = null;
+  /* ---- Fog: a cloud texture; cleared around each hiker and, more faintly, along the way ----
+     Thick enough that the deep valley stays hidden until someone gets near it (the orange hiker,
+     at about 11.7 s). When it lifts at the end, only the core square clears: a band of fog stays
+     along every edge (and over the extra width of wide maps), so what lies past the map is still
+     anybody's guess when the "(probably)" is pencilled in. */
+  let fogTex = null, fogSeen = null, fogClear = null, liftAt = 0; // liftAt: when the fog lifted (0: not yet)
+  // The part of the map the lifting fog clears, in px, and the width of the band left around it.
+  function clearRect() {
+    const band = Math.round(clamp(0.06 * Math.min(W, Hh), 8, 30));
+    return { l: Math.max(0, px(0)) + band, r: Math.min(W, px(1)) - band, t: band, b: Hh - band, band };
+  }
   function makeFog() {
     const w = Math.max(1, Math.round(W)), h = Math.max(1, Math.round(Hh));
     fogC.width = w; fogC.height = h;
     fogTex = document.createElement('canvas');
     fogTex.width = w; fogTex.height = h;
     const g = fogTex.getContext('2d');
-    g.fillStyle = 'rgba(250, 251, 248, .5)';
+    g.fillStyle = 'rgba(250, 251, 248, .87)';
     g.fillRect(0, 0, w, h);
     let seed = 11;
     const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -916,11 +997,31 @@
       g.fillStyle = grd;
       g.fillRect(x - r, y - r, 2 * r, 2 * r);
     }
+    // Fog pools in low ground: the deep valley and its skirt stay hidden until someone walks in.
+    [[VALLEY, 0.3, 0.75], [[0.75, 0.8], 0.24, 0.5]].forEach(([at, rr, a]) => {
+      const x = px(at[0]), y = py(at[1]), r = rr * Hh;
+      const grd = g.createRadialGradient(x, y, 0, x, y, r);
+      grd.addColorStop(0, `rgba(250, 251, 248, ${a})`);
+      grd.addColorStop(0.55, `rgba(250, 251, 248, ${a * 0.7})`);
+      grd.addColorStop(1, 'rgba(250, 251, 248, 0)');
+      g.fillStyle = grd;
+      g.fillRect(x - r, y - r, 2 * r, 2 * r);
+    });
     fogSeen = document.createElement('canvas');
     fogSeen.width = w; fogSeen.height = h;
     // re-clear what every hiker has already walked through
     hikers.forEach((hk) => { for (let i = 0; i <= hk.seenTo; i++) seeAt(hk.path[i]); });
+    // The lift: the core rectangle with soft edges. Drawn as the blurred shadow of a rectangle
+    // held off the canvas (canvas filters are not everywhere yet).
+    fogClear = document.createElement('canvas');
+    fogClear.width = w; fogClear.height = h;
+    const c = clearRect(), cg = fogClear.getContext('2d'), off = w + c.band * 4;
+    cg.shadowColor = '#000';
+    cg.shadowBlur = c.band;
+    cg.shadowOffsetX = off;
+    cg.fillRect(c.l + c.band / 2 - off, c.t + c.band / 2, Math.max(0, c.r - c.l - c.band), Math.max(0, c.b - c.t - c.band));
   }
+  const lifting = (now) => liftAt > 0 && now - liftAt < LIFT_MS;
   function seeAt(p) {
     if (!p || !Number.isFinite(p.loss) || !fogSeen) return;
     const g = fogSeen.getContext('2d');
@@ -939,6 +1040,12 @@
     g.drawImage(fogTex, 0, 0);
     g.globalCompositeOperation = 'destination-out';
     g.drawImage(fogSeen, 0, 0);
+    if (liftAt) {
+      const k = clamp((performance.now() - liftAt) / LIFT_MS, 0, 1);
+      g.globalAlpha = 1 - (1 - k) * (1 - k); // ease out
+      g.drawImage(fogClear, 0, 0);
+      g.globalAlpha = 1;
+    }
     hikers.forEach((hk) => {
       if (!hk.visible || hk.gone) return;
       const x = hk.sx, y = hk.sy, r = 58 * unit;
@@ -968,6 +1075,7 @@
   function setLabel(l, on, text) {
     if (text !== undefined) l.el.innerHTML = text;
     if (!on) l.gaveWay = false;
+    if (on && !l.on && l.tiny && l.tiny.yields) l.box = null; // placed afresh every round (see layoutLabels)
     l.on = on;
     l.el.classList.toggle('on', on);
     layoutLabels();
@@ -984,8 +1092,8 @@
   };
   const overlap = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
   // On a tiny map a tag can carry other rules (`tiny: { prio, optional, reserve, spots, clampOk,
-  // stamp }`): the punchline's tag and its stamp keep their place from the start, and the
-  // extras give way.
+  // stamp, roam, leader, yields, ahead }`): the punchline's tag and its stamp keep their place from
+  // the start, a tag that is up stays put, and the extras give way (see layoutLabels).
   const rule = (l, k) => (tiny && l.tiny && k in l.tiny ? l.tiny[k] : l[k]);
   const cost = (box, placed) => placed.reduce((sum, p) => sum + overlap(box, p), 0);
   // Where the stamp can go on a tag's box b. Normally over its lower right corner (or its upper
@@ -1005,37 +1113,60 @@
   const onMap = (b) => b.l >= 4 && b.t >= 4 && b.r <= W - 4 && b.b <= Hh - 4;
   function layoutLabels() {
     if (!W) return;
-    // Hikers' resting places are kept clear too, so no tag hides the hiker it is about.
-    const placed = hikers.filter((h) => h.visible && !h.nan).map((h) => {
-      const e = h.path[h.n], x = px(e.x), y = py(e.y), r = 12 * unit;
-      return { l: x - r, t: y - r, r: x + r, b: y + r };
-    });
+    // Hikers' resting places are kept clear too, so no tag hides the hiker it is about. On a tiny map
+    // the place of the long-strider's comeback is kept clear from the start, so no tag has to move
+    // when it turns up.
+    const rest = (e) => { const x = px(e[0]), y = py(e[1]), r = 12 * unit; return { l: x - r, t: y - r, r: x + r, b: y + r }; };
+    // (A hiker counts from the moment it is due, not from its first frame: the summit's tags come up in
+    // the same instant as the hikers, and a wide map's "You are here" used to move aside at Mount NaN.)
+    const now = performance.now();
+    const placed = hikers.filter((h) => !h.nan && (h.visible || now >= h.appear - 100)).map((h) => ({ ...rest([h.path[h.n].x, h.path[h.n].y]), user: !!h.user }));
+    if (ghost || tiny) placed.push(rest(ghostAt()));
     leaders.replaceChildren();
     // Once the global minimum is up on a tiny map, the lake's tag keeps only its first line
     // (before that, only when it finds no clear place with both).
     L.lake.el.classList.toggle('brief', tiny && L.valley.on);
-    [...labels].sort((a, b) => rule(a, 'prio') - rule(b, 'prio')).forEach((l) => {
+    if (!L.edge.on || !L.edge.box) L.edge.el.classList.remove('short', 'shorter'); // full length until it has a place
+    /* On a tiny map a tag that is up keeps its place until the round ends: the tags already up are
+       laid out first, and a tag that comes later takes only room that is still free (an optional
+       one stays down). Only the opening signpost (`yields`) still steps down for the tags after it.
+       A tag that comes before tags that outrank it (`ahead`) also keeps clear of where those will
+       go. Before, a later tag of higher priority took the room of one already up, which then hopped
+       elsewhere or vanished just as the new one came (a slip moved three times in one round). */
+    const up = (l) => (tiny && l.box && (l.on || rule(l, 'reserve')) && !rule(l, 'yields') ? 0 : 1);
+    /* On a wide map "You are here" grows its parking line at 10 s, when the tags around the summit are up.
+       It is laid out first, so it makes the room itself: clear of where they are. (Before, the line made
+       it hop 90 to 110 px to the left edge, the middle being a pixel or two over the green hiker at the
+       lake, and the tags after it would otherwise have had to move instead.) */
+    const upNow = tiny || !L.here.el.classList.contains('parked') ? []
+      : labels.filter((o) => o !== L.here && o.on && o.box && !o.el.classList.contains('hide')).map((o) => ({ l: o.box.l - 3, t: o.box.t - 3, r: o.box.r + 3, b: o.box.b + 3 }));
+    [...labels].sort((a, b) => up(a) - up(b) || rule(a, 'prio') - rule(b, 'prio')).forEach((l) => {
       const held = !l.on && rule(l, 'reserve'); // placed and kept clear, still unseen
       l.el.classList.toggle('hide', !l.on && !held);
       l.el.toggleAttribute('aria-hidden', held);
       if (!l.on && !held) return;
-      const at = typeof l.at === 'function' ? l.at() : l.at;
-      const a = [px(at[0]), py(at[1])];
-      let [best, bestCost, bestStamp] = place(l, a, placed);
-      // On a tiny map the lake's tag drops its second line when it has no clear place with it.
-      if (tiny && bestCost > 0 && l === L.lake && !l.el.classList.contains('brief')) {
-        l.el.classList.add('brief');
-        [best, bestCost, bestStamp] = place(l, a, placed);
+      // An extra that gave way on a tiny map stays down for the rest of the round.
+      if (tiny && l.gaveWay) { l.el.classList.add('hide'); l.box = null; return; }
+      const a = anchorOf(l);
+      const room = tiny && !l.box && rule(l, 'ahead') ? placed.concat(planned(rule(l, 'ahead')(), placed))
+        : l === L.here ? placed.concat(upNow) : placed;
+      // (A tag that is up keeps its place when a visitor's hiker comes to rest under it: see place().)
+      const [best, bestCost, bestStamp] = fit(l, a, room, !up(l));
+      if (rule(l, 'optional') && bestCost > 0) { l.el.classList.add('hide'); l.box = null; l.gaveWay = tiny; return; }
+      // Will the lake's tag come to the opening signpost's place? (Then it is covered there; see signDown().)
+      if (tiny && rule(l, 'yields')) {
+        const lk = planned([L.lake], placed)[0];
+        l.byLake = !!lk && overlap(best, lk) * 2 >= (best.r - best.l) * (best.b - best.t);
       }
-      // An extra that gave way on a tiny map stays down for the rest of the round (it would
-      // otherwise pop back up whenever a tag shrinks).
-      if ((rule(l, 'optional') && bestCost > 0) || (tiny && l.gaveWay)) { l.el.classList.add('hide'); l.box = null; l.gaveWay = tiny; return; }
-      placed.push({ l: best.l - 3, t: best.t - 3, r: best.r + 3, b: best.b + 3 });
+      placed.push({ l: best.l - 3, t: best.t - 3, r: best.r + 3, b: best.b + 3, by: l });
       l.el.style.left = best.l.toFixed(1) + 'px';
       l.el.style.top = best.t.toFixed(1) + 'px';
+      l.el.classList.toggle('west', !!best.west);
       l.box = best;
       l.stampAt = bestStamp;
-      if (bestStamp) placed.push({ l: bestStamp.l - 3, t: bestStamp.t - 3, r: bestStamp.r + 3, b: bestStamp.b + 3 });
+      // The stamp's place is kept clear too once it is coming (on a tiny map, from the start).
+      const st = bestStamp || (l === L.valley && l.on ? stampSpots(best)[0] : null);
+      if (st) placed.push({ l: st.l - 3, t: st.t - 3, r: st.r + 3, b: st.b + 3 });
       // a thin leader from the spot to the tag when they drifted apart
       if (rule(l, 'leader') && !held) {
         const cx = clamp(a[0], best.l, best.r), cy = clamp(a[1], best.t, best.b);
@@ -1047,8 +1178,46 @@
     });
     placeStamp();
   }
-  // Where tag l goes (anchor a, clear of the boxes in placed): [box, cost, stamp box or null].
-  function place(l, a, placed) {
+  const anchorOf = (l) => { const at = typeof l.at === 'function' ? l.at() : l.at; return [px(at[0]), py(at[1])]; };
+  // place(), and on a tiny map a tag that has no clear place gets shorter: the lake's drops its second
+  // line, the end signpost its "(fog)" and then its "Minimum" (`.short`, `.shorter`).
+  function fit(l, a, placed, kept) {
+    let r = place(l, a, placed, kept);
+    if (tiny && r[1] > 0 && l === L.lake && !l.el.classList.contains('brief')) {
+      l.el.classList.add('brief');
+      r = place(l, a, placed);
+    }
+    if (tiny && r[1] > 0 && l === L.edge) {
+      for (const c of ['short', 'shorter']) {
+        l.el.classList.remove('short', 'shorter');
+        l.el.classList.add(c);
+        r = place(l, a, placed);
+        if (!r[1]) break;
+      }
+      if (r[1]) l.el.classList.remove('short', 'shorter');
+    }
+    return r;
+  }
+  // Where tags still to come would go now, each clear of the ones before it and of the ones it keeps clear
+  // of itself (the opening signpost left out: it steps down for them). Their text is in place from the start.
+  function planned(list, placed) {
+    const room = placed.filter((p) => !(p.by && rule(p.by, 'yields')));
+    const out = [];
+    for (const t of list) {
+      if (t.on) continue;
+      const own = rule(t, 'ahead') ? planned(rule(t, 'ahead')(), room.concat(out)) : [];
+      const cls = t.el.className;
+      t.el.classList.remove('hide'); // measured unseen (a tag that is not on has no opacity)
+      const [box, c] = fit(t, anchorOf(t), room.concat(out, own));
+      t.el.className = cls;
+      if (box && !(c && rule(t, 'optional'))) out.push({ l: box.l - 3, t: box.t - 3, r: box.r + 3, b: box.b + 3 });
+    }
+    return out;
+  }
+  // Where tag l goes (anchor a, clear of the boxes in placed): [box, cost, stamp box or null]. A tag that is
+  // up (kept) on a tiny map does not count the visitors' hikers when it checks its own place: one that came
+  // to rest by the valley's kept place made that tag look for another, and it pushed the tags already up.
+  function place(l, a, placed, kept) {
     const pad = 4;
     // On a tiny map a tag near the right edge would be measured squeezed: measure it at the left.
     if (tiny) l.el.style.left = '0px';
@@ -1064,12 +1233,13 @@
     // A tag that brings its stamp keeps its own spot clear too (the hiker stands there).
     const mine = withStamp ? [...placed, { l: a[0] - 10 * unit, t: a[1] - 10 * unit, r: a[0] + 10 * unit, b: a[1] + 10 * unit }] : placed;
     // The cost of a box (and of the best place for the stamp on it): overlap, and 150 off the map.
-    const price = (box, inside) => {
-      let c = cost(box, mine) + (inside || rule(l, 'clampOk') ? 0 : 150), st = null;
+    const price = (box, inside, keep) => {
+      const against = keep ? mine.filter((p) => !p.user) : mine;
+      let c = cost(box, against) + (inside || rule(l, 'clampOk') ? 0 : 150), st = null;
       if (withStamp) {
         let sc = Infinity;
         for (const sb of stampSpots(box)) {
-          const k = cost(sb, mine) + (onMap(sb) ? 0 : 150);
+          const k = cost(sb, against) + (onMap(sb) ? 0 : 150);
           if (k < sc) { sc = k; st = sb; }
           if (!k) break;
         }
@@ -1081,17 +1251,22 @@
     // On a tiny map a tag stays where it was while that place is still clear (tags that grow or
     // shrink would otherwise hop between spots).
     if (tiny && l.box && l.box.l + w <= W - pad && l.box.t + h <= Hh - pad) {
-      const box = { l: l.box.l, t: l.box.t, r: l.box.l + w, b: l.box.t + h };
-      const [c, st] = price(box, true);
+      const box = { l: l.box.l, t: l.box.t, r: l.box.l + w, b: l.box.t + h, west: l.box.west };
+      const [c, st] = price(box, true, kept);
       if (!c) { best = box; bestCost = 0; bestStamp = st; }
     }
+    // The opening signpost never moves on a tiny map: where its place is taken, it steps down.
+    if (tiny && l.box && rule(l, 'yields')) return [best, bestCost, bestStamp];
     for (const s of bestCost ? rule(l, 'spots') : []) {
-      const [dx, dy, ax, ay] = typeof s === 'string' ? SPOT[s](g) : [s[0] * unit, s[1] * unit, s[2], s[3]];
+      // A spot given as a function is a place on the map in px: [x, y, ax, ay, west].
+      const fs = typeof s === 'function' ? s() : null;
+      const [dx, dy, ax, ay] = fs ? [fs[0] - a[0], fs[1] - a[1], fs[2], fs[3]]
+        : typeof s === 'string' ? SPOT[s](g) : [s[0] * unit, s[1] * unit, s[2], s[3]];
       let x = a[0] + dx - ax * w, y = a[1] + dy - ay * h;
       const inside = x >= pad && y >= pad && x + w <= W - pad && y + h <= Hh - pad;
       x = clamp(x, pad, W - pad - w);
       y = clamp(y, pad, Hh - pad - h);
-      const box = { l: x, t: y, r: x + w, b: y + h };
+      const box = { l: x, t: y, r: x + w, b: y + h, west: !!(fs && fs[4]) };
       const [c, st] = price(box, inside);
       if (c < bestCost) { best = box; bestCost = c; bestStamp = st; }
       if (c === 0) break;
@@ -1119,27 +1294,64 @@
   // Mount NaN is pinned where the long-strider left the map; the rescue slip goes up nearby.
   const exitAt = () => [AUTO.red.exitX, 0];
   L.nan = label('nan', S.nan, exitAt, [[14, 5, 0, 0], [-14, 5, 1, 0], [0, 5, 0.5, 0]], 2, { leader: false, say: true });
-  L.rescue = label('slip', S.rescue, exitAt, [[34, 36, 0, 0], [18, 36, 0, 0], [60, 44, 0, 0], [-18, 36, 1, 0], [0, 80, 0.5, 0]], 3, { leader: false, say: true, tiny: { prio: 9, optional: true, roam: true, leader: true } });
+  // On a tiny map it goes up only where it can stay: clear of where the lake's tag, the retry tag and
+  // the end signpost will go (`ahead`), or not at all.
+  L.rescue = label('slip', S.rescue(S.nth(3)), exitAt, [[34, 36, 0, 0], [18, 36, 0, 0], [60, 44, 0, 0], [-18, 36, 1, 0], [0, 80, 0.5, 0]], 3,
+    { leader: false, say: true, tiny: { prio: 9, optional: true, roam: true, leader: true, ahead: () => [L.lake, L.retry, L.edge] } });
   /* The trailhead sign; the slow walker never really leaves it, so its "still at the parking
      lot" line is added under the same sign rather than as a tag of its own. Priorities follow
      the order labels appear, so a new tag finds room around the ones already up. */
   L.here = label('herebox', `<div class="here">${S.here(fmt(loss(START[0], START[1]), 3))}</div><div class="park"></div>`, START,
-    [[0, -20, 0.5, 1], [6, -20, 1, 1], [-6, -20, 0, 1]], 0,
+    [[0, -20, 0.5, 1], [0, -23, 0.5, 1], [6, -20, 1, 1], [-6, -20, 0, 1]], 0,
     // On a tiny map it hangs below and left of the summit, its parking line kept from the start:
     // above, it would sit on the summit's hikers and on Mount NaN's corner of the top edge.
     { leader: false, clampOk: true, tiny: { spots: [[6, 16, 1, 0], [6, -20, 1, 1]] } });
   L.here.el.querySelector('.park').innerHTML = S.parking(fmt(AUTO.blue[AUTO.blue.length - 1].loss));
-  L.sign = label('sign', S.sign, START, [[10, 24, 0, 0], [10, 50, 0, 0], [-10, 24, 1, 0]], 1, { leader: false, tiny: { prio: 8, optional: true, spots: [[16, 22, 0, 0], [16, 44, 0, 0], [66, 22, 0, 0]] } });
-  L.lake = label('tag', '', LAKE, [[-30, 92, 0.5, 0], [0, 92, 0.5, 0], [-30, 130, 0.5, 0], [40, 60, 0, 0], [-60, 60, 1, 0]], 4,
+  /* On a tiny map it is the one tag that steps down for later ones (`yields`). It takes the clear place
+     nearest the summit (`roam`) that Mount NaN and the rescue slip will not need (`ahead`), and never
+     moves from there: if the lake's tag will come to the same place it is covered there at 7.6 s,
+     otherwise it goes down on a beat of its own (AT.signDown, see signDown()). */
+  L.sign = label('sign', S.sign, START, [[10, 24, 0, 0], [10, 50, 0, 0], [-10, 24, 1, 0]], 1,
+    { leader: false, tiny: { prio: 8, optional: true, yields: true, roam: true, ahead: () => [L.nan, L.rescue], spots: [[16, 22, 0, 0], [16, 44, 0, 0], [66, 22, 0, 0]] } });
+  L.lake = label('tag', S.lake(fmt(AUTO.green[AUTO.green.length - 1].loss)), LAKE, [[-30, 92, 0.5, 0], [0, 92, 0.5, 0], [-30, 130, 0.5, 0], [40, 60, 0, 0], [-60, 60, 1, 0]], 4,
     { say: true, tiny: { spots: [[24, 10, 0, 0], [40, 60, 0, 0], [-30, 92, 0.5, 0], [0, 92, 0.5, 0], [-60, 60, 1, 0]], roam: true } });
   L.lake.el.style.setProperty('--c', COLORS.green);
   // Its text is known from the start (the orange path is computed on load), so on a tiny map its
-  // place, and the stamp's, can be kept clear before it shows.
+  // place, and the stamp's, can be kept clear before it shows. (So is the lake's, for `ahead`.)
   L.valley = label('tag', S.global(fmt(AUTO.orange[AUTO.orange.length - 1].loss)), VALLEY, [[0, 26, 0.5, 0], [-20, 26, 1, 0], [20, 26, 0, 0], [-24, 0, 1, 0.5], [24, 0, 0, 0.5]], 5,
     { say: true, tiny: { prio: 0.5, reserve: true, clampOk: true, stamp: true, roam: true } });
   L.valley.el.style.setProperty('--c', COLORS.orange);
-  L.saddle = label('place', S.saddle, SADDLE, [[8, 10, 0, 0], [10, 0, 0, 0.5], [0, 12, 0.5, 0], [-8, 10, 1, 0], [8, -8, 0, 1]], 6, { optional: true });
-  L.plateau = label('place', S.plateau, PLATEAU, ['center', 'above', 'below'], 7, { leader: false, optional: true });
+  /* After Mount NaN the long-strider is back at the summit, translucent, with the same stride: no
+     checkpoint to go back to (the shelters on the map are the checkpoints nobody saved). It stands
+     just west of the summit ring, clear of the slow walker. Its tag takes the summit signpost's
+     place (the signpost moves to the edge of the fog at the end). On a tiny map the tag gives way
+     when there is no room; the translucent hiker still shows. */
+  const ghostAt = () => [START[0] - 20 * unit / Hh, START[1]];
+  L.retry = label('tag', S.retry, ghostAt, [[30, 24, 0, 0], [30, 50, 0, 0], [0, 24, 0.5, 0], [-16, 0, 1, 0.5], [30, 80, 0, 0]], 4.5,
+    { say: true, leader: false, tiny: { optional: true, roam: true, leader: true, spots: [[30, 22, 0, 0], [30, 44, 0, 0], [0, 22, 0.5, 0]] } });
+  L.retry.el.style.setProperty('--c', COLORS.red);
+  /* The tag beat after "(probably)": the opening signpost again, now at the edge of the fog that
+     stays, pointing off the map. East edge first; the west edge (sign turned round) when the east
+     has no room. */
+  // Its tip just inside the fog band, or (flush) at the very edge of the map.
+  const edgeSpot = (fy, west, flush) => () => {
+    const c = clearRect();
+    if (west) return [flush ? 4 : c.l - c.band * 0.5, fy * Hh, 0, 0.5, true];
+    return [flush ? W - 4 : c.r + c.band * 0.5, fy * Hh, 1, 0.5];
+  };
+  const EDGE_Y = [0.86, 0.74, 0.62, 0.5, 0.4, 0.32, 0.94];
+  // On a tiny map every pixel of height, nearest three quarters down first (the gaps between the tags
+  // at the end are a few pixels tall).
+  const edgeTinyY = () => { const ys = []; for (let y = 4; y <= Hh - 4; y++) ys.push(y / Hh); return ys.sort((a, b) => Math.abs(a - 0.75) - Math.abs(b - 0.75)); };
+  L.edge = label('sign', S.signEnd, () => [Math.min(1, X1), 0.5],
+    [...EDGE_Y.map((fy) => edgeSpot(fy)), ...EDGE_Y.map((fy) => edgeSpot(fy, false, true)), ...[0.86, 0.6, 0.4].map((fy) => edgeSpot(fy, true))], 5.5,
+    // On a tiny map any height along the fog's edge, then the map's own edge, east and then west:
+    // it comes last and takes only room that is still free (the tags before it keep clear of it).
+    { leader: false, optional: true, say: true, tiny: { get spots() { const ys = edgeTinyY(); return [[false, false], [false, true], [true, false], [true, true]].flatMap(([west, flush]) => ys.map((fy) => edgeSpot(fy, west, flush))); } } });
+  // The place names come with the lifting fog; on a tiny map they are the first to give way, and keep
+  // clear of where the end signpost will go.
+  L.saddle = label('place', S.saddle, SADDLE, [[8, 10, 0, 0], [10, 0, 0, 0.5], [0, 12, 0.5, 0], [-8, 10, 1, 0], [8, -8, 0, 1]], 6, { optional: true, tiny: { prio: 9.5, ahead: () => [L.edge] } });
+  L.plateau = label('place', S.plateau, PLATEAU, ['center', 'above', 'below'], 7, { leader: false, optional: true, tiny: { prio: 9.6, ahead: () => [L.edge] } });
 
   // The stamp sits on the global-minimum tag.
   const stamp = document.createElement('div');
@@ -1181,12 +1393,62 @@
   }
   // A white hiker pictogram on a coloured disc, like a park sign.
   const FIG = 'M1.2 -6.6 a1.9 1.9 0 1 0 0.01 0 M0.6 -3.6 L-0.4 1.2 L-2.8 6.2 M-0.4 1.2 L2 5.6 M0.4 -2.6 L3.2 -0.2 M3.6 -1.4 L4.6 6.4 M-1 -3.6 h-2.6 v4.4 h2.4';
+  const pictogram = (parent, kind) => {
+    mk('circle', { class: 'disc', r: 9.5, fill: COLORS[kind], 'stroke-width': 1.8 }, parent);
+    mk('path', { class: 'fig', d: FIG, 'stroke-width': 1.5 }, parent);
+  };
+
+  // The long-strider's second try (see L.retry): it only stands there. The audience knows the rest.
+  let ghost = null;
+  function setGhost(on) {
+    if (ghost) { ghost.remove(); ghost = null; }
+    if (!on) return;
+    ghost = mk('g', { class: 'hk ghost' }, inkHikers);
+    mk('ellipse', { class: 'shadow', rx: 7, ry: 2.6, cy: 9 }, ghost);
+    pictogram(ghost, 'red');
+    drawGhost();
+  }
+  function drawGhost() {
+    if (!ghost) return;
+    const [x, y] = ghostAt();
+    ghost.setAttribute('transform', `translate(${px(x).toFixed(1)} ${py(y).toFixed(1)}) scale(${unit.toFixed(3)})`);
+  }
+
+  /* The blow-up, seen: a hiker whose loss became NaN leaves the map, and the sign, spinning off
+     the top of the page (0.6 s, one turn, shrinking to 0.3). Drawn on a layer above everything,
+     since the map clips its own. */
+  const flyLayer = document.createElement('div');
+  flyLayer.className = 'fly';
+  flyLayer.setAttribute('aria-hidden', 'true');
+  document.body.append(flyLayer);
+  function flyOff(h) {
+    if (TTY.reduce) return;
+    const p = h.path[h.n - 1], q = h.path[h.n];
+    const r = map.getBoundingClientRect(), page = document.body.getBoundingClientRect();
+    const x0 = r.left - page.left + px(q.x), y0 = r.top - page.top + py(q.y);
+    // On along the way it was going (the end of a leap's arc), and off the page.
+    let dx = px(q.x) - px(p.x), dy = py(q.y) - py(p.y);
+    if (h.leaps) { const [cx, cy] = arcCtrl(p, q, h.n - 1); dx = px(q.x) - cx; dy = py(q.y) - cy; }
+    const len = Math.hypot(dx, dy) || 1;
+    dx /= len; dy /= len;
+    const PW_ = page.width, PH_ = page.height;
+    const out = (v, d, max) => (d > 0 ? (max + 40 - v) / d : d < 0 ? (v + 40) / -d : Infinity);
+    const D = Math.min(out(x0, dx, PW_), out(y0, dy, PH_), 2 * Math.hypot(PW_, PH_));
+    const el = document.createElement('div');
+    el.className = 'hk';
+    pictogram(mk('svg', { viewBox: '-12 -12 24 24' }, el), h.kind);
+    flyLayer.append(el);
+    // Tossed: it swells as it leaves the map (as it does mid-leap), then dwindles into the distance.
+    const s = unit, spin = dx < 0 ? -360 : 360;
+    const at = (f, rot, k) => ({ transform: `translate(${(x0 + dx * D * f).toFixed(1)}px, ${(y0 + dy * D * f).toFixed(1)}px) rotate(${rot}deg) scale(${(k * s).toFixed(3)})` });
+    el.animate([at(0, 0, 1.35), { ...at(0.4, spin * 0.3, 1.6), offset: 0.3 }, at(1, spin, 0.3)],
+      { duration: 600, easing: 'linear', fill: 'forwards' }).onfinish = () => el.remove();
+  }
   function makeHiker(kind, path, pace, opts) {
     const g = mk('g', { class: 'hk' });
     const shadow = mk('ellipse', { class: 'shadow', rx: 7, ry: 2.6, cy: 9 }, g);
     const body = mk('g', {}, g);
-    mk('circle', { class: 'disc', r: 9.5, fill: COLORS[kind], 'stroke-width': 1.8 }, body);
-    mk('path', { class: 'fig', d: FIG, 'stroke-width': 1.5 }, body);
+    pictogram(body, kind);
     const casing = mk('path', { class: 'trail casing' });
     const trail = mk('path', { class: kind === 'red' && !opts.momentum ? 'leap' : 'trail', stroke: COLORS[kind] });
     inkTrails.prepend(casing);
@@ -1272,7 +1534,9 @@
     }
   }
   function drawHiker(h, now) {
-    if (now < h.appear) { if (h.visible) { h.visible = false; h.g.style.display = 'none'; } return false; }
+    // Not out yet still counts as moving: a frame's time can be a little before the tap that made the
+    // hiker, and with the story stopped the frames then ended and the visitor's hiker never set off.
+    if (now < h.appear) { if (h.visible) { h.visible = false; h.g.style.display = 'none'; } return true; }
     if (!h.visible) { h.visible = true; h.g.style.display = ''; styleTrail(h); }
     const k = Math.max(0, (now - h.t0) / 1000 / h.pace);
     let i = Math.min(Math.floor(k), h.n), f = i >= h.n ? 0 : k - i;
@@ -1289,7 +1553,7 @@
     h.body.setAttribute('transform', `translate(0 ${(-bob - lift * 10 * unit).toFixed(1)}) scale(${s.toFixed(3)})`);
     h.shadow.setAttribute('transform', `scale(${unit.toFixed(3)})`);
     h.shadow.setAttribute('opacity', (1 - 0.6 * lift).toFixed(2));
-    if (lastLeap) { h.gone = i >= h.n || f > 0.75; h.g.classList.toggle('gone', h.gone); }
+    if (lastLeap) { h.gone = i >= h.n; h.g.classList.toggle('gone', h.gone); }
     h.trail.setAttribute('d', trailD(h, i, f));
     if (!h.leaps) h.casing.setAttribute('d', h.trail.getAttribute('d'));
     // fog clearing and the profile follow whole steps
@@ -1297,7 +1561,7 @@
     while (h.seenTo < reached) seeAt(h.path[++h.seenTo]);
     if (reached !== h.shown) { h.shown = reached; plotLine(h); }
     const arrived = i >= h.n;
-    if (arrived && !h.done) { h.done = true; plotLine(h); if (h.onArrive) h.onArrive(h); }
+    if (arrived && !h.done) { h.done = true; plotLine(h); if (h.nan) flyOff(h); if (h.onArrive) h.onArrive(h); }
     return !arrived;
   }
 
@@ -1383,17 +1647,22 @@
     hikers.slice().forEach(removeHiker);
     Object.values(L).forEach((l) => setLabel(l, false));
     L.here.el.classList.remove('parked');
-    L.lake.el.innerHTML = '';
+    L.lake.el.innerHTML = S.lake(fmt(AUTO.green[AUTO.green.length - 1].loss)); // kept measurable (see planned())
     stamp.classList.remove('on');
     L.valley.el.classList.remove('maybe-on');
     root.classList.remove('dusk-on');
-    fogC.classList.remove('lifted');
+    liftAt = 0;
+    setGhost(false);
+    setStoryUI(true);
+    momBtn.classList.remove('lit');
     inkPin.classList.remove('on');
     legendItems.forEach((li) => li.classList.remove('on'));
     rules.classList.remove('on');
     fired = {};
     loopStart = now;
     loops++;
+    // This round's count is in the slip from the start, so the tags that keep clear of it measure it right.
+    L.rescue.el.innerHTML = S.rescue(S.nth(loops + 2));
     if (fogSeen) fogSeen.getContext('2d').clearRect(0, 0, fogSeen.width, fogSeen.height);
     story.blue = makeHiker('blue', AUTO.blue, PACE.blue, {
       appear: now + AT.summit * 1000, t0: now + AT.go * 1000,
@@ -1411,9 +1680,28 @@
     });
     story.red = makeHiker('red', AUTO.red, PACE.red, {
       appear: now + AT.summit * 1000, t0: now + AT.go * 1000,
-      onArrive: () => { setLabel(L.nan, true); setTimeout(() => { if (L.nan.on) setLabel(L.rescue, true); }, TTY.reduce ? 0 : 600); },
+      onArrive: () => { setLabel(L.nan, true); setTimeout(() => { if (L.nan.on) setLabel(L.rescue, true, S.rescue(S.nth(loops + 2))); }, TTY.reduce ? 0 : 600); },
     });
     story.orange = null;
+  }
+  // The tag beat (on a tiny map the tags before it keep clear of its place: see layoutLabels).
+  function edgeSign() {
+    setLabel(L.edge, true);
+  }
+  /* On a tiny map the opening signpost goes down on a beat of its own, between the rescue slip (6.1 s) and
+     the lake's tag (7.6 s), unless the lake's tag comes to its place (then it is covered there at 7.6 s).
+     Taken down with the retry tag (8.6 s), it went just as that tag came up somewhere else. (A wide map's
+     retry tag takes the signpost's own place.) */
+  function signDown() {
+    if (!tiny || !L.sign.on) return;
+    layoutLabels(); // the slip is up by now: where the lake's tag will go, with it in place
+    if (!L.sign.byLake) setLabel(L.sign, false);
+  }
+  // The long-strider again at the summit, with the same stride (no second blow-up: everyone knows).
+  function retry() {
+    setGhost(true);
+    setLabel(L.sign, false);
+    setLabel(L.retry, true);
   }
   function spawnOrange(now, appear, go) {
     story.orange = makeHiker('orange', AUTO.orange, PACE.orange, {
@@ -1430,12 +1718,18 @@
     once('rules', AT.legend + legendItems.length * 0.13, () => rules.classList.add('on'));
     once('summit', AT.summit, () => { inkPin.classList.add('on'); setLabel(L.here, true); setLabel(L.sign, true); });
     once('dusk', AT.dusk, () => root.classList.add('dusk-on'));
-    once('orange', AT.orangeShow, () => spawnOrange(now, loopStart + AT.orangeShow * 1000, loopStart + AT.orangeGo * 1000));
-    once('lift', AT.lift, () => { fogC.classList.add('lifted'); setLabel(L.saddle, true); setLabel(L.plateau, true); });
+    once('signDown', AT.signDown, signDown);
+    once('retry', AT.retry, retry);
+    once('orange', AT.orangeShow, () => {
+      spawnOrange(now, loopStart + AT.orangeShow * 1000, loopStart + AT.orangeGo * 1000);
+      momBtn.classList.add('lit'); // shows only while the controls show the story (.story-ui)
+    });
+    once('lift', AT.lift, () => { liftAt = now; setLabel(L.saddle, true); setLabel(L.plateau, true); });
     once('stamp', AT.stamp, stampDown);
     once('maybe', AT.maybe, writeMaybe);
+    once('edge', AT.edge, edgeSign);
     const n = tickerItems().length;
-    if (!TTY.reduce && t >= 2 && (Math.floor(t / 2.6) % n) !== tick && autoplay) showTicker(Math.floor(t / 2.6));
+    if (!TTY.reduce && t >= 2 && (Math.floor(t / 2.6) % n) !== tick && autoplay && now >= tickerHold) showTicker(Math.floor(t / 2.6));
   }
   function stampDown() {
     stamp.classList.add('on');
@@ -1457,27 +1751,37 @@
     if (m) m.animate([{ clipPath: 'inset(-20% 100% -20% 0)' }, { clipPath: 'inset(-20% 0 -20% 0)' }], { duration: 650, easing: 'steps(9, end)' });
   }
 
-  /* ================= Visitors: tap the map, pick a stride ================= */
+  /* ================= Visitors: tap the map, pick a stride =================
+     Only a tap on the map stops the story (the stride buttons and the legend line do not). The story
+     starts over 12 s after the last tap, but never before every hiker the visitor started has
+     arrived and had its result up for 4 s. */
   function takeOver() {
-    if (autoplay) {
-      autoplay = false;
-      // the story stops where it is; hikers already on their way finish their walk
-    }
+    // the story stops where it is; hikers already on their way finish their walk
+    autoplay = false;
+    setStoryUI(false);
+    const now = performance.now();
+    let at = now + 12000;
+    hikers.forEach((h) => { if (h.user) at = Math.max(at, h.t0 + h.n * h.pace * 1000 + 4000); });
     clearTimeout(idle);
     idle = setTimeout(() => {
       autoplay = true;
       if (TTY.reduce) return finalScene();
       resetStory(performance.now());
       wake();
-    }, 12000);
+    }, at - now);
+    TTY.hold(Math.round(at - now)); // and the home page keeps the page up that long
   }
   function dropHiker(x, y) {
-    takeOver();
     if (hikers.length >= 5) removeHiker(hikers[0]);
     const lr = STRIDES[stride];
     const kind = momentum ? 'orange' : ['blue', 'green', 'red'][stride];
-    const path = descend(x, y, lr, momentum ? 0.9 : 0, 120, X0 - 0.005, X1 + 0.005);
-    const pace = momentum ? 0.06 : lr >= 1 ? 0.27 : lr < 0.01 ? 0.1 : 0.15;
+    // The slow walker stops at sunset (80 steps, as in the story); the long-strider that neither
+    // blows up nor settles, bouncing in a valley's skirt, is called after 40 leaps.
+    const max = !momentum && lr < 0.01 ? 80 : !momentum && lr >= 1 ? 40 : 120;
+    const path = descend(x, y, lr, momentum ? 0.9 : 0, max, X0 - 0.005, X1 + 0.005);
+    // Every result is up within about 9 s: long walks go faster.
+    const base = momentum ? 0.06 : lr >= 1 ? 0.27 : lr < 0.01 ? 0.05 : 0.15;
+    const pace = Math.min(base, 9 / Math.max(1, path.length - 1));
     const now = performance.now();
     const h = makeHiker(kind, path, pace, {
       momentum, user: true, appear: now, t0: now + (TTY.reduce ? -1e9 : 250),
@@ -1492,6 +1796,10 @@
       },
     });
     seeAt(path[0]);
+    // On a tiny map the opening signpost steps down at once if the new hiker will stop under it (the tags
+    // that are up stay put, see place()); left to the next layout, it went just as another tag came up.
+    if (tiny) layoutLabels();
+    takeOver();
     wake();
     return h;
   }
@@ -1521,7 +1829,7 @@
     let moving = false;
     hikers.forEach((h) => { if (drawHiker(h, now)) moving = true; });
     drawFog();
-    if (moving || (autoplay && !TTY.reduce)) raf = requestAnimationFrame(frame);
+    if (moving || lifting(now) || (autoplay && !TTY.reduce)) raf = requestAnimationFrame(frame);
   }
   function wake() { if (!raf && running) raf = requestAnimationFrame(frame); }
 
@@ -1537,12 +1845,18 @@
     setLabel(L.here, true); setLabel(L.sign, true);
     inkPin.classList.add('on');
     root.classList.add('dusk-on');
-    fogC.classList.add('lifted');
+    liftAt = -1e9;
     setLabel(L.saddle, true); setLabel(L.plateau, true);
     hikers.forEach((h) => drawHiker(h, now));
-    setLabel(L.rescue, true);
+    setLabel(L.rescue, true, S.rescue(S.nth(loops + 2)));
+    retry();
+    momBtn.classList.add('lit');
     stamp.classList.add('on');
     writeMaybe();
+    edgeSign();
+    // Everything is up at once here, so lay the tags out afresh in order of priority (they came up in
+    // another order above, and on a tiny map a tag that is up keeps its place).
+    labels.forEach((l) => { l.box = null; l.gaveWay = false; });
     layoutLabels();
     drawFog();
   }
@@ -1556,6 +1870,7 @@
     if (changed) {
       drawMarks();
       drawPin();
+      drawGhost();
       makeFog();
       clearTimeout(redrawT);
       redrawT = setTimeout(drawTerrain, terrain.width ? 120 : 0);
@@ -1591,7 +1906,9 @@
     wake();
   });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
-  Promise.all([loaded, document.fonts.ready]).then(() => { fitTicker(); layoutLabels(); TTY.ready(); });
+  // With the fonts in, tags measured in fallback fonts (the reduced-motion final scene is laid out at
+  // once) are placed afresh.
+  Promise.all([loaded, document.fonts.ready]).then(() => { fitTicker(); fitRanger(); labels.forEach((l) => { l.box = null; }); layoutLabels(); TTY.ready(); });
 })();
 </script>
 </body>

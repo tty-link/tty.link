@@ -37,7 +37,7 @@
     --tape: rgba(246, 226, 178, .85);
     --label: #fffdf6;
     --code-blue: #2557d6;
-    --term: #1e2229;
+    --memo: #fff6c8;
     --glow: #ffd23f;
   }
   * { box-sizing: border-box; margin: 0; }
@@ -112,8 +112,13 @@
     cursor: pointer;
   }
   .again:hover { background: var(--courier-tint); }
+  .again.reorder { background: var(--courier); color: #fff; }
+  .again.reorder:hover { background: var(--courier-dark); border-color: var(--courier-dark); }
   .appbar .again { display: none; }
-  .again.wide { margin-top: auto; padding: 9px 12px; border-radius: 10px; font-size: 13.5px; }
+  /* Wide screens: both buttons under the app. Narrow ones have one button in the app bar:
+     "Track again" until the show is over, then "Order again". */
+  .actions { display: flex; gap: 8px; margin-top: auto; }
+  .actions .again { flex: 1; padding: 9px 12px; border-radius: 10px; font-size: 13.5px; }
   @container app (max-width: 330px) { .pdesc { display: none; } }
 
   .appbody {
@@ -235,20 +240,30 @@
 
   .memo { visibility: hidden; }
   .memo.on { visibility: visible; }
-  .term {
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: var(--term);
-    color: #d9dee6;
+  /* The driver's note is a cream memo slip taped into the app; what the driver wrote on it
+     is npm's own output, word for word. */
+  .dnote {
+    position: relative;
+    margin: 0 2px;
+    padding: 10px 12px 9px;
+    border-radius: 2px;
+    background: var(--memo);
+    color: var(--ink);
     font: 500 11.5px/1.5 'IBM Plex Mono', ui-monospace, monospace;
-    white-space: pre-wrap;
     overflow-wrap: anywhere;
+    rotate: -1deg;
+    box-shadow: 0 1px 1px rgba(60, 45, 20, .1), 0 5px 10px -4px rgba(80, 60, 20, .35);
   }
-  .term > span { display: block; }
-  .term .cmd { color: #9fe3a9; }
-  .term .ok { color: #7fdc8c; }
-  .term .line { opacity: 0; }
-  .term .line.on { opacity: 1; }
+  .dnote::before {
+    content: ""; position: absolute; left: 50%; top: -6px; width: 56px; height: 13px;
+    translate: -50% 0; rotate: 2deg;
+    background: rgba(226, 216, 190, .72);
+    box-shadow: 0 0 0 .5px rgba(120, 100, 60, .12);
+  }
+  .dnote > span { display: block; }
+  .dnote .zero { color: var(--courier); font-weight: 700; }
+  .dnote .line { opacity: 0; }
+  .dnote .line.on { opacity: 1; }
 
   /* Short app columns (landscape phones, small windows) drop the history list first. */
   @container app (max-height: 640px) { .history { display: none; } }
@@ -350,6 +365,13 @@
   .notice .nt-name { font: 700 max(8px, 1.9cqw)/1 'IBM Plex Mono', monospace; color: #3c3216; }
   .notice .nt-date { font: 500 max(7px, 1.25cqw)/1 'IBM Plex Mono', monospace; }
   .notice.hot { box-shadow: 0 0 0 .6cqw var(--glow), 0 .3cqw .8cqw rgba(0,0,0,.18); }
+  /* Once, after the show: there is something on the door you can read. */
+  .notice.ping { animation: ping 1.2s ease-in-out; }
+  @keyframes ping {
+    0%, 100% { box-shadow: 0 .3cqw .8cqw rgba(0,0,0,.18); }
+    25%, 70% { box-shadow: 0 0 0 .6cqw var(--glow), 0 .3cqw .8cqw rgba(0,0,0,.18); }
+    48% { box-shadow: 0 0 0 .25cqw var(--glow), 0 .3cqw .8cqw rgba(0,0,0,.18); }
+  }
 
   .mat {
     left: 11cqw; bottom: 13.4cqw; width: 26cqw; height: 6.2cqw;
@@ -413,9 +435,15 @@
   .box .label small { font: 500 max(9px, 1.45cqw)/1 'IBM Plex Mono', 'IBM Plex Sans KR', monospace; color: var(--muted); white-space: nowrap; }
   /* is-odd is the narrowest labelled box: its sticker runs closer to the edges so
      "0.1.2 · 20 lines" fits at the same size as the other boxes' lines. On a phone every
-     sticker does, for the names at their 11px floor. */
+     sticker runs nearly edge to edge (95%), so the names stay at 10px or more. */
   .box[data-id="is-odd"] .label { left: 5%; right: 5%; }
-  @container world (max-width: 470px) { .box .label { left: 5%; right: 5%; } .box .label small { display: none; } }
+  /* In a narrow world the names are all a sticker has room for: stickers nearly as wide as the box,
+     names set a little tighter, so they stay at 10px or more on the smallest phone stage. */
+  @container world (max-width: 470px) {
+    .box .label { left: 2.5%; right: 2.5%; padding-left: .1cqw; padding-right: .1cqw; }
+    .box .label b { letter-spacing: -.06em; }
+    .box .label small { display: none; }
+  }
   .box .print {
     position: absolute;
     left: 6%; top: 30%;
@@ -509,7 +537,6 @@
   .card .meta { font: 500 max(11px, 1.75cqw)/1.2 'IBM Plex Mono', 'IBM Plex Sans KR', monospace; color: var(--muted); }
   .lang-ko .card .meta { font-family: 'IBM Plex Sans KR', 'IBM Plex Mono', sans-serif; }
   .card .sticker {
-    margin-left: auto;
     padding: .45cqw .9cqw;
     border-radius: 999px;
     background: var(--courier);
@@ -533,18 +560,59 @@
   .card code .cm { color: #8a8f96; font-weight: 500; }
   .card .body { font-size: max(12px, 2.1cqw); font-weight: 700; line-height: 1.35; }
   .card .note { margin-top: 1.1cqw; font-size: max(11px, 1.85cqw); line-height: 1.45; color: #3c4148; }
+  @container world (max-width: 460px) { .card .note { line-height: 1.32; } .card .body { line-height: 1.25; } }
+  /* The packing list is a printed slip: ink on paper, dashed like a tear-off form. */
   .card .tree {
     margin: 0;
     padding: 1.2cqw 1.5cqw;
-    border-radius: .8cqw;
-    background: var(--term);
-    color: #d9dee6;
+    border: max(1px, .2cqw) dashed #b4ad9e;
+    border-radius: .4cqw;
+    background: var(--label);
+    color: var(--ink);
     font: 500 max(10.5px, 2.1cqw)/1.45 'IBM Plex Mono', ui-monospace, monospace;
     white-space: pre;
     overflow: hidden;
   }
   .card .tl { display: block; }
   .card .tl.off { visibility: hidden; }
+  /* The box you ordered, labelled like food. Its room is kept from the start, so the code (and
+     the arrow from isOdd) never moves when the label is stamped on. In a wide world it gets a
+     row of its own; in a narrow one (phones) that row would push the card down over is-odd,
+     so there it is stamped over the "Your order" sticker, in the sticker's own slot. */
+  .card .slot { margin-left: auto; display: grid; justify-items: end; align-items: center; }
+  .card .slot > * { grid-area: 1 / 1; }
+  .card .ingr {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: -.2cqw 0 1.1cqw;
+    padding: .45cqw 1cqw .5cqw;
+    border: 1px solid var(--ink);
+    background: #fff;
+    font-size: max(12px, 2.3cqw);
+    font-weight: 700;
+    line-height: 1.25;
+    rotate: -1.5deg;
+    visibility: hidden;
+  }
+  .card .ingr.on { visibility: visible; }
+  /* The label is never smaller than the card's name (12px on a phone). In the sticker's slot it is
+     set a little tighter, with less padding, so the English still fits on one line in the 184px
+     card and stays no taller than the sticker: the card does not grow down over is-odd. There it is
+     stamped straight (tilted, it let the red sticker show around it and its corner touched the
+     line above), and the sticker underneath goes once it is stamped. */
+  .card .slot .ingr {
+    display: none; justify-self: start; margin: 0; padding: .15cqw .6cqw;
+    font-size: 12px; line-height: 1.1; letter-spacing: -.03em; white-space: nowrap; z-index: 1;
+  }
+  @container world (max-width: 460px) {
+    .card .ingr.row { display: none; }
+    .card .slot .ingr { display: block; rotate: 0deg; }
+    /* gone once the stamp has landed (its opacity is up at .18s), not before */
+    .card .slot:has(.ingr.on) .sticker { visibility: hidden; transition: visibility 0s .2s; }
+  }
+  .card .ingr .mono { font-weight: 600; }
+  .card .ingr .bang { color: var(--courier); }
   .card .needs {
     display: inline-block;
     margin-top: 1.1cqw;
@@ -608,8 +676,10 @@
     .logo { font-size: 11.5px; }
     .logo svg { width: 15px; height: 15px; }
     .again { padding: 3px 8px; font-size: 11.5px; }
-    .appbar .again { display: block; }
-    .again.wide { display: none; }
+    .appbar .again.track { display: block; }
+    .app.after .appbar .again.track { display: none; }
+    .app.after .appbar .again.reorder { display: block; }
+    .actions { display: none; }
     .photo { display: none; }
     .hint { bottom: 4px; padding: 3px 9px; font-size: 11.5px; }
     .appbody { gap: 8px; padding: 9px 11px 10px; }
@@ -630,8 +700,8 @@
     .steps li::after { top: 4px; }
     .memo h2 { display: none; }
     .status { flex-wrap: nowrap; white-space: nowrap; overflow: hidden; }
-    .term { padding: 6px 9px; font-size: 11px; line-height: 1.4; }
-    .term .cmd { display: none; }
+    .dnote { margin: 0; padding: 6px 8px 5px; font-size: 11px; line-height: 1.4; letter-spacing: -.01em; }
+    .dnote::before { top: -3px; width: 46px; height: 8px; }
     html:not(.embedded) .layout { padding-bottom: 46px; }
   }
   /* Short phone stages (the home stage on a 360×640 phone is about 330×410): the app keeps
@@ -659,7 +729,8 @@
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.8 18 6v8.6L10 18.8 2 14.6V6z" fill="#e4543b"/><path d="M2 6l8 4.2L18 6M10 10.2v8.6" fill="none" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span data-lang="en">Registry Express</span><span data-lang="ko">레지스트리택배</span>
       </span>
-      <button class="again" type="button"><span data-lang="en">Track again</span><span data-lang="ko">다시 조회</span></button>
+      <button class="again track" type="button"><span data-lang="en">Track again</span><span data-lang="ko">다시 조회</span></button>
+      <button class="again reorder" type="button"><span data-lang="en">Order again</span><span data-lang="ko">한 번 더 주문</span></button>
     </header>
     <div class="appbody">
       <div class="product">
@@ -698,9 +769,12 @@
 
       <div class="memo">
         <h2><span data-lang="en">Driver's note</span><span data-lang="ko">배송 기사 메모</span></h2>
-        <pre class="term"><span class="line cmd">$ npm install is-even</span><span class="line">added 5 packages, and audited 6 packages in 4s</span><span class="line">found <span class="ok">0</span> vulnerabilities</span></pre>
+        <p class="dnote"><span class="line l1">added 5 packages, and audited 6 packages in 4s</span><span class="line">found <b class="zero">0</b> vulnerabilities</span></p>
       </div>
-      <button class="again wide" type="button"><span data-lang="en">Track again</span><span data-lang="ko">다시 조회</span></button>
+      <div class="actions">
+        <button class="again track" type="button"><span data-lang="en">Track again</span><span data-lang="ko">다시 조회</span></button>
+        <button class="again reorder" type="button"><span data-lang="en">Order again</span><span data-lang="ko">한 번 더 주문</span></button>
+      </div>
     </div>
   </section>
 
@@ -812,8 +886,8 @@
       <span class="mono photo-time"></span>
     </div>
     <p class="hint" id="hint">
-      <span data-lang="en">Tap a box to open it.</span>
-      <span data-lang="ko">상자를 누르면 열어 볼 수 있어요.</span>
+      <span data-lang="en">Tap a box, or the notice on the door.</span>
+      <span data-lang="ko">상자나 문에 붙은 안내문을 눌러 보세요.</span>
     </p>
   </section>
 </main>
@@ -907,30 +981,35 @@
     },
     'is-buffer': {
       code: '<span class="cm">' + esc('// … Remove this eventually.') + '</span>',
-      note: TTY.t({ en: 'Never runs when you pass a number. No dependencies, at last.', ko: '숫자를 넣으면 한 번도 안 쓰인다. 드디어 의존성 없음.' }),
+      note: TTY.t({ en: 'Never called when you pass a number. No dependencies, at last.', ko: '숫자를 넣으면 한 번도 안 쓰인다. 드디어 의존성 없음.' }),
     },
   };
+  // Stamped on the box you ordered once the arrow has found is-odd: what it is made of.
+  const INGREDIENTS = TTY.t({
+    en: 'Ingredients: <span class="mono">is-odd</span> 99%, <span class="mono bang">!</span> 1%',
+    ko: '원재료명: <span class="mono">is-odd</span> 99%, <span class="mono bang">!</span> 1%',
+  });
   const NOTICE = {
     title: TTY.t({ en: 'Recall notice', ko: '회수 안내' }),
     meta: TTY.t({ en: 'left-pad 0.0.3 · 11 lines', ko: 'left-pad 0.0.3 · 11줄' }),
-    body: TTY.t({ en: "Withdrawn at the seller's request, March 22, 2016.", ko: '2016년 3월 22일, 판매자 요청으로 회수됨.' }),
+    body: TTY.t({ en: 'Pulled by its own seller on March 22, 2016.', ko: '2016년 3월 22일, 판매자가 직접 내린 상품입니다.' }),
     note: TTY.t({
-      en: "For 2.5 hours, builds failed across thousands of projects that depended on it (Babel, React…). Since then, a package others depend on can't simply be withdrawn.",
-      ko: '2시간 반 동안, 이 상품에 기대던 프로젝트 수천 개의 빌드가 실패했다(Babel, React…). 그 뒤로 남이 쓰는 상품은 마음대로 회수할 수 없다.',
+      en: "For 2.5 hours, builds broke at thousands of projects that hadn't changed a line (Babel, React…). Items others depend on can no longer be pulled at will. Sorry for the inconvenience.",
+      ko: '그 뒤 2시간 반 동안, 코드를 한 줄도 안 바꾼 프로젝트 수천 곳의 빌드가 깨졌습니다(Babel, React 등). 이제 다른 상품이 기대는 상품은 마음대로 내릴 수 없습니다. 이용에 불편을 드려 죄송합니다.',
     }),
   };
 
   // ---------------- The app ----------------
   const STEPS = TTY.t({
-    en: ['Picked up', 'In transit', 'At hub', 'En route', 'Delivered'],
+    en: ['Picked up', 'In transit', 'At hub', 'Delivering', 'Delivered'],
     ko: ['집화처리', '간선상차', '허브 도착', '배송출발', '배달완료'],
   });
   const ROWS = TTY.t({
-    en: [['registry.npmjs.org', 'Picked up'], ['Dependency check: +4 items', 'In transit'], ['npm cache', 'Arrived at hub'], ['node_modules', 'Out for delivery'], ['Front door · 5 items', 'Delivered']],
-    ko: [['registry.npmjs.org', '집화처리'], ['의존성 확인: 4개 동봉', '간선상차'], ['npm 캐시', '허브 도착'], ['node_modules', '배송출발'], ['문 앞 · 5개', '배달완료']],
+    en: [['registry.npmjs.org', 'Picked up'], ['Dependency check: +4 items', 'In transit'], ['npm cache', 'Arrived at hub'], ['Driver: npm', 'Delivering'], ['Front door · 5 items', 'Delivered']],
+    ko: [['registry.npmjs.org', '집화처리'], ['의존성 확인: 4개 동봉', '간선상차'], ['npm 캐시', '허브 도착'], ['배송 기사 npm', '배송출발'], ['문 앞 · 5개', '배달완료']],
   });
   const LIVE = TTY.t({
-    en: [['Picked up', 'registry.npmjs.org'], ['In transit', '+4 items added'], ['At hub', 'npm cache'], ['Out for delivery', 'arriving soon'], ['', 'is-even + 4 more items']],
+    en: [['Picked up', 'registry.npmjs.org'], ['In transit', '+4 items added'], ['At hub', 'npm cache'], ['Delivering', 'arriving soon'], ['', 'is-even and 4 more items']],
     ko: [['집화처리', 'registry.npmjs.org'], ['간선상차', '동봉 상품 4개 추가'], ['허브 도착', 'npm 캐시'], ['배송출발', '곧 도착해요'], ['', 'is-even 외 4건']],
   });
   const stepsEl = $('.steps');
@@ -1054,8 +1133,10 @@
     const meta = TTY.t({ en: `${p.ver} · index.js, ${p.lines} lines`, ko: `${p.ver} · index.js ${p.lines}줄` });
     const needs = p.next && id !== 'is-even'
       ? `<span class="needs dep">${esc(TTY.t({ en: 'needs → ', ko: '필요 → ' }))}${p.next}</span>` : '';
+    const ingr = (where) => `<span class="ingr ${where}">${INGREDIENTS}</span>`;
     return `<div class="head"><span class="name">${id}</span><span class="meta">${esc(meta)}</span>`
-      + (c.sticker ? `<span class="sticker">${esc(c.sticker)}</span>` : '') + `</div>`
+      + (c.sticker ? `<span class="slot"><span class="sticker">${esc(c.sticker)}</span>${ingr('in-slot')}</span>` : '') + `</div>`
+      + (c.sticker ? ingr('row') : '')
       + `<code>${c.code}</code>` + (c.note ? `<p class="note">${esc(c.note)}</p>` : '') + needs;
   }
   function target(id) { return PKG[id] ? PKG[id].next : null; }
@@ -1084,6 +1165,8 @@
     else if (id !== 'list') src.classList.add('open');
     const next = target(id);
     if (TTY.reduce) {
+      // the label first: drawLink measures the card, and the sticker under it must never be drawn
+      if (id === 'is-even') $$('.ingr', card).forEach((el) => el.classList.add('on'));
       drawLink(0);
       if (next) boxes[next].classList.add('glow');
       return;
@@ -1106,6 +1189,15 @@
         { transform: 'none' }, { transform: 'rotate(-5deg)' }, { transform: 'rotate(4deg)' }, { transform: 'rotate(-2deg)' }, { transform: 'none' },
       ], { duration: 520, easing: 'ease-in-out' });
     });
+    if (id === 'is-even') at(wait + dur + 600, () => { if (openId === id) $$('.ingr', card).forEach(stamp); });
+  }
+  function stamp(el) {
+    el.classList.add('on');
+    el.animate([
+      { transform: 'scale(1.7) rotate(-6deg)', opacity: 0 },
+      { transform: 'scale(.94) rotate(1deg)', opacity: 1, offset: .7 },
+      { transform: 'none', opacity: 1 },
+    ], { duration: 260, easing: 'ease-in' });
   }
   function closeCard() {
     if (!openId) return;
@@ -1167,6 +1259,11 @@
   let arrived = 0;
   let interactive = false;
   let showing = false;
+  let reordering = false;
+  // The driver's note, first line: npm's output for the order, and for the same order again
+  // (both from a real install on 2026-10-13).
+  const noteLine = $('.dnote .l1');
+  const NOTE_FIRST = { install: noteLine.textContent, again: 'up to date, audited 6 packages in 1s' };
   function reset() {
     stopTimers();
     world.getAnimations({ subtree: true }).forEach((a) => a.cancel());
@@ -1175,9 +1272,12 @@
     Object.values(boxes).forEach((b) => b.classList.remove('landed', 'open', 'glow'));
     truck.classList.remove('here');
     photo.classList.remove('on');
-    notice.classList.remove('hot');
+    notice.classList.remove('hot', 'ping');
     $('.memo').classList.remove('on');
-    $$('.term .line').forEach((l) => l.classList.remove('on'));
+    $$('.dnote .line').forEach((l) => l.classList.remove('on'));
+    noteLine.textContent = NOTE_FIRST.install;
+    reordering = false;
+    app.classList.remove('after');
     $$('li', stepsEl).forEach((li) => li.classList.remove('done', 'now'));
     $$('li', rowsEl).forEach((li) => { li.classList.remove('on', 'last'); delete li.dataset.t; });
     app.classList.remove('done');
@@ -1204,9 +1304,10 @@
     photo.classList.add('on');
     $('.photo-time').textContent = clock(new Date()).slice(0, 5);
     $('.memo').classList.add('on');
-    $$('.term .line').forEach((l) => l.classList.add('on'));
+    $$('.dnote .line').forEach((l) => l.classList.add('on'));
     interactive = true;
     hint.classList.add('on');
+    app.classList.add('after');
   }
 
   function play() {
@@ -1265,16 +1366,60 @@
     at(4750, () => { truck.classList.remove('here'); truck.getAnimations().forEach((a) => a.cancel()); bed.getAnimations().forEach((a) => a.cancel()); });
     // The driver's note: npm's own words.
     at(3600, () => $('.memo').classList.add('on'));
-    $$('.term .line').forEach((l, k) => at(3650 + k * 380, () => l.classList.add('on')));
+    $$('.dnote .line').forEach((l, k) => at(3650 + k * 380, () => l.classList.add('on')));
     // Why five? Each box needs the next one.
     at(4700, () => packingList(520));
     at(8100, () => closeCard());
-    // An old notice on the door, from 2016.
-    at(8500, () => openCard('left-pad'));
-    at(11300, () => closeCard());
-    // The box you actually ordered.
-    at(11700, punch);
-    at(15200, () => { hint.classList.add('on'); showing = false; });
+    // The box you actually ordered (the arrow reaches is-odd at 10.8 s, the label at 11.4 s).
+    at(8400, punch);
+    // The show is over: the notice on the door winks once, and the boxes are yours.
+    at(12500, () => {
+      showing = false;
+      hint.classList.add('on');
+      app.classList.add('after');
+      notice.classList.add('ping');
+    });
+  }
+  notice.addEventListener('animationend', () => notice.classList.remove('ping'));
+
+  // The same order again: the truck comes back, tips its empty bed, shakes it twice, and
+  // leaves. npm has nothing to add.
+  function reorder() {
+    if (reordering) return;
+    if (showing || !interactive) delivered();
+    hint.classList.remove('on');
+    closeCard();
+    reordering = true;
+    const lines = $$('.dnote .line');
+    const done = () => {
+      noteLine.textContent = NOTE_FIRST.again;
+      stSub.textContent = TTY.t({ en: '0 new items', ko: '새로 온 상품 0건' });
+    };
+    if (TTY.reduce) { done(); reordering = false; return; }
+    lines.forEach((l) => l.classList.remove('on'));
+    truck.getAnimations().forEach((a) => a.cancel());
+    bed.getAnimations().forEach((a) => a.cancel());
+    truck.classList.add('here');
+    const u = cq();
+    const ease = 'cubic-bezier(.2, .7, .3, 1)';
+    truck.animate([{ translate: `${75 * u}px 0` }, { translate: `${-1.2 * u}px 0`, offset: .85 }, { translate: '0 0' }], { duration: 750, easing: ease });
+    wheels.forEach((w) => w.animate([{ rotate: '0deg' }, { rotate: '-540deg' }], { duration: 750, easing: ease }));
+    at(750, () => bed.animate([{ rotate: '0deg' }, { rotate: '-20deg' }], { duration: 280, easing: 'ease-in', fill: 'forwards' }));
+    at(1030, () => bed.animate([{ rotate: '-20deg' }, { rotate: '-26deg' }, { rotate: '-20deg' }, { rotate: '-26deg' }, { rotate: '-20deg' }],
+      { duration: 600, easing: 'ease-in-out', fill: 'forwards' }));
+    at(1700, () => bed.animate([{ rotate: '-20deg' }, { rotate: '0deg' }], { duration: 320, easing: 'ease-out', fill: 'forwards' }));
+    at(1750, () => { done(); lines[0].classList.add('on'); });
+    at(2130, () => lines[1].classList.add('on'));
+    at(2100, () => {
+      truck.animate([{ translate: '0 0' }, { translate: `${80 * u}px 0` }], { duration: 800, easing: 'cubic-bezier(.5, 0, .9, .5)', fill: 'forwards' });
+      wheels.forEach((w) => w.animate([{ rotate: '0deg' }, { rotate: '600deg' }], { duration: 800, easing: 'cubic-bezier(.5, 0, .9, .5)' }));
+    });
+    at(2950, () => {
+      truck.classList.remove('here');
+      truck.getAnimations().forEach((a) => a.cancel());
+      bed.getAnimations().forEach((a) => a.cancel());
+      reordering = false;
+    });
   }
 
   // ---------------- Visitors ----------------
@@ -1282,6 +1427,7 @@
     if (!interactive) return;
     // Someone is playing: finish the show now and hand them the boxes.
     if (showing) delivered();
+    hint.classList.remove('on');
     if (openId === id) { closeCard(); return; }
     openCard(id);
   }
@@ -1289,6 +1435,7 @@
   notice.addEventListener('click', (e) => {
     e.stopPropagation();
     if (showing || !interactive) delivered();
+    hint.classList.remove('on');
     if (openId === 'left-pad') { closeCard(); return; }
     openCard('left-pad');
   });
@@ -1297,7 +1444,8 @@
     if (openId && !showing) closeCard();
   });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && openId) { if (showing) delivered(); closeCard(); } });
-  $$('.again').forEach((b) => b.addEventListener('click', () => { play(); }));
+  $$('.again.track').forEach((b) => b.addEventListener('click', () => { play(); }));
+  $$('.again.reorder').forEach((b) => b.addEventListener('click', () => { reorder(); }));
 
   // Sticker print, lines and arrows follow the boxes when the window changes size.
   new ResizeObserver(() => {

@@ -95,6 +95,14 @@
   @keyframes beat { 0%, 30%, 100% { transform: none; } 12% { transform: scale(1.35); } }
   .room .drip { stroke-dasharray: 2 7; animation: drip .7s linear infinite; }
   @keyframes drip { to { stroke-dashoffset: -9; } }
+  /* the phone strip's own drip bag and monitor (the wide room's are outside its crop) */
+  .room .mini { display: none; }
+  .room .mini-cable { transform-box: view-box; transform-origin: 87px 282px; rotate: 26deg; transition: rotate .45s cubic-bezier(.3, .8, .3, 1.2); }
+  .room.plugged .mini-cable { rotate: 0deg; }
+  .room .mini .drip { stroke-dasharray: 1.6 4.4; animation-name: mini-drip; }
+  @keyframes mini-drip { to { stroke-dashoffset: -6; } }
+  .room .mini-ecg { animation: mini-ecg 1.4s linear infinite; }
+  @keyframes mini-ecg { to { transform: translateX(-10px); } }
 
   .say {
     position: absolute;
@@ -332,7 +340,7 @@
   .plot .band-label { position: absolute; left: .35em; bottom: 22%; max-width: 62%; padding: .05em .3em; border-radius: 3px; background: rgba(244, 250, 246, .78); color: #1f7343; font-size: max(11px, .76em); font-weight: 600; line-height: 1.1; }
   .plot .nw { white-space: nowrap; }
   .plot .low-dot { position: absolute; width: .5em; height: .5em; border-radius: 50%; background: var(--bad); box-shadow: 0 0 0 2px #fff; translate: -50% -50%; }
-  .plot .low-dot i { position: absolute; right: calc(100% + .3em); top: 50%; translate: 0 -50%; color: var(--bad); font: 600 max(11px, .7em)/1 'IBM Plex Mono', monospace; font-style: normal; }
+  .plot .low-dot i { position: absolute; right: calc(100% + .3em); top: 50%; translate: 0 -50%; color: var(--bad); font: 600 max(11px, .7em)/1 'IBM Plex Mono', 'IBM Plex Sans KR', monospace; font-style: normal; white-space: nowrap; }
   .reveal-band, .curve-wrap, .plot .low-dot, .band-label { opacity: 0; }
   .plot.drawn .curve-wrap, .plot.drawn .low-dot, .plot.banded .reveal-band, .plot.banded .band-label { opacity: 1; }
 
@@ -367,6 +375,12 @@
     .stage { container-type: normal; display: block; height: 100%; aspect-ratio: 222 / 106; }
     .scene { width: 100%; height: 100%; aspect-ratio: auto; }
     .room { overflow: hidden; }
+    /* in the strip: a small drip bag on the left and a monitor on the right, so the charger is
+       still the drip and the battery still the vital sign; the percent on the phone grows to
+       stay readable (10 px at the 58 px strip of the 358×396 stage) */
+    .room .mini { display: inline; }
+    .room .cable { display: none; }
+    .room .ph-pct { font-size: 19px; }
     .say-wide { display: none; }
     .say-narrow { display: block; position: relative; left: auto; right: auto; bottom: auto; align-self: center; font-size: clamp(11.5px, 3.3cqi, 15px); padding: .4em .6em .45em; margin-right: 2px; }
     .say-narrow::after { left: 0; top: 50%; box-shadow: -1.5px 1.5px 0 var(--teal); }
@@ -468,8 +482,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .room .blinker, .room .ecg, .room .beat, .room .drip { animation: none; }
-    .room .cable { transition: none; }
+    .room .blinker, .room .ecg, .room .mini-ecg, .room .beat, .room .drip, .room .mini .drip { animation: none; }
+    .room .cable, .room .mini-cable { transition: none; }
   }
 </style>
 </head>
@@ -482,6 +496,7 @@
           <svg class="room" viewBox="0 0 300 520" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
             <defs>
               <clipPath id="mon-clip"><rect x="172" y="58" width="108" height="74" rx="3"/></clipPath>
+              <clipPath id="mini-clip"><rect x="264.5" y="249.5" width="26" height="19" rx="1.5"/></clipPath>
               <linearGradient id="sheet-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6f0ae"/><stop offset="1" stop-color="#b3db82"/></linearGradient>
               <linearGradient id="pole-g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c3cfd3"/><stop offset=".5" stop-color="#eef3f4"/><stop offset="1" stop-color="#9eacb1"/></linearGradient>
             </defs>
@@ -552,6 +567,33 @@
               <path d="M4 4 Q 16 -2 28 4 L 30 40 Q 16 52 2 40 Z" fill="#fff" stroke="#a9b9be" stroke-width="2"/>
               <path d="M18 12 L 10 26 H 16 L 13 37 L 23 21 H 17 L 20 12 Z" fill="#f2b705" stroke="#c99400" stroke-width=".8" stroke-linejoin="round"/>
               <rect x="13" y="45" width="8" height="8" rx="2" fill="#dde6e8" stroke="#a9b9be" stroke-width="1.4"/>
+            </g>
+            <!-- the phone strip (viewBox 72 244 222 106) crops all of that out: there a small drip
+                 bag hangs on the left with its own line to the phone, and a monitor on the right -->
+            <g class="mini">
+              <path d="M87 236 V 250" stroke="#9eacb1" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M78 252 Q 87 246.5 96 252 L 97 272 Q 87 280 77 272 Z" fill="#fff" stroke="#a9b9be" stroke-width="1.5"/>
+              <path d="M89.5 254.5 L 82.5 265 H 87 L 84.5 274 L 92.5 262 H 88 L 91 254.5 Z" fill="#f2b705" stroke="#c99400" stroke-width=".6" stroke-linejoin="round"/>
+              <rect x="84.3" y="276.5" width="5.4" height="6" rx="1.5" fill="#dde6e8" stroke="#a9b9be" stroke-width="1"/>
+              <g class="mini-cable">
+                <path d="M87 282 Q 87 295, 95 295" fill="none" stroke="#b9c7cc" stroke-width="4.4" stroke-linecap="round"/>
+                <path d="M87 282 Q 87 295, 95 295" fill="none" stroke="#f4f7f8" stroke-width="2.8" stroke-linecap="round"/>
+                <path class="drip" d="M87 282 Q 87 295, 95 295" fill="none" stroke="#f2b705" stroke-width="1.8" stroke-linecap="round"/>
+                <rect x="94.5" y="290.5" width="9.5" height="9" rx="2.2" fill="#f4f7f8" stroke="#a4b4b9" stroke-width="1.2"/>
+                <rect x="103.5" y="292.6" width="6.5" height="4.8" rx="1.2" fill="#aab6ba"/>
+              </g>
+              <rect x="276" y="236" width="4" height="12" fill="#b7c4c8"/>
+              <rect x="262" y="247" width="31" height="24" rx="3.5" fill="#2b3a41"/>
+              <rect x="264.5" y="249.5" width="26" height="19" rx="1.5" fill="#0d1b24"/>
+              <g clip-path="url(#mini-clip)">
+                <path class="mini-ecg" d="M258 257.5 h2.5 l1 -1.2 l1 1.2 h.8 l.6 1.6 l.9 -6.5 l.9 6.5 l.6 -1.6 h1.7 h2.5 l1 -1.2 l1 1.2 h.8 l.6 1.6 l.9 -6.5 l.9 6.5 l.6 -1.6 h1.7 h2.5 l1 -1.2 l1 1.2 h.8 l.6 1.6 l.9 -6.5 l.9 6.5 l.6 -1.6 h1.7 h2.5 l1 -1.2 l1 1.2 h.8 l.6 1.6 l.9 -6.5 l.9 6.5 l.6 -1.6 h1.7 h2.5 l1 -1.2 l1 1.2 h.8 l.6 1.6 l.9 -6.5 l.9 6.5 l.6 -1.6 h1.7" fill="none" stroke="#47e08a" stroke-width="1.1" stroke-linejoin="round"/>
+              </g>
+              <g transform="translate(267.5 261)">
+                <rect width="14.5" height="6.6" rx="1.6" fill="none" stroke="#8fe3ff" stroke-width="1.1"/>
+                <rect x="14.9" y="2" width="1.4" height="2.6" rx=".5" fill="#8fe3ff"/>
+                <rect class="mini-fill" x="1.2" y="1.2" width="7.4" height="4.2" rx=".8" fill="#47e08a"/>
+              </g>
+              <path class="beat" d="M287 262.6 c-1.1 -1.4 -2.8 -.5 -1.9 .9 l1.9 1.9 l1.9 -1.9 c.9 -1.4 -.8 -2.3 -1.9 -.9 z" fill="#ff6b81"/>
             </g>
             <!-- exam table -->
             <rect x="222" y="306" width="64" height="24" rx="11" fill="#fff" stroke="#c7d6d3" stroke-width="1.6"/>
@@ -708,7 +750,7 @@
                 <span class="lbl xl mono" style="left:50%">12</span>
                 <span class="lbl xl mono minor" style="left:75%">18</span>
                 <span class="lbl xl mono" style="left:100%">24</span>
-                <span class="low-dot" style="left:75%; top:91%"><i>9%</i></span>
+                <span class="low-dot" style="left:75%; top:91%"><i><span data-lang="en">commute 9%</span><span data-lang="ko">퇴근길 9%</span></i></span>
                 <span class="band-label"><span data-lang="en">healthy range <span class="nw">20–80%</span></span><span data-lang="ko">건강 구간 <span class="nw">20~80%</span></span></span>
               </div>
             </figure>
@@ -749,34 +791,34 @@
     en: [
       { test: 'Maximum capacity', result: '81%', ref: '80% or more', finding: 'Normal B', tone: 'ok',
         note: 'Batteries are usually designed to keep about 80% after 500 full cycles (1,000 on newer models). Remarkably spry for its age.' },
-      { test: 'Charge cycles', result: '642', ref: '—', finding: 'Normal A', tone: 'ok',
+      { test: 'Charge cycles', result: '1,042', ref: '—', finding: 'Normal A', tone: 'ok',
         note: '0 to 100% counts as one cycle. Two halves make one.' },
       { test: '1% endurance', result: '23 min', ref: '—', finding: 'Mystery', tone: 'mystery',
         note: 'Even at 0% a little is kept in reserve for protection. The display and reality differ a bit.' },
       { test: 'Cold response', result: '31% at −5 °C → shut down', ref: '—', finding: 'Caution', tone: 'warn',
         note: "Lithium-ion's internal resistance rises in the cold and the voltage drops suddenly. Keep it in an inside pocket." },
-      { test: 'Temperature while charging', result: '41 °C', aside: ' (gaming while charging)', ref: '35 °C or lower', finding: 'Caution', tone: 'warn',
+      { test: 'Temperature while charging', result: '46 °C', aside: ' (gaming while charging)', ref: '45 °C or lower', finding: 'Caution', tone: 'warn',
         note: "Heat can shrink a battery's capacity for good. Let it rest while it charges." },
       { test: 'Swelling', result: 'none', ref: 'none', finding: 'Normal A', tone: 'ok',
         note: "If it swells, come in at once. Known online as a 'spicy pillow'. Do not press." },
-      { test: 'Overnight charging', result: '100% every night', ref: 'wait at 80%', finding: 'Lifestyle', tone: 'warn',
+      { test: 'Overnight charging', result: '100% every night', ref: 'wait at 80%', finding: 'Fix habits', tone: 'warn',
         note: 'With optimized charging on, it waits at 80% and finishes just before you usually unplug.' },
-      { test: "Owner's battery anxiety", result: 'uneasy at 20%', ref: '—', finding: 'Counseling', tone: 'bad',
+      { test: "Owner's battery anxiety", result: 'uneasy at 20%', ref: '—', finding: 'Treat owner', tone: 'bad',
         note: "20% is still a whole fifth. You're fine." },
     ],
     ko: [
       { test: '최대 용량', result: '81%', ref: '80% 이상', finding: '정상B', tone: 'ok',
         note: '보통 충전 500회에 80% 안팎으로 설계합니다(최근 기종은 1,000회). 연세에 비해 정정하십니다.' },
-      { test: '충전 횟수', result: '642회', ref: '—', finding: '정상A', tone: 'ok',
+      { test: '충전 횟수', result: '1,042회', ref: '—', finding: '정상A', tone: 'ok',
         note: '0→100%를 한 번으로 셉니다. 50%씩 두 번이면 한 번.' },
       { test: '1% 지구력', result: '23분', ref: '—', finding: '미스터리', tone: 'mystery',
         note: '0%가 돼도 보호를 위해 조금 남겨 둡니다. 표시와 실제가 조금 다릅니다.' },
       { test: '추위 반응', result: '영하 5도에서 31% → 꺼짐', ref: '—', finding: '주의', tone: 'warn',
         note: '리튬 이온은 추우면 내부 저항이 커져 전압이 뚝 떨어집니다. 안주머니에 넣어 주세요.' },
-      { test: '충전 중 체온', result: '41°C', aside: ' (충전하며 게임)', ref: '35°C 이하', finding: '주의', tone: 'warn',
-        note: '열을 받으면 배터리 용량이 되돌릴 수 없게 줄 수 있습니다. 충전 중에는 쉬게 해 주세요.' },
+      { test: '충전 중 체온', result: '46°C', aside: ' (충전하며 게임)', ref: '45°C 이하', finding: '주의', tone: 'warn',
+        note: '배터리도 열받으면 늙습니다. 한번 줄어든 용량은 돌아오지 않습니다. 충전 중에는 쉬게 해 주세요.' },
       { test: '배 부풂', result: '없음', ref: '없음', finding: '정상A', tone: 'ok',
-        note: "부풀었다면 즉시 내원. 영어권 별명 '매운 베개'. 누르지 마세요." },
+        note: "부풀었다면 바로 내원하세요. 흔히 '배터리 배부름'이라고 하죠. 절대 누르지 마세요." },
       { test: '밤샘 충전 습관', result: '매일 100%', ref: '80%에서 대기', finding: '개선', pre: '생활 습관', tone: 'warn',
         note: "'최적화된 충전'을 켜면 80%에서 기다렸다가 평소 뽑는 시각 전에 마저 채웁니다." },
       { test: '주인 배터리 불안', result: '20%에서 초조함', ref: '—', finding: '상담', pre: '보호자', tone: 'bad',
@@ -787,8 +829,13 @@
     en: {
       summary: "Don't fill all the way up. Don't run all the way down. Between 20 and 80, it lasts. So do people.",
       doctor: 'Dr. Lithium',
-      rest: "Resting at 80%. I'll finish before your 7 a.m. alarm.",
-      low: "I'm fine. That's still a whole fifth.",
+      guardian: 'The doctor will see you now.',
+      // (a no-break space keeps the last two words of the bubble on one line)
+      rest: "Stopping at 80%. Any more and I'll\u00a0bloat.",
+      low: "I'm fine. I can do 23 minutes on 1%.",
+      // the owner's row once the phone has stopped at 80% (the beat after the summary)
+      fret: 'uneasy even at 80%',
+      fretNote: "Stopping at 80% is a feature, not a bug. You're fine.",
       ref: 'reference', finding: 'Finding',
       plugIn: 'Phone on the exam table: plug the charger in',
       plugOut: 'Phone on the exam table: unplug the charger',
@@ -797,8 +844,11 @@
       summary: '꽉 채우지도, 바닥까지 쓰지도 마세요. 20~80% 사이에서 오래 갑니다. 사람도 그렇습니다.',
       doctor: '리튬 박사',
       doctorRole: '담당의',
-      rest: '80%에서 잠깐 쉴게요. 7시 알람 전에 마저 채울게요.',
-      low: '괜찮아요, 아직 5분의 1이나 남았어요.',
+      guardian: '보호자분, 들어오시래요.',
+      rest: '80%에서 멈출게요. 과식하면 배\u00a0나와요.',
+      low: '괜찮아요. 저 1%로도 23분 버텨요.',
+      fret: '80%에서도 초조함',
+      fretNote: '80%에서 멈추는 건 버그가 아니라 기능입니다. 괜찮아요.',
       ref: '참고치', finding: '판정',
       plugIn: '진찰대 위 휴대폰: 충전기 꽂기',
       plugOut: '진찰대 위 휴대폰: 충전기 뽑기',
@@ -867,14 +917,17 @@
     }
     find.append(stk);
     // spoken as one sentence; the visible cells are separate boxes
-    b.setAttribute('aria-label', `${r.test}: ${r.result}${r.aside || ''}${r.ref !== '—' ? ` (${L.ref} ${r.ref})` : ''}. ${L.finding}: ${r.pre ? r.pre + ' ' : ''}${r.finding}`);
+    b.setAttribute('aria-label', rowLabel(r, r.result));
     b.setAttribute('aria-expanded', 'false');
     b.setAttribute('aria-controls', 'note');
     b.addEventListener('click', () => { takeOver(); toggleNote(i); });
     li.append(b);
     rowsEl.append(li);
-    return { b, res: $('.c-res', b), typed: $('.typed', b), stk, aside: $('.aside', b), result: r.result, more: r.aside || '' };
+    return { b, res: $('.c-res', b), full, typed: $('.typed', b), stk, aside: $('.aside', b), result: r.result, more: r.aside || '' };
   });
+  function rowLabel(r, result) {
+    return `${r.test}: ${result}${r.aside || ''}${r.ref !== '—' ? ` (${L.ref} ${r.ref})` : ''}. ${L.finding}: ${r.pre ? r.pre + ' ' : ''}${r.finding}`;
+  }
 
   /* ---- The X-ray: cathode, separator, anode, separator, ... ---- */
   (() => {
@@ -961,11 +1014,14 @@
   const phFill = $('.ph-fill', room);
   const monPct = $('.mon-pct', room);
   const monFill = $('.mon-fill', room);
+  const miniFill = $('.mini-fill', room);
   const sayEls = $$('.say');
   const side = $('.side');
   const battery = { level: 62, plugged: false };
   let mode = 'idle'; // idle · charging · resting · draining · low
   let worried = false;
+  let fretted = false; // the owner's row has gone from 20% to 80% (ownerFrets)
+  let fretTimer = 0;
   let raf = 0;
   let lastTs = 0;
 
@@ -975,9 +1031,11 @@
     monPct.textContent = lv + '%';
     phFill.setAttribute('width', (17.4 * battery.level / 100).toFixed(2));
     monFill.setAttribute('width', (22 * battery.level / 100).toFixed(2));
+    miniFill.setAttribute('width', (12.1 * battery.level / 100).toFixed(2));
     const c = battery.level < 20 ? '#d64545' : '#2e9d5b';
     phFill.setAttribute('fill', c);
     monFill.setAttribute('fill', battery.level < 20 ? '#ff6b6b' : '#47e08a');
+    miniFill.setAttribute('fill', battery.level < 20 ? '#ff6b6b' : '#47e08a');
   }
   function say(text, low) {
     sayEls.forEach((el) => {
@@ -1001,6 +1059,9 @@
     battery.level = 80;
     say(L.rest);
     settled();
+    // a visitor who charged it gets the owner's row too (the autoplay's comes after the summary)
+    clearTimeout(fretTimer);
+    if (held) fretTimer = setTimeout(() => ownerFrets(!reduce), 1200);
   }
   function worry() {
     worried = true;
@@ -1035,6 +1096,7 @@
   }
   function plug(on) {
     battery.plugged = on;
+    clearTimeout(fretTimer);
     if (on) {
       calm();
       if (battery.level >= 80) rest();
@@ -1137,7 +1199,7 @@
     note.innerHTML = '';
     const head = document.createElement('b');
     head.textContent = ROWS[i].test;
-    note.append(head, ROWS[i].note);
+    note.append(head, i === rows.length - 1 && fretted ? L.fretNote : ROWS[i].note);
     note.classList.add('on');
     placeNote();
     if (!reduce) note.animate([{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'ease-out' });
@@ -1188,6 +1250,30 @@
       if (i === rows.length - 1) at(200, rollEyes);
     });
   }
+  // The tag after the summary: the battery took the advice and stopped at 80%, and the owner's
+  // row is typed over, from uneasy at 20% to uneasy even at 80%, and stamped again.
+  function ownerFrets(animate) {
+    if (fretted) return;
+    fretted = true;
+    const i = rows.length - 1;
+    const r = rows[i];
+    r.full.textContent = L.fret;
+    r.b.setAttribute('aria-label', rowLabel(ROWS[i], L.fret));
+    if (noteFor === i) showNote(i);
+    if (!animate) return;
+    const chars = [...L.fret];
+    const per = Math.min(45, 420 / chars.length);
+    r.res.classList.remove('done');
+    r.typed.textContent = '';
+    chars.forEach((_, k) => at(k * per, () => { r.typed.textContent = chars.slice(0, k + 1).join(''); }));
+    at(chars.length * per + 10, () => { r.res.classList.add('done'); r.typed.textContent = ''; });
+    r.b.animate([{ backgroundColor: 'rgba(214, 69, 69, .22)' }, { backgroundColor: 'rgba(214, 69, 69, .22)', offset: .5 }, { backgroundColor: 'rgba(214, 69, 69, 0)' }], { duration: 1800, easing: 'ease-out' });
+    at(chars.length * per + 120, () => r.stk.animate([
+      { transform: 'scale(1.7) rotate(-14deg)', opacity: .3 },
+      { transform: 'scale(.92) rotate(3deg)', opacity: 1, offset: .65 },
+      { transform: 'none', opacity: 1 },
+    ], { duration: 340, easing: 'cubic-bezier(.4, 0, .6, 1)' }));
+  }
   function scanXray(animate) {
     if (!animate) {
       xray.classList.add('scanned');
@@ -1224,11 +1310,12 @@
       return;
     }
     const units = writingUnits();
-    // about 2.2 s of writing, then the signature and the seal: done by about 19.9 s
+    // about 2.2 s of writing, then the signature and the seal (about 19.0 s), then the owner's row
     const per = Math.min(ko ? 60 : 28, 2200 / Math.max(1, units.length));
     units.forEach((u, k) => u.animate([{ opacity: 0, transform: 'translateY(.08em)' }, { opacity: 1, transform: 'none' }], { duration: 160, delay: k * per, easing: 'ease-out', fill: 'backwards' }));
     const signAt = units.length * per + 200;
     who.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: signAt + 400, fill: 'backwards' });
+    at(signAt + 950 + T.fret, () => ownerFrets(true));
     scribble.animate([{ strokeDasharray: '1', strokeDashoffset: 1 }, { strokeDasharray: '1', strokeDashoffset: 0 }], { duration: 700, delay: signAt, easing: 'ease-in-out', fill: 'both' });
     at(signAt + 950, () => {
       seal.classList.add('on');
@@ -1246,6 +1333,11 @@
     scribble.style.strokeDasharray = '1';
     scribble.style.strokeDashoffset = '1';
     seal.classList.remove('on');
+    fretted = false;
+    clearTimeout(fretTimer);
+    const last = rows[rows.length - 1];
+    last.full.textContent = last.result;
+    last.b.setAttribute('aria-label', rowLabel(ROWS[rows.length - 1], last.result));
   }
   function completeReport() {
     // finish whatever was on its way, without motion
@@ -1257,10 +1349,13 @@
     writeSummary(false);
     scribble.style.strokeDasharray = '';
     scribble.style.strokeDashoffset = '';
+    // the phone already resting at 80% means the owner's beat was on its way too
+    if (mode === 'resting') ownerFrets(false);
   }
 
   /* ---- The timeline (22 s). Times in ms; change them here. ---- */
-  const T = { print: 0, rows: 1500, rowGap: 900, xray: 9500, chart: 11500, plug: 14000, summary: 16500, loop: 22000 };
+  // guardian: the phone's line after row 8 (until the plug clears it); fret: the owner's row, after the seal
+  const T = { print: 0, rows: 1500, rowGap: 900, guardian: 8700, xray: 9500, plug: 11000, chart: 11500, summary: 15600, fret: 500, loop: 22000 };
   let timers = [];
   function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
   function stopTimeline() { timers.forEach(clearTimeout); timers = []; }
@@ -1282,6 +1377,7 @@
     resetPatient();
     printPaper();
     rows.forEach((_, i) => at(T.rows + i * T.rowGap, () => fillRow(i, true)));
+    at(T.guardian, () => say(L.guardian));
     at(T.xray, () => scanXray(true));
     at(T.chart, () => drawChart(true));
     at(T.plug, () => plug(true));
@@ -1306,6 +1402,7 @@
       held = true;
       stopTimeline();
       completeReport();
+      if (mode === 'idle') say(''); // the phone's line to the guardian
     }
     bump();
   }
@@ -1316,6 +1413,7 @@
     completeReport();
     battery.level = 62;
     plug(true); // reduced motion: straight to 80% and the resting bubble
+    ownerFrets(false);
   }
   applyLayout();
   drawBattery();

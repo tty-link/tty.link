@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-tty-nav="bottom right">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -171,6 +171,30 @@
     margin-top: -.5em;
   }
   .p-pin::after { content: ""; position: absolute; left: 50%; top: 100%; translate: -50% 0; border: .35em solid transparent; border-top-color: var(--warn); }
+  /* The last beat: the 47-day bar gets the same red sticker the expired milk got, with the
+     carton's own words on it. As big as the poster title (the joke is not smaller than the heading). */
+  .p-stk {
+    position: absolute;
+    left: calc(var(--d) / 398 * 100% + var(--stk-gap, .7em));
+    top: 50%;
+    z-index: 1;
+    translate: 0 -50%;
+    rotate: -6deg;
+    padding: .3em .55em .32em;
+    border-radius: .4em;
+    background: var(--warn);
+    color: #fff;
+    font: 700 max(12px, min(9cqh, 2.8cqw))/1.05 'Archivo Narrow', sans-serif;
+    letter-spacing: .04em;
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: 0 .2em .5em rgba(0,0,0,.3), 0 0 0 2px #fff;
+    visibility: hidden;
+  }
+  .p-stk.on { visibility: visible; }
+  .p-stk.after-pin { --stk-gap: 3.4em; }
+  /* Korean in Plex, not font-kku sticker: its ㅗ has so short a tick that 보관 read as 브관. */
+  .lang-ko .p-stk { font-family: 'IBM Plex Sans KR', sans-serif; font-weight: 700; letter-spacing: .02em; }
   .p-foot { display: none; }
   @container page (max-aspect-ratio: 9/10) or (max-width: 560px) {
     .p-rows { grid-template-columns: 1fr; row-gap: .4cqh; padding: 1.2cqh 4cqw 1cqh; align-content: space-evenly; }
@@ -182,12 +206,20 @@
     .poster-src { display: none; }
     .p-pin { font-size: max(11px, 6cqh); translate: 0 -50%; margin: 0 0 0 .7em; padding: .2em .45em; }
     .p-pin::after { left: auto; right: 100%; top: 50%; translate: 0 -50%; border: .3em solid transparent; border-right-color: var(--warn); }
+    /* Here each label sits over its bar: the sticker goes to the far end of the bar's row, up on
+       the free end of the label line, clear of the words and of the milk line under it. */
+    .p-stk { left: auto; right: 0; translate: 0 -76%; }
   }
   /* A short poster (the 358×396 phone stage: about 112px) cannot stack four labels over four bars
      and the milk line: the label and its bar share a row again, as on wide screens. */
   @container (max-height: 140px) {
     .p-rows { grid-template-columns: auto 1fr; row-gap: max(3px, 2.4cqh); column-gap: 3cqw; align-content: center; }
     .p-track { margin-bottom: 0; }
+    .p-stk { left: calc(var(--d) / 398 * 100% + var(--stk-gap, .5em)); right: auto; translate: 0 -50%; padding: .22em .45em .24em; }
+    .p-stk .stk-l { display: block; }
+    /* From 2029 there is no room here for both the NOW pin and the sticker; the blue label says now. */
+    .p-stk.after-pin { --stk-gap: .5em; }
+    .p-track:has(> .p-stk.on) > .p-pin { visibility: hidden; }
   }
 
   /* ---- The aisle goes on: neighbouring cases, out of focus ---- */
@@ -296,7 +328,7 @@
     box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 2px 4px rgba(0,0,0,.4);
   }
   .lang-ko .plaque { font-family: 'IBM Plex Sans KR', sans-serif; letter-spacing: .02em; }
-  .plaque small { display: block; font-size: .86em; font-weight: 600; text-transform: none; opacity: .85; }
+  .plaque small { display: block; font-size: max(10px, .86em); font-weight: 600; text-transform: none; opacity: .85; }
   .vault-glass { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 0 14%, rgba(255,255,255,.16) 14% 18%, transparent 18% 22%, rgba(255,255,255,.08) 22% 23%, transparent 23% 64%, rgba(255,255,255,.12) 64% 70%, transparent 70%); box-shadow: inset 0 0 0 max(2px, .4cqmin) rgba(200, 210, 218, .55); }
   .vault-glass::after { content: ""; position: absolute; top: 0; bottom: 0; left: var(--lock, 58%); width: max(2px, .3cqw); background: rgba(210, 220, 228, .6); }
   .padlock { position: absolute; left: var(--lock, 58%); bottom: 6cqh; width: max(16px, 26cqh); translate: -50% 0; color: #c99a2e; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); pointer-events: none; }
@@ -320,7 +352,8 @@
   .cell { --rail: 25cqh; position: relative; container: cell / size; }
   @container page (max-aspect-ratio: 9/10) or (max-width: 560px) {
     .cell { --rail: 27cqh; }
-    .robot .robot-say { bottom: 20%; right: 74%; max-width: 9.4em; }
+    /* Low and a little tighter, so its top stays under the new carton's shelf label (358×396: label to 346px). */
+    .robot .robot-say { bottom: 4%; right: 74%; max-width: none; padding: .4em .7em; line-height: 1.2; }
   }
   .rail {
     position: absolute;
@@ -375,6 +408,8 @@
     transform-origin: 0 50%;
   }
   .door::after { content: ""; position: absolute; right: 5%; top: 26%; height: 40%; width: max(4px, .7cqmin); border-radius: 99px; background: linear-gradient(90deg, #7d8a94, #f4f7f9 45%, #8d9aa4); box-shadow: 1px 2px 3px rgba(0,0,0,.25); }
+  /* Three shelves: the handle stays between two label rails (it hid the last digit of "D-80"). */
+  @container page (max-aspect-ratio: 9/10) or (max-width: 560px) { .door::after { top: 36%; height: 19%; } }
   .base { margin: 0 calc(-1 * var(--frame)); background: repeating-linear-gradient(90deg, #2b3237 0 max(3px, .5cqmin), #3c464d max(3px, .5cqmin) max(6px, 1cqmin)); border-top: 2px solid #c3cdd4; }
 
   /* Price tags: yellow price, e-ink days left. */
@@ -408,7 +443,7 @@
   .eink-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .lang-ko .eink-name { font-family: 'IBM Plex Sans KR', sans-serif; font-weight: 500; }
   .eink-row { display: flex; align-items: center; gap: .45em; white-space: nowrap; }
-  .eink-word { font: 600 .82em/1 'Archivo Narrow', sans-serif; text-transform: uppercase; letter-spacing: .05em; }
+  .eink-word { font: 600 max(10px, .82em)/1 'Archivo Narrow', sans-serif; text-transform: uppercase; letter-spacing: .05em; }
   .eink-d { font: 800 1.32em/1.05 'Archivo', sans-serif; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
   .eink-d.over { color: #c4251b; }
   .eink.off .eink-name, .eink.off .eink-row { visibility: hidden; }
@@ -607,6 +642,23 @@
   .cart-say::after { right: 100%; top: 50%; translate: 0 -50%; border-right-color: var(--warn); }
   .cart-say.right { left: auto; right: calc(100% + 10px); }
   .cart-say.right::after { right: auto; left: 100%; border-right-color: transparent; border-left-color: var(--warn); }
+  .lang-ko .cart-say { font-family: 'IBM Plex Sans KR', sans-serif; }
+  /* The two joke bubbles are sized by the stage, not by the small cart and robot boxes (they were
+     11px on phones, smaller than every sign around them). */
+  .cart-say, .robot .robot-say { font-size: clamp(14px, 2.2vh, 19px); }
+  @container page (max-aspect-ratio: 9/10) or (max-width: 560px) {
+    .cart-say, .robot .robot-say { font-size: clamp(14px, 3.9vw, 17.6px); }
+    /* Opened on its own on a phone, the robot has stepped aside for the kit's nav, and the bubble would
+       cover the end of the parked cart's BROWSER plate: a touch smaller there (12px at 360 wide). */
+    html:not(.embedded) .robot .robot-say { font-size: clamp(12px, 3.3vw, 17.6px); }
+  }
+  /* Bubbles with more than one line: each line keeps together; narrow, the cart's first line splits in two. */
+  .say-l { white-space: nowrap; }
+  .robot-say .say-l { display: block; }
+  .say-code { display: block; margin-top: .25em; font: 600 max(10px, .85em)/1.15 'Archivo Narrow', sans-serif; letter-spacing: .02em; opacity: .92; }
+  @container page (max-aspect-ratio: 9/10) or (max-width: 560px) {
+    .cart-say .say-l { display: block; }
+  }
 
   .robot { position: absolute; left: 0; bottom: calc(4% + var(--lift, 0px) * .96); height: calc(96% - var(--lift, 0px) * .96); aspect-ratio: .84; container-type: size; }
   .robot-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
@@ -649,17 +701,17 @@
   .insp-art { grid-area: art; position: relative; width: 7em; height: 100%; min-height: 8.4em; }
   .insp-art .art { position: absolute; }
   .insp-head { grid-area: head; padding-right: 2.2em; }
-  .insp-kicker { font: 700 .72em/1 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--blue); }
+  .insp-kicker { font: 700 max(10px, .72em)/1 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--blue); }
   .insp-title { margin-top: .3em; font: 800 1.28em/1.15 'Archivo', 'IBM Plex Sans KR', sans-serif; }
   .lang-ko .insp-title { font-family: 'IBM Plex Sans KR', sans-serif; font-weight: 700; }
   .insp-tag { margin-top: .3em; font: 500 .9em/1.35 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; color: #4a5660; }
   .lang-ko .insp-tag { font-family: 'IBM Plex Sans KR', sans-serif; font-size: .84em; }
   .insp-rows { grid-area: rows; display: grid; grid-template-columns: auto 1fr auto; align-items: center; column-gap: .9em; row-gap: .3em; margin-top: .6em; padding-top: .6em; border-top: 1px solid #e2e7eb; }
-  .r-label { font: 600 .78em/1.3 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; letter-spacing: .07em; text-transform: uppercase; color: #5a6772; white-space: nowrap; }
-  .lang-ko .r-label { font-family: 'IBM Plex Sans KR', sans-serif; letter-spacing: 0; font-size: .82em; }
+  .r-label { font: 600 max(10px, .78em)/1.3 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; letter-spacing: .07em; text-transform: uppercase; color: #5a6772; white-space: nowrap; }
+  .lang-ko .r-label { font-family: 'IBM Plex Sans KR', sans-serif; letter-spacing: 0; font-size: max(10px, .82em); }
   .r-val { min-width: 0; font: 700 .98em/1.3 'Archivo', 'IBM Plex Sans KR', sans-serif; }
   .r-val .mono { font-family: 'Archivo Narrow', sans-serif; font-weight: 700; font-size: 1.04em; }
-  .r-hint { margin-left: .35em; font: 500 .82em/1 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; color: #5a6772; }
+  .r-hint { margin-left: .35em; font: 500 max(10px, .82em)/1 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; color: #5a6772; }
   .lang-ko .r-hint { font-family: 'IBM Plex Sans KR', sans-serif; }
   .chk { display: grid; place-items: center; width: 1.45em; height: 1.45em; border-radius: 50%; background: var(--ok); color: #fff; font: 900 .8em/1 'Archivo', sans-serif; }
   .chk.bad { background: var(--warn); }
@@ -667,18 +719,18 @@
   .rv { opacity: 0; }
   .rv.in { opacity: 1; }
   .insp-trace { grid-area: trace; margin-top: .85em; }
-  .trace-h { font: 700 .76em/1 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #5a6772; margin-bottom: .5em; }
-  .lang-ko .trace-h { font-family: 'IBM Plex Sans KR', sans-serif; letter-spacing: .02em; font-size: .82em; }
+  .trace-h { font: 700 max(10px, .76em)/1 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #5a6772; margin-bottom: .5em; }
+  .lang-ko .trace-h { font-family: 'IBM Plex Sans KR', sans-serif; letter-spacing: .02em; font-size: max(10px, .82em); }
   .stations { display: flex; align-items: stretch; gap: 1.1em; padding: 0; list-style: none; }
   .station { position: relative; flex: 1 1 0; min-width: 0; padding: .5em .6em .55em; border: 1px solid #dde4e9; border-radius: .6em; background: #f5f8fa; }
   .station + .station::before { content: ""; position: absolute; right: calc(100% + .3em); top: 50%; width: .5em; height: .5em; border: solid #8a98a3; border-width: .16em .16em 0 0; translate: 0 -50%; rotate: 45deg; }
   .st-top { display: flex; align-items: center; gap: .35em; }
   .st-ico { flex: none; width: 1.35em; height: 1.35em; }
-  .st-role { font: 600 .72em/1.15 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; color: #5a6772; }
-  .lang-ko .st-role { font-family: 'IBM Plex Sans KR', sans-serif; font-size: .76em; }
+  .st-role { font: 600 max(10px, .72em)/1.15 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; color: #5a6772; }
+  .lang-ko .st-role { font-family: 'IBM Plex Sans KR', sans-serif; font-size: max(10px, .76em); }
   .st-name { display: block; margin-top: .3em; font: 800 .96em/1.15 'Archivo', 'IBM Plex Sans KR', sans-serif; overflow-wrap: anywhere; }
-  .st-via { display: block; font: 500 .72em/1.2 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; color: #6b7882; }
-  .st-stat { display: block; margin-top: .35em; font: 700 .76em/1.15 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; color: var(--ok); }
+  .st-via { display: block; font: 500 max(10px, .72em)/1.2 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; color: #6b7882; }
+  .st-stat { display: block; margin-top: .35em; font: 700 max(10.5px, .8em)/1.15 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; color: var(--ok); }
   .st-stat.bad { color: var(--warn); }
   .lang-ko .st-stat { font-family: 'IBM Plex Sans KR', sans-serif; }
   .insp-verdict { grid-area: verdict; display: flex; align-items: center; flex-wrap: wrap; gap: .4em .7em; margin-top: .85em; padding: .6em .8em; border-radius: .6em; font: 800 1em/1.25 'Archivo', 'IBM Plex Sans KR', sans-serif; }
@@ -689,12 +741,31 @@
   .v-root { background: #fbe9c6; color: #5a3500; font-weight: 700; }
   .v-bad .warn-ico { flex: none; width: 1.6em; color: #fff; }
   .v-code { display: block; font: 600 .88em/1.2 'Archivo Narrow', sans-serif; letter-spacing: .02em; opacity: .95; overflow-wrap: anywhere; }
+  /* Chrome's way past the warning, worn: a greasy thumbprint on the link everyone has pressed. */
+  .v-proceed { display: block; margin-top: .4em; font: 600 max(10px, .84em)/1.2 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif; color: rgba(255, 255, 255, .8); }
+  .lang-ko .v-proceed { font-family: 'IBM Plex Sans KR', sans-serif; font-weight: 500; }
+  .v-proceed u { position: relative; text-underline-offset: .16em; }
+  .v-proceed u::after {
+    content: "";
+    position: absolute;
+    left: 58%;
+    top: 46%;
+    width: 2.3em;
+    height: 2.9em;
+    translate: -50% -50%;
+    rotate: 24deg;
+    border-radius: 50%;
+    background: repeating-radial-gradient(ellipse 60% 70% at 50% 58%, rgba(70, 12, 6, .5) 0 .07em, transparent .07em .22em);
+    -webkit-mask: radial-gradient(closest-side, #000 45%, transparent);
+            mask: radial-gradient(closest-side, #000 45%, transparent);
+    pointer-events: none;
+  }
   .v-chip { display: inline-flex; align-items: center; gap: .3em; padding: .15em .55em; border-radius: 99px; font: 700 .9em/1.3 'Archivo Narrow', sans-serif; }
   .v-chip.ok { background: #fff; color: #0d5c29; }
   .v-chip.bad { background: #fff; color: var(--warn); }
   .insp-x { position: absolute; right: .7em; top: .7em; display: grid; place-items: center; width: 2em; height: 2em; padding: 0; border: 0; border-radius: 50%; background: #eef2f5; color: #3b4852; font: 700 1.1em/1 'Archivo', sans-serif; cursor: pointer; }
   .insp-x:hover { background: #e1e7ec; }
-  .insp .note { left: 1em; top: 3.6em; width: 7.4em; translate: 0 0; rotate: -7deg; font-size: .8em; z-index: 3; padding: .45em .55em .5em; }
+  .insp .note { left: 1em; top: 3.6em; width: 7.4em; translate: 0 0; rotate: -7deg; font-size: max(10px, .8em); z-index: 3; padding: .45em .55em .5em; }
   .insp .note .note-code { margin-top: 0; font-size: 1em; line-height: 1.2; }
   .insp .glassy::after { content: ""; position: absolute; inset: -6%; border-radius: 4px; background: linear-gradient(115deg, transparent 0 20%, rgba(255,255,255,.35) 20% 26%, transparent 26%); box-shadow: inset 0 0 0 2px rgba(190, 205, 215, .6); }
   @container page (max-aspect-ratio: 9/10) or (max-width: 560px) {
@@ -812,13 +883,13 @@
       </svg>
       <span class="robot-chest" aria-hidden="true">ACME</span>
       <div class="robot-crate"><div class="crate-load"></div><div class="crate-front" aria-hidden="true"></div></div>
-      <span class="say robot-say hide"><span data-lang="en">Renewing at about two thirds of its life.</span><span data-lang="ko">수명의 3분의 2쯤에서 갱신해요.</span></span>
+      <span class="say robot-say hide"><span data-lang="en"><span class="say-l">My cron died.</span> <span class="say-l">I was due on day <span class="due">60</span>.</span></span><span data-lang="ko"><span class="say-l">크론이 죽어 있었어요.</span> <span class="say-l">원래 <span class="due">60</span>일째 오거든요.</span></span></span>
     </div>
   </div>
 
   <div class="poster" role="button" tabindex="0">
     <div class="poster-top">
-      <h2 class="poster-title"><span data-lang="en">Certificate shelf life, then and now</span><span data-lang="ko">인증서 유통기한 변천</span></h2>
+      <h2 class="poster-title"><span data-lang="en">Certificate shelf life, then and now</span><span data-lang="ko">인증서 유통기한, 이만큼 줄었다</span></h2>
       <span class="poster-src"><span data-lang="en">CA/B Forum SC-081</span><span data-lang="ko">CA/B 포럼 SC-081</span></span>
     </div>
     <div class="p-rows"></div>
@@ -886,30 +957,34 @@
     en: {
       kicker: 'Back label', name: 'Name', packed: 'Packed', best: 'Best before', trace: 'Traceability',
       farm: 'Farm (root)', center: 'Collection center (intermediate)', pack: 'Packaging (your site)',
-      ok_: 'Signature checked ✓', bad_: 'Not in the trust store ✗', store_: 'In the trust store ✓',
-      same: 'same as the address', addr: 'address is tty.link', level: 'one level only', selfRoot: 'signed by itself',
+      ok_: 'Signature checked ✓', bad_: "Our cow isn't in the trust store ✗", store_: 'In the trust store ✓',
+      same: 'same as the address', addr: 'address is tty.link', depends: 'depends on the address', selfRoot: 'signed by itself',
       left: (n) => `${n} days left`, daysLeft: 'days left',
       ok: 'Into the basket 🔒', notPrivate: 'Your connection is not private',
+      proceed: 'Advanced › <u>Proceed to tty.link (unsafe)</u>',
+      dateSay: ['One day over.', "I don't do sniff tests."], cold: '<span class="stk-l">KEEP</span> <span class="stk-l">REFRIGERATED</span>',
       root: 'Not sold in store · kept only in your OS and browser trust stores',
       close: 'Put it back', card: 'Back label', via: 'via Root YR', free: '$0', notSold: 'not for sale',
-      stickers: { expired: 'EXPIRED', fresh: 'FRESH', soon: 'SELL BY' },
-      milk: 'Milk: about 2 weeks', honey: 'Honey: never spoils', posterLabel: 'Poster: certificate shelf life, then and now. Press to roll it up.',
+      stickers: { expired: 'EXPIRED', fresh: 'FRESH', soon: 'REDUCED' },
+      milk: 'Milk: about 2 weeks', honey: 'Honey: 20 years (keeps)', posterLabel: 'Poster: certificate shelf life, then and now. Press to roll it up.',
       bannerLabel: 'Banner: 47 days max from 2029. Certificates now need refrigeration. Press to turn it over.',
       pick: 'Pick up and read the back label',
       phase: (d, now, from) => (now ? `<b>${d} days</b> · now${from ? ` (from ${fmtLong(from)})` : ''}` : from ? `<b>${d} days</b> · from ${fmtLong(from)}` : `<b>${d} days</b>`),
       pin: 'NOW',
     },
     ko: {
-      kicker: '뒷면 라벨', name: '상품명', packed: '입고일', best: '유통기한', trace: '이력 조회',
+      kicker: '뒷면 라벨', name: '상품명', packed: '제조일', best: '유통기한', trace: '이력 조회',
       farm: '목장(루트)', center: '집유장(중간)', pack: '포장(이 사이트)',
-      ok_: '서명 확인 ✓', bad_: '신뢰 저장소에 없음 ✗', store_: '신뢰 저장소에 있음 ✓',
-      same: '주소와 같음', addr: '주소는 tty.link', level: '한 층만', selfRoot: '자기 자신이 서명',
+      ok_: '서명 확인 ✓', bad_: '우리 집 소는 신뢰 저장소에 없음 ✗', store_: '신뢰 저장소에 있음 ✓',
+      same: '주소와 같음', addr: '주소는 tty.link', depends: '주소에 따라 다름', selfRoot: '자기 자신이 서명',
       left: (n) => `남은 날 ${n}일`, daysLeft: '남은 날',
       ok: '장바구니에 담음 🔒', notPrivate: '연결이 비공개로 설정되어 있지 않습니다',
+      proceed: '고급 › <u>tty.link(안전하지 않음)</u>(으)로 이동',
+      dateSay: ['하루 지났네요.', '냄새는 안 맡아 봐요.'], cold: '냉장 보관',
       root: '매장 진열 안 함 · 운영체제와 브라우저의 신뢰 저장소에만 있어요',
       close: '제자리에 두기', card: '뒷면 라벨', via: 'Root YR 경유', free: '₩0', notSold: '비매품',
       stickers: { expired: '폐기', fresh: '신선', soon: '임박' },
-      milk: '우유: 약 2주', honey: '꿀: 상하지 않음', posterLabel: '포스터: 인증서 유통기한 변천. 누르면 걷혀요.',
+      milk: '우유: 약 2주', honey: '꿀: 20년(잘 안 상함)', posterLabel: '포스터: 인증서 유통기한, 이만큼 줄었다. 누르면 걷혀요.',
       bannerLabel: '현수막: 2029년부터 최대 47일. 이제 인증서도 냉장 보관. 누르면 뒤집혀요.',
       pick: '집어서 뒷면 라벨 보기',
       phase: (d, now, from) => (now ? `<b>${d}일</b> · 지금${from ? `(${fmtLong(from)}부터)` : ''}` : from ? `<b>${d}일</b> · ${fmtLong(from)}부터` : `<b>${d}일</b>`),
@@ -918,17 +993,28 @@
   });
   const CODE = { authority: 'NET::ERR_CERT_AUTHORITY_INVALID', date: 'NET::ERR_CERT_DATE_INVALID', name: 'NET::ERR_CERT_COMMON_NAME_INVALID' };
 
+  /* ---- Lifetimes by date, so the shelf never contradicts the poster ---- */
+  // The public maximum (CA/B Forum SC-081) and Let's Encrypt's default (its 2025-12-02 plan:
+  // 64 days from 2027-02-10, 45 from 2028-02-16). The robot is due at two thirds of that.
+  const PHASES = [{ d: 398, from: null }, { d: 200, from: new Date(2026, 2, 15) }, { d: 100, from: new Date(2027, 2, 15) }, { d: 47, from: new Date(2029, 2, 15) }];
+  const nowIdx = PHASES.reduce((k, ph, i) => (ph.from && today >= ph.from ? i : k), 0);
+  const MAX_DAYS = PHASES[nowIdx].d;
+  const LE_DAYS = today >= new Date(2028, 1, 16) ? 45 : today >= new Date(2027, 1, 10) ? 64 : 90;
+  const DUE = Math.round(LE_DAYS * 2 / 3);
+  $$('.due').forEach((el) => { el.textContent = DUE; });
+
   /* ---- Products. made = days before today it was packed (notBefore), days = shelf life ---- */
   const le = (cn) => [
-    { role: 'farm', name: 'ISRG Root X1', st: 'ok_' },
+    { role: 'farm', name: 'ISRG Root X1', st: 'store_' },
     { role: 'center', name: 'YR1', via: true, st: 'ok_' },
     { role: 'pack', name: cn, st: 'ok_' },
   ];
   const T = (en, ko_) => (ko ? ko_ : en);
+  const leTag = T(`Let's Encrypt · ${LE_DAYS} days`, `Let's Encrypt · ${LE_DAYS}일`);
   const PRODUCTS = {
     ttylink: {
-      kind: 'carton', look: 'blue', facings: 3, made: -3, days: 90, cn: 'tty.link', verdict: 'ok', chain: le('tty.link'), stickers0: ['fresh'],
-      title: T('tty.link Fresh Milk', 'tty.link 신선 우유'), tag: T("Let's Encrypt · 90 days · $0", "Let's Encrypt · 90일 · ₩0"), short: T('tty.link Milk', 'tty.link 우유'), price: L.free,
+      kind: 'carton', look: 'blue', facings: 3, made: -3, days: LE_DAYS, cn: 'tty.link', verdict: 'ok', chain: le('tty.link'), stickers0: ['fresh'],
+      title: T('tty.link Fresh Milk', 'tty.link 신선 우유'), tag: `${leTag} · ${L.free}`, short: T('tty.link Milk', 'tty.link 우유'), price: L.free,
     },
     homemade: {
       kind: 'home', facings: 1, made: -30, days: 3650, cn: 'tty.link', verdict: 'authority',
@@ -936,31 +1022,31 @@
       title: T('Homemade Milk', '자체 서명 우유'), tag: T('vouched for by our own cow', '우리 집 소가 직접 보증함'), short: T('Homemade Milk', '자체 서명 우유'), price: L.free,
     },
     cheese: {
-      kind: 'cheese', facings: 1, back: true, made: -40, days: 90, cn: '*.example.com', verdict: 'wild', chain: le('*.example.com'),
+      kind: 'cheese', facings: 1, back: true, made: -Math.round(LE_DAYS * 4 / 9), days: LE_DAYS, cn: '*.example.com', verdict: 'wild', chain: le('*.example.com'),
       title: T('Wildcard Cheese *.example.com', '와일드카드 치즈 *.example.com'), tag: T('goes with every subdomain (one level only: not a.b.example.com)', '모든 하위 도메인과 어울립니다(한 층만, a.b.example.com은 안 됨)'), short: T('Wildcard Cheese', '와일드카드 치즈'), price: L.free,
     },
     ev: {
-      kind: 'ev', facings: 1, made: -120, days: 200, cn: 'tty.link', verdict: 'ok',
+      kind: 'ev', facings: 1, made: -Math.round(MAX_DAYS * .6), days: MAX_DAYS, cn: 'tty.link', verdict: 'ok',
       chain: [{ role: 'farm', name: 'Golden Pasture Root CA', st: 'ok_' }, { role: 'center', name: 'Golden Pasture EV CA', st: 'ok_' }, { role: 'pack', name: 'tty.link', st: 'ok_' }],
       title: T('Premium EV Milk', '프리미엄 EV 우유'), tag: T('green company name in the address bar · discontinued 2019 (Chrome 77) · same milk inside', '주소창 초록 회사 이름 · 2019년 단종(크롬 77) · 내용물은 같음'), short: T('Premium EV Milk', '프리미엄 EV 우유'), price: T('$299', '₩390,000'),
     },
     www: {
-      kind: 'carton', look: 'red', facings: 3, made: -20, days: 90, cn: 'www.tty.link', verdict: 'name', chain: le('www.tty.link'),
-      title: T('www.tty.link Milk', 'www.tty.link 우유'), tag: T("Let's Encrypt · 90 days", "Let's Encrypt · 90일"), short: T('www.tty.link Milk', 'www.tty.link 우유'), price: L.free,
+      kind: 'carton', look: 'red', facings: 3, made: -20, days: LE_DAYS, cn: 'www.tty.link', verdict: 'name', chain: le('www.tty.link'),
+      title: T('www.tty.link Milk', 'www.tty.link 우유'), tag: leTag, short: T('www.tty.link Milk', 'www.tty.link 우유'), price: L.free,
     },
     yesterday: {
-      kind: 'carton', look: 'old', facings: 1, made: -91, days: 90, cn: 'tty.link', verdict: 'date', chain: le('tty.link'), stickers0: ['soon'],
-      title: T('Best Before Yesterday', '어제까지 우유'), tag: T("Let's Encrypt · 90 days", "Let's Encrypt · 90일"), short: T('Best Before Yesterday', '어제까지 우유'), price: L.free,
+      kind: 'carton', look: 'old', facings: 1, made: -(LE_DAYS + 1), days: LE_DAYS, cn: 'tty.link', verdict: 'date', chain: le('tty.link'), stickers0: ['soon'],
+      title: T('Best Before Yesterday', '어제까지 우유'), tag: leTag, short: T('Best Before Yesterday', '어제까지 우유'), price: L.free,
     },
     fresh: {
-      kind: 'carton', look: 'blue', facings: 1, made: 0, days: 90, cn: 'tty.link', verdict: 'ok', chain: le('tty.link'), stickers0: ['fresh'],
-      title: T('tty.link Fresh Milk', 'tty.link 신선 우유'), tag: T("Let's Encrypt · 90 days · $0", "Let's Encrypt · 90일 · ₩0"), short: T('tty.link Milk', 'tty.link 우유'), price: L.free,
+      kind: 'carton', look: 'blue', facings: 1, made: 0, days: LE_DAYS, cn: 'tty.link', verdict: 'ok', chain: le('tty.link'), stickers0: ['fresh'],
+      title: T('tty.link Fresh Milk', 'tty.link 신선 우유'), tag: `${leTag} · ${L.free}`, short: T('tty.link Milk', 'tty.link 우유'), price: L.free,
     },
     // ISRG Root X1 itself: 2015-06-04 to 2035-06-04, in every trust store.
     honey: {
       kind: 'honey', start: new Date(2015, 5, 4), end: new Date(2035, 5, 4), cn: 'ISRG Root X1', verdict: 'root',
       chain: [{ role: 'farm', name: 'ISRG Root X1', st: 'store_' }, { role: 'farm', name: 'ISRG Root X1', st: 'ok_' }],
-      title: T('Root Certificate Honey', '루트 인증서 꿀'), tag: T('20-odd years · honey never spoils · not sold in store', '20년 남짓 · 꿀은 상하지 않는다 · 매장 진열 안 함'), short: T('Root Certificate Honey', '루트 인증서 꿀'), price: L.notSold,
+      title: T('Root Certificate Honey', '루트 인증서 꿀'), tag: T('20 years · honey keeps · not sold in store', '20년 · 꿀은 잘 안 상함 · 매장 진열 안 함'), short: T('Root Certificate Honey', '루트 인증서 꿀'), price: L.notSold,
     },
   };
   Object.entries(PRODUCTS).forEach(([id, p]) => {
@@ -969,7 +1055,10 @@
     p.left = diffDays(today, p.end);
     p.stickers = (p.stickers0 || []).slice();
   });
-  const dText = (p) => (p.left >= 0 ? `D-${p.left}` : `D+${-p.left}`);
+  // Shelf labels: Korean counts like a D-day (D-1, D-0, D+1); English just counts down, past zero.
+  const dOf = (n) => (!ko ? String(n) : n >= 0 ? `D-${n}` : `D+${-n}`);
+  const dText = (p) => dOf(p.left);
+  const dSpoken = (p) => (ko ? dText(p) : L.left(p.left));
   const AR = { carton: .5, home: .45, ev: .45, cheese: 160 / 110, honey: 120 / 130 };
 
   /* ---- Drawings ---- */
@@ -1229,7 +1318,7 @@
     const d = $('.eink-d', slot.tags);
     d.textContent = dText(p);
     d.classList.toggle('over', p.left < 0);
-    slot.btn.setAttribute('aria-label', `${p.title}, ${dText(p)}, ${p.price}. ${L.pick}`);
+    slot.btn.setAttribute('aria-label', `${p.title}, ${dSpoken(p)}, ${p.price}. ${L.pick}`);
   }
   function fillSlot(slot) {
     const p = PRODUCTS[slot.id];
@@ -1297,10 +1386,11 @@
     $('.insp-tag', card).textContent = p.tag;
     $('.insp-x', card).setAttribute('aria-label', L.close);
     card.setAttribute('aria-label', `${L.card}: ${p.title}`);
-    const nameOk = p.verdict === 'name' ? false : p.verdict === 'root' ? null : true;
-    const hint = p.verdict === 'name' ? L.addr : p.verdict === 'wild' ? L.level : p.verdict === 'root' ? L.selfRoot : L.same;
+    // The wildcard is not judged against one address: the chips under it say which names it fits.
+    const nameOk = p.verdict === 'name' ? false : p.verdict === 'root' || p.verdict === 'wild' ? null : true;
+    const hint = p.verdict === 'name' ? L.addr : p.verdict === 'wild' ? L.depends : p.verdict === 'root' ? L.selfRoot : L.same;
     const chk = (ok) => `<span class="chk rv ${ok === false ? 'bad' : ok === null ? 'none' : ''}" aria-hidden="true">${ok === false ? '✕' : ok === null ? '–' : '✓'}</span>`;
-    const best = p.left >= 0 ? `${fmt(p.end)} · ${L.left(p.left)}` : `${fmt(p.end)} · D+${-p.left}`;
+    const best = `${fmt(p.end)} · ${p.left >= 0 || !ko ? L.left(p.left) : dText(p)}`;
     $('.insp-rows', card).innerHTML = `
       <span class="r-label">${L.name}</span><span class="r-val"><span class="mono">${p.cn}</span><span class="r-hint">${hint}</span></span>${chk(nameOk)}
       <span class="r-label">${L.packed}</span><span class="r-val">${fmt(p.start)}</span><span></span>
@@ -1315,7 +1405,7 @@
     if (p.verdict === 'ok') { v.classList.add('v-ok'); v.textContent = L.ok; }
     else if (p.verdict === 'root') { v.classList.add('v-root'); v.textContent = L.root; }
     else if (p.verdict === 'wild') { v.classList.add('v-info'); v.innerHTML = '<span class="v-chip ok">✓ www.example.com</span><span class="v-chip bad">✕ a.b.example.com</span>'; }
-    else { v.classList.add('v-bad'); v.innerHTML = `${WARN}<span><span>${L.notPrivate}</span><span class="v-code">${CODE[p.verdict]}</span></span>`; }
+    else { v.classList.add('v-bad'); v.innerHTML = `${WARN}<span><span>${L.notPrivate}</span><span class="v-code">${CODE[p.verdict]}</span><span class="v-proceed">${L.proceed}</span></span>`; }
     $('.note', card)?.remove();
   }
 
@@ -1547,6 +1637,9 @@
   // right, right where the robot stops under yesterday's slot. After the swap he rolls left
   // ('aside') until his crate, with yesterday's milk in it (a button), is out from under it.
   // (The cart, stopping under the right-hand column on a phone, keeps clear of it the same way.)
+  // The nav is pinned to the bottom right (<html data-tty-nav>): left to itself the kit moved it to
+  // the bottom left at 648×732 and 440×972, over the parked cart or pushing it off the stage. Should
+  // it ever sit on the left, whatever is under it steps right instead.
   function clearOfNav(x, el = robot, boxes = null) {
     const nav = document.querySelector('.tty-nav');
     if (!nav || getComputedStyle(nav).display === 'none') return x;
@@ -1557,6 +1650,7 @@
     const gap = 8;
     if (bottom <= n.top - gap || top >= n.bottom + gap) return x;          // above or below it
     if (f.left + x + left >= n.right + gap || f.left + x + right <= n.left - gap) return x;
+    if (n.left + n.width / 2 < f.left + f.width / 2) return Math.max(x, n.right + gap - f.left - left);
     return Math.min(x, n.left - gap - f.left - right);
   }
   function addToCart(id) {
@@ -1565,9 +1659,11 @@
     return mini;
   }
   function showLock() { cartLock.classList.remove('hide'); pop(cartLock, 460); }
-  function say(el, text) {
+  // At yesterday's milk the cart does what people don't: no sniff test, the code and nothing else.
+  const DATE_SAY = `<span class="say-l">${L.dateSay[0]}</span> <span class="say-l">${L.dateSay[1]}</span><span class="say-code">${CODE.date}</span>`;
+  function say(el, text, html = false) {
     if (text === null) { el.classList.add('hide'); return; }
-    if (text !== undefined) el.textContent = text;
+    if (text !== undefined) el[html ? 'innerHTML' : 'textContent'] = text;
     el.classList.remove('hide');
     pop(el, 360);
   }
@@ -1597,7 +1693,7 @@
     b.append(makeArt(id, { mini: true }));
     if (id === 'yesterday') {
       const p = PRODUCTS.yesterday;
-      b.setAttribute('aria-label', `${p.title}, ${dText(p)}. ${L.pick}`);
+      b.setAttribute('aria-label', `${p.title}, ${dSpoken(p)}. ${L.pick}`);
       b.setAttribute('aria-expanded', 'false');
       b.addEventListener('click', () => onProduct(crateSlot));
     } else {
@@ -1668,8 +1764,6 @@
   }
 
   /* ---- Poster ---- */
-  const PHASES = [{ d: 398, from: null }, { d: 200, from: new Date(2026, 2, 15) }, { d: 100, from: new Date(2027, 2, 15) }, { d: 47, from: new Date(2029, 2, 15) }];
-  const nowIdx = PHASES.reduce((k, ph, i) => (ph.from && today >= ph.from ? i : k), 0);
   $('.p-rows').innerHTML = PHASES.map((ph, i) => `
       <span class="p-label">${L.phase(ph.d, i === nowIdx, ph.from)}</span>
       <span class="p-track p-row-${ph.d}${i === nowIdx ? ' p-row-now' : i > nowIdx ? ' p-row-future' : ''}" style="--d:${ph.d}"><i class="p-bar"></i>${i === nowIdx ? `<b class="p-pin">${L.pin}</b>` : ''}</span>`).join('')
@@ -1677,6 +1771,12 @@
     + `<span class="p-label p-row-honey">${L.honey}</span><span class="p-track p-row-honey" style="--d:398"><i class="p-bar"></i></span>`;
   $$('.p-label').forEach((l, k) => { const tr = l.nextElementSibling; if (tr && tr.classList.contains('p-row-now')) l.classList.add('p-row-now'); });
   $('.p-foot').textContent = `${L.milk} · ${L.honey}`;
+  // The sticker for the 47-day bar (the last beat of the loop).
+  const cold = document.createElement('span');
+  cold.className = 'p-stk';
+  cold.innerHTML = L.cold;
+  if (nowIdx === 3) cold.classList.add('after-pin');   // from 2029 the NOW pin is on this bar too
+  $('.p-track.p-row-47', poster).append(cold);
   banner.setAttribute('aria-label', L.bannerLabel);
   poster.setAttribute('aria-label', L.posterLabel);
   let posterOn = false;
@@ -1684,21 +1784,27 @@
     if (posterOn) return;
     posterOn = true;
     poster.classList.add('on');
+    cold.classList.add('on');
     banner.style.visibility = 'hidden';
     if (reduce) return;
     banner.animate([{ transform: 'none', visibility: 'visible' }, { transform: 'rotateX(-90deg)', visibility: 'visible' }], { duration: 260, easing: 'ease-in' });
     poster.animate([{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 100% 0)', offset: .3 }, { clipPath: 'inset(0 0 0 0)' }], { duration: slow ? 820 : 560, easing: 'cubic-bezier(.3, .7, .3, 1)' });
     const bars = $$('.p-bar', poster);
-    bars.forEach((b, k) => b.animate([{ transform: 'scaleX(0)' }, { transform: 'none' }], { duration: slow ? 700 : 400, delay: (slow ? 700 : 300) + k * (slow ? 340 : 70), easing: 'cubic-bezier(.3, .8, .3, 1)', fill: 'backwards' }));
+    bars.forEach((b, k) => b.animate([{ transform: 'scaleX(0)' }, { transform: 'none' }], { duration: slow ? 600 : 400, delay: (slow ? 550 : 300) + k * (slow ? 180 : 70), easing: 'cubic-bezier(.3, .8, .3, 1)', fill: 'backwards' }));
     const pin = $('.p-pin', poster);
-    if (pin) pin.animate([{ opacity: 0, transform: 'translateY(-60%)' }, { opacity: 1, transform: 'none' }], { duration: 380, delay: slow ? 2800 : 700, easing: 'cubic-bezier(.3, 1.5, .5, 1)', fill: 'backwards' });
+    if (pin) pin.animate([{ opacity: 0, transform: 'translateY(-60%)' }, { opacity: 1, transform: 'none' }], { duration: 380, delay: slow ? 1500 : 700, easing: 'cubic-bezier(.3, 1.5, .5, 1)', fill: 'backwards' });
+    // Then the 47-day bar gets slapped like the milk did, and the poster shakes the same way.
+    const late = slow ? 1900 : 1000;
+    cold.animate([{ transform: 'scale(2.4) rotate(14deg)', opacity: 0 }, { transform: 'scale(.92)', opacity: 1, offset: .7 }, { transform: 'none', opacity: 1 }], { duration: 360, delay: late, easing: 'cubic-bezier(.5, 0, .9, .5)', fill: 'backwards' });
+    poster.animate([{ transform: 'none' }, { transform: 'translate(.5%, 1.2%) rotate(.5deg)' }, { transform: 'translate(-.4%, -.5%)' }, { transform: 'none' }], { duration: 280, delay: late + 240 });
   }
   function posterUp(instant) {
     if (!posterOn) return;
     posterOn = false;
     banner.style.visibility = '';
-    if (instant || reduce) { poster.classList.remove('on'); return; }
-    poster.animate([{ clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 100% 0)' }], { duration: 360, easing: 'ease-in' }).onfinish = () => { if (!posterOn) poster.classList.remove('on'); };
+    cold.getAnimations().forEach((a) => a.cancel());
+    if (instant || reduce) { poster.classList.remove('on'); cold.classList.remove('on'); return; }
+    poster.animate([{ clipPath: 'inset(0 0 0 0)' }, { clipPath: 'inset(0 0 100% 0)' }], { duration: 360, easing: 'ease-in' }).onfinish = () => { if (!posterOn) { poster.classList.remove('on'); cold.classList.remove('on'); } };
     banner.animate([{ transform: 'rotateX(-90deg)' }, { transform: 'rotateX(-90deg)', offset: .5 }, { transform: 'none' }], { duration: 560, easing: 'ease-out' });
   }
 
@@ -1762,35 +1868,39 @@
       lightsOn();
       if (!reduce) {
         $$('.unit, .vault .prod', fridge).forEach((u, k) => u.animate([{ transform: 'translateY(-14%)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 360, delay: 260 + k * 45, easing: 'cubic-bezier(.3, 1.3, .5, 1)', fill: 'backwards' }));
-        [...slots, vaultSlot].forEach((s, k) => { einkOff(s); setTimeout(() => einkOn(s, true), 650 + k * 110); });
-        setD(slots[5], 'D-1', false);   // yesterday's label wakes up one day early...
+        // The other labels wake up one by one while the lights flicker; yesterday's waits.
+        [...slots, vaultSlot].forEach(einkOff);
+        [...slots.slice(0, 5), vaultSlot].forEach((s, k) => setTimeout(() => einkOn(s, true), 600 + k * 90));
       }
     }],
-    // The 3-second gag: the label ticks over, the milk goes off, the sticker comes down.
-    [1300, () => spotOn(slots[5], 1600)],
-    [1450, () => { setD(slots[5], 'D-0', false); einkOn(slots[5], true); }],
-    [1700, () => { updateTags(slots[5]); einkOn(slots[5], true); spoil('yesterday'); }],
-    [2250, () => slapExpired('yesterday')],
-    // Then the browser goes shopping (everything up to the homemade milk is 1.5 s later than
-    // before the gag; the yesterday stop is shorter, so the robot keeps its old times).
+    // The 3-second gag: yesterday's label comes on a day early, quietly, and ticks over in the
+    // spotlight; only the last tick flashes, and that is when the milk goes off.
+    [900, () => { setD(slots[5], dOf(1), false); einkOn(slots[5], false); }],
+    [1200, () => spotOn(slots[5], 1800)],
+    [1550, () => setD(slots[5], dOf(0), false)],
+    [2000, () => { updateTags(slots[5]); einkOn(slots[5], true); spoil('yesterday'); }],
+    [2500, () => slapExpired('yesterday')],
+    // Then the browser goes shopping and reads every label.
     [3000, () => cartTo('ttylink', 700)],
-    [3650, () => pick('ttylink', { pace: 540, auto: true })],
-    [7650, () => {
+    [3650, () => pick('ttylink', { pace: 460, auto: true })],
+    // The trust-store tick stays up 2 s; the carton lands in the basket just before the cart moves on (8.0 s).
+    [7500, () => {
       const mini = addToCart('ttylink');
       mini.style.visibility = 'hidden';
-      putBack({ ms: 520, into: { box: rect(mini), done: () => { mini.style.visibility = ''; showLock(); } } });
+      putBack({ ms: 450, into: { box: rect(mini), done: () => { mini.style.visibility = ''; showLock(); } } });
     }],
-    [8500, () => cartTo('homemade', 650)],
-    [9150, () => pick('homemade', { pace: 470, auto: true })],
-    [12450, () => putBack({ ms: 520 })],
-    [13250, () => cartTo('yesterday', 650)],
-    [13900, () => einkBlink(slots[5])],
-    [14200, () => say(cartSay, CODE.date)],
-    [15350, () => { say(cartSay, null); cartTo('park', 800); }],
-    [15900, () => robotTo('fresh', 850)],
-    [16800, () => say(robotSay)],
-    [17050, restock],
-    [19500, () => posterDown(true)],
+    [8000, () => cartTo('homemade', 650)],
+    [8600, () => pick('homemade', { pace: 420, auto: true })],
+    [12650, () => putBack({ ms: 520 })],
+    [13000, () => cartTo('yesterday', 650)],
+    [13650, () => einkBlink(slots[5])],
+    [13800, () => say(cartSay, DATE_SAY, true)],
+    [16700, () => { say(cartSay, null); cartTo('park', 800); }],
+    // The punchline: the renewal robot turns up after the fact, with an excuse.
+    [17000, () => robotTo('fresh', 850)],
+    [17750, () => say(robotSay)],
+    [17900, restock],
+    [19650, () => posterDown(true)],
   ];
 
   function startLoop() {
@@ -1824,6 +1934,15 @@
     const under = document.elementsFromPoint(e.clientX, e.clientY).find((el) => el.matches('.prod, .crate-unit[data-id="yesterday"]'));
     const slot = under && [...slots, vaultSlot, crateSlot].find((sl) => sl.btn === under);
     if (slot && slot.id !== held?.id) pick(slot.id); else putBack();
+  });
+  // While the card is still fading in or out, the product under it is still showing: a tap there picks that product.
+  // Once the card is fully up, a tap on it does nothing.
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.insp-x')) return;
+    if (!card.getAnimations().some((a) => a.playState === 'running')) return;
+    const under = document.elementsFromPoint(e.clientX, e.clientY).find((el) => el.matches('.prod, .crate-unit[data-id="yesterday"]'));
+    const slot = under && [...slots, vaultSlot, crateSlot].find((sl) => sl.btn === under);
+    if (slot && slot.id !== held?.id) { takeOver(); pick(slot.id); }
   });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && held) { takeOver(); putBack(); } });
   banner.addEventListener('click', () => { takeOver(); posterDown(false); });

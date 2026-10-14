@@ -100,9 +100,37 @@
   .now-name > font-kku { color: var(--ink); }
   .now-type { margin-top: 1cqi; font-size: max(11px, 3.6cqi); color: var(--soft); font-style: italic; }
   .lang-ko .now-type { font-style: normal; }
-  .now-score { font-family: 'Italiana', serif; font-size: 8cqi; color: var(--sw); text-align: right; line-height: 1; transition: color .4s; }
+  .now-score { position: relative; font-family: 'Italiana', serif; font-size: 8cqi; color: var(--sw); text-align: right; line-height: 1; transition: color .4s; }
   .now-score small { display: block; font-family: 'Newsreader', 'Gowun Batang', serif; font-size: max(11px, 2.8cqi); color: var(--soft); }
-  .now-score small.faulty { margin-top: .6cqi; font-size: max(11px, 3.1cqi); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #a3242c; }
+  /* Blue's two scores, one a line: "to you." / "41 to the next desk". */
+  .now-score small.aside { margin-top: .4cqi; font-size: max(12px, 3.3cqi); line-height: 1.25; white-space: pre-line; color: var(--ink); }
+  /* The butterfly's verdict, a rubber stamp in the score's place once its key has stuck. It
+     keeps its room while hidden, so nothing on the card moves when it lands; until then a dash
+     sits in that room. Two lines (SENT / BACK, 돌려 / 보냄), so it stays narrow and the spec
+     line beside it does not wrap. */
+  .now-score .dash { position: absolute; inset: 0; display: grid; place-items: center; }
+  .now-score.stamped .dash { visibility: hidden; }
+  .now-score .stamp {
+    display: block;
+    margin: .6cqi 1.2cqi .6cqi 0;
+    padding: 1cqi 1.4cqi .7cqi;
+    border: max(2px, .6cqi) solid #a3242c;
+    border-radius: 1cqi;
+    box-shadow: inset 0 0 0 max(1.5px, .45cqi) var(--card), inset 0 0 0 max(2.5px, .75cqi) #a3242c;
+    font-family: 'Newsreader', 'Gowun Batang', serif;
+    font-size: max(14px, 5.4cqi);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    text-align: center;
+    white-space: pre-line;
+    color: #a3242c;
+    rotate: -8deg;
+    visibility: hidden;
+  }
+  .now-score.stamped .stamp { visibility: visible; }
+  .lang-ko .now-score .stamp { font-size: max(15px, 6cqi); font-weight: 700; letter-spacing: .02em; line-height: 1.12; padding: 1cqi 1.2cqi .8cqi; }
   .lang-ko .now-score { font-family: 'Newsreader', serif; font-weight: 600; font-size: 6.6cqi; }
   .label { margin-top: 3.2cqi; font-size: max(11px, 2.9cqi); letter-spacing: .08em; color: var(--soft); }
   .notes { margin-top: .8cqi; font-size: max(12px, 4.4cqi); line-height: 1.4; font-style: italic; min-height: 2.8em; }
@@ -139,7 +167,11 @@
   @container (min-width: 600px) and (min-aspect-ratio: 7/10) {
     .page { grid-template-columns: 1fr 1.05fr; grid-template-rows: auto 1fr; column-gap: 5cqw; }
     .head { grid-column: 1 / -1; }
-    .stage { align-self: center; align-items: center; height: 100%; max-height: 72cqh; grid-template-rows: minmax(0, 1fr) auto; }
+    /* The glass and the key take the height their width gives them, and the wave sits right
+       under the key: on the tall home stage it used to float 200 px below, away from the presses
+       it draws. */
+    .stage { align-self: center; align-content: center; align-items: end; height: 100%; max-height: 72cqh; grid-template-rows: auto auto; row-gap: 3cqh; }
+    .glass, .key { height: auto; max-height: 46cqh; }
     .card { align-self: center; }
   }
   /* A little taller than wide: the card takes the larger share so its type stays readable. */
@@ -171,6 +203,10 @@
     .now-name { font-size: 8.4cqi; }
     .card { --name-kku: 7.8cqi; }
     .now-type { margin-top: .6cqi; }
+    /* The stamp no taller than the name and spec line beside it, so the key it is about keeps
+       its height (the stamp at full size cost the stuck key 13 px here). */
+    .now-score .stamp { margin: 0 1cqi 0 0; padding: .6cqi 1.2cqi .4cqi; font-size: max(13px, 4.5cqi); }
+    .lang-ko .now-score .stamp { padding: .6cqi 1cqi .4cqi; font-size: max(14px, 4.9cqi); line-height: 1.06; }
     .notes-label, .pairs-label { display: none; }
     .notes { margin-top: 2cqi; line-height: 1.32; }
     .lang-ko .notes { line-height: 1.42; }
@@ -194,8 +230,8 @@
       <span data-lang="ko">손끝 아래 축들의 시음 노트.</span>
     </p>
     <p class="hint" id="ss-hint">
-      <span data-lang="en">Tap a bottle to taste it. Tap the key to press it.</span>
-      <span data-lang="ko">병을 누르면 시음해요. 키캡도 눌러 보세요.</span>
+      <span data-lang="en">Tap a bottle on the list to taste it. Tap the key, too.</span>
+      <span data-lang="ko">목록의 병을 누르면 시음해요. 키캡도 눌러 보세요.</span>
     </p>
   </header>
 
@@ -270,20 +306,20 @@
   // fixed them for free under a service program (not a recall), so the bottle was "sent back".
   const SWITCHES = TTY.t({
     en: [
-      { id: 'red', c: '#c0392b', name: 'Red', type: 'linear · 45 g · 2.0 / 4.0 mm', score: '92', notes: 'Light-bodied and linear, with notes of 3 a.m. deadlines. Smooth all the way down.', pairs: 'Gaming, and refactors after midnight.' },
+      { id: 'red', c: '#c0392b', name: 'Red', type: 'linear · 45 g · 2.0 / 4.0 mm', score: '92', notes: 'Light-bodied. Goes down at a touch, with hints of typos you never meant.', pairs: 'Gaming, and refactors after midnight.' },
       { id: 'brown', c: '#8a5a35', name: 'Brown', type: 'tactile · 55 g · 2.0 / 4.0 mm', score: '90', notes: 'A small bump halfway down, like rereading an email before you send it.', pairs: 'Meetings and open-plan offices.' },
-      { id: 'blue', c: '#2e6fd8', name: 'Blue', type: 'clicky · 60 g · 2.2 / 4.0 mm', score: '97', scoreNote: 'yours. 41 for your coworkers', notes: 'Bold and clicky. Your coworkers will remember this vintage.', pairs: 'Working alone. Far away.' },
-      { id: 'silent', c: '#8c8f99', name: 'Silent', type: 'dampened · 45 g · 1.9 / 3.7 mm', score: '89', notes: 'So quiet your manager assumes you are idle. Hints of library.', pairs: 'Shared flats, sleeping babies, secret side projects.' },
+      { id: 'blue', c: '#2e6fd8', name: 'Blue', type: 'clicky · 60 g · 2.2 / 4.0 mm', score: '97', aside: 'to you.\n41 to the next desk', notes: 'Bold and clicky. Your coworkers will remember this vintage.', pairs: 'Working alone. Far away.' },
+      { id: 'silent', c: '#8c8f99', name: 'Silent', type: 'dampened linear · 45 g · 1.9 / 3.7 mm', score: '89', notes: "So quiet your manager thinks you've gone idle. Hints of library.", pairs: 'Shared flats, sleeping babies, secret side projects.' },
       { id: 'black', c: '#2b2b30', name: 'Black', type: 'linear · 60 g · 2.0 / 4.0 mm', score: '93', notes: 'Full-bodied and heavy. Builds character, and forearms.', pairs: 'Typing with conviction.' },
-      { id: 'butterfly', c: '#9aa3ad', name: 'Butterfly', type: 'vintage 2016 · 0.5 mm, all of it', score: '—', scoreNote: 'sent back', listScore: 'sent back', faulty: true, notes: 'Crisp and shallow, notes of toast crumb. The finish sometimes arrives twwice.', pairs: 'A repair program.' },
+      { id: 'butterfly', c: '#9aa3ad', name: 'Butterfly', type: 'vintage 2016 · all 0.5 mm of it', score: '—', stamp: 'Sent\nback', listScore: 'sent back', notes: 'Crisp and shallow, notes of toast crumb. The finish arrives twwice, or not at al.', pairs: 'A free repair program.' },
     ],
     ko: [
-      { id: 'red', c: '#c0392b', name: '적축', type: '리니어 · 45g · 입력 2.0 / 바닥 4.0mm', score: '92점', notes: '가볍고 매끄러운 바디. 새벽 3시 마감의 향이 나요. 끝까지 부드럽게 넘어갑니다.', pairs: '게임, 그리고 자정 넘은 리팩터링' },
+      { id: 'red', c: '#c0392b', name: '적축', type: '리니어 · 45g · 입력 2.0 / 바닥 4.0mm', score: '92점', notes: '가벼운 바디. 손가락만 얹어도 술술 넘어가고, 뒷맛에 오타가 살짝 남아요.', pairs: '게임, 그리고 자정 넘은 리팩터링' },
       { id: 'brown', c: '#8a5a35', name: '갈축', type: '택타일 · 55g · 입력 2.0 / 바닥 4.0mm', score: '90점', notes: '중간에 한 번 멈칫합니다. 보내기 전에 다시 읽는 메일처럼요.', pairs: '회의, 그리고 개방형 사무실' },
-      { id: 'blue', c: '#2e6fd8', name: '청축', type: '클리키 · 60g · 입력 2.2 / 바닥 4.0mm', score: '97점', scoreNote: '나에게. 옆자리는 41점', notes: '묵직하고 경쾌한 클릭감. 동료들이 이 빈티지를 오래 기억할 거예요.', pairs: '혼자 일하는 날. 아주 멀리서.' },
-      { id: 'silent', c: '#8c8f99', name: '저소음', type: '저소음 · 45g · 입력 1.9 / 바닥 3.7mm', score: '89점', notes: '너무 조용해서 팀장님이 노는 줄 압니다. 도서관 향이 은은해요.', pairs: '룸메이트, 잠든 아기, 몰래 하는 사이드 프로젝트' },
-      { id: 'black', c: '#2b2b30', name: '흑축', type: '리니어 · 60g · 입력 2.0 / 바닥 4.0mm', score: '93점', notes: '풀바디에 묵직한 압. 인내심과 팔뚝을 함께 길러 줍니다.', pairs: '확신에 찬 타이핑' },
-      { id: 'butterfly', c: '#9aa3ad', name: '버터플라이', type: '2016년산 · 이동 거리 0.5mm가 전부', score: '—', scoreNote: '돌려보냄', listScore: '돌려보냄', faulty: true, notes: '얕고 바삭한 맛, 빵 부스러기 향. 여운이 가끔 두 번 찍찍힙니다.', pairs: '무상 수리 프로그램' },
+      { id: 'blue', c: '#2e6fd8', name: '청축', type: '클리키 · 60g · 입력 2.2 / 바닥 4.0mm', score: '97점', aside: '내 귀엔.\n옆자리 귀엔 41점', notes: '묵직하고 경쾌한 클릭감. 동료들이 이 빈티지를 오래 기억할 거예요.', pairs: '혼자 일하는 날. 아주 멀리서.' },
+      { id: 'silent', c: '#8c8f99', name: '저소음', type: '리니어 · 45g · 입력 1.9 / 바닥 3.7mm', score: '89점', notes: '너무 조용해서 팀장님이 노는 줄 압니다. 도서관 향이 은은해요.', pairs: '룸메이트, 잠든 아기, 몰래 하는 사이드 프로젝트' },
+      { id: 'black', c: '#2b2b30', name: '흑축', type: '리니어 · 60g · 입력 2.0 / 바닥 4.0mm', score: '93점', notes: '풀바디에 묵직한 키압. 인내심과 팔뚝을 함께 길러 줍니다.', pairs: '확신에 찬 타이핑' },
+      { id: 'butterfly', c: '#9aa3ad', name: '버터플라이', type: '2016년산 · 이동 거리 0.5mm가 전부', score: '—', stamp: '돌려\n보냄', listScore: '돌려보냄', notes: '얕고 바삭한 맛, 빵 부스러기 향. 여운이 두 번 찍찍히거나, 아예 안 찍힙니.', pairs: '무상 수리 프로그램' },
     ],
   });
   const L = TTY.t({
@@ -303,7 +339,7 @@
     li.style.setProperty('--c', sw.c);
     li.querySelector('.nm').textContent = sw.name;
     li.querySelector('.sc').textContent = sw.listScore || sw.score;
-    li.querySelector('button').addEventListener('click', (e) => { if (!e.isTrusted) return; takeOver(); taste(i); });
+    li.querySelector('button').addEventListener('click', (e) => { if (!e.isTrusted) return; const mine = takeOver(); taste(i, () => run === mine); });
     list.append(li);
     return li;
   });
@@ -315,24 +351,32 @@
     blue: (t) => (t < .14 ? t / .14 * .2 : t < .24 ? .95 : .95 * Math.exp(-(t - .24) * 9)) + .05,
     silent: (t) => Math.sin(Math.PI * t) * .07,
     black: (t) => Math.pow(Math.sin(Math.PI * t), .6) * .5,
-    // a short tick, then the same tick again: one press, two letters
-    butterfly: (t) => (t < .2 ? Math.sin(Math.PI * t / .2) * .42 : t > .46 && t < .64 ? Math.sin(Math.PI * (t - .46) / .18) * .34 : 0),
+    // The butterfly has a fault a press. "twice": a short tick, then the same tick again (one
+    // press, two letters). "none": nothing at all. "stuck": the tick going down, and no way back up.
+    twice: (t) => (t < .2 ? Math.sin(Math.PI * t / .2) * .42 : t > .46 && t < .64 ? Math.sin(Math.PI * (t - .46) / .18) * .34 : 0),
+    none: () => 0,
+    stuck: (t) => (t < .2 ? Math.sin(Math.PI * t / .2) * .42 : 0),
   };
-  function pulse(id, from, width) {
+  function pulse(shape, id, from, width) {
     const pts = [];
     const n = 60;
     for (let k = 0; k <= n; k++) {
       const t = k / n;
-      const env = PROFILE[id](t);
+      const env = PROFILE[shape](t);
       const osc = Math.sin(k * (id === 'blue' || id === 'butterfly' ? 2.6 : id === 'black' ? .9 : 1.6));
       pts.push(`${(from + t * width).toFixed(1)} ${(20 - env * osc * 18).toFixed(1)}`);
     }
     return pts.join(' L');
   }
   let waveD = 'M0 20';
-  function drawPulse(id, k) {
+  function clearWave() {
+    waveD = 'M0 20';
+    line.setAttribute('d', waveD);
+  }
+  // Cell k of three. Each press draws its own cell.
+  function drawPulse(shape, id, k) {
     const w = 300 / 3;
-    waveD += ` L${(k * w).toFixed(1)} 20 L${pulse(id, k * w + 8, w - 16)} L${((k + 1) * w).toFixed(1)} 20`;
+    waveD += ` L${(k * w).toFixed(1)} 20 L${pulse(shape, id, k * w + 8, w - 16)} L${((k + 1) * w).toFixed(1)} 20`;
     line.setAttribute('d', waveD);
     if (!TTY.reduce) {
       const len = line.getTotalLength();
@@ -345,8 +389,12 @@
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   let current = -1;
   let shownName = '';
+  let stampEl = null;
   function show(i) {
     const sw = SWITCHES[i];
+    // Only a new bottle fades in. The first tasting re-shows the card already drawn before the
+    // page went on stage, and a fade there would flash it out and in at 0 s.
+    const fresh = current !== i;
     current = i;
     root.style.setProperty('--sw', sw.c);
     root.style.setProperty('--wave', WAVE[sw.id]);
@@ -364,86 +412,183 @@
       nowName.textContent = sw.name;
     }
     shownName = sw.name;
-    nowType.textContent = sw.type;
-    nowScore.innerHTML = '';
-    nowScore.append(sw.score);
-    const small = document.createElement('small');
-    small.textContent = sw.scoreNote || L.score;
-    small.classList.toggle('faulty', !!sw.faulty);
-    if (small.textContent) nowScore.append(small);
+    // Korean spec lines keep "입력 2.2" and "바닥 4.0mm" whole when they wrap (648 x 732 blue
+    // broke as "… 입력 2.2 / 바닥" + "4.0mm"): a no-break space after the two words.
+    nowType.textContent = ko ? sw.type.replace(/(입력|바닥) /g, '$1\u00a0') : sw.type;
+    nowScore.classList.remove('stamped');
+    stampEl = null;
+    if (sw.stamp) {
+      // The verdict waits for the evidence: a dash until the key sticks.
+      const dash = document.createElement('span');
+      dash.className = 'dash';
+      dash.textContent = sw.score;
+      stampEl = document.createElement('small');
+      stampEl.className = 'stamp';
+      stampEl.textContent = sw.stamp;
+      nowScore.replaceChildren(dash, stampEl);
+    } else {
+      nowScore.replaceChildren(sw.score);
+      if (sw.aside || L.score) {
+        const small = document.createElement('small');
+        small.textContent = sw.aside || L.score;
+        if (sw.aside) small.className = 'aside';
+        nowScore.append(small);
+      }
+    }
     notes.textContent = sw.notes;
     // "Pairs with:" in front of the line shows only on small stages, where its own line is gone.
     const pl = document.createElement('span');
     pl.className = 'pl';
     pl.textContent = L.pairs + ': ';
     pairs.replaceChildren(pl, sw.pairs);
-    if (!TTY.reduce) [nowName, notes, pairs].forEach((el, k) => el.animate([{ opacity: 0, filter: 'blur(3px)' }, { opacity: 1, filter: 'blur(0)' }], { duration: 420, delay: k * 90, easing: 'ease-out', fill: 'backwards' }));
+    if (fresh && !TTY.reduce) [nowName, notes, pairs].forEach((el, k) => el.animate([{ opacity: 0, filter: 'blur(3px)' }, { opacity: 1, filter: 'blur(0)' }], { duration: 420, delay: k * 90, easing: 'ease-out', fill: 'backwards' }));
   }
+  function stampIt() {
+    if (!stampEl || nowScore.classList.contains('stamped')) return;
+    nowScore.classList.add('stamped');
+    if (!TTY.reduce) stampEl.animate([{ opacity: 0, scale: 1.45 }, { opacity: 1, scale: .96, offset: .7 }, { opacity: 1, scale: 1 }], { duration: 220, easing: 'ease-out' });
+  }
+  // The ritual for every bottle: the glass swirls, and so does the key, a small circle beside it,
+  // before it is pressed three times. (The key moves as a whole, so its stuck pose is untouched.)
   function swirl() {
     if (TTY.reduce) return;
     liquid.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-40px)' }], { duration: 900, iterations: 2, easing: 'ease-in-out' });
     tilt.animate([{ rotate: '0deg' }, { rotate: '-7deg' }, { rotate: '6deg' }, { rotate: '-3deg' }, { rotate: '0deg' }], { duration: 1500, easing: 'ease-in-out' });
+    const box = key.getBoundingClientRect();
+    const r = Math.min(16, Math.max(7, Math.min(box.width, box.height) * .09));
+    const lap = [];
+    for (let a = 0; a <= 12; a++) {
+      const th = (a / 12) * 2 * Math.PI;
+      lap.push({ translate: `${(Math.sin(th) * r).toFixed(1)}px ${((Math.cos(th) - 1) * r * .6).toFixed(1)}px` });
+    }
+    key.animate(lap, { duration: 750, easing: 'ease-in-out' });
   }
-  // The butterfly's third key goes down and stays there, a little crooked, until the next
-  // press (or the next bottle) frees it. It is the last thing the tasting leaves on screen.
-  const STUCK = 'translateY(2px) rotate(-6deg)';
-  let stuckKey = null;
+
+  // The butterfly's key, when it sticks, stays down and crooked until it is freed. `press` keeps
+  // the pose in its style; animations only travel to it.
+  const STUCK = 'translateY(2px) rotate(-9deg)';
+  let stuck = false;
+  let jolted = false; // a stuck key fails the first press, then comes up on the second
+  let stuckAnim = null;
   function unstick() {
-    if (stuckKey) { stuckKey.cancel(); stuckKey = null; }
+    if (stuckAnim) { stuckAnim.cancel(); stuckAnim = null; }
     press.style.transform = '';
+    stuck = false;
+    jolted = false;
   }
+  function holdDown(frames, duration, easing) {
+    if (stuckAnim) stuckAnim.cancel();
+    press.style.transform = STUCK;
+    stuck = true;
+    stuckAnim = TTY.reduce ? null : press.animate(frames, { duration, easing });
+  }
+  // Two tries to get back up, about 2.4 s after it stuck. Neither works.
+  function strain() {
+    if (!stuck || TTY.reduce) return;
+    holdDown([
+      { transform: STUCK },
+      { transform: 'translateY(-1px) rotate(-2deg)', offset: .2 },
+      { transform: 'translateY(3px) rotate(-11deg)', offset: .42 },
+      { transform: 'translateY(-1px) rotate(-3deg)', offset: .64 },
+      { transform: 'translateY(3px) rotate(-11deg)', offset: .84 },
+      { transform: STUCK },
+    ], 640, 'ease-in-out');
+  }
+  const strainLater = (live) => wait(2400).then(() => { if (live() && stuck) strain(); });
+
+  // One press of switch `id`, drawn into wave cell `k`. The butterfly brings a fault each time.
+  const FAULTS = ['twice', 'none', 'stuck'];
+  let nextFault = 0;
   async function strike(id, k) {
     unstick();
+    const fault = id === 'butterfly' ? FAULTS[nextFault] : null;
+    if (fault) nextFault = (nextFault + 1) % FAULTS.length;
     // Key travel in px is roughly to scale: 15 for 4 mm, 13 for 3.7 mm, 2 for half a millimetre.
     const travel = id === 'butterfly' ? 2 : id === 'silent' ? 13 : 15;
     const down = id === 'black' ? 170 : id === 'blue' ? 90 : id === 'butterfly' ? 70 : 120;
-    const sticks = id === 'butterfly' && k === 2;
+    const sticks = fault === 'stuck';
     if (sticks) {
-      if (TTY.reduce) press.style.transform = STUCK;
-      else stuckKey = press.animate([{ transform: 'none' }, { transform: `translateY(${travel}px)`, offset: .4 }, { transform: STUCK }], { duration: 420, easing: 'cubic-bezier(.3, 1.6, .5, 1)', fill: 'forwards' });
+      holdDown([{ transform: 'none' }, { transform: `translateY(${travel}px)`, offset: .4 }, { transform: STUCK }], 420, 'cubic-bezier(.3, 1.6, .5, 1)');
     } else if (!TTY.reduce) {
       const frames = id === 'brown' || id === 'blue'
         ? [{ transform: 'none' }, { transform: `translateY(${travel * .35}px)`, offset: .3 }, { transform: `translateY(${travel * .4}px)`, offset: .42 }, { transform: `translateY(${travel}px)`, offset: .6 }, { transform: 'none' }]
         : [{ transform: 'none' }, { transform: `translateY(${travel}px)`, offset: .5 }, { transform: 'none' }];
       press.animate(frames, { duration: down * 2.6, easing: 'ease-in-out' });
     }
-    drawPulse(id, k);
+    drawPulse(fault || id, id, k);
     await wait(TTY.reduce ? 0 : down * 2.6 + (sticks ? 700 : 0) + 180);
+    return sticks;
   }
-  async function taste(i, live = () => true) {
+  // Pressing a stuck key: the first press only jolts it (and types nothing), the second frees it,
+  // with the butterfly's two ticks. Then its faults carry on: nothing, then stuck again.
+  function pressStuck(k) {
+    if (!jolted) {
+      holdDown([{ transform: STUCK }, { transform: 'translateY(4px) rotate(-12deg)', offset: .35 }, { transform: 'translateY(1px) rotate(-8deg)', offset: .7 }, { transform: STUCK }], 300, 'ease-out');
+      jolted = true;
+      drawPulse('none', 'butterfly', k);
+      return;
+    }
+    unstick();
+    if (!TTY.reduce) press.animate([{ transform: STUCK }, { transform: 'translateY(-3px) rotate(2deg)', offset: .35 }, { transform: 'translateY(.5px)', offset: .7 }, { transform: 'none' }], { duration: 380, easing: 'ease-out' });
+    drawPulse('twice', 'butterfly', k);
+    nextFault = 1;
+  }
+  async function taste(i, live) {
     unstick();
     show(i);
-    waveD = 'M0 20';
-    line.setAttribute('d', waveD);
+    clearWave();
+    cell = 0;
+    nextFault = 0;
     swirl();
-    await wait(TTY.reduce ? 0 : 800); if (!live()) return;
-    for (let k = 0; k < 3; k++) { await strike(SWITCHES[i].id, k); if (!live()) return; }
+    await wait(TTY.reduce ? 0 : 800); if (!live()) return false;
+    for (let k = 0; k < 3; k++) { await strike(SWITCHES[i].id, k); if (!live()) return false; }
+    if (stuck) { stampIt(); strainLater(live); }
+    return true;
   }
 
   /* ---- Autoplay and taking over ---- */
+  // Six bottles, blue (the loudest) left up longest of the five, and the butterfly last: its key
+  // sticks at about 20.3 s, the stamp lands at 21.2, the key tries to get up at 23.6, and the
+  // round starts again at about 26.4 s.
   let run = 0;
-  async function play() {
+  async function play(from) {
     const mine = ++run;
     const live = () => run === mine;
-    // Six bottles; the last one (the butterfly, its key stuck) stays up until the round ends.
-    while (live()) {
-      for (let i = 0; i < SWITCHES.length; i++) {
-        await taste(i, live); if (!live()) return;
-        await wait(i < SWITCHES.length - 1 ? 1200 : 6200); if (!live()) return;
-      }
+    for (let i = from; live(); i = (i + 1) % SWITCHES.length) {
+      if (!await taste(i, live)) return;
+      await wait(i === SWITCHES.length - 1 ? 5200 : i === 2 ? 2200 : 1200); if (!live()) return;
     }
   }
-  function takeOver() { run++; }
+  // A visitor's tap stops the round where it is; whatever they started plays out and stays.
+  // After 12 s with no taps the round carries on from the next bottle. (The kit already asks the
+  // home page for 12 s more on every pointerdown and keydown.)
+  let idle = 0;
+  function takeOver() {
+    const mine = ++run;
+    clearTimeout(idle);
+    if (!TTY.reduce) idle = setTimeout(() => { if (run === mine) play((current + 1) % SWITCHES.length); }, 12000);
+    return mine;
+  }
   // The keycap: a click, a tap, or Enter / Space when it has focus. One press of the bottle on
-  // the card (and it frees the butterfly's stuck key).
+  // the card; the visitor's presses fill the wave's three cells, then start it again.
   const key = $('.key');
   key.setAttribute('aria-label', L.key);
+  let cell = 0;
   function pressKey() {
-    takeOver();
-    const sw = SWITCHES[Math.max(current, 0)];
+    const mine = takeOver();
     if (current < 0) show(0);
-    waveD = 'M0 20';
-    strike(sw.id, 0);
+    const sw = SWITCHES[current];
+    if (cell === 0) clearWave();
+    const k = cell;
+    cell = (cell + 1) % 3;
+    // A press on the key autoplay has just stuck, before its stamp (20.3-21.2 s), stops the
+    // round that would have stamped it: the stamp lands here instead. (Once on, it stays.)
+    if (stuck) { pressStuck(k); stampIt(); return; }
+    strike(sw.id, k).then((sticks) => {
+      if (!sticks || run !== mine) return;
+      stampIt();
+      strainLater(() => run === mine);
+    });
   }
   key.addEventListener('click', (e) => { if (e.isTrusted) pressKey(); });
   key.addEventListener('keydown', (e) => {
@@ -454,13 +599,14 @@
 
   /* ---- Start ---- */
   if (TTY.reduce) {
-    // The last scene: the butterfly, two ticks a press, the third key stuck.
+    // The last scene: the butterfly's three faults on the wave, the key stuck, the stamp on.
     show(SWITCHES.length - 1);
     for (let k = 0; k < 3; k++) strike('butterfly', k);
+    stampIt();
   } else {
     show(0);
   }
-  TTY.onShow(() => { if (!TTY.reduce) play(); });
+  TTY.onShow(() => { if (!TTY.reduce) play(0); });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
 })();

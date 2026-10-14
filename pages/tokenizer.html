@@ -64,7 +64,8 @@
   }
 
   .head { position: absolute; left: 5cqw; top: 5cqh; max-width: 50cqw; }
-  h1 { font-size: min(6.4cqw, 7.4cqh); font-weight: 900; font-stretch: 112%; line-height: .95; letter-spacing: -.01em; }
+  /* The title stays no bigger than the punch (.caption.big): it carries no joke. 'The Token / Factory' on two lines. */
+  h1 { font-size: min(4.6cqw, 6cqh); max-width: 31cqw; font-weight: 900; font-stretch: 112%; line-height: .95; letter-spacing: -.01em; }
   /* Kept left of the press (its left edge is at 38cqw or further right), however the title wraps. */
   .sub { max-width: 31cqw; margin-top: 1.4cqh; font-size: min(2cqw, 2.5cqh); font-stretch: 90%; font-weight: 500; color: #4a5960; text-wrap: balance; }
   .lang-ko .sub { font-size: min(1.9cqw, 2.4cqh); }
@@ -215,7 +216,24 @@
   .receipt .row { display: flex; justify-content: space-between; gap: 1em; }
   .receipt .row span:last-child { white-space: nowrap; }
   .receipt .total { margin-top: .4em; padding-top: .4em; border-top: 1.5px dashed #9aa3a7; font-weight: 700; }
-  .receipt .foot { margin-top: .6em; font-size: .9em; opacity: .75; text-align: center; }
+  .receipt .foot { margin-top: .6em; font-size: max(10px, .9em); opacity: .75; text-align: center; }
+  /* The answer line is stamped on once the receipt is out, in the conclusion's red. */
+  .receipt .stamp {
+    justify-content: center;
+    gap: .7em;
+    width: fit-content;
+    margin: .3em auto 0;
+    padding: 0 .55em;
+    border: 1.5px solid currentColor;
+    border-radius: .25em;
+    color: #c4381a;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    transform: rotate(-3deg);
+    visibility: hidden;
+  }
+  .receipt .stamp.in { visibility: visible; }
 
   /* The end of a shift: the button and its one-line hint, left of the receipt. */
   .end {
@@ -259,23 +277,25 @@
   /* Portrait stages (phones) stack the meters under the title. */
   @container (orientation: portrait) {
     .head { left: 5cqw; top: 3cqh; max-width: 90cqw; }
-    h1 { font-size: 8.4cqw; }
+    /* No bigger than the smallest punch here: the one-line conclusion with less motion, min(5.6cqw, 4.6cqh). */
+    h1 { font-size: min(5.6cqw, 4.6cqh); max-width: none; }
     .sub { max-width: none; font-size: 3.4cqw; }
     .lang-ko .sub { font-size: 3.3cqw; }
-    /* Opened on its own, the title keeps left of the tty.link nav in the top right corner. */
-    html:not(.embedded) .head { max-width: calc(90cqw - var(--nav-room)); }
-    html:not(.embedded) h1 { font-size: min(8.4cqw, calc((90cqw - var(--nav-room)) / 10.8)); }
+    /* Opened on its own, the title keeps left of the tty.link nav in the top right corner. The line
+       under it starts below the nav and keeps the full width (squeezed, it took two lines and ran
+       into the meters on a 648 px stage). */
+    html:not(.embedded) h1 { max-width: calc(90cqw - var(--nav-room)); font-size: min(5.6cqw, 4.6cqh, calc((90cqw - var(--nav-room)) / 10.8)); }
     /* The meters end above the press lamp (the housing top is 37cqh, the lamp pokes 2.2cqh above it)
        on a near-square stage too, where sizes in cqw alone would run into it. */
     .meters { left: 5cqw; right: auto; top: 19cqh; }
     .meter { min-width: 24cqw; padding: min(1.6cqw, 1.2cqh) 2.4cqw; border-radius: 1.6cqw; }
-    .m-label { font-size: max(9px, min(2.6cqw, 2cqh)); line-height: 1.2; }
+    .m-label { font-size: max(10px, min(2.6cqw, 2cqh)); line-height: 1.2; }
     .m-val { font-size: min(8cqw, 5.4cqh); }
-    .m-unit { font-size: max(9px, min(2.4cqw, 1.9cqh)); line-height: 1.2; }
+    .m-unit { font-size: max(10px, min(2.4cqw, 1.9cqh)); line-height: 1.2; }
     .gauge { width: min(22cqw, 20cqh); }
     .press { top: 37cqh; width: 40cqw; }
     .housing { height: 10cqh; }
-    .plate { font-size: 2.6cqw; }
+    .plate { font-size: max(10px, 2.6cqw); }
     .lamp { width: 4.6cqw; }
     .piston { height: 3.6cqh; }
     .blade { height: 3.4cqh; }
@@ -283,7 +303,7 @@
     .belt::before, .belt::after { width: 3cqh; }
     .legs { top: 68cqh; }
     .lane { bottom: 36cqh; }
-    .bin { top: 69.5cqh; width: 16cqw; font-size: 2.4cqw; }
+    .bin { top: 69.5cqh; width: 16cqw; font-size: max(10px, 2.4cqw); }
     .caption { top: 80cqh; font-size: 4.2cqw; }
     .caption.big { font-size: 6.6cqw; }
     /* With less motion the conclusion stays up with the button row under it: one line. */
@@ -297,14 +317,19 @@
        fine print (which would run under the receipt) steps aside. */
     .printed .end { right: calc(4cqw + var(--rw) + 3cqw); flex-direction: column-reverse; align-items: flex-start; gap: .5em; }
     .printed .fine { opacity: 0; }
-    .fine { max-width: 90cqw; font-size: 2.6cqw; }
+    .fine { max-width: 90cqw; font-size: max(10px, 2.6cqw); }
     .bar, .chip { --chip: 5.6cqw; }
+    /* Sixteen jamo (수고하셨습니다) on a phone's belt: slimmer sides, so fit() shrinks the letters less (10.8 px+). */
+    .chip.jamo { padding: .22em .2em; }
   }
   /* Short phone stages (about 360 x 400): a tighter receipt that clears the press, and a
      conclusion on one line above the button. */
   @container (orientation: portrait) and (max-height: 470px) {
     .receipt { padding: 10px 12px 18px; line-height: 1.3; }
     .receipt .no { display: none; }
+    .receipt .total { margin-top: .3em; padding-top: .3em; }
+    .receipt .stamp { margin-top: .15em; }
+    .receipt .foot { margin-top: .4em; }
     .caption.big { font-size: min(6.6cqw, 4.6cqh); }
   }
   html:not(.embedded) { --nav-room: 84px; }
@@ -317,7 +342,7 @@
 <div class="rig">
   <header class="head">
     <h1 data-lang="en">The Token Factory</h1>
-    <h1 data-lang="ko"><font-kku font="sticker" size="min(6.8cqw, 7.8cqh)">토큰 공장</font-kku></h1>
+    <h1 data-lang="ko"><font-kku font="sticker" size="1em">토큰 공장</font-kku></h1>
     <p class="sub" data-lang="en">We cut your words into pieces and bill you per piece.</p>
     <p class="sub" data-lang="ko">말을 조각내고, 조각마다 요금을 받습니다.</p>
   </header>
@@ -361,10 +386,10 @@
       tokens: 'Tokens', bill: 'Your bill', unit: 'cookies', plate: 'Cutter No. 7', bin: 'Billing',
       fine: 'A cartoon. Real tokenizers are more complicated, and pricier to explain.',
       again: 'Next shift', hint: 'Each shift cuts new words.',
-      c4: 'Why Korean costs more',
+      c4: 'Korean surcharge applied.',
       receipt: {
         title: 'The Token Factory', no: 'Receipt No. 0042',
-        syllables: (w) => `${w}, syllables`, jamo: (w) => `${w}, jamo too`,
+        syllables: (w) => `${w}, syllables`, jamo: (w) => `${w}, surcharge`,
         tokens: 'Tokens', total: 'Total', cost: (n) => `${n} cookies`,
         answer: ['Answer', 'sold separately'],
         foot: 'Prices are made up. The feelings are real.',
@@ -374,10 +399,10 @@
       tokens: '토큰', bill: '청구액', unit: '쿠키', plate: '7번 절단기', bin: '청구',
       fine: '만화입니다. 실제 토크나이저는 더 복잡하고, 설명하기는 더 비쌉니다.',
       again: '다음 교대', hint: '교대마다 다른 말을 잘라요.',
-      c4: '<font-kku font="sebul" size="1em">한국어 요금이 더 나오는 이유</font-kku>',
+      c4: '<font-kku font="sebul" size="1em">한국어 할증 적용</font-kku>',
       receipt: {
         title: '토큰 공장', no: '영수증 0042번',
-        syllables: (w) => `${w} (글자)`, jamo: (w) => `${w} (자모까지)`,
+        syllables: (w) => `${w} (글자)`, jamo: (w) => `${w} (자모 할증)`,
         tokens: '토큰 합계', total: '청구액', cost: (n) => `쿠키 ${n}개`,
         answer: ['답변', '별도'],
         foot: '요금은 지어낸 것입니다. 서운함은 진짜입니다.',
@@ -432,13 +457,20 @@
     thumb: { text: '👍', pieces: ['F0', '9F', '91', '8D'], bytes: true, label: TTY.t({ en: '👍, bytes', ko: '👍 (바이트)' }), line: TTY.t({ en: '👍 = F0 9F 91 8D. One thumb, four tokens.', ko: '👍 = F0 9F 91 8D. 엄지 하나에 토큰 네 개.' }) },
   };
   // A shift: an English greeting, one longer word (or a thumbs-up), then the same greeting in Korean.
-  // Each shift (Next shift, or the encore) moves to the next; the first is picked at random.
+  // Each shift (Next shift, or the encore) moves to the next one.
   const SHIFTS = [
     { english: [WORDS.hello, WORDS.unbelievable], korean: '안녕하세요', line: TTY.t({ en: '안녕하세요… same hello, five already?', ko: '안녕하세요… 같은 인사인데 벌써 다섯 개?' }) },
     { english: [WORDS.thanks, WORDS.strawberry], korean: '감사합니다', line: TTY.t({ en: '감사합니다… same thanks, five already?', ko: '감사합니다… 같은 말인데 벌써 다섯 개?' }) },
-    { english: [WORDS.work, WORDS.thumb], korean: '수고하셨습니다', line: TTY.t({ en: '수고하셨습니다… same thing, seven already?', ko: '수고하셨습니다… 같은 말인데 벌써 일곱 개?' }) },
+    { english: [WORDS.work, WORDS.thumb], korean: '수고하셨습니다', line: TTY.t({ en: '수고하셨습니다… same “good work”, seven already?', ko: '수고하셨습니다… 같은 말인데 벌써 일곱 개?' }) },
   ];
-  let shiftNo = Math.floor(Math.random() * SHIFTS.length);
+  // A first visit starts with the first shift (Hello world, 안녕하세요); each later visit in this
+  // browser starts one shift further on, so whoever sees the factory again gets new words.
+  let shiftNo = 0;
+  try {
+    const kept = Number(localStorage.getItem('tty.tokenizer.shift'));
+    if (Number.isInteger(kept) && kept > 0) shiftNo = kept % SHIFTS.length;
+    localStorage.setItem('tty.tokenizer.shift', String((shiftNo + 1) % SHIFTS.length));
+  } catch (e) { /* storage blocked: the first shift */ }
   let ENGLISH = SHIFTS[shiftNo].english;
   let KOREAN = SHIFTS[shiftNo].korean;
   const receiptRows = () => [
@@ -638,15 +670,25 @@
     const rows = receiptRows();
     const tokens = totalTokens();
     factory.classList.add('printed');
-    receipt.innerHTML = `<h2>${r.title}</h2><p class="no">${r.no}</p>${rows.map(([a, b]) => `<p class="row"><span>${a}</span><span>${b}</span></p>`).join('')}<p class="row total"><span>${r.tokens}</span><span>${tokens}</span></p><p class="row"><span>${r.total}</span><span>${r.cost(tokens * PRICE)}</span></p><p class="row"><span>${r.answer[0]}</span><span>${r.answer[1]}</span></p><p class="foot">${r.foot}</p>`;
+    // The answer line is in place from the start (hidden), so stamping it moves nothing.
+    receipt.innerHTML = `<h2>${r.title}</h2><p class="no">${r.no}</p>${rows.map(([a, b]) => `<p class="row"><span>${a}</span><span>${b}</span></p>`).join('')}<p class="row total"><span>${r.tokens}</span><span>${tokens}</span></p><p class="row"><span>${r.total}</span><span>${r.cost(tokens * PRICE)}</span></p><p class="row stamp${TTY.reduce ? ' in' : ''}"><span>${r.answer[0]}</span><span>${r.answer[1]}</span></p><p class="foot">${r.foot}</p>`;
     if (TTY.reduce) { receipt.style.transform = 'none'; return Promise.resolve(); }
     const a = receipt.animate([{ transform: 'translateY(105%)' }, { transform: 'translateY(0)' }], { duration: 1800, easing: 'steps(14, end)', fill: 'forwards' });
     return a.finished.then(() => { receipt.style.transform = 'none'; a.cancel(); });
+  }
+  // Thunk: "Answer sold separately" lands on the receipt like a rubber stamp.
+  function stamp() {
+    const s = receipt.querySelector('.stamp');
+    if (!s) return;
+    s.classList.add('in');
+    s.animate([{ transform: 'scale(1.7) rotate(-9deg)', opacity: 0 }, { transform: 'rotate(-3deg)', opacity: 1 }], { duration: 220, easing: 'cubic-bezier(.6, 0, .9, .5)' });
+    rig.animate([{ transform: 'none' }, { transform: 'translate(1.5px, 2px)' }, { transform: 'translate(-2px, 0)' }, { transform: 'none' }], { duration: 200, delay: 200 });
   }
 
   /* ---- Run ---- */
   let running = false;
   let encore = null;
+  let stamping = null;
   let shifts = 0;
   function nextShift() {
     shiftNo = (shiftNo + 1) % SHIFTS.length;
@@ -656,6 +698,7 @@
   async function run() {
     if (running) return;
     clearTimeout(encore);
+    clearTimeout(stamping);
     running = true;
     if (shifts++) nextShift();
     again.classList.remove('on');
@@ -678,6 +721,7 @@
     lamp.classList.remove('on');
     again.classList.add('on');
     running = false;
+    stamping = setTimeout(stamp, 500);
     // Left alone, the factory starts another shift after a while.
     encore = setTimeout(run, 9000);
   }

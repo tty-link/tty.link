@@ -96,6 +96,12 @@
   .tag-t { font: 700 13px 'JetBrains Mono', monospace; fill: #2a1a0c; }
   .bang { font: 400 34px 'Creepster', cursive; fill: #ffe27a; }
   .zz { font: 700 14px 'JetBrains Mono', monospace; fill: #cfc3ff; }
+  /* The room's own plate ('4242 Z' → 'VACANT') carries the setup and the punchline's empty room:
+     in a small house it grows about its centre so it stays 10 px and up (17 units × scale × width / 600).
+     The scale sits on the inner group: its origin (0 0) is the plate's centre, and the flip in vacate()
+     animates the outer group's transform, so the two never multiply. */
+  @container (max-width: 276px) { .plate-face { scale: 1.75; } }
+  @container (min-width: 276.5px) and (max-width: 370px) { .plate-face { scale: 1.3; } }
 
   /* Animated SVG groups: positions come from the transform attribute on the parent group, motion
      from CSS/Web Animations on the child, scaled about the parent's origin (the feet). */
@@ -158,24 +164,25 @@
     translate: -50% 0; rotate: 45deg; background: inherit; border: inherit; border-width: 0 2px 2px 0;
   }
   .bubble.dad { background: #fff3c4; }
-  .bubble.grandpa { background: #ffe9e0; }
+  .bubble.grandpa { background: #ffe9e0; max-width: 78cqi; }
   .bubble.zom { background: #eaffd8; }
 
   /* ---------- side panel: register, counter, buttons ---------- */
   .panel { grid-area: panel; display: grid; gap: 6px; min-width: 0; width: min(100%, 640px); justify-self: center; }
   .register { display: none; }
+  /* The hunters' meter: a reflective grey-green LCD in the same red case as the one hunter B holds. */
   .lcd {
     display: flex; flex-wrap: wrap; justify-content: center; gap: 0 .8em;
     padding: 5px 10px;
-    border-radius: 8px;
-    background: #0d1a12;
-    box-shadow: inset 0 0 0 2px #2c4a35, 0 0 14px #57ff9a22;
-    color: #8dffb6;
+    border-radius: 6px;
+    background: #c9d3ad;
+    box-shadow: inset 0 0 0 2px #8a9670, inset 0 3px 6px #39421f33, 0 0 0 3px #b8402f;
+    color: #1f2a17;
     font: 500 clamp(11.5px, 3.1cqi, 14px)/1.25 'JetBrains Mono', 'Gowun Dodum', monospace;
     text-align: center;
   }
-  .lcd b { color: #d6ffe5; font-weight: 700; }
-  .lcd .err { color: #ff9ab8; }
+  .lcd b { color: #0e1509; font-weight: 700; }
+  .lcd .err { color: #b3123f; font-weight: 700; }
   .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .btn {
     display: grid; justify-items: center; gap: 1px;
@@ -489,10 +496,10 @@
       <rect x="258" y="474" width="64" height="62" rx="3" fill="none" stroke="#3f271b" stroke-width="3"/>
       <circle cx="322" cy="472" r="4.5" fill="#d9c27a"/>
     </g>
-    <g class="plate-main" transform="translate(290 366)">
+    <g class="plate-main" transform="translate(290 366)"><g class="plate-face">
       <rect class="plate-bg" x="-48" y="-15" width="96" height="27" rx="3" fill="#d9c27a"/>
       <text class="plate-t plate-4242" x="0" y="5" text-anchor="middle">4242 Z</text>
-    </g>
+    </g></g>
     <!-- suitcase and candy pail -->
     <g transform="translate(536 590)">
       <rect x="-34" y="-44" width="68" height="40" rx="6" fill="#7a4b2a"/>
@@ -525,8 +532,8 @@
       <path d="M8 -112 L28 -98" stroke="#c4ad74" stroke-width="12" stroke-linecap="round"/>
       <g transform="translate(30 -104)">
         <rect x="-4" y="-14" width="26" height="30" rx="4" fill="#d24a3a"/>
-        <rect x="0" y="-10" width="18" height="12" rx="2" fill="#0d1a12"/>
-        <path class="needle" d="M9 2 L9 -8" stroke="#8dffb6" stroke-width="1.6"/>
+        <rect x="0" y="-10" width="18" height="12" rx="2" fill="#c9d3ad"/>
+        <path class="needle" d="M9 2 L9 -8" stroke="#1f2a17" stroke-width="1.6"/>
         <circle cx="9" cy="10" r="2.5" fill="#ffd166"/>
       </g>
     </g>
@@ -659,7 +666,7 @@
   <aside class="panel">
     <section class="register" aria-labelledby="reg-title">
       <h2 id="reg-title"><span data-lang="en">Guest Register</span><span data-lang="ko">투숙객 명부</span></h2>
-      <p class="cmdline">$ ps -eo pid,ppid,stat,cmd</p>
+      <p class="cmdline"><span data-lang="en">as seen by ps -eo pid,ppid,stat,cmd</span><span data-lang="ko">ps -eo pid,ppid,stat,cmd로 뽑음</span></p>
       <table class="reg">
         <thead><tr><th class="num">PID</th><th class="num">PPID</th><th>STAT</th><th>CMD</th></tr></thead>
         <tbody></tbody>
@@ -696,42 +703,42 @@
       desc: 'A haunted house in cross-section. Two ghost hunters fire kill -9 at a zombie in room 4242; the shots pass straight through. A reaper turns out to be its parent, who reaps it with wait(). Upstairs, grandpa PID 1 takes in an orphan.',
       stage: 'Room 4242 of the haunted house',
       dead: "I'm already dead.",
-      dadCall: 'Dad!',
-      reap: "Relax. I'm just here to reap.",
-      grandpa: "Parent's gone? Then you're with me.",
-      hunters: '…So what are we here for?',
+      dadCall: "Dad! You're\u00a0late!",
+      reap: "Relax. I'm just here to reap my kid.",
+      grandpa: "Your parent went first? Grandpa'll reap you, kiddo.",
+      hunters: '…So why are we even here?',
       count: (n) => `kill -9 × ${n}`,
       effect: 'no effect · no error either',
       ready: 'SIGKILL loaded',
       nosuch: (pid) => `kill: (${pid}) - No such process`,
       reaped: (pid) => `wait() → ${pid} reaped · status 0`,
-      adopted: 'PPID 3999 → 1 (adopted by init)',
+      adopted: '4317: PPID 3999 → 1 (init\u00a0adopts)',
       vacant: 'VACANT',
       reactions: ['Still dead.', 'That tickles.', 'I already exited.', '*yawn*', 'Have you tried my parent?'],
-      next: (pid) => `Room ${pid}: another one checks out…`,
+      next: (pid) => `A new zombie moves into room ${pid}. It has already exited.`,
       sayZap: (n) => `kill -9 sent, ${n} so far. The zombie is still there.`,
-      sayReap: 'The parent reaped the zombie. Room 4242 is vacant.',
+      sayReap: (pid) => `The parent reaped the zombie. Room ${pid} is vacant.`,
       sayGone: 'The room is already vacant: no such process.',
     },
     ko: {
       desc: '유령의 집 단면도. 유령 사냥꾼 둘이 4242호의 좀비에게 kill -9를 쏘지만 빛줄기가 그대로 통과한다. 저승사자는 알고 보니 좀비의 부모이고, wait()로 아이를 거둬 간다. 위층에서는 1번 할아버지가 고아를 거둔다.',
       stage: '유령의 집 4242호',
       dead: '이미 죽었는데요.',
-      dadCall: '아빠!',
-      reap: '놀라지 마세요. 애 거두러 왔어요.',
+      dadCall: '아빠! 왜\u00a0이제\u00a0와!',
+      reap: '놀라지 마세요. 애\u00a0데리러 왔어요.',
       grandpa: '부모가 먼저 갔구나. 이 할애비가 거두마.',
-      hunters: '…우린 뭐 하러 왔지?',
+      hunters: '…우린 뭐\u00a0하러 왔지?',
       count: (n) => `kill -9 × ${n}`,
       effect: '효과 없음 · 오류도 없음',
       ready: 'SIGKILL 장전 완료',
       nosuch: (pid) => `kill: (${pid}) - No such process`,
       reaped: (pid) => `wait() → ${pid} 거둠 · 종료 코드 0`,
-      adopted: 'PPID 3999 → 1 (init이 입양)',
+      adopted: '4317: PPID 3999 → 1 (init이\u00a0입양)',
       vacant: '빈 방',
-      reactions: ['여전히 죽어 있어요.', '간지러워요.', '저 이미 종료했어요.', '하암~', '부모님 불러 주실래요?'],
-      next: (pid) => `${pid}호: 또 한 명 체크아웃…`,
+      reactions: ['아직도 죽어 있는데요.', '간지러워요.', '저 이미 종료했어요.', '하암~', '부모님 불러 주실래요?'],
+      next: (pid) => `${pid}호에 새 좀비가 들어왔다. 이미 종료한 상태다.`,
       sayZap: (n) => `kill -9를 ${n}번 보냈다. 좀비는 그대로다.`,
-      sayReap: '부모가 좀비를 거둬 갔다. 4242호가 비었다.',
+      sayReap: (pid) => `부모가 좀비를 거둬 갔다. ${pid}호가 비었다.`,
       sayGone: '방이 이미 비었다. 그런 프로세스가 없다.',
     },
   });
@@ -806,15 +813,17 @@
     zombie: () => (zombie.classList.contains('sitting') ? [500, 434] : [460, 428]),
     dad: () => [318, 372],
     hunter: () => [170, 412],
-    grandpa: () => [296, 168],
+    // From the attic floor, tail down between the plates: the plates ('PPID 1') stay readable.
+    grandpa: () => [330, 124],
   };
   // The stretch of the house (SVG x) each speaker's bubble may use. The hunters' line stays left
-  // of the door (x 240) so the room's sign ('VACANT') can be read. Dad's line stays left of his
+  // of the room's plate ('VACANT'), which is wider in a small house. Dad's line stays left of his
   // face and the zombie's right of it, so in a small house both fit side by side.
+  const plateScale = () => parseFloat(getComputedStyle($('.plate-face')).scale) || 1;
   const SPAN = {
     zombie: () => [reaper.classList.contains('hidden') ? 4 : 358, 596],
     dad: () => [4, 352],
-    hunter: () => [4, 236],
+    hunter: () => [4, 236 - 48 * (plateScale() - 1) - 4],
     grandpa: () => [4, 596],
   };
   const bubbleTimers = {};
@@ -822,17 +831,22 @@
   // changes size: on the home page the frame loads at full window size and then shrinks into the stage.
   function place(b) {
     const who = b.dataset.who;
-    const W = b.parentElement.clientWidth;
+    const house = b.parentElement;
+    const W = house.clientWidth;
     if (!W) return;
     const [x, y] = ANCHOR[who]();
-    const [lo, hi] = SPAN[who]().map((u) => u / 600 * W);
-    b.style.maxWidth = hi - lo < W * .58 ? (hi - lo) + 'px' : '';
+    // The hunters stand by the left wall. When the house is narrower than its stage (a short phone
+    // stage), their line may also use the night sky beside the wall instead of piling up four lines.
+    const sky = who === 'hunter' ? Math.max(0, house.getBoundingClientRect().left - $('.stage').getBoundingClientRect().left - 4) : 0;
+    const [lo, hi] = SPAN[who]().map((u, i) => u / 600 * W - (i ? 0 : sky));
+    const cap = sky ? Math.max(W * .58, 150) : W * .58;
+    b.style.maxWidth = hi - lo < cap ? (hi - lo) + 'px' : sky ? cap + 'px' : '';
     b.style.left = (x / 600 * 100) + '%';
     b.style.top = (y / 620 * 100) + '%';
     // Keep the bubble in its stretch; the tail still points at the speaker.
     const w = b.offsetWidth;
     const cx = x / 600 * W;
-    const left = Math.max(Math.min(Math.max(cx - w / 2, lo), hi - w), 0);
+    const left = Math.max(Math.min(Math.max(cx - w / 2, lo), hi - w), -sky);
     b.style.left = (left + w / 2) + 'px';
     b.style.setProperty('--tail', Math.min(Math.max(cx - left, 16), w - 16) + 'px');
   }
@@ -1120,30 +1134,35 @@
       zombie.classList.add('happy');
       hearts.classList.remove('hidden');
       anim(hearts, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'translateY(-6px)', offset: .3 }, { opacity: 0, transform: 'translateY(-26px)' }], { duration: 1500 });
-      say('zombie', L.dadCall, 1300);
+      say('zombie', L.dadCall, 2000);
     });
-    at(8700, () => say('dad', L.reap, 2300));
+    at(8700, () => say('dad', L.reap, 2700));
     at(8800, () => anim(hb, [{ transform: 'translate(52px, -44px) rotate(-10deg)' }, { transform: 'none' }], { duration: 500 }));
     // 10.2 s: the exit status changes hands: that is the reaping.
     at(10200, () => handOver(900));
     at(11100, () => { leaveTogether(1500); lcd(L.reaped(4242)); });
-    at(12900, () => { doorOpen(false); vacate(4242); present = false; });
+    at(12900, () => { doorOpen(false); vacate(4242); present = false; setButtons(); });
     // 13.3 s upstairs: the sleepover's parent goes home. The kid is re-parented to PID 1.
     at(13300, orphanParentExits);
     at(13300, () => lcd(L.adopted));
-    at(14000, grandpaComesDown);
-    at(15200, () => { grandpaTakesIn(); say('grandpa', L.grandpa, 2600); });
-    at(17300, grandpaGoesUp);
-    // 17.8 s: the punchline goes back to the professionals.
-    at(17900, () => {
+    at(13800, grandpaComesDown);
+    at(15000, () => { grandpaTakesIn(); say('grandpa', L.grandpa, 3000); });
+    at(17400, grandpaGoesUp);
+    // 18.2 s: the punchline goes back to the professionals.
+    at(18200, () => {
       anim(zapArm, [{ transform: 'rotate(0)' }, { transform: 'rotate(32deg)' }], { duration: 600 });
       $('.ha-mouth').setAttribute('d', 'M5 -138 q5 -2 10 0');
       say('hunter', L.hunters, 4200);
       lcd(L.effect);
     });
-    at(19400, () => hint.classList.add('on'));
-    // Then dad's next kid comes back (a fresh zombie to practise on), and later the story starts over.
-    at(22600, () => { auto = false; startRound(0); });
+    // 20.5 s, while they still wonder: dad's next kid rises in room 4242 (a fresh zombie to practise
+    // on), the zapper comes back up and the meter reloads. Later the story starts over.
+    at(20500, () => {
+      auto = false;
+      hint.classList.add('on');
+      startRound(0, () => anim(zapArm, [{ transform: 'rotate(32deg)' }, { transform: 'rotate(0)' }], { duration: 300, easing: 'cubic-bezier(.3,1.4,.6,1)' }));
+    });
+    at(21300, () => wave(2, 900));
     loopTimer = setTimeout(play, 34000);
   }
 
@@ -1175,7 +1194,7 @@
     btnKill.setAttribute('aria-disabled', String(busy));
   }
   // A new zombie in room 4242: dad's next kid comes back and exits.
-  function startRound(delay = 0) {
+  function startRound(delay = 0, then = null) {
     busy = true; setButtons();
     at(delay, () => {
       cancelAnims();
@@ -1193,7 +1212,10 @@
       anim(zMove, [{ transform: 'translate(0, 30px)', opacity: 0 }, { transform: 'translate(0, -6px)', opacity: 1, offset: .7 }, { transform: 'translate(0, 0)', opacity: 1 }], { duration: 700 });
       present = true; busy = false; misses = 0;
       setButtons();
+      // A fresh zombie, a fresh reading: no 'No such process' or 'reaped' left over from the empty room.
+      lcd(L.ready);
       sr.textContent = L.next(pid);
+      if (then) then();
     });
   }
 
@@ -1217,10 +1239,13 @@
     zapArm.style.transform = '';
     hint.classList.add('on');
     if (reapingStarted) {
-      if (present) { vacate(pid); present = false; }
+      // The reaping is done (or as good as): the room stays empty for a moment, so this very click
+      // can hit nothing but the wall ("No such process"). The next zombie comes in a little later.
+      if (present) { vacate(pid); present = false; lcd(L.reaped(pid)); }
       reaper.classList.add('hidden');
       zombie.classList.add('hidden');
-      startRound(0);
+      busy = false; setButtons();
+      at(2500, () => startRound(0));
     } else {
       reaper.classList.add('hidden'); reaper.classList.remove('unhooded');
       zMove.style.transform = '';
@@ -1254,7 +1279,7 @@
     at(reduce ? 0 : 380, () => {
       if (line === L.reactions[3]) yawn(1000);
       else if (line === L.reactions[0]) wave(1, 600);
-      say('zombie', line, 1800);
+      say('zombie', line, 2000);
     });
     sr.textContent = L.sayZap(kills);
     if (misses >= 3) {
@@ -1273,22 +1298,24 @@
     const thisPid = pid;
     if (reduce) {
       reaper.classList.remove('hidden'); unhood();
-      say('dad', L.reap, 1600);
-      at(1700, () => {
+      say('dad', L.reap, 2700);
+      at(2800, () => {
         reaper.classList.add('hidden'); zombie.classList.add('hidden'); hush();
-        vacate(thisPid); present = false; lcd(L.reaped(thisPid)); sr.textContent = L.sayReap;
-        startRound(2600);
+        vacate(thisPid); present = false; lcd(L.reaped(thisPid)); sr.textContent = L.sayReap(thisPid);
+        busy = false; setButtons();
+        at(2600, () => startRound(0));
       });
       return;
     }
     doorOpen(true);
     at(250, () => reaperEnter(false));
-    at(1000, () => { unhood(); standUp(); zombie.classList.add('happy'); say('dad', L.reap, 1800); });
+    // Dad's line stays up 2.7 s (eight words); the two set off as it fades, as in the story.
+    at(1000, () => { unhood(); standUp(); zombie.classList.add('happy'); say('dad', L.reap, 2700); });
     at(2300, () => handOver(800));
-    at(3100, () => { leaveTogether(1400); lcd(L.reaped(thisPid)); });
-    at(4800, () => { doorOpen(false); vacate(thisPid); present = false; sr.textContent = L.sayReap; });
-    at(5200, () => { busy = false; setButtons(); });
-    startRound(7600);
+    at(3400, () => { leaveTogether(1400); lcd(L.reaped(thisPid)); });
+    at(5100, () => { doorOpen(false); vacate(thisPid); present = false; sr.textContent = L.sayReap(thisPid); });
+    at(5500, () => { busy = false; setButtons(); });
+    startRound(7900);
   }
 
   [[btnKill, pressKill], [btnWait, pressWait]].forEach(([b, fn]) => b.addEventListener('click', (e) => {

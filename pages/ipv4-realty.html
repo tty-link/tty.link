@@ -222,11 +222,11 @@
     margin-top: auto;
     font: 600 clamp(11px, 8cqi, 15px)/1.25 'Barlow', sans-serif;
     color: #3b4651;
-    background: linear-gradient(transparent 58%, rgba(255, 210, 63, 0) 58%) no-repeat;
-    transition: background-color .3s;
   }
   .lang-ko .hook { font-family: 'Gothic A1', sans-serif; font-weight: 700; }
-  .sheet.hi .hook { background-image: linear-gradient(transparent 52%, rgba(255, 210, 63, .85) 52%); }
+  /* The marker runs under every line of the hook, not just the last one. */
+  .hl { -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .sheet.hi .hl { background: linear-gradient(transparent 52%, rgba(255, 210, 63, .85) 52%); }
   .stk {
     position: absolute;
     left: 50%;
@@ -344,6 +344,7 @@
   .gauge { flex: none; display: flex; flex-direction: column; gap: .6cqh; padding: 1.1cqh 3cqi; background: rgba(255,255,255,.82); border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.15); transition: transform .25s, box-shadow .25s; }
   .g-l { font: 800 clamp(11px, 2.6cqh, 17px)/1.1 'Barlow', sans-serif; color: var(--navy-2); }
   .lang-ko .g-l { font-family: 'Gothic A1', sans-serif; }
+  .g-short { display: none; }
   .g-bar { height: clamp(6px, 1.3cqh, 10px); border-radius: 99px; background: #d5dde4; overflow: hidden; }
   .g-bar i { display: block; width: var(--p); height: 100%; background: var(--teal); border-radius: inherit; }
   .g-s { font: 600 clamp(11px, 1.9cqh, 13px)/1.1 'Barlow', sans-serif; color: var(--muted); }
@@ -368,6 +369,31 @@
       linear-gradient(90deg, transparent 49%, #f4f6f8 49% 51%, transparent 51%),
       linear-gradient(115deg, transparent 20%, rgba(255,255,255,.35) 20% 30%, transparent 30% 60%, rgba(255,255,255,.2) 60% 64%, transparent 64%);
   }
+  /* The tag beat: a second after the banner, the model home's own glass gets a sticker. */
+  .half {
+    position: absolute;
+    left: 50%;
+    top: 42%;
+    z-index: 2;
+    width: max-content;
+    max-width: 94%;
+    translate: -50% -50%;
+    rotate: -7deg;
+    text-wrap: balance;
+    padding: .28em .55em .3em;
+    border: 2px solid #fff;
+    border-radius: 3px;
+    outline: 1.5px solid var(--sold);
+    background: var(--sold);
+    color: #fff;
+    font: 800 clamp(12px, 8.6cqi, 22px)/1.05 'Barlow Condensed', sans-serif;
+    letter-spacing: .05em;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,.35);
+    opacity: 0;
+  }
+  .lang-ko .half { font: 900 clamp(12px, 8.6cqi, 21px)/1.05 'Gothic A1', sans-serif; letter-spacing: .02em; white-space: nowrap; }
+  .half.on { opacity: 1; }
   .flag { position: absolute; bottom: 0; width: clamp(16px, 9cqi, 34px); height: 40cqh; z-index: 2; pointer-events: none; }
   .flag.l { left: -2cqi; }
   .flag.r { right: -2cqi; }
@@ -382,6 +408,9 @@
     position: relative;
     margin: 0 calc(-1 * var(--pad));
     container: road / size;
+    /* The truck waits off to the left and the tumbleweed leaves to the right: clip sideways
+       only, so a hopping box and the speech bubble can still rise above the road. */
+    overflow-x: clip;
     background:
       linear-gradient(180deg, var(--walk) 0 34%, #b9b1a2 34% 38%, var(--asphalt) 38% 100%);
     z-index: 2;
@@ -436,7 +465,7 @@
     pointer-events: none;
   }
   .lang-ko .bubble { font-family: 'Gothic A1', sans-serif; font-weight: 700; }
-  .bubble b { display: block; margin-bottom: .1em; font-size: .82em; color: var(--muted); }
+  .bubble b { display: block; margin-bottom: .1em; font-size: max(10px, .82em); color: var(--muted); }
   /* The tail points left, at the thing that would not move. */
   .bubble::after {
     content: "";
@@ -451,6 +480,9 @@
     rotate: 45deg;
   }
   .bubble.on { opacity: 1; }
+  /* 3.6 s: a letter leaves 127.0.0.1, gets as far as the doorstep and comes straight back. */
+  .env { position: absolute; left: 0; top: 0; z-index: 8; width: clamp(26px, 5cqw, 36px); aspect-ratio: 4 / 3; pointer-events: none; opacity: 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
+  .env svg { display: block; width: 100%; height: 100%; overflow: visible; }
 
   /* ---------- the punchline banner ---------- */
   .punch {
@@ -577,9 +609,18 @@
     /* Keep the card clear of the standalone "?" and ":)" buttons. */
     html:not(.embedded) .card { top: calc(50% - 22px); max-height: calc(92cqh - 44px); }
     .p-big { font-size: clamp(16px, 4.4cqw, 22px); }
+    /* A pointed-out listing comes properly forward on a phone, growing inward from its edge. */
+    .sheet.hi { transform: scale(1.5); }
+    .sheet:nth-child(odd) { transform-origin: 0 50%; }
+    .sheet:nth-child(even) { transform-origin: 100% 50%; }
+    .sheet:nth-child(1) { transform-origin: 0 0; }
+    .sheet:nth-child(2) { transform-origin: 100% 0; }
+    .sheet:nth-child(5) { transform-origin: 0 100%; }
+    .sheet:nth-child(6) { transform-origin: 100% 100%; }
   }
+  /* The "축" disc is half the Korean punchline: smaller on a phone, never gone. */
   @container page (max-width: 420px) {
-    .p-mark { display: none; }
+    .p-mark { width: 24px; font-size: 14px; }
   }
   @container page (max-height: 600px) {
     .sign-sub { display: none; }
@@ -592,6 +633,10 @@
   }
   @container v6 (max-width: 170px) {
     .units-s, .g-s, .ban::before, .ban::after { display: none; }
+    .g-long { display: none; }
+    .g-short { display: inline; }
+    /* A phone's model home is ~90 px wide: a bigger lift would push the ends past its frame. */
+    .gauge.hi, .ban.hi { transform: scale(1.03); }
   }
   /* Short phone stages (the home page's 358×396): the tagline strip gives its height to the
      listing sheets. On a short sheet the sticker is smaller and flatter so it sits on the photo
@@ -605,11 +650,11 @@
     .si { padding: 3cqi 6cqi 3cqi; gap: .5cqh; }
     .hook { line-height: 1.1; }
     .stk, .lang-ko .stk {
-      padding: .1em .4em;
-      border-width: 1.5px;
+      padding: .04em .4em .06em;
+      border-width: 1px;
       outline-width: 1px;
       font-size: 10px;
-      rotate: calc(var(--r, -9deg) * .2);
+      rotate: calc(var(--r, -9deg) * .1);
       transition: opacity .3s, transform .3s;
     }
     .sheet.hi .stk { opacity: .08; transform: translate(12%, -45%) rotate(-12deg); }
@@ -622,6 +667,7 @@
     .flag .cloth { animation: none; }
     .truck.haz .hz { animation: none; opacity: 1; }
     .sheet, .gauge, .ban, .move, .stk, .lang-ko .stk { transition: none; }
+    .env { display: none; }
   }
 </style>
 </head>
@@ -679,8 +725,8 @@
         <span class="units-s">2¹²⁸ ≈ 3.4×10³⁸</span>
       </span>
       <span class="gauge" id="gauge">
-        <span class="g-l" data-lang="en">Moved in: about 48%</span>
-        <span class="g-l" data-lang="ko">입주율 약 48%</span>
+        <span class="g-l" data-lang="en">Moved in: <span class="g-long">about </span><span class="g-short">~</span>48%</span>
+        <span class="g-l" data-lang="ko"><span class="g-long">이사 온 사람</span><span class="g-short">전입</span> 약 48%</span>
         <span class="g-bar"><i style="--p: 48%"></i></span>
         <span class="g-s" data-lang="en">Google, Oct 2026</span>
         <span class="g-s" data-lang="ko">구글 측정 · 2026년 10월</span>
@@ -693,6 +739,7 @@
           <rect x="20" y="20" width="20" height="14" fill="#fff" stroke="#c8b48f" stroke-width="1"/>
           <path d="M23 31 l5 -6 4 4 3 -3 4 5 z" fill="#9cc7a0"/>
         </svg>
+        <span class="half" id="half"><span data-lang="en">HALF MOVED IN</span><span data-lang="ko">반만 입주</span></span>
       </span>
       <span class="glint" aria-hidden="true"></span>
     </button>
@@ -752,8 +799,8 @@
     <span class="p-txt">
       <span class="p-big" data-lang="en">Welcome home. Both of them.</span>
       <font-kku data-lang="ko" font="gothic" size="clamp(20px, 5cqh, 42px)" class="k-punch">두 집 살림</font-kku>
-      <span class="p-sub" data-lang="en">Dual stack: IPv4 and IPv6, both at once.</span>
-      <span class="p-sub" data-lang="ko">듀얼 스택: IPv4와 IPv6를 둘 다 쓴다.</span>
+      <span class="p-sub" data-lang="en">a.k.a. dual stack</span>
+      <span class="p-sub" data-lang="ko">일명 듀얼 스택</span>
     </span>
   </div>
 
@@ -792,7 +839,7 @@
       ko: { tag: '분양', addr: '0.0.0.0/0', big: '43억 세대 대단지', hook: '사람보다 집이 적음', stk: '분양 완료' } },
     { id: 'loop', tone: 'blue', tilt: 1, r: 8,
       en: { tag: 'Owner-occupied', addr: '127.0.0.1', big: '16,777,216 rooms', hook: "There's no place like 127.0.0.1", stk: 'NOT FOR SALE' },
-      ko: { tag: '자가', addr: '127.0.0.1', big: '방 1,677만 개', hook: '혼자 삶', stk: '매매 불가' } },
+      ko: { tag: '자가', addr: '127.0.0.1', big: '본인 거주 대저택', hook: '방 1,677만 개, 1인 가구', stk: '매매 불가' } },
     { id: 'priv', tone: 'green', tilt: -.6, r: -7,
       en: { tag: 'Private', addr: '192.168.0.1', big: 'Cozy starter home', hook: 'Same address as next door', stk: 'RESIDENTS ONLY' },
       ko: { tag: '사설', addr: '192.168.0.1', big: '단지 내 전용', hook: '옆집도 같은 번지', stk: '외부인 불가' } },
@@ -803,35 +850,35 @@
       en: { tag: 'Reserved', addr: '240.0.0.0/4', big: '268 million lots', hook: 'Saved for later since 1989', stk: 'ON HOLD' },
       ko: { tag: '보류', addr: '240.0.0.0/4', big: '2억 6843만 필지', hook: "1989년부터 '나중에'", stk: '개발 제한' } },
     { id: 'mkt', tone: 'red', tilt: 1.4, r: -8, hand: true,
-      en: { tag: 'Motivated!', addr: '203.0.113.0/24', big: '256 homes · price on request', hook: 'Location, location, location', stk: 'SOLD' },
+      en: { tag: 'Motivated!', addr: '203.0.113.0/24', big: '256 homes · price on request', hook: 'Too good to be true', stk: 'SOLD' },
       ko: { tag: '급매!!', addr: '203.0.113.0/24', big: '256세대 · 시세 문의', hook: '피 붙음', stk: '계약 완료' } },
   ];
 
   const CARDS = {
-    all: { tone: 'red', no: 'IPv4-0001',
+    all: { tone: 'red', no: 'IPv4-0000',
       en: { kind: 'Listing', addr: '0.0.0.0 – 255.255.255.255', name: 'The whole IPv4 neighborhood',
         rows: [['Size', '4,294,967,296 homes (2³²)'], ['Status', '<span class="sold">Sold out</span>'], ['Built', 'Sept 1981 (RFC 791)'], ['Sold out', 'Feb 3, 2011 (IANA)']],
         notes: ['IANA handed its last five /8 blocks to the five regional registries (RIRs), one each, and that was the end of the free pool.',
           'Asia-Pacific (APNIC) reached its final /8 on Apr 15, 2011. Europe (RIPE NCC) announced on Nov 25, 2019: “We have now run out of IPv4 addresses.”',
           'The world passed 8 billion people in 2022 (UN). Not even one home each.'],
-        agent: 'Fewer homes than people.' },
+        agent: 'Plenty of room next door. Moving is the hard part.' },
       ko: { kind: '매물 정보', addr: '0.0.0.0 ~ 255.255.255.255', name: 'IPv4 대단지',
         rows: [['규모', '4,294,967,296세대 (2³²)'], ['거래', '<span class="sold">분양 완료</span>'], ['준공', '1981년 9월 (RFC 791)'], ['완판', '2011년 2월 3일 (IANA)']],
         notes: ['IANA가 마지막 /8 다섯 덩어리를 대륙별 등록기관(RIR) 다섯 곳에 하나씩 나눠 주며 분양이 끝났다.',
           '아시아·태평양(APNIC)은 2011년 4월 15일 마지막 /8에 들어섰고, 유럽(RIPE NCC)은 2019년 11월 25일 "IPv4 주소가 다 떨어졌다"고 발표했다.',
           '세계 인구는 2022년에 80억 명을 넘었다(유엔). 한 사람에 한 채도 안 돌아간다.'],
-        agent: '사람보다 집이 적어요.' } },
+        agent: '옆 동네엔 자리 많아요. 이사가 귀찮아서 그렇지.' } },
     loop: { tone: 'blue', no: 'IPv4-0127',
       en: { kind: 'Listing', addr: '127.0.0.0/8', name: 'Owner-occupied mansion (loopback, “localhost”)',
         rows: [['Size', '16,777,216 rooms'], ['Status', '<span class="sold">Not for sale</span> · owner lives here'], ['Usual room', '127.0.0.1']],
         notes: ['Anything sent here never leaves the house. It comes straight back to you.',
           'RFC 1122 (1989): addresses of this form “MUST NOT appear outside a host.”'],
-        agent: "There's no place like 127.0.0.1." },
+        agent: 'Everything works here. Only here.' },
       ko: { kind: '매물 정보', addr: '127.0.0.0/8', name: '본인 거주 대저택 (루프백, localhost)',
         rows: [['규모', '방 16,777,216개'], ['거래', '<span class="sold">매매 불가</span> · 본인 거주'], ['주로 쓰는 방', '127.0.0.1']],
         notes: ['이 번지로 보낸 것은 집 밖으로 나가지 않고 곧장 나에게 돌아온다.',
           'RFC 1122(1989): 이 주소는 호스트 밖에 나타나서는 안 된다(MUST NOT).'],
-        agent: '방 1,677만 개에 혼자 사세요.' } },
+        agent: '여기선 다 잘 돼요. 여기서만요.' } },
     priv: { tone: 'green', no: 'IPv4-0192',
       en: { kind: 'Listing', addr: '192.168.0.0/16', name: 'Residents-only complex (private addresses)',
         rows: [['Size', '65,536 homes'], ['Status', '<span class="sold">Residents only</span>'], ['Sister complexes', '10.0.0.0/8 · 172.16.0.0/12 (RFC 1918)']],
@@ -850,14 +897,14 @@
           'Carrier-grade NAT: your provider does it again, so many homes share one public address and your router becomes a tenant too.',
           'Visitors who knock first (incoming connections, port forwarding) have a hard time getting in.',
           'RFC 6598 added: “the IESG and the IETF remain committed to the deployment of IPv6.”'],
-        agent: 'A sublet of a sublet.' },
+        agent: 'Easy to go out. Hard to have anyone over.' },
       ko: { kind: '매물 정보', addr: '100.64.0.0/10', name: '통신사 셰어하우스 (CGNAT)',
         rows: [['규모', '4,194,304세대'], ['거래', '<span class="sold">만실</span> · 셰어'], ['지정', '2012년 4월 (RFC 6598)']],
         notes: ['NAT: 집 안 기기 여럿이 공유기의 공인 주소 하나를 같이 쓴다.',
           'CGNAT: 통신사가 그걸 한 번 더 해서 여러 집이 공인 주소 하나를 나눠 쓴다. 우리 집 공유기도 세입자가 된다.',
           '밖에서 먼저 찾아오는 손님(들어오는 연결, 포트 포워딩)은 들어오기 어렵다.',
           'RFC 6598의 덧붙임: "IESG와 IETF는 여전히 IPv6 보급에 힘쓴다."'],
-        agent: '세입자의 세입자예요.' } },
+        agent: '나가 놀긴 쉬운데, 손님 들이긴 어려워요.' } },
     res: { tone: 'gray', no: 'IPv4-0240',
       en: { kind: 'Listing', addr: '240.0.0.0/4', name: 'Reserved land (old “Class E”)',
         rows: [['Size', '268,435,456 lots'], ['Status', '<span class="sold">On hold</span> · reserved for future use'], ['Reserved', 'Aug 1989 (RFC 1112)']],
@@ -871,13 +918,13 @@
         agent: '미래가 오면 연락드릴게요.' } },
     mkt: { tone: 'red', no: 'IPv4-0203',
       en: { kind: 'Listing', addr: '203.0.113.0/24', name: 'Motivated seller',
-        rows: [['Size', '256 homes'], ['Status', '<span class="sold">Under contract</span>'], ['Price', 'On request']],
+        rows: [['Size', '256 homes'], ['Status', '<span class="sold">Sold</span> · still advertised'], ['Price', 'On request']],
         notes: ['Since the run-out, IPv4 addresses are bought and sold, through the registries’ transfer policies and brokers.',
           'Before it, you got them from a registry by showing you needed them. A 2011 sale: 666,624 addresses from a bankrupt telecom company for $7.5 million (about $11 each).',
           'Fine print: 203.0.113.0/24 is reserved for documentation (RFC 5737). This listing is not real.'],
         agent: 'Motivated. Just not about the price.' },
       ko: { kind: '매물 정보', addr: '203.0.113.0/24', name: '급매 · 프리미엄 매물',
-        rows: [['규모', '256세대'], ['거래', '<span class="sold">계약 완료</span>'], ['시세', '문의']],
+        rows: [['규모', '256세대'], ['거래', '<span class="sold">계약 완료</span> · 아직 광고 중'], ['시세', '문의']],
         notes: ['고갈 뒤 IPv4 주소는 사고파는 물건이 됐다. 등록기관의 이전 제도로 거래하고, 중개업자도 있다.',
           '고갈 전에는 필요하다고 증명하면 등록기관에서 받던 주소다. 2011년 실거래: 파산한 통신장비 회사의 주소 666,624개가 750만 달러(개당 약 11달러).',
           '203.0.113.0/24는 문서 예시용 주소(RFC 5737)라 실제로는 못 산다. 허위 매물이다.'],
@@ -887,24 +934,27 @@
         rows: [['Size', '2¹²⁸ ≈ 3.4×10³⁸ homes (340 undecillion)'], ['One street (/64)', '18,446,744,073,709,551,616 homes, about 4.3 billion IPv4 internets'],
           ['Leasing since', 'Dec 1995 (RFC 1883) → 1998 (RFC 2460) → Internet Standard 2017 (RFC 8200)'],
           ['Moved in', 'About 48% of users reach Google over IPv6 (Oct 5–11, 2026 average)']],
-        notes: ['There is no direct road from the IPv4 houses: the two protocols cannot talk to each other directly.',
-          'The easiest way across is to keep both (dual stack): two networks side by side, two of everything to look after.'],
-        agent: 'Now leasing. Since 1995.' },
+        notes: ["IPv4 houses and IPv6 houses don't speak the same language: the two protocols cannot talk to each other directly.",
+          'The easiest way across is to keep both (dual stack): two networks side by side, two of everything to look after.',
+          'Most of those who moved kept the old place too.'],
+        agent: 'This is the year. We say that every year.' },
       ko: { kind: '분양 정보', addr: '::/0', name: 'IPv6 신도시 견본주택',
         rows: [['규모', '2¹²⁸ ≈ 3.4×10³⁸세대 (약 340간)'], ['한 동네(/64)', '18,446,744,073,709,551,616호 (IPv4 인터넷 전체의 약 43억 배)'],
           ['분양 공고', '1995년 12월 (RFC 1883) → 1998년 (RFC 2460) → 2017년 인터넷 표준 (RFC 8200)'],
-          ['입주율', '구글 사용자 중 IPv6로 접속하는 비율 약 48% (2026년 10월 5~11일 평균), 한국은 약 19% (10월 11일)']],
-        notes: ['IPv4 집과 바로 이어진 길이 없다. 두 프로토콜은 서로 직접 통하지 않는다.',
-          '가장 쉬운 방법은 둘 다 쓰는 것이다(듀얼 스택). 네트워크가 두 벌이라 챙길 것도 두 벌이다.'],
-        agent: '입주자 모집 중이에요. 1995년부터요.' } },
+          ['이사 온 사람', '구글 사용자 중 IPv6로 접속하는 비율 약 48% (2026년 10월 5~11일 평균), 한국은 약 19% (10월 11일)']],
+        notes: ['IPv4 집과 IPv6 집은 말이 안 통한다. 두 프로토콜은 서로 직접 통하지 않는다.',
+          '가장 쉬운 방법은 둘 다 쓰는 것이다(듀얼 스택). 네트워크가 두 벌이라 챙길 것도 두 벌이다.',
+          '옮겨 온 사람도 대부분 옛집을 그대로 두고 산다.'],
+        agent: '올해는 진짜 다 들어와요. 매년 하는 말이지만요.' } },
   };
 
   // Things that will not move. The autoplay always uses the first.
   const BLOCKERS = [
     { key: 'printer', en: ['The old printer', 'I only speak IPv4.'], ko: ['오래된 프린터', '저는 IPv4만 할 줄 알아요.'] },
-    { key: 'site', en: ['Your favorite site', "We don't have an IPv6 address yet. (No AAAA record.)"], ko: ['단골 사이트', '저희는 아직 IPv6 주소(AAAA 레코드)가 없어요.'] },
-    { key: 'router', en: ['The router', 'Have you seen my settings? IPv6: Off.'], ko: ['공유기', '제 설정 보셨어요? IPv6: 사용 안 함.'] },
-    { key: 'config', en: ['The config file', 'Every address in me is written in IPv4.'], ko: ['설정 파일', '제 안의 주소는 전부 IPv4로 적혀 있어요.'] },
+    { key: 'site', en: ['Your favorite site', "IPv6? It's on the roadmap."], ko: ['단골 사이트', 'IPv6요? 아직 검토 중이에요.'] },
+    { key: 'router', en: ['The router', 'My admin page only lives at 192.168.0.1.'], ko: ['공유기', '제 관리자 페이지는 192.168.0.1에서만 열려요.'] },
+    { key: 'config', en: ['The config file', "I'm hardcoded to 10.0.0.5."], ko: ['설정 파일', '저는 10.0.0.5로 하드코딩돼 있어요.'] },
+    { key: 'me', en: ['You', "Can't remember a single IPv6 address."], ko: ['나', 'IPv6 주소는 하나도 못 외워요.'] },
   ];
   const EYES = '<circle cx="15" cy="21" r="1.9" fill="#1f2731"/><circle cx="25" cy="21" r="1.9" fill="#1f2731"/>';
   const ART = {
@@ -912,6 +962,8 @@
     site: `<svg viewBox="0 0 40 40"><circle cx="20" cy="21" r="15" fill="#8fd0ef" stroke="#3d7fa6"/><path d="M5 21 h30 M20 6 v30 M20 6 q-9 15 0 30 M20 6 q9 15 0 30" fill="none" stroke="#3d7fa6"/><circle cx="20" cy="21" r="8.5" fill="#d9f0fa"/><path d="M28 2 h7 v12 l-3.5 -3 -3.5 3 z" fill="#e04a2c"/>${EYES}</svg>`,
     router: `<svg viewBox="0 0 40 40"><path d="M10 18 L7 3 M30 18 L33 3" stroke="#2c3440" stroke-width="2.2" stroke-linecap="round"/><rect x="3" y="15" width="34" height="16" rx="3" fill="#39424f" stroke="#1f252d"/><circle cx="9" cy="27" r="1.3" fill="#3ee08f"/><circle cx="13" cy="27" r="1.3" fill="#3ee08f"/><circle cx="17" cy="27" r="1.3" fill="#ffb21f"/><circle cx="15" cy="21" r="2.1" fill="#fff"/><circle cx="25" cy="21" r="2.1" fill="#fff"/><circle cx="15.4" cy="21.3" r="1.1" fill="#1f2731"/><circle cx="25.4" cy="21.3" r="1.1" fill="#1f2731"/></svg>`,
     config: `<svg viewBox="0 0 40 40"><path d="M8 3 h17 l8 8 v26 h-25 z" fill="#fff" stroke="#6d767e"/><path d="M25 3 v8 h8" fill="#e6eaee" stroke="#6d767e"/><path d="M12 28 h16 M12 32 h12" stroke="#b8c0c7"/><text x="11" y="15" font-family="IBM Plex Mono, monospace" font-size="5.2" fill="#2f6fd1">10.0.0.5</text>${EYES}</svg>`,
+    // You: a sticky note with the one address you do know by heart.
+    me: `<svg viewBox="0 0 40 40"><g transform="rotate(-4 20 20)"><path d="M5 6 h30 v24 l-7 6 h-23 z" fill="#ffe27a" stroke="#c9a21e"/><path d="M28 36 v-6 h7" fill="#f2cf55" stroke="#c9a21e"/><text x="7.5" y="14" font-family="IBM Plex Mono, monospace" font-size="4.3" fill="#1f2731">192.168.0.1</text><path d="M10 29 q5 2 10 0" fill="none" stroke="#1f2731" stroke-width="1.2" stroke-linecap="round"/>${EYES}</g></svg>`,
   };
 
   // ---------- build the window ----------
@@ -933,7 +985,8 @@
     } else tag.textContent = t.tag;
     const addr = Object.assign(document.createElement('span'), { className: 'addr', textContent: t.addr });
     const big = Object.assign(document.createElement('span'), { className: 'big', textContent: t.big });
-    const hook = Object.assign(document.createElement('span'), { className: 'hook', textContent: t.hook });
+    const hook = Object.assign(document.createElement('span'), { className: 'hook' });
+    hook.append(Object.assign(document.createElement('span'), { className: 'hl', textContent: t.hook }));
     const stk = Object.assign(document.createElement('span'), { className: 'stk' + (s.calm ? ' calm' : ''), textContent: t.stk });
     stk.style.setProperty('--r', s.r + 'deg');
     const pic = Object.assign(document.createElement('span'), { className: 'pic' });
@@ -963,6 +1016,19 @@
 
   v6.setAttribute('aria-label', ko ? 'IPv6 신도시 견본주택, 분양 정보 보기' : 'IPv6 New Town model home: leasing details');
 
+  // The flags flank the lobby. On a phone 40% of the building reaches up over the gauge and
+  // hides the ends of its line, so they stop at the lobby's top.
+  const entry = $('.entry');
+  const flags = document.querySelectorAll('.flag');
+  const fitFlags = () => {
+    const v = $('.v6').getBoundingClientRect();
+    const e = entry.getBoundingClientRect();
+    flags.forEach((f) => { f.style.height = Math.max(0, Math.min(v.height * .4, v.bottom - e.top + 4)) + 'px'; });
+  };
+  const flagRO = new ResizeObserver(fitFlags);
+  flagRO.observe($('.v6'));
+  flagRO.observe(entry);
+
   // ---------- small helpers ----------
   let timers = [];
   const later = (ms, fn) => { timers.push(setTimeout(fn, ms)); };
@@ -971,7 +1037,7 @@
   const stop = (el) => el.getAnimations().forEach((a) => a.cancel());
 
   // ---------- stickers ----------
-  function slam(stk) {
+  function slam(stk, shake = windowEl) {
     stk.classList.add('on');
     if (reduce) return;
     stk.animate([
@@ -979,20 +1045,79 @@
       { transform: 'scale(.93)', opacity: 1, offset: .72 },
       { transform: 'scale(1)', opacity: 1 },
     ], { duration: 340, easing: 'cubic-bezier(.5, 0, .9, .45)' });
-    windowEl.animate([{ transform: 'none' }, { transform: 'translate(0, 2px)' }, { transform: 'translate(0, -1px)' }, { transform: 'none' }], { duration: 220, delay: 230 });
+    shake.animate([{ transform: 'none' }, { transform: 'translate(0, 3px)' }, { transform: 'translate(0, -1px)' }, { transform: 'none' }], { duration: 220, delay: 230 });
   }
 
   // ---------- tumbleweed ----------
-  function roll(dur) {
+  // It only ever rolls in front of the empty model home: in from the right, coming to rest
+  // at the lot line, and out of the truck's way again when someone moves.
+  const linePct = () => {
+    const rr = road.getBoundingClientRect();
+    return (v6.getBoundingClientRect().left - rr.left) / rr.width * 100;
+  };
+  function rollIn() {
     [weed, weedB, weedS].forEach(stop);
-    weed.style.left = '-12%';
-    weed.animate([{ left: '106%' }, { left: '-12%' }], { duration: dur, easing: 'linear' });
-    weedS.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-1080deg)' }], { duration: dur, easing: 'linear' });
+    const to = linePct();
+    const dur = 1700;
+    const ease = 'cubic-bezier(.3, .55, .4, 1)';
+    weed.style.left = to + '%';
+    weed.animate([{ left: '106%' }, { left: to + '%' }], { duration: dur, easing: ease });
+    weedS.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-720deg)' }], { duration: dur, easing: ease });
     weedB.animate([
-      { transform: 'translateY(0)' }, { transform: 'translateY(-55%)', offset: .1 }, { transform: 'translateY(0)', offset: .2 },
-      { transform: 'translateY(-35%)', offset: .32 }, { transform: 'translateY(0)', offset: .44 }, { transform: 'translateY(-60%)', offset: .58 },
-      { transform: 'translateY(0)', offset: .72 }, { transform: 'translateY(-30%)', offset: .86 }, { transform: 'translateY(0)' },
+      { transform: 'translateY(0)' }, { transform: 'translateY(-60%)', offset: .13 }, { transform: 'translateY(0)', offset: .28 },
+      { transform: 'translateY(-38%)', offset: .42 }, { transform: 'translateY(0)', offset: .56 }, { transform: 'translateY(-22%)', offset: .7 },
+      { transform: 'translateY(0)', offset: .82 }, { transform: 'translateY(-9%)', offset: .91 }, { transform: 'translateY(0)' },
     ], { duration: dur, easing: 'ease-in-out' });
+  }
+  function rollOut() {
+    const at = parseFloat(weed.style.left);
+    if (!(at < 100)) return;
+    [weed, weedB, weedS].forEach(stop);
+    weed.style.left = '112%';
+    const dur = 1000;
+    weed.animate([{ left: at + '%' }, { left: '112%' }], { duration: dur, easing: 'cubic-bezier(.45, 0, .8, .7)' });
+    weedS.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(540deg)' }], { duration: dur, easing: 'ease-in' });
+    weedB.animate([
+      { transform: 'translateY(0)' }, { transform: 'translateY(-30%)', offset: .25 }, { transform: 'translateY(0)', offset: .5 },
+      { transform: 'translateY(-45%)', offset: .75 }, { transform: 'translateY(0)' },
+    ], { duration: dur, easing: 'ease-in-out' });
+  }
+
+  // ---------- 127.0.0.1: a letter that never leaves the house ----------
+  const env = Object.assign(document.createElement('div'), { className: 'env' });
+  env.setAttribute('aria-hidden', 'true');
+  env.innerHTML = '<svg viewBox="0 0 24 18"><rect x="1" y="1" width="22" height="16" rx="1.5" fill="#fff" stroke="#1f2731" stroke-width="1.5"/><path d="M1.6 2 L12 10.2 L22.4 2" fill="none" stroke="#1f2731" stroke-width="1.5" stroke-linejoin="round"/><rect x="16.2" y="3.6" width="4.4" height="4" fill="#2f6fd1"/></svg>';
+  document.body.append(env);
+  const bez = (a, c, b, t) => (1 - t) * (1 - t) * a + 2 * (1 - t) * t * c + t * t * b;
+  function loopback() {
+    if (reduce) return;
+    const s = sheets.loop.getBoundingClientRect();
+    const house = $('.v4').getBoundingClientRect();
+    const rr = road.getBoundingClientRect();
+    const w = env.offsetWidth, h = env.offsetHeight;
+    // Out of the listing, down to the doorstep, a U-turn there and straight back in.
+    const P = [s.left + s.width / 2 - w / 2, s.top + s.height * .45 - h / 2];
+    const T = [Math.min(house.right - w * 1.2, P[0] + s.width * .7), rr.top + rr.height * .12 - h / 2];
+    const out = [P[0] + (T[0] - P[0]) * .15, P[1] - s.height * .35];
+    const back = [T[0] + (T[0] - P[0]) * .5 + w, P[1] + (T[1] - P[1]) * .35];
+    const frames = [];
+    const N = 7;
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      frames.push({ transform: `translate(${bez(P[0], out[0], T[0], t)}px, ${bez(P[1], out[1], T[1], t)}px) scale(${.35 + .65 * Math.min(1, t * 4)}) rotate(${-10 + 22 * t}deg)`,
+        opacity: i === 0 ? 0 : 1, offset: t * .44, easing: i === 0 ? 'ease-out' : 'linear' });
+    }
+    // At the doorstep: a squash, an about-face, and home again.
+    frames.push({ transform: `translate(${T[0]}px, ${T[1] + h * .1}px) scale(1.15, .8) rotate(0deg)`, opacity: 1, offset: .5 });
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      frames.push({ transform: `translate(${bez(T[0], back[0], P[0], t)}px, ${bez(T[1], back[1], P[1], t)}px) scale(${-(1 - .65 * Math.max(0, t * 4 - 3))}, ${1 - .65 * Math.max(0, t * 4 - 3)}) rotate(${12 - 20 * t}deg)`,
+        opacity: i === N ? 0 : 1, offset: .58 + t * .42 });
+    }
+    const tilt = getComputedStyle(sheets.loop).rotate;
+    env.animate(frames, { duration: 1250, easing: 'linear' }).finished.then(() => {
+      sheets.loop.animate([{ rotate: tilt }, { rotate: '-5deg' }, { rotate: '4deg' }, { rotate: '-2deg' }, { rotate: tilt }], { duration: 440, easing: 'ease-out' });
+    }).catch(() => {});
   }
 
   // ---------- truck ----------
@@ -1005,7 +1130,7 @@
     const line = (v6.getBoundingClientRect().left - rr.left) / rr.width * 100;
     return Math.max(START + 8, line - truckPct() * .8);
   };
-  const SLOTS = [3, 9.5, 16, 22.5];
+  const SLOTS = [3, 9.5, 16, 22.5, 29];
   let left = []; // items left behind at the old house
   let loaded = null;
   let moveGen = 0;
@@ -1065,10 +1190,13 @@
     return sleep(980).then(() => el);
   }
 
+  let tagT = null;
   function showPunch() {
     const was = punch.classList.contains('on');
     punch.classList.add('on');
-    if (reduce) return;
+    if (reduce) { showTag(); return; }
+    // The tag follows the first drop a beat later, even if someone keeps moving meanwhile.
+    if (!was) { clearTimeout(tagT); tagT = setTimeout(showTag, 1800); } else showTag();
     if (!was) {
       punch.animate([
         { transform: 'translateY(-160%) rotate(-2deg)' },
@@ -1079,6 +1207,12 @@
     } else {
       punch.animate([{ transform: 'none' }, { transform: 'translateY(4%) rotate(-1deg)' }, { transform: 'rotate(.6deg)' }, { transform: 'none' }], { duration: 420 });
     }
+  }
+  // The tag: the new home gets a sticker too.
+  const half = $('#half');
+  function showTag() {
+    if (half.classList.contains('on')) return;
+    slam(half, v6);
   }
 
   // One move: drive toward IPv6, brake, one thing hops off and walks back home, the rest moves in.
@@ -1101,6 +1235,7 @@
       showPunch();
       return;
     }
+    rollOut();
     const at = parseFloat(truck.style.left);
     if (!(at >= START - .5 && at <= START + .5)) {
       if (at > START) {
@@ -1195,7 +1330,9 @@
     Object.values(sheets).forEach((s) => s.classList.remove('hi'));
     [ban, gauge].forEach((el) => el.classList.remove('hi'));
     punch.classList.remove('on');
-    [truck, weed, weedB, weedS, punch].forEach(stop);
+    [truck, weed, weedB, weedS, punch, env, half].forEach(stop);
+    half.classList.remove('on');
+    clearTimeout(tagT);
     truck.classList.remove('haz');
     truck.style.left = '-30%';
     cargo.style.visibility = 'visible';
@@ -1204,7 +1341,7 @@
 
   function finalScene() {
     stickers.forEach((s) => s.classList.add('on'));
-    weed.style.left = '61%'; // came to rest at the lot line
+    weed.style.left = linePct() + '%'; // came to rest at the lot line
     tries = 0;
     moveTo6(true);
   }
@@ -1219,18 +1356,22 @@
     resetScene();
     auto = true;
     if (reduce) { finalScene(); return; }
-    // 0–2.4 s: every listing gets its sticker; the model home next door gleams; a tumbleweed.
-    glint.animate([{ transform: 'translateX(-80%)' }, { transform: 'translateX(80%)' }], { duration: 1300, delay: 250, easing: 'ease-in-out' });
-    ban.animate([{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 500, delay: 350, easing: 'ease-out', fill: 'backwards' });
+    // 0.55–2.3 s: every listing gets its sticker (sold out). Then, a beat later, the model home
+    // next door gleams and a tumbleweed rolls in front of it and stops at the lot line (empty).
     stickers.forEach((s, i) => later(550 + i * 290, () => slam(s)));
-    later(1300, () => roll(3400));
-    // 3.6–9 s: the details worth reading.
+    later(2200, () => {
+      rollIn();
+      glint.animate([{ transform: 'translateX(-80%)' }, { transform: 'translateX(80%)' }], { duration: 1300, easing: 'ease-in-out' });
+    });
+    // 3.6–9 s: the details worth reading. 127.0.0.1 sends a letter that comes straight back.
     later(3600, () => hi(sheets.loop, 1800));
+    later(3800, loopback);
     later(5500, () => hi(sheets.priv, 1800));
     later(7400, () => { hi(ban, 1800); hi(gauge, 1800); glint.animate([{ transform: 'translateX(-80%)' }, { transform: 'translateX(80%)' }], { duration: 1100, easing: 'ease-in-out' }); });
-    // 9.2 s: a moving truck pulls up; 10 s: someone presses "Move to IPv6". It brakes at the
-    // lot line (≈11.3 s), the printer hops off (≈11.7–12.7 s) and says why, the truck moves on
-    // (≈14–15 s) and the banner drops (≈15–15.9 s). The page holds there.
+    // 9.2 s: a moving truck pulls up; 10 s: someone presses "Move to IPv6" and the tumbleweed
+    // clears off. The truck brakes at the lot line (≈11.3 s), the printer hops off (≈11.7–12.7 s)
+    // and says why, the truck moves on (≈14–15 s), the banner drops (≈15–15.9 s) and the model
+    // home gets its own sticker (≈16.9 s). The page holds there.
     later(9200, () => { load(BLOCKERS[0]); drive(-30, START, 800, 'cubic-bezier(.2, .7, .3, 1)'); });
     later(10000, () => {
       moveBtn.classList.add('press');

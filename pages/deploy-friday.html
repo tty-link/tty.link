@@ -52,7 +52,7 @@
   .shot { position: absolute; inset: 0; width: 100%; height: 100%; transform-origin: 50% 50%; transition: transform .75s cubic-bezier(.7, 0, .2, 1); }
   .screen[data-scene="2"] .shot { transform: scale(2.3); transform-origin: 64% 52%; }
   .screen[data-scene="3"] .shot { transform: scale(2.7); transform-origin: 27% 38%; }
-  .screen[data-scene="4"] .shot { transform: scale(1.75); transform-origin: 64% 50%; }
+  .screen[data-scene="4"] .shot { transform: scale(1.75); transform-origin: 55% 50%; }
   .screen[data-scene="3"] .shot-wrap { animation: jitter .12s steps(2) infinite; }
   @keyframes jitter { 50% { translate: .3cqi -.2cqi; } }
   .shot-wrap { position: absolute; inset: 0; }
@@ -80,10 +80,23 @@
   .screen[data-scene="1"] .monitor .ready, .screen[data-scene="2"] .monitor .ready { display: inline; }
   .screen[data-scene="3"] .monitor .busy { display: inline; }
   .screen[data-scene="4"] .monitor .done, .screen[data-scene="5"] .monitor .done, .screen[data-scene="6"] .monitor .done { display: inline; }
-  .screen[data-scene="2"] .press { animation: press .45s 1.15s both; }
+  /* The press lands just after the camera arrives (.75 s), on the same beat as "click!". */
+  .screen[data-scene="2"] .press { animation: press .45s .85s both; }
   @keyframes press { 40% { transform: scale(.88); } 100% { transform: scale(1); } }
   .press { transform-box: fill-box; transform-origin: 50% 50%; }
-  .busy .fill { transform-box: fill-box; transform-origin: 0 50%; animation: load 2.6s cubic-bezier(.5, 0, .5, 1) both; }
+  .busy .fill { transform-box: fill-box; transform-origin: 0 50%; animation: load 2.3s cubic-bezier(.5, 0, .5, 1) both; }
+  /* Scene 1 opens on his hand drifting from the keyboard to the mouse: that is what the seniors
+     see. The arm stretches from the shoulder, the hand travels; it stays on the mouse through
+     the close-ups and clicks with the button in scene 2. */
+  .reach { transform-box: view-box; transform-origin: 520px 600px; }
+  .rolling[data-scene="1"] .reach { animation: reach-arm 3.8s both; }
+  .rolling[data-scene="1"] .hand { animation: reach-hand 3.8s both; }
+  @keyframes reach-arm { 0%, 12% { transform: none; animation-timing-function: cubic-bezier(.45, 0, .25, 1); } 24%, 100% { transform: scaleX(1.85); } }
+  @keyframes reach-hand { 0%, 12% { transform: none; animation-timing-function: cubic-bezier(.45, 0, .25, 1); } 24%, 100% { transform: translate(172px, -10px); } }
+  .screen[data-scene="2"] .reach, .screen[data-scene="3"] .reach, .screen[data-scene="4"] .reach { transform: scaleX(1.85); }
+  .screen[data-scene="2"] .hand, .screen[data-scene="3"] .hand, .screen[data-scene="4"] .hand { transform: translate(172px, -10px); }
+  .screen[data-scene="2"] .hand { animation: click .45s .85s both; }
+  @keyframes click { 40% { translate: 0 7px; } }
   @keyframes load { from { transform: scaleX(.04); } to { transform: scaleX(.92); } }
   .arms-up { display: none; }
   .screen[data-scene="5"] .arms-up, .screen[data-scene="6"] .arms-up { display: inline; }
@@ -95,31 +108,33 @@
   .sky { transition: opacity 1.2s; }
   .screen[data-scene="5"] .sky.late, .screen[data-scene="6"] .sky.late { opacity: 1; }
 
-  /* The seniors behind the partitions (the 3-second gag). Scene 1: they look over, see the
-     button, eyes go wide, and take cover: one ducks at once, the other sinks slowly and keeps
-     his eyes on it to the last. They stay down for the close-ups; from "Weekend: saved!" on,
-     only their eyes come back over the partitions, not quite trusting it. `.rolling` is set
-     when the page is shown, so the home's hidden preload doesn't use the gag up. */
+  /* The seniors behind the partitions (the 3-second gag). Scene 1 (3.8 s): calm faces while
+     the home's wipe ends; his hand goes for the mouse (.45-.9 s); their eyes go wide (1.05 s)
+     and they take cover: one ducks at once (gone by 1.5 s), the other sinks slowly and keeps his
+     eyes on it to the last (3.5 s). Only then does the caption say why (1.6 s). They stay down
+     for the close-ups; from "Weekend: saved!" on, only their eyes come back over the
+     partitions, not quite trusting it. `.rolling` is set when the page is shown, so the home's
+     hidden preload doesn't use the gag up. */
   .mate { transform: translateY(170px); transition: transform .35s ease-in; }
   .mate .m-wide { opacity: 0; }
-  .rolling[data-scene="1"] .mate-l { animation: duck-fast 3.2s linear both; }
-  .rolling[data-scene="1"] .mate-r { animation: duck-slow 3.2s linear both; }
-  .rolling[data-scene="1"] .mate .m-calm { animation: eyes-off 3.2s steps(1) both; }
-  .rolling[data-scene="1"] .mate .m-wide { animation: eyes-on 3.2s steps(1) both; }
+  .rolling[data-scene="1"] .mate-l { animation: duck-fast 3.8s linear both; }
+  .rolling[data-scene="1"] .mate-r { animation: duck-slow 3.8s linear both; }
+  .rolling[data-scene="1"] .mate .m-calm { animation: eyes-off 3.8s steps(1) both; }
+  .rolling[data-scene="1"] .mate .m-wide { animation: eyes-on 3.8s steps(1) both; }
   @keyframes duck-fast {
     0%, 30% { transform: translateY(0); }
-    36% { transform: translateY(-18px); animation-timing-function: ease-in; }
-    44%, 100% { transform: translateY(170px); }
+    34% { transform: translateY(-18px); animation-timing-function: ease-in; }
+    40%, 100% { transform: translateY(170px); }
   }
   @keyframes duck-slow {
-    0%, 33% { transform: translateY(0); }
-    38% { transform: translateY(-14px); }
-    46% { transform: translateY(0); animation-timing-function: ease-in-out; }
-    78%, 86% { transform: translateY(52px); animation-timing-function: ease-in; }
+    0%, 32% { transform: translateY(0); }
+    36% { transform: translateY(-14px); }
+    42% { transform: translateY(0); animation-timing-function: ease-in-out; }
+    76%, 84% { transform: translateY(52px); animation-timing-function: ease-in; }
     92%, 100% { transform: translateY(170px); }
   }
-  @keyframes eyes-off { 0% { opacity: 1; } 26%, 100% { opacity: 0; } }
-  @keyframes eyes-on { 0% { opacity: 0; } 26%, 100% { opacity: 1; } }
+  @keyframes eyes-off { 0% { opacity: 1; } 28%, 100% { opacity: 0; } }
+  @keyframes eyes-on { 0% { opacity: 0; } 28%, 100% { opacity: 1; } }
   .screen[data-scene="5"] .mate, .screen[data-scene="6"] .mate { transform: translateY(52px); transition: transform .6s 1.1s ease-out; }
   /* On a small TV (the phone home stage's is about 336px wide) a senior's face would be 25px
      across. They grow by half, from the top edge of their partition, so "ducked" and "only the
@@ -132,27 +147,40 @@
   .screen[data-scene="5"] .mate .m-wide, .screen[data-scene="6"] .mate .m-wide { opacity: 1; }
 
   /* Scene 6, the freeze-frame: scene 5 (captions and all) drained of colour, a slow push in,
-     and a phone notification dropped in over the "Deployed" screen. */
-  .screen[data-scene="6"] .shot { transform: scale(1.06); transition: transform 2.9s linear; }
+     the narrator, and a phone notification dropped in over the "Deployed" screen (landed at
+     .9 s). It buzzes, then deadpan adds the cause: the very minute the clip opened on
+     (1.8 s, once the buzz has stopped). */
+  .screen[data-scene="6"] .shot { transform: scale(1.06); transition: transform 4.2s linear; }
   .screen[data-scene="6"] .shot-wrap, .screen[data-scene="6"] .caps[data-scene="5"] { filter: grayscale(1) brightness(.72) contrast(1.15); }
-  .narr { left: 50%; top: 89%; translate: -50% -50%; font: 800 3.8cqi/1 'Grandstander', sans-serif; color: #fff; text-shadow: 0 .3cqi 1cqi rgba(0, 0, 0, .85); animation: fade .7s .15s backwards; }
+  .narr { left: 50%; top: 89%; translate: -50% -50%; font: 800 3.8cqi/1 'Grandstander', sans-serif; color: #fff; text-shadow: 0 .3cqi 1cqi rgba(0, 0, 0, .85); animation: fade .5s .1s backwards; }
   .lang-ko .narr { font-family: 'Gowun Dodum', sans-serif; font-weight: 400; font-size: 4cqi; }
   @keyframes fade { from { opacity: 0; } }
   .alert {
-    position: absolute; left: 62%; top: 33%; z-index: 5; translate: -50% 0;
+    position: absolute; left: 62%; top: 31%; z-index: 5; translate: -50% 0;
     display: grid; grid-template-columns: auto 1fr auto; gap: .3em .8em; align-items: center;
     box-sizing: border-box; width: max(50cqi, 15.5em); padding: .8em 1em; border-radius: 1.1em;
     background: #fff; color: var(--ink);
     font: 700 max(11px, 2.3cqi)/1.25 'Grandstander', 'Gowun Dodum', sans-serif;
     box-shadow: 0 1cqi 3cqi rgba(0, 0, 0, .5);
-    animation: notify .5s .6s cubic-bezier(.2, .9, .3, 1.15) backwards, buzz .32s 1.2s 2 steps(4);
+    animation: notify .45s .45s cubic-bezier(.2, .9, .3, 1.15) backwards, buzz .32s 1.05s 2 steps(4);
   }
   .lang-ko .alert { font-family: 'Gowun Dodum', sans-serif; }
   .alert i { width: 1.9em; aspect-ratio: 1; border-radius: .45em; background: var(--pink); }
-  .alert .app, .alert time { font-size: .8em; opacity: .62; }
+  .alert .app, .alert time { font-size: max(10px, .8em); opacity: .62; }
   .alert p { grid-column: 1 / -1; margin: 0; font-size: 1.08em; }
+  .alert .cause { grid-column: 1 / -1; max-height: 2.6em; overflow: hidden; font-size: max(10px, .88em); opacity: .85; animation: cause .4s 1.8s cubic-bezier(.2, .9, .3, 1) backwards; }
   @keyframes notify { from { opacity: 0; translate: -50% -60%; scale: .9; } }
   @keyframes buzz { 25% { rotate: -1.4deg; } 75% { rotate: 1.4deg; } }
+  .alert .cause b { font-weight: inherit; color: #c2185b; }
+  @keyframes cause { from { opacity: 0; max-height: 0; } }
+  /* A phone's TV is 189 px tall: the card stays between the frozen "Weekend: saved!" and
+     "See you Monday~" by sitting tighter. */
+  @container (max-width: 420px) { .alert { padding: .55em .85em; row-gap: .2em; } .alert i { width: 1.6em; } }
+  /* Straight to the freeze-frame from another scene: scene 5 is laid down at once (`snap`, no
+     camera move, no clock tick), and its captions stay put (`cut`), so only the push-in, the
+     narrator and the phone move. */
+  .screen.snap, .screen.snap * { transition: none !important; }
+  .screen.cut .caps[data-scene="5"] :is(.ch, [part="glyph"], [part~="jongseong"], .slide) { animation: none !important; }
 
   /* On air: live on a real Friday, a rerun any other day. */
   .onair { margin-left: .5em; padding: .15em .45em; border-radius: .35em; background: rgba(255, 255, 255, .22); font: inherit; font-family: 'Grandstander', 'Gowun Dodum', sans-serif; font-style: normal; color: #fff; }
@@ -163,10 +191,10 @@
     position: absolute; top: 3cqi; left: 3cqi; z-index: 4;
     padding: .5cqi 1.2cqi; border-radius: .8cqi;
     background: rgba(0, 0, 0, .45);
-    font: 800 max(9px, 1.7cqi)/1 'Grandstander', sans-serif;
+    font: 800 max(10px, 1.7cqi)/1 'Grandstander', sans-serif;
   }
   .bug b { color: var(--yellow); }
-  .program { position: absolute; top: 3.3cqi; right: 3cqi; z-index: 4; font-size: max(9px, 1.6cqi); font-weight: 700; text-shadow: 0 1px 3px rgba(0, 0, 0, .7); }
+  .program { position: absolute; top: 3.3cqi; right: 3cqi; z-index: 4; font-size: max(10px, 1.6cqi); font-weight: 700; text-shadow: 0 1px 3px rgba(0, 0, 0, .7); }
 
   /* ---- Captions ---- */
   .caps { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
@@ -190,8 +218,9 @@
   .en-small { font: 800 4.2cqi/1 'Grandstander', sans-serif; color: #fff; text-shadow: 0 .3cqi 1cqi rgba(0, 0, 0, .7); }
   .w1 { color: var(--pink); } .w2 { color: var(--yellow); } .w3 { color: var(--cyan); }
   .ch { display: inline-block; white-space: pre; }
-  .pop .ch { animation: pop .56s cubic-bezier(.34, 1.56, .64, 1) backwards; animation-delay: calc(var(--i) * 55ms); }
-  .shake .ch { animation: pop .42s cubic-bezier(.34, 1.56, .64, 1) backwards, quake 1.3s ease-in-out infinite; animation-delay: calc(var(--i) * 45ms + 200ms), calc(var(--i) * 80ms + 650ms); }
+  /* `--late` holds a caption back so it lands after the action it names (see the timing block). */
+  .pop .ch { animation: pop .56s cubic-bezier(.34, 1.56, .64, 1) backwards; animation-delay: calc(var(--late, 0s) + var(--i) * 55ms); }
+  .shake .ch { animation: pop .42s cubic-bezier(.34, 1.56, .64, 1) backwards, quake 1.3s ease-in-out infinite; animation-delay: calc(var(--late, 200ms) + var(--i) * 45ms), calc(var(--late, 200ms) + 450ms + var(--i) * 80ms); }
   .slide { animation: slide .5s .45s cubic-bezier(.2, .9, .3, 1) backwards; }
   .glitchy { animation: slide .35s .3s backwards, rgb .18s steps(2) infinite .6s; }
   @keyframes pop { from { opacity: 0; scale: .2; translate: 0 .35em; } }
@@ -200,10 +229,10 @@
   @keyframes rgb { 0% { text-shadow: -.06em 0 #ff2bd6, .06em 0 #2bf0ff; } 100% { text-shadow: .05em 0 #ff2bd6, -.05em 0 #2bf0ff; } }
 
   /* Korean captions: font-kku jamo move separately, so the final consonant can land late */
-  .pop [part="glyph"] { animation: pop .56s cubic-bezier(.34, 1.56, .64, 1) backwards; animation-delay: calc(var(--fy-glyph-index, 0) * 70ms); }
-  .pop [part~="jongseong"] { animation: drop .62s cubic-bezier(.3, .7, .4, 1) backwards; animation-delay: calc(var(--fy-glyph-index, 0) * 70ms + 420ms); }
+  .pop [part="glyph"] { animation: pop .56s cubic-bezier(.34, 1.56, .64, 1) backwards; animation-delay: calc(var(--late, 0s) + var(--fy-glyph-index, 0) * 70ms); }
+  .pop [part~="jongseong"] { animation: drop .62s cubic-bezier(.3, .7, .4, 1) backwards; animation-delay: calc(var(--late, 0s) + var(--fy-glyph-index, 0) * 70ms + 420ms); }
   @keyframes drop { 0% { opacity: 0; translate: 0 -1.1em; } 55% { opacity: 1; translate: 0 .08em; } 78% { translate: 0 -.05em; } 100% { translate: 0 0; } }
-  .shake [part="glyph"] { animation: pop .42s cubic-bezier(.34, 1.56, .64, 1) backwards, quake 1.3s ease-in-out infinite; animation-delay: calc(var(--fy-glyph-index, 0) * 50ms + 200ms), calc(var(--fy-glyph-index, 0) * 90ms + 650ms); }
+  .shake [part="glyph"] { animation: pop .42s cubic-bezier(.34, 1.56, .64, 1) backwards, quake 1.3s ease-in-out infinite; animation-delay: calc(var(--late, 200ms) + var(--fy-glyph-index, 0) * 50ms), calc(var(--late, 200ms) + 450ms + var(--fy-glyph-index, 0) * 90ms); }
   .ko-sfx { filter: drop-shadow(.25cqi .3cqi 0 var(--ink)) drop-shadow(0 0 .15cqi var(--ink)); }
   .ko-sfx > font-kku { color: var(--yellow); }
 
@@ -211,8 +240,21 @@
     position: absolute; left: 4cqi; bottom: 6cqi; z-index: 3;
     display: flex; max-width: 74%;
     font-size: max(10px, 2cqi);
-    animation: slide .6s .9s cubic-bezier(.2, .9, .3, 1) backwards;
+    animation: slide .6s .3s cubic-bezier(.2, .9, .3, 1) backwards;
   }
+
+  /* Caption timing per scene, so the words follow the picture:
+     1  lower third .3 s; hand to the mouse .45-.9 s; seniors' eyes 1.05 s; "Friday, 4:59 PM" 1.6 s; aside 1.8 s
+     2  "And then…" .3 s; camera in by .75 s; press and "click!" .85 s; "he hit deploy" 1 s
+     3  "(동공지진)" .3 s, like the English glitch, so it is up 2 s of the 2.3-s scene
+     4  "(disbelief)" .4 s, so it is up for 2 s of the 2.4-s scene */
+  .caps[data-scene="1"] .cap-main { --late: 1.6s; }
+  .caps[data-scene="1"] .slide { animation-delay: 1.8s; }
+  .caps[data-scene="2"] .slide { animation-delay: .3s; }
+  .caps[data-scene="2"] .cap-sfx { --late: .85s; }
+  .caps[data-scene="2"] .cap-main { --late: 1s; }
+  .caps[data-scene="3"] .slide { animation-delay: .3s; }
+  .caps[data-scene="4"] .slide { animation-delay: .4s; }
   .lower b { padding: .7cqi 1.4cqi; background: var(--yellow); color: var(--ink); font-weight: 800; }
   .lower span { padding: .7cqi 1.6cqi; background: rgba(20, 12, 30, .85); }
 
@@ -220,7 +262,7 @@
   .timeline { position: relative; display: grid; height: var(--tl); gap: 4px; }
   .clips { display: flex; gap: 4px; height: 100%; }
   .clip {
-    position: relative; flex: var(--d) 1 0; min-width: 0;
+    position: relative; flex: var(--d) 1 0; min-width: max-content;
     display: grid; align-content: end;
     padding: 0 8px 7px;
     border: 0; border-radius: 8px;
@@ -229,7 +271,8 @@
     text-align: left; overflow: hidden; white-space: nowrap;
     cursor: pointer; opacity: .55; transition: opacity .2s;
   }
-  /* The label is its own box so a long one ends in "…", as clip names do in an editor. */
+  /* A clip is never narrower than its name (the short scenes would cut "Weekend" or "동공지진"
+     to "…" on a phone); the label keeps its own box so a name could still end in "…". */
   .clip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   @media (max-width: 480px) { .clips { gap: 3px; } .clip { padding-inline: 4px; letter-spacing: -.03em; } .clip::before { left: 4px; right: 4px; } }
   .lang-ko .clip { font-family: 'Gowun Dodum', sans-serif; }
@@ -268,7 +311,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .shot, .lines, .slide, .glitchy, .lower, .pop .ch, .shake .ch, .pop [part="glyph"], .pop [part~="jongseong"], .shake [part="glyph"], .screen[data-scene="3"] .shot-wrap, .narr, .alert, .mate, .mate g { animation: none !important; transition: none !important; }
+    .shot, .lines, .slide, .glitchy, .lower, .pop .ch, .shake .ch, .pop [part="glyph"], .pop [part~="jongseong"], .shake [part="glyph"], .screen[data-scene="3"] .shot-wrap, .narr, .alert, .alert .cause, .mate, .mate g, .reach, .hand { animation: none !important; transition: none !important; }
   }
 </style>
 </head>
@@ -354,7 +397,7 @@
             <g class="done">
               <circle cx="1015" cy="360" r="62" fill="#2fbf71"/>
               <path d="M985 362 l22 22 l40 -46" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="1015" y="482" text-anchor="middle" font-family="Grandstander, 'Gowun Dodum', sans-serif" font-weight="800" font-size="36" fill="#1d1030" class="done-label">0 incidents</text>
+              <text x="1015" y="482" text-anchor="middle" font-family="Grandstander, 'Gowun Dodum', sans-serif" font-weight="800" font-size="46" fill="#1d1030" class="done-label">0 incidents</text>
             </g>
           </g>
         </g>
@@ -366,7 +409,7 @@
           <rect x="290" y="440" width="240" height="300" rx="40" fill="#5b3f8c"/>
           <path d="M300 900 V600 q0 -120 120 -120 h40 q120 0 120 120 V900 Z" fill="#4c6ef5"/>
           <path d="M360 488 q60 40 120 0" fill="none" stroke="#3b5bdb" stroke-width="16" stroke-linecap="round"/>
-          <g class="arm-desk"><path d="M520 600 q120 20 200 40" fill="none" stroke="#4c6ef5" stroke-width="58" stroke-linecap="round"/><circle cx="740" cy="640" r="30" fill="#f2c7a5"/></g>
+          <g class="arm-desk"><path class="reach" d="M520 600 q120 20 200 40" fill="none" stroke="#4c6ef5" stroke-width="58" stroke-linecap="round"/><circle class="hand" cx="740" cy="640" r="30" fill="#f2c7a5"/></g>
           <g class="arms-up"><path d="M330 560 q-90 -80 -70 -200" fill="none" stroke="#4c6ef5" stroke-width="56" stroke-linecap="round"/><path d="M560 560 q90 -80 70 -200" fill="none" stroke="#4c6ef5" stroke-width="56" stroke-linecap="round"/><circle cx="262" cy="340" r="30" fill="#f2c7a5"/><circle cx="630" cy="340" r="30" fill="#f2c7a5"/></g>
           <circle cx="440" cy="350" r="112" fill="#f2c7a5"/>
           <path d="M328 350 q0 -130 120 -122 q110 8 104 120 q-30 -70 -110 -76 q-60 -2 -114 78 Z" fill="#2d1e18"/>
@@ -396,7 +439,7 @@
     </div>
     <div class="caps" data-scene="2" data-lang="en" hidden>
       <p class="cap cap-small slide en-small">And then…</p>
-      <p class="cap cap-main pop en-main" data-split style="top: 72%">he pressed deploy</p>
+      <p class="cap cap-main pop en-main" data-split style="top: 72%">he hit deploy</p>
       <p class="cap cap-sfx right shake en-sfx" data-split style="top: 20%">click!</p>
     </div>
     <div class="caps" data-scene="3" data-lang="en" hidden>
@@ -413,7 +456,7 @@
       <p class="cap cap-small slide bubble en-aside" style="top: 74%">See you Monday~</p>
     </div>
     <div class="caps" data-scene="6" data-lang="en" hidden>
-      <div class="alert"><i></i><span class="app">ON-CALL</span><time>Sat 3:12 AM</time><p>[P1] 1 incident in prod</p></div>
+      <div class="alert"><i></i><span class="app">ON-CALL</span><time>Sat 3:12 AM</time><p>[P1] 1 incident in prod</p><span class="cause">Cause: <b>Fri 4:59 PM</b> deploy</span></div>
       <p class="cap narr">Little did he know…</p>
     </div>
 
@@ -426,16 +469,16 @@
     </div>
     <div class="caps" data-scene="2" data-lang="ko" hidden>
       <p class="cap cap-small slide bubble"><font-kku font="malang" size="4.2cqi">그리고 그는…</font-kku></p>
-      <p class="cap cap-main pop" style="top: 72%"><font-kku font="sticker" size="8.6cqi">배포 버튼을 눌렀다</font-kku></p>
+      <p class="cap cap-main pop" style="top: 72%"><font-kku font="sticker" size="8.6cqi">기어이 눌러 버렸다</font-kku></p>
       <p class="cap cap-sfx right shake ko-sfx" style="top: 18%"><font-kku font="dunggeun" size="6.4cqi">딸깍!</font-kku></p>
     </div>
     <div class="caps" data-scene="3" data-lang="ko" hidden>
-      <p class="cap cap-aside left slide bubble dark" style="top: 68%"><font-kku font="glitch" size="5.4cqi">(동공 지진)</font-kku></p>
+      <p class="cap cap-aside left slide bubble dark" style="top: 68%"><font-kku font="glitch" size="5.4cqi">(동공지진)</font-kku></p>
       <p class="cap cap-sfx right shake ko-sfx" style="top: 15%"><font-kku font="dunggeun" size="6cqi">두근두근</font-kku></p>
     </div>
     <div class="caps" data-scene="4" data-lang="ko" hidden>
       <p class="cap cap-main pop" style="top: 80%"><font-kku font="sticker" size="9.4cqi">장애 0건</font-kku></p>
-      <p class="cap cap-aside slide bubble"><font-kku font="malang" size="4.4cqi">(믿을 수 없음)</font-kku></p>
+      <p class="cap cap-aside slide bubble"><font-kku font="malang" size="4.4cqi">(본인도 놀람)</font-kku></p>
       <p class="cap cap-sfx shake ko-sfx" style="top: 15%"><font-kku font="dunggeun" size="6cqi">띠용?</font-kku></p>
     </div>
     <div class="caps" data-scene="5" data-lang="ko" hidden>
@@ -443,7 +486,7 @@
       <p class="cap cap-small slide bubble" style="top: 74%"><font-kku font="malang" size="4.2cqi">월요일에 만나요~</font-kku></p>
     </div>
     <div class="caps" data-scene="6" data-lang="ko" hidden>
-      <div class="alert"><i></i><span class="app">당직 알림</span><time>토 오전 3:12</time><p>[P1] 운영 장애 1건</p></div>
+      <div class="alert"><i></i><span class="app">당직 알림</span><time>토 오전 3:12</time><p>[P1] 운영 장애 1건</p><span class="cause">원인: <b>금 오후 4:59</b> 배포</span></div>
       <p class="cap narr">그때까지만 해도 그는 몰랐다…</p>
     </div>
   </div>
@@ -462,16 +505,17 @@
 <script>
 (() => {
   const screen = document.querySelector('.screen');
+  // Until the freeze-frame is on air its clip is called "???": "Sat 3 AM" after "Weekend"
+  // would tell the ending 14 seconds early (the cue sheet hides its lines for the same reason).
   const SCENES = [
-    { ms: 3200, c: '#ffd23f', label: TTY.t({ en: '4:59', ko: '4시 59분' }), cue: TTY.t({ en: 'Friday, 4:59 PM (one minute to freedom)', ko: '금요일 오후 4시 59분 (퇴근 1분 전)' }) },
-    { ms: 2700, c: '#39c5ff', label: TTY.t({ en: 'Deploy', ko: '배포' }), cue: TTY.t({ en: 'And then… he pressed deploy', ko: '그리고 그는… 배포 버튼을 눌렀다' }) },
-    { ms: 2600, c: '#ff4f8b', label: TTY.t({ en: 'Panic', ko: '동공지진' }), cue: TTY.t({ en: '(visible panic) ba-dum ba-dum', ko: '(동공 지진) 두근두근' }) },
-    { ms: 2800, c: '#7be0a5', label: TTY.t({ en: 'Result', ko: '결과' }), cue: TTY.t({ en: '0 incidents (disbelief)', ko: '장애 0건 (믿을 수 없음)' }) },
-    { ms: 2800, c: '#c9a7ff', label: TTY.t({ en: 'Weekend', ko: '주말' }), cue: TTY.t({ en: 'Weekend: saved! See you Monday~', ko: '주말 사수 성공! 월요일에 만나요~' }) },
+    { ms: 3800, c: '#ffd23f', label: TTY.t({ en: '4:59', ko: '4시 59분' }), cue: TTY.t({ en: 'Friday, 4:59 PM (one minute to freedom)', ko: '금요일 오후 4시 59분 (퇴근 1분 전)' }) },
+    { ms: 3000, c: '#39c5ff', label: TTY.t({ en: 'Deploy', ko: '배포' }), cue: TTY.t({ en: 'And then… he hit deploy', ko: '그리고 그는… 배포 버튼을 기어이 눌러 버렸다' }) },
+    { ms: 2300, c: '#ff4f8b', label: TTY.t({ en: 'Panic', ko: '동공지진' }), cue: TTY.t({ en: '(visible panic) ba-dum ba-dum', ko: '(동공지진) 두근두근' }) },
+    { ms: 2400, c: '#7be0a5', label: TTY.t({ en: 'Result', ko: '결과' }), cue: TTY.t({ en: '0 incidents (disbelief)', ko: '장애 0건 (본인도 놀람)' }) },
+    { ms: 2400, c: '#c9a7ff', label: TTY.t({ en: 'Weekend', ko: '주말' }), cue: TTY.t({ en: 'Weekend: saved! See you Monday~', ko: '주말 사수 성공! 월요일에 만나요~' }) },
     // The freeze-frame: scene 5 stays on screen, grey, and the phone goes off.
-    { ms: 2900, c: '#8a8496', also: 5, label: TTY.t({ en: 'Sat 3 AM', ko: '새벽 3시' }), cue: TTY.t({ en: 'Little did he know… [P1] 1 incident, Sat 3:12 AM', ko: '그때까지만 해도 그는 몰랐다… 토 오전 3:12 장애 1건' }) },
+    { ms: 4200, c: '#8a8496', also: 5, teaser: '???', label: TTY.t({ en: 'Sat 3 AM', ko: '새벽 3시' }), cue: TTY.t({ en: 'Little did he know… [P1] 1 incident, Sat 3:12 AM', ko: '그때까지만 해도 그는 몰랐다… 토 오전 3:12 장애 1건' }) },
   ];
-  const TOTAL = SCENES.reduce((a, s) => a + s.ms, 0);
 
   // Labels drawn inside the SVG
   const set = (sel, en, ko) => { document.querySelector(sel).textContent = TTY.t({ en, ko }); };
@@ -485,8 +529,8 @@
   set('.busy-label', 'Deploying…', '배포 중…');
   set('.done-label', 'Deployed', '배포 완료');
   screen.setAttribute('aria-label', TTY.t({
-    en: 'A variety-show clip: on Friday at 4:59 PM a junior developer presses deploy, panics, and gets zero incidents. Weekend saved. Freeze-frame: at 3:12 on Saturday morning, his phone gets a P1 alert.',
-    ko: '예능 장면: 금요일 오후 4시 59분, 막내 개발자가 배포 버튼을 누르고 동공 지진을 겪지만 장애는 0건. 주말 사수 성공. 정지 화면: 토요일 오전 3시 12분, 그의 휴대폰에 장애 알림이 온다.',
+    en: 'A variety-show clip: on Friday at 4:59 PM a junior developer hits deploy, panics, and gets zero incidents. Weekend saved. Freeze-frame: at 3:12 on Saturday morning, his phone gets a P1 alert, caused by the Friday 4:59 PM deploy.',
+    ko: '예능 장면: 금요일 오후 4시 59분, 막내 개발자가 배포 버튼을 누르고 동공지진을 겪지만 장애는 0건. 주말 사수 성공. 정지 화면: 토요일 오전 3시 12분, 그의 휴대폰에 장애 알림이 온다. 원인은 금요일 오후 4시 59분 배포.',
   }));
 
   // English captions: one span per letter (and a colour per word) so letters can bounce in.
@@ -518,7 +562,7 @@
     b.className = 'clip';
     b.style.setProperty('--d', s.ms);
     b.style.setProperty('--c', s.c);
-    b.append(Object.assign(document.createElement('span'), { textContent: s.label }));
+    b.append(Object.assign(document.createElement('span'), { textContent: s.teaser || s.label }));
     b.addEventListener('click', () => go(i));
     clips.append(b);
   });
@@ -545,7 +589,10 @@
     li.append(b);
     cues.append(li);
   });
+  // A scene on air fills in its cue line and, if it had a teaser, its real clip name. Once
+  // filled, a line stays filled (on later loops everything shows).
   const reveal = (i) => {
+    clips.children[i].firstChild.textContent = SCENES[i].label;
     const b = cues.querySelectorAll('.cue')[i];
     if (!b.classList.contains('ahead')) return;
     b.classList.remove('ahead');
@@ -556,8 +603,24 @@
   let scene = 0;
   let timer = 0;
   let headAnim = null;
-  // Where a clip starts on the strip, in percent (the strip keeps the clips in proportion).
-  const startOf = (i) => (SCENES.slice(0, i).reduce((a, s) => a + s.ms, 0) / TOTAL) * 100;
+  // The playhead runs from the start of the clip on screen to its end, in percent of the
+  // timeline, measured from the clips themselves: a clip is at least as wide as its name, so
+  // the strip is only roughly in proportion. Whenever a clip's width changes (a resize, the
+  // home stage shrinking its frame, a name filled in) it is measured again and keeps its place.
+  // Without motion it does not travel; it waits at the start of the clip.
+  function placeHead(t) {
+    const W = head.offsetParent ? head.offsetParent.clientWidth : 0;
+    if (!W) return;
+    const c = clips.children[scene];
+    const a = (c.offsetLeft / W) * 100;
+    const b = ((c.offsetLeft + c.offsetWidth) / W) * 100;
+    if (headAnim) headAnim.cancel();
+    if (TTY.reduce) { head.style.left = `${a}%`; return; }
+    headAnim = head.animate([{ left: `${a}%` }, { left: `${b}%` }], { duration: SCENES[scene].ms, fill: 'forwards' });
+    headAnim.currentTime = t;
+  }
+  const watch = new ResizeObserver(() => { if (headAnim || TTY.reduce) placeHead(headAnim ? headAnim.currentTime : 0); });
+  [...clips.children].forEach((c) => watch.observe(c));
   function show(i) {
     scene = i;
     screen.dataset.scene = String(i + 1);
@@ -566,20 +629,24 @@
     [...clips.children].forEach((c, j) => c.classList.toggle('on', j === i));
     [...cues.querySelectorAll('.cue')].forEach((c, j) => c.classList.toggle('on', j === i));
     reveal(i);
-    // Without motion the playhead does not travel; it waits at the start of the clip on screen.
-    if (TTY.reduce) head.style.left = `${startOf(i)}%`;
+    if (TTY.reduce) placeHead(0);
   }
   function go(i) {
     clearTimeout(timer);
+    // Straight to the freeze-frame from any scene but 5: lay scene 5 down first, at once and
+    // with its captions still, so the frozen frame does not zoom out of a close-up or pop.
+    screen.classList.remove('cut');
+    if (i === SCENES.length - 1 && scene !== i - 1 && !TTY.reduce) {
+      screen.classList.add('cut', 'snap');
+      show(i - 1);
+      void screen.offsetWidth;
+      screen.classList.remove('snap');
+    }
     show(i);
     if (TTY.reduce) return;
-    // The playhead runs from this clip's start to its end. It moves in percent of the
-    // strip, so it stays on the right clip when the window is resized.
-    if (headAnim) headAnim.cancel();
-    headAnim = head.animate([{ left: `${startOf(i)}%` }, { left: `${startOf(i + 1)}%` }],
-      { duration: SCENES[i].ms, fill: 'forwards' });
-    // On the home stage the visit ends on the freeze-frame (the stage moves on at 18 s, the
-    // clip is 17.0 s): it stays there instead of starting over a second before the cut.
+    placeHead(0);
+    // On the home stage the visit ends on the freeze-frame (it starts at 13.9 s and the stage
+    // moves on at 18 s): it stays there instead of starting over before the cut.
     if (TTY.embedded && i === SCENES.length - 1) return;
     timer = setTimeout(() => go((i + 1) % SCENES.length), SCENES[i].ms);
   }

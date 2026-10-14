@@ -169,7 +169,7 @@
     padding-right: .18em;
     background: var(--c);
     color: var(--fc, #fff);
-    font: 700 .86em/1 'Fredoka', sans-serif;
+    font: 700 max(10px, .86em)/1 'Fredoka', sans-serif;
     clip-path: polygon(0 0, 100% 0, 78% 50%, 100% 100%, 0 100%);
     border-radius: .2em 0 0 .2em;
   }
@@ -214,7 +214,7 @@
   }
   .cell.hidden { opacity: 0; }
   .bench-en { display: flex; align-items: center; gap: .1em; color: var(--ink); white-space: nowrap; }
-  .bench-en .op { font: 600 .6em 'Fredoka', sans-serif; color: var(--indigo); padding: 0 .08em; }
+  .bench-en .op { font: 600 max(10px, .6em) 'Fredoka', sans-serif; color: var(--indigo); padding: 0 .08em; }
   .bubble {
     position: absolute;
     padding: .25em .6em .3em;
@@ -240,6 +240,7 @@
     rotate: 45deg;
   }
   .bubble > font-kku { color: var(--ink); }
+  .bubble .say { display: block; font: 600 1em/1.15 'Fredoka', sans-serif; color: var(--ink); }
   /* 도깨비불: the final consonant leaves with a blue-green flame for a tail. */
   .spark { position: absolute; left: 0; top: 0; display: grid; place-items: center; color: #0d6e74; }
   .spark::before {
@@ -310,6 +311,7 @@
   .record { display: flex; flex-direction: column; visibility: hidden; }
   .record.on { visibility: visible; }
   .rec-main {
+    position: relative;
     padding: 12px 16px 12px;
     border-radius: 12px 12px 0 0;
     -webkit-mask: radial-gradient(circle 9px at 0 100%, #0000 98%, #000), radial-gradient(circle 9px at 100% 100%, #0000 98%, #000);
@@ -321,12 +323,15 @@
   .lang-ko .rec-label { font-weight: 400; }
   .rec-total { font: 700 clamp(24px, 11cqi, 36px)/1 'Space Mono', monospace; letter-spacing: -.02em; }
   .bars { list-style: none; margin-top: 8px; display: grid; gap: 3px; }
-  .bar { display: grid; grid-template-columns: 1.5em minmax(0, 1fr) 29% 2.3em; align-items: center; gap: 6px; font-size: 12.5px; line-height: 1.15; }
-  .bar .bn { display: grid; place-items: center; width: 1.4em; height: 1.4em; border-radius: 50%; background: var(--c); color: var(--fc, #fff); font: 700 .82em/1 'Fredoka', sans-serif; border: 1.2px solid var(--ink); }
+  .bar { --bf: 12.5px; display: grid; grid-template-columns: 1.5em minmax(0, 1fr) 24% 2.3em; align-items: center; gap: 6px; font-size: var(--bf); line-height: 1.15; }
+  /* The badge keeps its size in the row; only its digit has a 10 px floor (9.4 px on short wide stages). */
+  .bar .bn { display: grid; place-items: center; width: calc(1.15 * var(--bf)); height: calc(1.15 * var(--bf)); border-radius: 50%; background: var(--c); color: var(--fc, #fff); font: 700 max(10px, calc(.82 * var(--bf)))/1 'Fredoka', sans-serif; border: 1.2px solid var(--ink); }
   .bar .bl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bar .bt { height: 9px; border-radius: 5px; background: rgba(43, 45, 66, .1); }
   .bar .bt > i { display: block; height: 100%; width: calc(var(--v) / 8 * 100%); min-width: 4px; border-radius: 5px; background: var(--c); box-shadow: inset 0 0 0 1.3px var(--ink); transform-origin: 0 50%; }
   .bar .bv { font: 700 .95em/1 'Space Mono', monospace; text-align: right; }
+  /* A narrow ticket (the 1280×720 stage) gives the names the room, not the bars. */
+  @container (max-width: 270px) { .bar { grid-template-columns: 1.5em minmax(0, 1fr) 17% 2.3em; } }
   .stack { display: none; height: 11px; margin-top: 6px; border: 1.5px solid var(--ink); border-radius: 6px; overflow: hidden; }
   .stack > i { flex: var(--v) 0 0; background: var(--c); border-right: 1px solid rgba(43, 45, 66, .55); transform-origin: 0 50%; }
   .stack > i:last-child { border-right: 0; }
@@ -335,8 +340,33 @@
   .blink svg { width: 22px; height: 14px; flex: none; }
   .fine, .yours { margin-top: 5px; font-size: 12px; line-height: 1.35; color: rgba(43, 45, 66, .8); }
   .yours { display: none; color: var(--ink); }
-  .record.visitor .fine { display: none; }
   .record.visitor .yours { display: block; }
+  .yours .y-short { display: none; }
+  /* The tag after the hall of fame: a rubber stamp on today's lap. */
+  /* It lands on the bar chart, in the gap between the first rows' names and their numbers (right:
+     36px clears the one-digit numbers by 10 px or more and the longest English name, "USB Door
+     (avg)", by 8 px on the narrow 868×633 ticket); on a phone, on the folded strip. */
+  .verdict {
+    position: absolute;
+    right: 36px;
+    top: 50px;
+    z-index: 1;
+    padding: .12em .45em .08em;
+    border: 2.5px solid #d62839;
+    border-radius: 6px;
+    background: rgba(255, 244, 246, .92);
+    color: #d62839;
+    font: 700 15px/1.12 'Space Mono', monospace;
+    letter-spacing: -.02em;
+    text-align: center;
+    white-space: nowrap;
+    rotate: -8deg;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .verdict .w { display: block; }
+  .lang-ko .verdict { font: 400 17px/1.12 'Gowun Dodum', 'Space Mono', sans-serif; letter-spacing: 0; }
+  .record.stamped .verdict { visibility: visible; }
   .stamp {
     display: inline-block;
     padding: 0 .3em;
@@ -364,13 +394,17 @@
     -webkit-mask-composite: source-in;
     mask: radial-gradient(circle 9px at 0 0, #0000 98%, #000) intersect, radial-gradient(circle 9px at 100% 0, #0000 98%, #000);
   }
-  .trophy { grid-row: 1 / span 3; width: 34px; height: 40px; }
+  .trophy { grid-row: 1 / span 4; width: 34px; height: 40px; }
   .hof-tag { font: 700 10.5px/1 'Fredoka', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #8a5a00; }
   .lang-ko .hof-tag { font-family: 'Gowun Dodum', sans-serif; letter-spacing: .06em; }
   .hof1 { font-size: 13px; font-weight: 600; line-height: 1.3; }
   .lang-ko .hof1 { font-weight: 400; }
   .hof1 .mono { font-weight: 700; }
-  .hof2 { font-size: 12px; line-height: 1.3; color: rgba(43, 45, 66, .85); }
+  .hof1 .nw { white-space: nowrap; }
+  /* The punchline is the biggest line on the stub; who measured it, the smallest. */
+  .hof2 { font-size: 15px; font-weight: 600; line-height: 1.25; color: var(--ink); }
+  .lang-ko .hof2 { font-weight: 400; font-size: 15.5px; }
+  .hof-src { font-size: 11px; line-height: 1.3; color: rgba(43, 45, 66, .78); }
   .hof { opacity: 0; }
   .rec-stub.on .hof { opacity: 1; }
 
@@ -418,12 +452,19 @@
   }
   /* Short wide stages: the ticket keeps its rows but tightens. */
   @container page (min-width: 640px) and (min-aspect-ratio: 1/1) and (max-height: 700px) {
-    .bar { font-size: 11.5px; }
+    .bar { --bf: 11.5px; }
     .bars { gap: 1px; margin-top: 5px; }
     .rec-main { padding: 9px 14px; }
     .blink { margin-top: 5px; font-size: 13px; }
-    .rec-stub { padding: 8px 14px 9px; }
+    .rec-stub { padding: 8px 14px 9px; grid-template-columns: minmax(0, 1fr); }
+    /* The stub's lines get the trophy's room, so the card still clears the key above it. */
+    .trophy { display: none; }
+    .hof2, .lang-ko .hof2 { font-size: 14px; }
     .keybar { gap: 8px; }
+    /* Someone typing: their own measured key, in its short form, takes the blink line's place. */
+    .record.visitor .blink { display: none; }
+    .yours .y-long { display: none; }
+    .yours .y-short { display: inline; }
   }
   /* Short wide stages: the key steps aside for the ticket; the shortest fold the bars. */
   @container page (min-width: 640px) and (min-aspect-ratio: 1/1) and (max-height: 660px) {
@@ -437,6 +478,9 @@
     .bars { display: none; }
     .stack { display: flex; }
     .rec-total { font-size: 28px; }
+    .verdict { top: 36px; right: 14px; rotate: -3deg; font-size: 14px; line-height: 1.2; }
+    .verdict .w { display: inline; }
+    .lang-ko .verdict { font-size: 15px; }
   }
   /* Phones: the ticket lies on its side, stub to the right; the bars fold into one strip. */
   @container page (max-width: 639px), (max-aspect-ratio: 1/1) {
@@ -473,11 +517,30 @@
     .blink { margin-top: 5px; font-size: 12px; gap: 4px; }
     .blink svg { width: 17px; height: 11px; }
     .fine, .yours { margin-top: 3px; font-size: 11px; line-height: 1.3; }
+    .verdict { top: 29px; right: 7px; font-size: 12.5px; line-height: 1.2; border-width: 2px; rotate: -3deg; }
+    .verdict .w { display: inline; }
+    .lang-ko .verdict { font-size: 13.5px; }
     .hof-tag { font-size: 10px; }
-    .hof1 { font-size: 11.5px; line-height: 1.28; }
-    .hof2 { font-size: 11px; line-height: 1.28; }
+    .hof1 { font-size: 11px; line-height: 1.25; }
+    .hof2 { font-size: 12.5px; line-height: 1.22; }
+    .lang-ko .hof2 { font-size: 13px; }
+    .hof-src { font-size: 10px; line-height: 1.25; }
     .admit-big { font-size: 22px; }
     .admit-small { font-size: 11.5px; }
+  }
+  /* A tall stage with room across (648×732): the lying ticket is wide, so its words can grow. */
+  @container page (max-width: 639px), (max-aspect-ratio: 1/1) {
+    @container (min-width: 540px) {
+      .rec-label { font-size: 14px; }
+      .blink { font-size: 13px; }
+      .fine { font-size: 12px; }
+      .hof1 { font-size: 12.5px; }
+      .hof2 { font-size: 15px; }
+      .lang-ko .hof2 { font-size: 15.5px; }
+      .hof-src { font-size: 11px; }
+      .verdict { font-size: 14px; }
+      .lang-ko .verdict { font-size: 15px; }
+    }
   }
   /* Opened on its own, the page gets the kit's "? :)" in the bottom-right corner (74 px wide on a
      phone): the key and its hint keep clear of it. */
@@ -575,11 +638,15 @@
       <div class="rec-main paper">
         <div class="rec-head">
           <h2 class="rec-label">
-            <span data-lang="en">Today's lap</span>
-            <span data-lang="ko">오늘의 한 바퀴</span>
+            <span data-lang="en">Today's lap*</span>
+            <span data-lang="ko">오늘의 한 바퀴*</span>
           </h2>
-          <b class="rec-total">29.5<small style="font-size:.55em"> ms</small></b>
+          <b class="rec-total"><span class="tot">29.5</span><small style="font-size:.55em"> ms</small></b>
         </div>
+        <p class="verdict">
+          <span data-lang="en"><span class="w">Barely</span> <span class="w">a tie*</span></span>
+          <span data-lang="ko"><span class="w">겨우</span> <span class="w">무승부*</span></span>
+        </p>
         <ol class="bars"></ol>
         <div class="stack" aria-hidden="true"></div>
         <p class="blink">
@@ -588,8 +655,8 @@
           <span data-lang="ko">눈 한 번 깜빡이는 사이 세 바퀴 넘게</span>
         </p>
         <p class="fine">
-          <span data-lang="en">Typical values. Every machine differs.</span>
-          <span data-lang="ko">흔한 기기의 예시예요. 기기마다 달라요.</span>
+          <span data-lang="en">* Press Pad not counted. On a quiet day at the park.</span>
+          <span data-lang="ko">* 꾹 발판은 빼고 쟀어요. 공원이 한산한 날 기준.</span>
         </p>
         <p class="yours" aria-live="polite"></p>
       </div>
@@ -600,12 +667,16 @@
           <span data-lang="ko">명예의 전당</span>
         </p>
         <p class="hof1 hof">
-          <span data-lang="en">Record holder · 1983 Apple IIe · <span class="mono">30 ms</span> (measured by Dan Luu, 2017)</span>
-          <span data-lang="ko">기록 보유 · 1983년 Apple IIe · <span class="mono">30ms</span> (Dan Luu, 2017년 측정)</span>
+          <span data-lang="en">Record holder · 1983 <span class="nw">Apple IIe · <span class="mono">30 ms</span></span></span>
+          <span data-lang="ko">기록 보유 · 1983년 <span class="nw">Apple IIe · <span class="mono">30ms</span></span></span>
         </p>
         <p class="hof2 hof">
-          <span data-lang="en">It ran at 1 MHz. Plenty of today's machines are slower.</span>
-          <span data-lang="ko">클럭은 1MHz. 요즘 기기 상당수는 더 느려요.</span>
+          <span data-lang="en">A 1 MHz machine, Press Pad and all.</span>
+          <span data-lang="ko">클럭 1MHz짜리가 꾹 발판까지 타고 세운 기록</span>
+        </p>
+        <p class="hof-src hof">
+          <span data-lang="en">Measured by Dan Luu, 2017. Plenty of today's machines were slower.</span>
+          <span data-lang="ko">Dan Luu, 2017년 측정 · 요즘 기기 상당수는 더 느렸어요</span>
         </p>
       </div>
     </section>
@@ -615,7 +686,7 @@
     <button class="bigkey" type="button"><span class="cap-legend" aria-hidden="true"></span><span class="cap-label"><span data-lang="en">Press</span><span data-lang="ko">누르기</span></span></button>
     <p class="hint">
       <span data-lang="en"><span class="kb">Type on your keyboard<span class="first"> (tap the map first)</span></span><span class="tap">Tap the key to send in a rider</span></span>
-      <span data-lang="ko"><span class="kb">키보드로 쳐 보세요<span class="first">(먼저 지도를 한 번 누르기)</span></span><span class="tap">키를 누르면 손님이 입장해요</span></span>
+      <span data-lang="ko"><span class="kb">키보드로 쳐 보세요<span class="first"> (지도를 먼저 한 번 눌러 주세요)</span></span><span class="tap">키를 누르면 손님이 입장해요</span></span>
     </p>
     <p class="hint-yours" aria-live="polite"></p>
   </div>
@@ -639,6 +710,11 @@
   const QUEUE0 = 0.32;                   // leaves the park at about 17 s
   const WALK = 0.18;                     // between two rides (wire time, not counted)
   const LOOP = 24;
+  // The ending: the exit screen lights at about 17.1 s, then today's lap, the hall of fame
+  // (the punchline) and the stamp on today's lap (the tag), each read before the next arrives.
+  const REC_AT = 17.5;
+  const HOF_AT = 18.6;
+  const STAMP_AT = 20.3;
   const IDLE = 12000;                    // a visitor's park starts over 12 s after the last key,
   const HOLD = 6000;                     // and never before their word has had 6 s on the screen
   const ORDER = ['pad', 'bridge', 'wheel', 'door', 'rapids', 'carousel', 'hall', 'glyphs', 'queue', 'exit'];
@@ -650,48 +726,49 @@
     door: { n: 3, c: C.teal, ms: 4, dwell: 0.25 },
     rapids: { n: 4, c: C.indigo, ms: 1, dwell: 0.3 },
     carousel: { n: 5, c: C.red, ms: 2, dwell: 0.6 },
-    hall: { n: 6, c: C.yellow, ms: 0.5, dwell: ko ? 0.15 : 0 },
+    hall: { n: 6, c: C.yellow, ms: ko ? 0.5 : 0, dwell: ko ? 0.15 : 0 },   // English riders skip it
     glyphs: { n: 7, c: C.teal, ms: 3, dwell: 0.9 },
     queue: { n: 8, c: C.indigo, ms: 8, dwell: 0.05 },
     exit: { n: 9, c: C.red, ms: 5, dwell: 1.5 },
   };
 
-  // Sign text: name, wait tag, note; short forms for small maps.
+  // Sign text: name, wait tag, note; short forms for small maps (ns: a note that stays on them).
   const SIGN = TTY.t({
     en: {
-      pad: { name: 'Press Pad' },
-      bridge: { name: 'Bounce Bridge', wait: 'wait 5 ms', note: 'the contacts bounce; we count it once', short: 'Bridge', ws: '5 ms' },
+      pad: { name: 'Press Pad', note: 'You must be 1 key tall to ride', ns: '1 key tall to ride' },
+      bridge: { name: 'Bounce Bridge', wait: 'wait 5 ms', note: 'bounce all you like, it counts as one ride', short: 'Bridge', ws: 'wait 5 ms' },
       wheel: { name: 'Matrix Wheel', wait: '1 ms', note: 'every row, in turn', short: 'Wheel', ws: '1 ms' },
       door: { name: 'USB Revolving Door', wait: 'opens every 8 ms', short: 'USB Door', ws: 'every 8 ms' },
       rapids: { name: 'Kernel Rapids', wait: '1 ms', short: 'Rapids', ws: '1 ms' },
       carousel: { name: 'Event Loop Carousel', wait: '2 ms', note: 'board after the rider in front gets off', short: 'Carousel', ws: '2 ms' },
-      hall: { name: 'Hangul Assembly Hall', note: 'English riders skip the line', short: 'Hangul Hall', ws: 'skip' },
+      hall: { name: 'Hangul Assembly Hall', wait: '0 ms', note: 'English riders skip the line', short: 'Hangul Hall', ws: '0 ms' },
       glyphs: { name: 'Hall of Glyphs', wait: '3 ms', short: 'Glyphs', ws: '3 ms' },
-      queue: { name: 'Frame Queue', wait: 'departs every 16.7 ms', short: 'Frame Queue', ws: 'every 16.7 ms' },
+      queue: { name: 'Frame Queue', wait: 'wait up to 16.7 ms', note: 'departs every 16.7 ms, all at once', short: 'Frame Queue', ws: 'up to 16.7 ms' },
       exit: { name: 'Pixel Exit', wait: '5 ms', short: 'Exit', ws: '5 ms' },
     },
     ko: {
-      pad: { name: '꾹 발판' },
-      bridge: { name: '덜컹 흔들다리', wait: '대기 5ms', note: '접점이 몇 번 튀어도 한 번으로 셉니다', short: '흔들다리', ws: '5ms' },
+      pad: { name: '꾹 발판', note: '키 1개 이상 탑승 가능', ns: '키 1개 이상' },
+      bridge: { name: '덜컹 흔들다리', wait: '대기 5ms', note: '몇 번 튀어도 한 번 탄 걸로 칩니다', short: '흔들다리', ws: '대기 5ms' },
       wheel: { name: '매트릭스 관람차', wait: '1ms', note: '줄마다 차례로', short: '관람차', ws: '1ms' },
       door: { name: 'USB 회전문', wait: '8ms마다 한 번 열림', short: '회전문', ws: '8ms마다' },
       rapids: { name: '커널 급류', wait: '1ms', short: '급류', ws: '1ms' },
       carousel: { name: '이벤트 루프 회전목마', wait: '2ms', note: '앞 손님이 내려야 탑니다', short: '회전목마', ws: '2ms' },
-      hall: { name: '한글 조합 공방', wait: '0.5ms', note: '자모를 글자로', short: '조합 공방', ws: '0.5ms' },
+      hall: { name: '한글 조합 공방', wait: '0.5ms', note: '주의: 받침이 옆 글자로 튈 수 있습니다', short: '조합 공방', ws: '0.5ms' },
       glyphs: { name: '글꼴 거울의 방', wait: '3ms', short: '거울의 방', ws: '3ms' },
-      queue: { name: '프레임 대기줄', wait: '16.7ms마다 출발', short: '대기줄', ws: '16.7ms마다' },
+      queue: { name: '프레임 대기줄', wait: '대기 최대 16.7ms', note: '16.7ms마다 한꺼번에 출발', short: '대기줄', ws: '최대 16.7ms' },
       exit: { name: '화면 출구', wait: '5ms', short: '화면 출구', ws: '5ms' },
     },
   });
   // Rows on the ticket (door and queue: the average wait).
   const BARS = TTY.t({
-    en: { bridge: 'Bounce Bridge', wheel: 'Matrix Wheel', door: 'USB Door (avg)', rapids: 'Kernel Rapids', carousel: 'Event Loop', hall: 'Hangul IME', glyphs: 'Hall of Glyphs', queue: 'Frame Queue (avg)', exit: 'Pixel Exit' },
+    en: { bridge: 'Bounce Bridge', wheel: 'Matrix Wheel', door: 'USB Door (avg)', rapids: 'Kernel Rapids', carousel: 'Event Loop', hall: 'Hangul (skipped)', glyphs: 'Hall of Glyphs', queue: 'Frame Queue (avg)', exit: 'Pixel Exit' },
     ko: { bridge: '흔들다리', wheel: '관람차', door: '회전문(평균)', rapids: '커널 급류', carousel: '회전목마', hall: '조합 공방', glyphs: '거울의 방', queue: '대기줄(평균)', exit: '화면 출구' },
   });
   const TXT = TTY.t({
-    // yours: on the record card; mine: the one line by the key on phones.
-    en: { goblin: 'Dokkaebi fire!', yours: (ms) => `Your key: <span class="stamp">${ms} ms</span> inside the browser (it can't see the parts before and after)`, mine: (ms) => `Your key: <span class="stamp">${ms} ms</span>, the browser's part only`, next: (c) => `Press: the next rider is ${c}` },
-    ko: { goblin: '도깨비불!', yours: (ms) => `방금 당신의 키: 브라우저 안에서 <span class="stamp">${ms}ms</span> (앞뒤 구간은 브라우저가 볼 수 없어요)`, mine: (ms) => `방금 당신의 키: <span class="stamp">${ms}ms</span>, 브라우저 안 구간만`, next: (c) => `누르기: 다음 손님 ${c}` },
+    // yours: on the record card; mine: the one line by the key on phones. The browser can time
+    // only from the key event to the next frame's callback; the rest happens out of its sight.
+    en: { goblin: 'Dokkaebi fire!', skip: 'No assembly required!', yours: (ms) => `Your key: <span class="stamp">${ms} ms</span> from the key event to the next frame (the browser can't see the rest)`, mine: (ms) => `Your key: <span class="stamp">${ms} ms</span> to the next frame`, next: (c) => `Press: the next rider is ${c}` },
+    ko: { goblin: '도깨비불!', bear: '곰?', yours: (ms) => `방금 누른 키: 키 이벤트부터 다음 프레임까지 <span class="stamp">${ms}ms</span> (그 앞뒤는 브라우저가 못 봐요)`, mine: (ms) => `방금 누른 키: 다음 프레임까지 <span class="stamp">${ms}ms</span>`, next: (c) => `누르기: 다음 손님 ${c}` },
   });
 
   // ---- 두벌식 automaton ----
@@ -1021,12 +1098,14 @@
     for (const s of spots) {
       if (placed.length >= 14) break;
       const r = (.13 + s.k * .1) * u;
-      if (s.x - r < 0 || s.x + r > W || s.y - 1.6 * r < 0 || s.y + .4 * r > H) continue;
-      if (obstacles.some((o) => s.x + r > o[0] && s.x - r < o[2] && s.y + .4 * r > o[1] && s.y - 1.6 * r < o[3])) continue;
+      // Trees reach 2.3r above their foot (the pine's tip), a flower bed 0.7r.
+      const kind = (placed.length + 1) % 3;
+      const up = kind ? 2.35 * r : .7 * r;
+      if (s.x - r < 0 || s.x + r > W || s.y - up < 0 || s.y + .4 * r > H) continue;
+      if (obstacles.some((o) => s.x + r > o[0] && s.x - r < o[2] && s.y + .4 * r > o[1] && s.y - up < o[3])) continue;
       if (pathPts.some((p) => Math.hypot(p.x - s.x, p.y - s.y) < .2 * u + r)) continue;
       if (placed.some((p) => Math.hypot(p.x - s.x, p.y - s.y) < (p.r + r) * 1.5)) continue;
       placed.push({ x: s.x, y: s.y, r });
-      const kind = placed.length % 3;
       const g = (inner) => `<g transform="translate(${s.x.toFixed(1)} ${s.y.toFixed(1)}) scale(${(r / 20).toFixed(3)})">${inner}</g>`;
       if (kind === 1) out.push(g(`<ellipse cx="0" cy="2" rx="18" ry="5" fill="rgba(43,45,66,.16)"/><rect class="o" x="-3" y="-14" width="6" height="16" fill="#9a6a45" stroke-width="2"/><circle class="o" cx="-8" cy="-20" r="12" fill="#5fae4a" stroke-width="2"/><circle class="o" cx="8" cy="-22" r="13" fill="#6dbb55" stroke-width="2"/><circle class="o" cx="0" cy="-32" r="12" fill="#7cc85f" stroke-width="2"/><circle cx="-4" cy="-35" r="3" fill="#fff" opacity=".35"/>`));
       else if (kind === 2) out.push(g(`<ellipse cx="0" cy="2" rx="16" ry="4" fill="rgba(43,45,66,.16)"/><rect class="o" x="-2.5" y="-8" width="5" height="10" fill="#9a6a45" stroke-width="2"/><path class="o" d="M0 -46 L15 -8 H-15 Z" fill="#4f9e44" stroke-width="2"/><path class="o" d="M0 -46 L10 -22 H-10 Z" fill="#62b052" stroke-width="2"/>`));
@@ -1144,7 +1223,11 @@
   function camFor() {
     const { W, H, u, stops } = L;
     const pad = stops.pad, br = stops.bridge;
-    const x0 = pad.x - 1.15 * u, x1 = br.x + .6 * u;
+    const x0 = pad.x - 1.15 * u;
+    // The bridge and its whole sign: the wait tag ("wait 5 ms") is part of the joke.
+    let x1 = br.x + .6 * u;
+    const bs = signsEl.children[ORDER.indexOf('bridge')];
+    if (bs) bs.querySelectorAll('.sign-head, .wait').forEach((c) => { x1 = Math.max(x1, bs.offsetLeft + c.offsetLeft + c.offsetWidth + 4); });
     const y1 = Math.max(pad.y, br.y) + L.labelH;
     const s = Math.max(1.15, Math.min(2.2, 130 / u, W / (x1 - x0), H / y1));
     // Far enough right that the whole glove shows; down a little, for the rider's high arc.
@@ -1192,7 +1275,8 @@
       let sub = '';
       const wait = short ? t.ws : t.wait;
       if (wait) sub += `<span class="wait">${CLOCK}${wait}</span>`;
-      if (!short && t.note) sub += `<i class="note">${t.note}</i>`;
+      const note = short ? t.ns : t.note;
+      if (note) sub += `<i class="note">${note}</i>`;
       el.innerHTML = `<p class="sign-head${id === 'pad' ? ' plain' : ''}">${flag}<span class="sign-name">${name}</span></p>${sub ? `<p class="sign-sub">${sub}</p>` : ''}`;
       signsEl.append(el);
       const w = s.signW;
@@ -1235,12 +1319,15 @@
       benchFs = 0;
       renderBench(null);
     } else {
-      // English riders skip the line; the hall just shows what it would do.
-      const fsz = Math.min(.3 * hu, refs.benchW / 5.4);
+      // English riders skip the line; the hall just shows what it would do (on a map where the sum
+      // would drop under 13 px, such as 358×640 phones, only what it makes; 13 px keeps the whole
+      // sum on the 868×633 home stage of a 1280×720 window and on 390×844).
+      const sum = Math.min(.3 * hu, refs.benchW / 5.4);
+      const fsz = sum >= 13 ? sum : Math.max(12, .3 * hu);
       const en = document.createElement('div');
       en.className = 'bench-en';
       en.style.fontSize = fsz.toFixed(1) + 'px';
-      const parts = ['ㅎ', '+', 'ㅐ', '+', 'ㅇ', '=', '행'];
+      const parts = sum >= 13 ? ['ㅎ', '+', 'ㅐ', '+', 'ㅇ', '=', '행'] : ['행'];
       parts.forEach((p) => {
         if (p === '+' || p === '=') { const o = document.createElement('b'); o.className = 'op'; o.textContent = p; en.append(o); } else en.append(kku(p, fsz));
       });
@@ -1278,6 +1365,8 @@
     const last = benchCells[view.length - 1];
     if (last && (ev.kind === 'start' || ev.kind === 'add' || ev.kind === 'combo')) last.el.animate([{ transform: 'translateY(-14%) scale(1.1)' }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.3,1.6,.5,1)' });
     if (ev.kind === 'combo') showBubble(`${ev.a}+${ev.b} = ${ev.c}`);
+    // 고마워 passes through 곰 on its way: the bait before the final consonant jumps.
+    if (ev.kind === 'add' && ime.text() === '곰') showBubble(TXT.bear, 1300);
     if (ev.kind === 'jump' && view.length >= 2) {
       const from = benchCells[view.length - 2], to = last;
       to.el.classList.add('hidden');
@@ -1313,12 +1402,21 @@
   }
 
   let bubbleTimer = 0;
-  function showBubble(text) {
+  function showBubble(text, ms = 1500) {
     const b = refs.bubble;
-    b.replaceChildren(kku(text, Math.max(14, .15 * L.u)));
+    const px = Math.max(14, .15 * L.u);
+    if (ko) b.replaceChildren(kku(text, px));
+    else {
+      // English lines in the park's own type (font-kku sebul is for the Korean letters).
+      const say = document.createElement('span');
+      say.className = 'say';
+      say.style.fontSize = px.toFixed(1) + 'px';
+      say.textContent = text;
+      b.replaceChildren(say);
+    }
     clearTimeout(bubbleTimer);
     b.animate([{ opacity: 0, transform: 'scale(.5) rotate(-8deg)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.3,1.5,.5,1)', fill: 'forwards' });
-    bubbleTimer = setTimeout(() => b.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }), 1500);
+    bubbleTimer = setTimeout(() => b.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }), ms);
   }
 
   let boardText = '';
@@ -1374,10 +1472,15 @@
   const stub = $('.rec-stub');
   const yours = $('.yours');
   const hintYours = $('.hint-yours');
+  const verdict = $('.verdict');
+  // Today's lap is the sum of the rides after the Press Pad (29.5 ms; 29 for English riders,
+  // who skip the Hangul hall).
+  $('.tot').textContent = String(Math.round(ORDER.slice(1).reduce((a, id) => a + RIDE[id].ms, 0) * 10) / 10);
   $('.bars').innerHTML = ORDER.slice(1).map((id) => `<li class="bar" style="--c:${RIDE[id].c};--v:${RIDE[id].ms};--fc:${RIDE[id].c === C.yellow ? C.ink : '#fff'}"><span class="bn">${RIDE[id].n}</span><span class="bl">${BARS[id]}</span><span class="bt"><i></i></span><span class="bv">${RIDE[id].ms}</span></li>`).join('');
   $('.stack').innerHTML = ORDER.slice(1).map((id) => `<i style="--c:${RIDE[id].c};--v:${RIDE[id].ms}"></i>`).join('');
   let shownRecord = false;
   let shownHof = false;
+  let shownStamp = false;
   const wide = () => matchMedia('(min-width: 640px) and (min-aspect-ratio: 1/1)').matches;
   const overlayTicket = () => !reduce && !wide();
   function showRecord(instant) {
@@ -1388,7 +1491,8 @@
     const from = wide() ? 'translate(115%, 4%) rotate(8deg)' : 'translate(0, -125%) rotate(-3deg)';
     record.animate([{ transform: from }, { transform: 'rotate(-1.2deg)', offset: .75 }, { transform: 'none' }], { duration: 750, easing: 'cubic-bezier(.2,.9,.3,1)' });
     admit.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, delay: 300, fill: 'forwards' }).onfinish = () => { admit.style.visibility = 'hidden'; };
-    record.querySelectorAll('.bt > i, .stack > i').forEach((el, i) => el.animate([{ transform: 'scaleX(0)' }, { transform: 'none' }], { duration: 420, delay: 450 + (i % 9) * 70, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' }));
+    // (the bars are done growing about 1 s in, before the hall of fame)
+    record.querySelectorAll('.bt > i, .stack > i').forEach((el, i) => el.animate([{ transform: 'scaleX(0)' }, { transform: 'none' }], { duration: 360, delay: 300 + (i % 9) * 45, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' }));
   }
   function showHof(instant) {
     if (shownHof) return;
@@ -1398,11 +1502,21 @@
     stub.querySelectorAll('.hof').forEach((el, i) => el.animate([{ opacity: 0, transform: 'scale(1.6) rotate(-6deg)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: i * 140, easing: 'cubic-bezier(.5,0,.9,.4)', fill: 'backwards' }));
     stub.animate([{ transform: 'none' }, { transform: 'translateY(3px)' }, { transform: 'none' }], { duration: 260, delay: 400 });
   }
+  // The tag: the referee's stamp lands on today's lap.
+  function showStamp(instant) {
+    if (shownStamp) return;
+    shownStamp = true;
+    record.classList.add('stamped');
+    if (instant || reduce) return;
+    verdict.animate([{ opacity: 0, transform: 'scale(2.6)' }, { opacity: 1, transform: 'scale(.94)', offset: .72 }, { opacity: 1, transform: 'none' }], { duration: 340, easing: 'cubic-bezier(.55,0,.9,.45)' });
+    record.animate([{ transform: 'none' }, { transform: 'translateY(4px)' }, { transform: 'none' }], { duration: 220, delay: 240 });
+  }
   function hideTicket() {
-    shownRecord = shownHof = false;
-    record.classList.remove('on', 'visitor');
+    shownRecord = shownHof = shownStamp = false;
+    record.classList.remove('on', 'visitor', 'stamped');
     stub.classList.remove('on');
     record.getAnimations().forEach((a) => a.cancel());
+    verdict.getAnimations().forEach((a) => a.cancel());
     admit.getAnimations().forEach((a) => a.cancel());
     admit.style.visibility = '';
     yours.textContent = '';
@@ -1423,6 +1537,7 @@
   let lastInput = 0;
   let lastExit = 0;        // when the visitor's last rider left the park (performance.now())
   let fingerIn = 0;        // 0 = the finger is off-screen, 1 = hovering over the keycap
+  let skipSaid = false;    // English: "No assembly required!" said this lap
   const BODY =['#ffb3b3', '#ffe29a', '#a8ece7', '#c3c9f7'];
   const SLOTS = [[22, -12], [0, -12], [-22, -12], [-22, -36], [0, -36], [22, -36]];
   const ease = (p) => (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
@@ -1590,6 +1705,8 @@
       r.snap = ime.text();
       r.snapSeq = ++seq;
       if (refs.hallDoor && !reduce) refs.hallDoor.animate([{ fill: '#ffd166' }, { fill: '#8d5a3b' }], { duration: 500 });
+      // The first English rider of a lap walks straight past the workbench.
+      if (!ko && !skipSaid && !r.cmd) { skipSaid = true; showBubble(TXT.skip, 2000); }
     }
     // Exit: the screen shows what was composed by the last rider of the frame.
     for (const r of riders) {
@@ -1658,10 +1775,13 @@
     refs.rope.setAttribute('d', `M-46 -28 Q0 ${(-12 + sag * 6).toFixed(1)} 46 -28`);
     refs.capTop.setAttribute('transform', `translate(0 ${press * 6})`);
     refs.foam.forEach((f, i) => f.setAttribute('stroke-dashoffset', (-T * u * (i ? .5 : .9)).toFixed(1)));
+    // Korean riders leave the hall as part of a syllable: the mirrors draw that syllable (마, 워),
+    // the glyph the screen will actually show, not the loose letter.
+    const glyph = mirror && (ko && !mirror.r.cmd && mirror.r.snap ? [...mirror.r.snap].pop() : mirror.r.ch);
     refs.mirrors.forEach((m, i) => {
       if (!mirror) { m.textContent = ''; return; }
-      if (m.textContent !== mirror.r.ch) {
-        m.textContent = mirror.r.ch;
+      if (m.textContent !== glyph) {
+        m.textContent = glyph;
         m.setAttribute('style', `font-size:17px;font-family:${['', "Georgia,'Times New Roman',serif", "'Space Mono',monospace"][i] || (ko ? "'Gowun Dodum'" : "'Fredoka'")}${ko ? ",'Gowun Dodum'" : ''},sans-serif;font-weight:700;fill:${C.ink};text-anchor:middle;dominant-baseline:central;transform-box:fill-box;transform-origin:center;transform:${['scale(1,1.45)', 'none', 'scale(1.5,.75)'][i]}`);
       }
       m.setAttribute('opacity', Math.min(1, Math.sin(Math.PI * mirror.p) * 2.2).toFixed(2));
@@ -1742,6 +1862,7 @@
     lastEnter = -1;
     seq = boardSeq = 0;
     finaleDone = false;
+    skipSaid = false;
     demoWord = demoPos = 0;
     demoLapped = false;
     updateKey();
@@ -1766,6 +1887,7 @@
     renderBoard(ime.text(), false);
     showRecord(true);
     showHof(true);
+    showStamp(true);
   }
 
   function takeOver() {
@@ -1782,9 +1904,10 @@
     boardSeq = seq;
     carouselFree = T;
     lastEnter = T - 1;
+    skipSaid = false;
     document.documentElement.classList.add('visitor');
     if (overlayTicket()) hideTicket();
-    else { showRecord(false); showHof(true); }
+    else { showRecord(false); showHof(true); showStamp(true); }
   }
 
   let idleTimer = 0;
@@ -1805,7 +1928,8 @@
     // What this browser can see of it: from the key event to the frame that shows the change.
     requestAnimationFrame(() => {
       const ms = (performance.now() - t0).toFixed(1);
-      yours.innerHTML = TXT.yours(ms);
+      // (the card's short stages take the one-line form, as phones do by the key)
+      yours.innerHTML = `<span class="y-long">${TXT.yours(ms)}</span><span class="y-short">${TXT.mine(ms)}</span>`;
       hintYours.innerHTML = TXT.mine(ms);
     });
     if (reduce) { clearTimeout(idleTimer); idleTimer = setTimeout(resetReduced, IDLE); }
@@ -1844,8 +1968,9 @@
     T += dt;
     if (mode === 'auto') {
       if (!finaleDone && T > 3 && riders.length === 0) { finaleDone = true; bulbsUntil = T + 2.4; }
-      if (T >= 18) showRecord();
-      if (T >= 20) showHof();
+      if (T >= REC_AT) showRecord();
+      if (T >= HOF_AT) showHof();
+      if (T >= STAMP_AT) showStamp();
       if (T >= LOOP) restart();
     } else if (!riders.length && now - lastInput > IDLE && now - lastExit > HOLD) restart();
     if (L) step(dt);

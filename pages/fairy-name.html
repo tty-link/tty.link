@@ -317,15 +317,38 @@
   .field.ok .tick { scale: 1; }
   .match { display: flex; align-items: center; gap: 2cqi; padding: 2.2cqi 3cqi; border-radius: 1.2cqi; background: #e3f5ea; color: #15603a; font-size: max(12px, 4.3cqi); font-weight: 700; visibility: hidden; }
   .match .tick { margin: 0; scale: 1; }
+  .match .nw { white-space: nowrap; }
   .match.on { visibility: visible; }
+  /* The bank's padlock: a gold key opens it after the result line (the tag beat). */
+  .lock { transform-origin: 30% 35%; }
+  .lock .sh-o { display: none; }
+  .lock.open .sh-c { display: none; }
+  .lock.open .sh-o { display: inline; }
   .q-short { display: none; }
-  /* A small card (the 358×396 and 328×408 home stages on phones): the English questions get
-     their short forms and the progress row steps aside, so the result line stays on the card. */
+  /* A small card (the 358×396 and 328×408 home stages on phones). Front: the month table
+     steps aside so the formula and "Tell us in the comments!" stay whole (the month word still
+     turns into the month on its way to the form). Back: the English questions get their short
+     forms and the progress row steps aside, so the two-line result stays on the card. The
+     "Show my fairy name" panel packs tighter (months in two rows) so the warning bubble, the
+     note, the safe name and the months all fit; the bar under the card closes it again. */
   @container card (max-height: 230px) {
-    .lang-en .q-long, .lang-en .bank-sub { display: none; }
+    .front .months { display: none; }
+    .front { justify-content: space-evenly; }
+    .ask { white-space: nowrap; font-size: 10.5px; padding: .35em .85em .25em; }
+    .bank-sub { display: none; }
+    .lang-en .q-long { display: none; }
     .lang-en .q-short { display: inline; }
-    .lang-en .field { gap: .4cqi; }
-    .lang-en .match { padding-block: 1.6cqi; line-height: 1.2; }
+    .field { gap: .4cqi; }
+    .match { padding-block: 1.6cqi; line-height: 1.2; }
+    .picker { gap: 2cqi; padding: 3cqi 3.4cqi; }
+    .pk-x { display: none; }
+    .answer { gap: 1.8cqi; }
+    .bubble { padding: 1.4cqi 3.2cqi 1.6cqi; line-height: 1.2; }
+    .note { max-width: 100%; font-size: 10.5px; line-height: 1.22; }
+    .safe { gap: 0; }
+    .safe-k { font-size: 10.5px; }
+    .pk-months { grid-template-columns: repeat(6, 1fr); gap: 1.2cqi; }
+    .pk-months button { min-height: 0; padding: .2em 0 .15em; font-size: 11px; }
   }
 
   /* ---- Below the card: CTA bar, actions, comments ---- */
@@ -346,7 +369,8 @@
     text-align: left;
   }
   .lang-ko .cta { font-weight: 400; }
-  .cta svg { width: 1.1em; height: 1.1em; }
+  .cta svg { width: 1.1em; height: 1.1em; transition: rotate .2s; }
+  .cta[aria-expanded="true"] svg { rotate: 90deg; }
   .cta:hover { background: linear-gradient(90deg, #e4d6ff, #ffd9ec); }
   .actions { grid-area: act; display: flex; align-items: center; gap: 14px; padding: 0 12px; height: 34px; font-weight: 600; }
   .act { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
@@ -397,12 +421,18 @@
     bottom: 0;
     width: min(100cqw, 600px);
     max-height: calc(100cqh - 44px);
+    /* The sheet's top edge never lands across the words on the "Show my fairy name" bar (on
+       648×732 the three tips alone stopped halfway up it and cut them in two). While the room
+       from the bar's top down (100cqh - 48px - --s) is 240 px or less, the sheet grows to start
+       at the bar's top and covers it whole; past 240 the ×100 drops it at once to its own height
+       (166–213 px), so its top falls at least 27 px under the bar's top, below the words. */
+    min-height: max(0px, min(100cqh - 48px - var(--s), 240px - 100 * (100cqh - 288px - var(--s))));
     translate: -50% 0;
     container-type: inline-size;
     display: flex;
     flex-direction: column;
-    gap: 3cqi;
-    padding: 18px 16px 16px;
+    gap: min(3cqi, 12px);
+    padding: 15px 16px 12px;
     border-radius: 22px 22px 0 0;
     background: #fff;
     box-shadow: 0 -10px 40px rgba(60, 30, 110, .22);
@@ -414,17 +444,19 @@
   .adv-title { padding-right: 36px; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 19px; line-height: 1.1; color: var(--violet); }
   .adv-title > font-kku { color: var(--violet); }
   .adv-x { right: 10px; top: 12px; width: 30px; height: 30px; font-size: 18px; }
-  .tips { list-style: none; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; counter-reset: tip; font-size: 13.5px; line-height: 1.42; }
+  .tips { list-style: none; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; counter-reset: tip; font-size: 13.5px; line-height: 1.42; }
   .tips > li { position: relative; padding-left: 30px; counter-increment: tip; }
   .tips > li::before { content: counter(tip); position: absolute; left: 0; top: .05em; display: grid; place-items: center; width: 21px; height: 21px; border-radius: 50%; background: var(--c, var(--lav)); color: var(--ink); font: 700 12px/1 'Inter', sans-serif; }
-  .tips > li:nth-child(1) { --c: var(--pink); } .tips > li:nth-child(2) { --c: var(--lav); } .tips > li:nth-child(3) { --c: var(--mint); } .tips > li:nth-child(4) { --c: #ffe9a8; } .tips > li:nth-child(5) { --c: #ffd9c7; }
+  .tips > li:nth-child(1) { --c: var(--pink); } .tips > li:nth-child(2) { --c: var(--lav); } .tips > li:nth-child(3) { --c: var(--mint); }
   .tips .strong { font-weight: 700; }
   .lang-ko .tips .strong { font-weight: 400; color: #000; }
-  .lie { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; width: fit-content; max-width: 100%; margin-top: 6px; padding: 4px 12px 4px 10px; border: 1.5px dashed #c9bde3; border-radius: 9px; background: #fcfaff; color: var(--soft); font-size: 12.5px; }
+  .lie { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; width: fit-content; max-width: 100%; margin-top: 4px; padding: 3px 12px 3px 10px; border: 1.5px dashed #c9bde3; border-radius: 9px; background: #fcfaff; color: var(--soft); font-size: 12.5px; }
   .lie .wax { font-size: 21px; }
   .quote { padding: 0 .3em; border-radius: .3em; background: #f3eefc; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-  .nist { font-family: 'Inter', sans-serif; font-weight: 600; white-space: nowrap; }
-  .foot { padding-top: 8px; border-top: 1px dashed #ddd3ee; font-size: 12px; line-height: 1.45; color: var(--soft); }
+  /* The Korean footnote sits under the advice only where the advice has its own place beside the
+     card (layouts 2, 3). In the sheet over the card (layout 1) it would push the sheet up over
+     the result line; without it the sheet stops under the card and the punch stays in view. */
+  .foot { display: none; padding-top: 8px; border-top: 1px dashed #ddd3ee; font-size: 12px; line-height: 1.45; color: var(--soft); }
   /* (Opened on its own on a phone, the kit's "?" and ":)" are pinned to the top right instead:
      see the start of the script.) */
 
@@ -458,9 +490,11 @@
     .cmts { gap: 11px; padding-top: 10px; }
     .cmt { grid-template-columns: 30px minmax(0, 1fr) 13px; gap: 10px; }
     .c-ava { width: 30px; height: 30px; font-size: 13px; }
+    .advice { gap: 3cqi; min-height: 0; }
     .adv-title { font-size: 21px; }
     .tips { font-size: 14px; gap: 11px; }
     .lie .wax { font-size: 23px; }
+    .foot { display: block; }
   }
   /* ---- Layout 3: wide but short: the card on the left, the account, comments and buttons
      in a column on its right (like a post opened on a computer); advice covers that column. ---- */
@@ -548,25 +582,53 @@
   @container page (min-width: 700px) and (max-width: 999.98px) and (min-aspect-ratio: 1/1) {
     .act.cm { display: none; }
   }
-  /* Phones: three comments. */
+  /* Phones: three comments (the plainest one, last, steps aside). They sit a little closer so
+     the third, the developer who answers anyway, fits under the card on every phone stage
+     (358×396, 360×520, 390×600, 328×408); stages narrower than 356 px also take 11 px type
+     (the English developer's comment would wrap to three lines there).
+     Under 356 px the advice sheet also takes the tighter type of the narrow advice card. The
+     300 px advice query above only reaches stages up to 332 px; on 334–355 px stages the lie row
+     (ko) and tip 3 (en) wrapped to a second line, the sheet grew to 203–213 px and climbed over
+     the result line (the home stage of a 375×667 phone, 343×435: 14 px in ko, 4 px in en, for
+     good with reduced motion). The Korean crayon lie also steps down to 19 px so its row stays
+     on one line down to 320 px (it wrapped at 320–334 px, 199 px, 3 px over). The sheet now
+     stays 171–188 px (the room from the bar's top down is 184 px or more) and stops under the
+     result line on every stage 320–420 px wide. */
   @container page (max-width: 599.98px) {
     .cmt:nth-child(4) { display: none; }
+    .cmts { gap: 4px; padding-top: 3px; padding-bottom: 3px; }
+    .cmt { line-height: 1.25; }
+  }
+  @container page (max-width: 355.98px) {
+    .cmts { font-size: 11px; }
+    .tips { font-size: 12.5px; gap: 6px; line-height: 1.38; }
+    .tips > li { padding-left: 27px; }
+    .lie { --lie-kku: 19px; gap: 2px 6px; margin-top: 3px; padding: 2px 9px 3px 7px; font-size: 11.5px; }
+    .lie .wax { font-size: 20px; }
   }
 
-  /* ---- The sponsor's fairy (autoplay, first eight seconds): she pops out of the account's
+  /* ---- The sponsor's fairy (autoplay, first nine seconds): she pops out of the account's
      sparkle and loops over the card shedding glitter: wings, wand, tutu, and a burglar's mask,
-     striped top and sack. Each comment that answers sends a gold key into the sack; she slips
-     away as the card turns over. Drawn above everything, clipped to the screen. ---- */
+     striped top and sack. Each comment that answers sends a gold key into the sack; she drops
+     under its weight and wobbles away as the card turns over. Drawn above everything, clipped
+     to the screen. ---- */
   .imp { position: fixed; inset: 0; z-index: 22; overflow: clip; pointer-events: none; }
   .fairy { position: absolute; left: 0; top: 0; width: 56px; aspect-ratio: 64 / 72; visibility: hidden; }
   .fairy.on { visibility: visible; }
-  .fairy-art { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 3px 4px rgba(70, 40, 130, .28)); }
+  .fairy-art { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 3px 4px rgba(70, 40, 130, .28)); transform-origin: 50% 92%; }
   .fairy .wing { transform-box: fill-box; animation: flap .13s ease-in-out infinite alternate; }
   .fairy .wing.l { transform-origin: 100% 60%; }
   .fairy .wing.r { transform-origin: 0% 60%; }
   .fairy.perched .wing { animation-duration: .42s; }
+  /* leaving with a full sack: frantic wings */
+  .fairy.heavy .wing { animation-duration: .07s; }
   @keyframes flap { to { scale: .45 1; } }
+  /* perched, she leans ±8° from side to side looking around, her eyes going the same way:
+     the head centre travels 10.4 px on a 358×396 stage (313.8 ↔ 324.2 px, measured with
+     getScreenCTM; ±7° gave 9 px) */
+  .fairy.perched .fairy-art { animation: lookabout 1.3s steps(1, end) infinite; }
   .fairy.perched .pupils { animation: shifty 1.3s steps(1, end) infinite; }
+  @keyframes lookabout { 0% { rotate: -8deg; } 50% { rotate: 8deg; } }
   @keyframes shifty { 0% { translate: -1.3px 0; } 50% { translate: 1.3px 0; } }
   .fairy .sack { transform-box: fill-box; transform-origin: 50% 8%; transition: scale .25s cubic-bezier(.3, 1.8, .5, 1); }
   .dust { position: absolute; left: 0; top: 0; width: 12px; height: 12px; color: var(--gold); }
@@ -645,7 +707,7 @@
 
         <section class="face back" aria-labelledby="bank-title" inert>
           <div class="bank-bar">
-            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.6v2.4"/></svg>
+            <svg class="lock" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/><path class="sh-c" d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path class="sh-o" d="M8 10.5V5.8a4 4 0 0 1 7.8-1.3"/><path d="M12 14.6v2.4"/></svg>
             <h2 id="bank-title"><span data-lang="en">Reset your password</span><span data-lang="ko">비밀번호 찾기</span></h2>
             <span class="help" aria-hidden="true">?</span>
           </div>
@@ -655,7 +717,7 @@
               <span class="steps" aria-hidden="true"><span class="step"></span><span class="step"></span><span class="step"></span></span>
             </p>
             <div class="field">
-              <p class="lbl"><span data-lang="en">Birth month</span><span data-lang="ko">생일(월)</span></p>
+              <p class="lbl"><span data-lang="en">Birth month</span><span data-lang="ko">태어난 달</span></p>
               <div class="input"><span class="val"></span><span class="caret"></span><span class="tick" aria-hidden="true">✓</span></div>
             </div>
             <div class="field">
@@ -667,8 +729,8 @@
               <div class="input"><span class="val"></span><span class="caret"></span><span class="tick" aria-hidden="true">✓</span></div>
             </div>
             <p class="match"><span class="tick" aria-hidden="true">✓</span>
-              <span data-lang="en">3 of 3 security questions match</span>
-              <span data-lang="ko">보안 질문 3개 중 3개 일치</span>
+              <span data-lang="en"><span class="nw">3 of 3 match ·</span> <span class="nw">Identity verified</span></span>
+              <span data-lang="ko"><span class="nw">3개 중 3개 일치 ·</span> <span class="nw">본인 확인 완료</span></span>
             </p>
           </div>
         </section>
@@ -693,14 +755,14 @@
 
     <ul class="cmts">
       <li class="cmt" data-lang="en"><span class="c-ava" style="--g: linear-gradient(135deg,#ff9fc9,#ffc77a)" aria-hidden="true">J</span><p class="c-text"><span class="who">@jess.daily</span> <mark class="hl m" data-k="0">Petal</mark> <mark class="hl p" data-k="1">Biscuit</mark> of <mark class="hl s" data-k="2">Maple Street</mark> 🍪 (March baby, my first dog was Biscuit lol)</p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
-      <li class="cmt" data-lang="en"><span class="c-ava" style="--g: linear-gradient(135deg,#7fc8ff,#8f7bff)" aria-hidden="true">M</span><p class="c-text"><span class="who">@mike_88</span> <mark class="hl m">Maple</mark> <mark class="hl p">Rufus</mark>, <mark class="hl s">Oak Avenue</mark>!!</p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
       <li class="cmt" data-lang="en"><span class="c-ava" style="--g: linear-gradient(135deg,#6fdcb8,#3fb3c9)" aria-hidden="true">C</span><p class="c-text"><span class="who">@carol.k</span> <mark class="hl m">Snowflake</mark> <mark class="hl p">Whiskers</mark> of <mark class="hl s">Elm Drive</mark> ❤️❤️ did it with my daughter</p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
-      <li class="cmt" data-lang="en"><span class="c-ava" style="--g: linear-gradient(135deg,#b9a2ff,#ff9ad0)" aria-hidden="true">D</span><p class="c-text"><span class="who">@devon.codes</span> <mark class="hl m">Sparkle</mark> <mark class="hl p">Pickles</mark> (Dec, the hamster)</p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
+      <li class="cmt" data-lang="en"><span class="c-ava" style="--g: linear-gradient(135deg,#b9a2ff,#ff9ad0)" aria-hidden="true">D</span><p class="c-text"><span class="who">@devon.codes</span> pretty sure these are security questions lol. anyway <mark class="hl m">Sparkle</mark> <mark class="hl p">Pickles</mark></p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
+      <li class="cmt" data-lang="en"><span class="c-ava" style="--g: linear-gradient(135deg,#7fc8ff,#8f7bff)" aria-hidden="true">M</span><p class="c-text"><span class="who">@mike_88</span> <mark class="hl m">Maple</mark> <mark class="hl p">Rufus</mark>, <mark class="hl s">Oak Avenue</mark>!!</p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
 
-      <li class="cmt" data-lang="ko"><span class="c-ava" style="--g: linear-gradient(135deg,#ff9fc9,#ffc77a)" aria-hidden="true">지</span><p class="c-text"><span class="who">@daily_jiwoo</span> 저는 <mark class="hl m" data-k="0">꽃잎</mark> <mark class="hl p" data-k="1">초코</mark>! <mark class="hl s" data-k="2">행복초</mark> 요정나라 출신이에요 ㅋㅋ 🍫</p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
-      <li class="cmt" data-lang="ko"><span class="c-ava" style="--g: linear-gradient(135deg,#7fc8ff,#8f7bff)" aria-hidden="true">민</span><p class="c-text"><span class="who">@minsu.88</span> <mark class="hl m">단풍</mark> <mark class="hl p">뭉치</mark>, <mark class="hl s">바다초</mark>!!</p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
+      <li class="cmt" data-lang="ko"><span class="c-ava" style="--g: linear-gradient(135deg,#ff9fc9,#ffc77a)" aria-hidden="true">지</span><p class="c-text"><span class="who">@daily_jiwoo</span> 저는 <mark class="hl m" data-k="0">꽃잎</mark> <mark class="hl p" data-k="1">초코</mark>! <mark class="hl s" data-k="2">행복초</mark> 요정나라 출신이에요 (3월생, 첫 강아지가 초코였어요 ㅋㅋ)</p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
       <li class="cmt" data-lang="ko"><span class="c-ava" style="--g: linear-gradient(135deg,#6fdcb8,#3fb3c9)" aria-hidden="true">유</span><p class="c-text"><span class="who">@yuna_mom</span> 딸이랑 같이 해 봤어요 ^^ <mark class="hl m">눈꽃</mark> <mark class="hl p">나비</mark>, <mark class="hl s">은하초</mark></p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
-      <li class="cmt" data-lang="ko"><span class="c-ava" style="--g: linear-gradient(135deg,#b9a2ff,#ff9ad0)" aria-hidden="true">현</span><p class="c-text"><span class="who">@hyun_dev</span> <mark class="hl m">반짝</mark> <mark class="hl p">콩이</mark> (12월생, 햄스터)</p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
+      <li class="cmt" data-lang="ko"><span class="c-ava" style="--g: linear-gradient(135deg,#b9a2ff,#ff9ad0)" aria-hidden="true">현</span><p class="c-text"><span class="who">@hyun_dev</span> 이거 보안 질문 같은데 ㅋㅋ 암튼 <mark class="hl m">반짝</mark> <mark class="hl p">콩이</mark></p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
+      <li class="cmt" data-lang="ko"><span class="c-ava" style="--g: linear-gradient(135deg,#7fc8ff,#8f7bff)" aria-hidden="true">민</span><p class="c-text"><span class="who">@minsu.88</span> <mark class="hl m">단풍</mark> <mark class="hl p">뭉치</mark>, <mark class="hl s">바다초</mark>!!</p><svg class="c-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15.4 3.5 9.3A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.5c0 6.1-8.5 11.2-8.5 11.2Z"/></svg></li>
     </ul>
   </article>
 
@@ -713,19 +775,15 @@
     <ol class="tips">
       <li data-lang="en"><span class="strong">Lie on security questions.</span>
         <span class="lie"><span>First pet:</span> <span class="wax" data-wax>Thursday Fridge</span></span></li>
-      <li data-lang="en">Save the lie in your password manager.</li>
-      <li data-lang="en">Turn on two-step verification.</li>
-      <li data-lang="en">NIST's own guidelines (<span class="nist">SP 800-63B</span>) say not to ask <span class="quote">'What was the name of your first pet?'</span> at all.</li>
+      <li data-lang="en">Save the lie in your password manager, and turn on two-step verification.</li>
       <li data-lang="en">For quizzes like this: <span class="quote">'haha cute'</span> is enough.</li>
 
       <li data-lang="ko"><span class="strong">보안 질문에는 거짓말로 답하세요.</span>
-        <span class="lie"><span>처음 키운 반려동물:</span> <font-kku font="crayon" size="21px" seed="fairy" jamo-seeds>목요일의 냉장고</font-kku></span></li>
-      <li data-lang="ko">그 거짓말은 비밀번호 관리자에 적어 두세요.</li>
-      <li data-lang="ko">2단계 인증을 켜세요.</li>
-      <li data-lang="ko">미국 표준 지침(<span class="nist">NIST SP 800-63B</span>)은 '첫 반려동물 이름' 같은 질문을 아예 쓰지 말라고 합니다.</li>
+        <span class="lie"><span>처음 키운 반려동물:</span> <font-kku font="crayon" size="var(--lie-kku, 21px)" seed="fairy" jamo-seeds>목요일의 냉장고</font-kku></span></li>
+      <li data-lang="ko">그 거짓말은 비밀번호 관리자에 적어 두고, 2단계 인증을 켜세요.</li>
       <li data-lang="ko">이런 테스트에는 <span class="quote">'재밌네요 ㅋㅋ'</span>까지만.</li>
     </ol>
-    <p class="foot" data-lang="ko">참고: 한국은 결혼해도 성이 그대로라 영어권 단골 질문 '어머니의 결혼 전 성은?'이 성립하지 않아요.</p>
+    <p class="foot" data-lang="ko">참고: 영어권 단골 질문 '어머니의 결혼 전 성은?'은 한국에선 그냥 '어머니 성은?'이라 비밀도 아니에요.</p>
   </aside>
 
   <svg class="wires" aria-hidden="true"></svg>
@@ -832,7 +890,7 @@
       flip: '카드 뒤집기',
       bubble: '잠깐! 방금 생일 달을 알려 주셨네요 🙂',
       note: '이 페이지는 아무것도 저장하거나 보내지 않아요. 진짜 테스트는 저장합니다.',
-      safe: '당신의 안전한 요정 이름:',
+      safe: '대신 드리는 안전한 요정 이름:',
       values: ['3월', '초코', '행복초등학교'],
       decode: '3월',
     },
@@ -949,6 +1007,7 @@
     steps.forEach((s) => s.classList.remove('on'));
     match.classList.remove('on');
     bait.classList.remove('on');
+    lockShut();
   }
   function fillField(k) {
     vals[k].textContent = L.values[k];
@@ -1013,8 +1072,17 @@
     const len = guide.getTotalLength();
     const n = Math.max(6, Math.round(len / 8));
     const dots = [];
+    // Beside the card (layout 3) the line drops from the word through the lines of the comment
+    // under it (two or three when it wraps): no dots over those words, it comes out underneath.
+    let skip = null;
+    if (layout() === 3) {
+      const a = marks[k].getClientRects()[0] || marks[k].getBoundingClientRect();
+      const own = marks[k].closest('.cmt').getBoundingClientRect();
+      skip = { top: a.bottom + 1, bottom: own.bottom - 1, left: own.left, right: own.right };
+    }
     for (let i = 0; i <= n; i++) {
       const p = guide.getPointAtLength((len * i) / n);
+      if (skip && i < n && p.y > skip.top && p.y < skip.bottom && p.x > skip.left && p.x < skip.right) continue;
       const c = document.createElementNS(NS, 'circle');
       c.setAttribute('cx', p.x.toFixed(1));
       c.setAttribute('cy', p.y.toFixed(1));
@@ -1089,7 +1157,11 @@
     advice.classList.add('on');
     stage.classList.add('advising');
     if (animate && !still) {
-      advice.animate([{ opacity: 0, transform: 'translateY(40px)' }, { opacity: 1, transform: 'none' }], { duration: 650, delay: layout() === 2 ? 250 : 0, easing: 'cubic-bezier(.2, .8, .2, 1)', fill: 'backwards' });
+      const delay = layout() === 2 ? 250 : 0;
+      advice.animate([{ opacity: 0, transform: 'translateY(40px)' }, { opacity: 1, transform: 'none' }], { duration: 650, delay, easing: 'cubic-bezier(.2, .8, .2, 1)', fill: 'backwards' });
+      // the made-up answer is crayoned in, left to right, once the card is up
+      const lie = $('.lie .wax, .lie font-kku');
+      if (lie) lie.animate([{ clipPath: 'inset(-30% 100% -30% -5%)' }, { clipPath: 'inset(-30% -5% -30% -5%)' }], { duration: 900, delay: delay + 650, easing: 'steps(12, end)', fill: 'backwards' });
     }
   }
   function hideAdvice() {
@@ -1101,7 +1173,7 @@
   const WORDS = TTY.t({
     en: { first: ['Thursday', 'Fridge', 'Umbrella', 'Sideways', 'Teaspoon', 'Radiator', 'Gravel', "Tuesday's", 'Lampshade', 'Parsnip'], last: ['Thursday', 'Fridge', 'Umbrella', 'Sideways', 'Teaspoon', 'Radiator', 'Gravel', 'Lampshade', 'Parsnip'] },
     // Korean names read as "○○의 ○○": the first word ends in 의.
-    ko: { first: ['목요일의', '화요일의', '냉장고의', '우산의', '옆걸음의', '찻숟가락의', '라디에이터의', '자갈의', '전등갓의', '무말랭이의'], last: ['냉장고', '우산', '옆걸음', '찻숟가락', '라디에이터', '자갈', '전등갓', '무말랭이'] },
+    ko: { first: ['목요일의', '화요일의', '냉장고의', '우산의', '옆걸음의', '효자손의', '고무장갑의', '자갈의', '전기장판의', '무말랭이의'], last: ['냉장고', '우산', '옆걸음', '효자손', '고무장갑', '자갈', '전기장판', '무말랭이'] },
   });
   const pickOne = (list) => list[Math.floor(Math.random() * list.length)];
   let lastName = TTY.t({ en: 'Thursday Fridge', ko: '목요일의 냉장고' });
@@ -1165,20 +1237,27 @@
     cta.setAttribute('aria-expanded', 'true');
     if (!still) picker.animate([{ opacity: 0, transform: 'translateY(6%)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.2, .8, .2, 1)' });
   }
+  // Closing keeps the visitor's warning and safe name: they are there again when the panel is
+  // reopened, until the next round starts (reset).
   function closePicker(focusBack) {
     if (picker.hidden) return;
     picker.hidden = true;
-    picker.classList.remove('answered');
-    answer.replaceChildren();
     cta.setAttribute('aria-expanded', 'false');
     if (focusBack) cta.focus();
   }
+  function clearAnswer() {
+    picker.classList.remove('answered');
+    answer.replaceChildren();
+  }
 
-  /* ---- The sponsor's fairy (autoplay, 0.25–8.4 s) ----
-     0.25 s she pops out of the account's sparkle and loops over the card (1.1 s, glitter from
-     the wand), then stands on the right end of the "Show my fairy name" bar. Each comment's
-     highlights (2.95, 4.35, 5.75, 7.15 s) send a gold key into her sack, which grows. 7.8 s she
-     flies off the top right as the card turns over. */
+  /* ---- The sponsor's fairy (autoplay, 0.25–8.96 s) ----
+     0.25 s she pops out of the account's sparkle and loops over the card (1.15 s, glitter from
+     the wand), then stands on the right end of the "Show my fairy name" bar, leaning from side
+     to side. Each comment's highlights (2.75, 3.95, 5.15, 6.35 s) send a gold key into her sack
+     (in at 3.7, 4.9, 6.1, 7.3 s), which grows a quarter each time. 7.8 s she leaves with it:
+     drops under the weight (0.26 s), then wobbles off the top right with frantic wings (0.9 s,
+     gone at 8.96 s) as the card turns over. 13.9 s one more key comes back from there and opens
+     the bank's padlock. */
   const imp = $('.imp');
   const fairy = $('.fairy');
   const sack = $('.fairy .sack');
@@ -1210,8 +1289,9 @@
     const gone = () => d.remove();
     d.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: `translateY(${size * .8}px) scale(.2) rotate(90deg)` }], { duration: 650, easing: 'ease-out' }).finished.then(gone, gone);
   }
-  // Moves the fairy along a cubic curve, shedding glitter from the wand tip.
-  function flight(p0, p1, p2, p3, w, ms, grow, done) {
+  // Moves the fairy along a cubic curve, shedding glitter from the wand tip. `grow` starts her
+  // small (out of the sparkle); `wobble` rocks her as she goes.
+  function flight(p0, p1, p2, p3, w, ms, { grow = false, wobble = false } = {}, done) {
     const run = ++fairyRun;
     const h = w * 72 / 64;
     const t0 = performance.now();
@@ -1225,6 +1305,7 @@
       const y = u * u * u * p0.y + 3 * u * u * e * p1.y + 3 * u * e * e * p2.y + e * e * e * p3.y;
       putFairy(x, y, w);
       fairy.style.scale = grow ? String(.2 + .8 * Math.min(1, k * 3.2)) : '';
+      fairy.style.rotate = wobble ? `${(Math.sin(k * Math.PI * 7) * 11).toFixed(1)}deg` : '';
       if (now - last > 50 && k < .96) {
         last = now;
         dust(x + w * 10 / 64 + (Math.random() - .5) * w * .2, y + h * 16 / 72 + (Math.random() - .5) * w * .2, Math.max(8, w * (.16 + Math.random() * .12)));
@@ -1241,10 +1322,11 @@
     const end = perchAt(w);
     sackKeys = 0;
     sack.style.scale = '';
-    fairy.classList.remove('perched');
+    fairy.style.rotate = '';
+    fairy.classList.remove('perched', 'heavy');
     fairy.classList.add('on');
     const p0 = { x: a.left + a.width / 2 - w / 2, y: a.top + a.height / 2 - h / 2 };
-    flight(p0, { x: c.left + c.width * .7 - w / 2, y: c.top - h * .6 }, { x: c.right - w * .1, y: c.top + c.height * .55 }, end, w, 1150, true, () => {
+    flight(p0, { x: c.left + c.width * .7 - w / 2, y: c.top - h * .6 }, { x: c.right - w * .1, y: c.top + c.height * .55 }, end, w, 1150, { grow: true }, () => {
       fairy.classList.add('perched');
       fairy.animate([{ transform: 'translateY(-10%)' }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.3, 1.6, .5, 1)' });
     });
@@ -1276,21 +1358,62 @@
       gone();
       if (!fairy.classList.contains('perched')) return;
       sackKeys++;
-      sack.style.scale = String(1 + sackKeys * .1);
+      sack.style.scale = String(1 + sackKeys * .25);
       for (let n = 0; n < 4; n++) dust(sx + dx + (Math.random() - .5) * kw * 1.4, sy + dy - Math.random() * kw, kw * .5);
       fairy.animate([{ transform: 'none' }, { transform: 'translateY(-7%) rotate(-4deg)' }, { transform: 'none' }], { duration: 300, easing: 'ease-out' });
     }, gone);
   }
+  // Off with the sack: it is heavy, so she first drops by a third of her height (0.26 s, at
+  // least 12 px), then wobbles away to the top right (0.9 s).
   function fairyOut() {
     if (!fairy.classList.contains('on')) return;
     fairy.classList.remove('perched');
+    fairy.classList.add('heavy');
     const f = rect(fairy);
     const p0 = { x: f.left, y: f.top };
-    flight(p0, { x: p0.x - f.width * .5, y: p0.y - f.height * .8 }, { x: innerWidth * .8, y: -f.height * .2 }, { x: innerWidth + f.width * .4, y: -f.height * 1.4 }, f.width, 650, false, () => fairy.classList.remove('on'));
+    const d = Math.max(12, f.height * .3);
+    const q = { x: p0.x, y: p0.y + d };
+    flight(p0, p0, q, q, f.width, 260, { wobble: true }, () => {
+      flight(q, { x: q.x - f.width * .3, y: q.y }, { x: innerWidth * .8, y: -f.height * .2 }, { x: innerWidth + f.width * .4, y: -f.height * 1.4 }, f.width, 900, { wobble: true }, () => fairy.classList.remove('on', 'heavy'));
+    });
   }
+  // The tag: one key comes back from where she flew off and opens the padlock on the bank bar.
+  const lock = $('.bank-bar .lock');
+  function unlock(animate) {
+    if (lock.classList.contains('open')) return;
+    const open = () => {
+      lock.classList.add('open');
+      if (!animate || still) return;
+      const r = rect(lock);
+      // the padlock is 8 px on the smallest card: it pops up to about 26 px for a moment
+      const pop = Math.max(1.9, 26 / r.width).toFixed(2);
+      lock.animate([{ transform: 'none' }, { transform: `scale(${pop}) rotate(-12deg)`, offset: .35 }, { transform: `scale(${pop}) rotate(8deg)`, offset: .7 }, { transform: 'none' }], { duration: 760, easing: 'cubic-bezier(.3, 1.4, .5, 1)' });
+      for (let n = 0; n < 6; n++) dust(r.left + r.width / 2 + (Math.random() - .5) * r.width * 2.4, r.top + r.height / 2 - Math.random() * r.height * 1.6, Math.max(9, r.width * .9));
+    };
+    if (!animate || still) return open();
+    const r = rect(lock);
+    const kw = Math.round(Math.max(22, rect($('.cardwrap')).width * .09));
+    const ex = r.left + r.width / 2, ey = r.top + r.height * .7;
+    const key = document.createElement('span');
+    key.className = 'key';
+    key.innerHTML = KEY_ART;
+    Object.assign(key.style, { width: kw + 'px', height: kw + 'px', left: ex - kw / 2 + 'px', top: ey - kw / 2 + 'px' });
+    imp.append(key);
+    const dx = innerWidth + kw - ex, dy = -kw - ey;
+    const end = Math.max(.35, r.width * 1.3 / kw);
+    const gone = () => key.remove();
+    key.animate([
+      { transform: `translate(${dx}px, ${dy}px) scale(1.1) rotate(-200deg)` },
+      { transform: `translate(${dx * .25}px, ${Math.min(dy * .25, -kw * 1.4)}px) scale(1) rotate(60deg)`, offset: .7 },
+      { transform: `translate(0, 0) scale(${end}) rotate(90deg)`, offset: .85 },
+      { transform: `translate(0, 0) scale(${end}) rotate(0deg)` },
+    ], { duration: 760, easing: 'ease-in-out' }).finished.then(() => { gone(); open(); }, gone);
+  }
+  function lockShut() { lock.classList.remove('open'); }
   function fairyAway() {
     fairyRun++;
-    fairy.classList.remove('on', 'perched');
+    fairy.style.rotate = '';
+    fairy.classList.remove('on', 'perched', 'heavy');
     // script animations only (the wings' CSS flapping must keep running for the next round)
     imp.getAnimations({ subtree: true }).forEach((a) => { if (!(a instanceof CSSAnimation)) a.cancel(); });
     imp.querySelectorAll('.key, .dust').forEach((n) => n.remove());
@@ -1308,6 +1431,7 @@
     stage.classList.add('snap');
     clearWires(false);
     closePicker(false);
+    clearAnswer();
     hideAdvice();
     flipTo(false);
     clearBack();
@@ -1324,18 +1448,22 @@
     setCounts(LIKES[1], SHARES[1]);
     comments.forEach((li, i) => { if (!li.classList.contains('lit')) showComment(i, false); });
   }
-  // The punchline at rest: back up, three fields filled, bait band and advice.
+  // The punchline at rest: back up, three fields filled, bait band, padlock open and advice.
   function finalScene() {
     settleFeed();
     flipTo(true);
     fillAll();
     showMatch(false);
+    unlock(false);
     showAdvice(false);
     if (layout() === 2) requestAnimationFrame(() => [0, 1, 2].forEach((k) => buildWire(k)));
   }
 
-  // The 22-second loop. Times in ms after the page is shown.
-  const T = { fairy: 250, likes: 1500, comments: [2500, 3900, 5300, 6700], keys: 450, fairyOut: 7800, flip: 8000, fields: [8950, 10000, 11000], match: 13000, unwire: 14600, advice: 15000, outro: 21400, loop: 22000 };
+  // The 22-second loop. Times in ms after the page is shown. The last comment's key is in the
+  // sack at 7.3 s, before the fairy leaves at 7.8. The advice waits until 16.5 s where it covers
+  // the card (layout 1, a sheet over it), so the result line and the bait band stay up 3.5 s;
+  // beside the card (layouts 2, 3) it comes at 15.5.
+  const T = { fairy: 250, likes: 1500, comments: [2300, 3500, 4700, 5900], keys: 450, fairyOut: 7800, flip: 8000, fields: [8950, 10000, 11000], match: 13000, unlock: 13900, unwire: 14600, advice: 15500, adviceOver: 16500, outro: 21400, loop: 22000 };
   const AUTO = { draw: 420, fly: 520, type: 600, char: 110 };
   const QUICK = { draw: 300, fly: 380, type: 420, char: 90 };
   function play() {
@@ -1352,8 +1480,10 @@
     later(T.flip, () => flipTo(true));
     T.fields.forEach((t, k) => later(t, () => feed(k, AUTO, live)));
     later(T.match, () => showMatch(true));
+    later(T.unlock, () => unlock(true));
     later(T.unwire, () => clearWires(true));
-    later(T.advice, () => showAdvice(true));
+    later(T.advice, () => { if (layout() !== 1) showAdvice(true); });
+    later(T.adviceOver, () => showAdvice(true));
     later(T.outro, () => stage.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' }));
     later(T.loop, play);
   }
@@ -1364,7 +1494,7 @@
     const live = () => mine === seq;
     clearBack();
     clearWires(false);
-    if (still) { fillAll(); showMatch(false); showAdvice(false); if (layout() === 2) [0, 1, 2].forEach((k) => buildWire(k)); return; }
+    if (still) { fillAll(); showMatch(false); unlock(false); showAdvice(false); if (layout() === 2) [0, 1, 2].forEach((k) => buildWire(k)); return; }
     await wait(900); if (!live()) return;
     for (let k = 0; k < 3; k++) {
       feed(k, QUICK, live);
@@ -1372,7 +1502,9 @@
     }
     await wait(500); if (!live()) return;
     showMatch(true);
-    await wait(layout() === 2 ? 1500 : 2600); if (!live()) return;
+    await wait(900); if (!live()) return;
+    unlock(true);
+    await wait(layout() === 2 ? 900 : 2000); if (!live()) return;
     clearWires(true);
     await wait(300); if (!live()) return;
     showAdvice(true);
@@ -1388,13 +1520,14 @@
     stage.getAnimations().forEach((a) => a.cancel());
     fairyAway();
     settleFeed();
-    // A half-filled form stops making sense when the lines stop: finish it.
+    // A half-filled form stops making sense when the lines stop: finish it (and its padlock).
     if (onBack && !match.classList.contains('on')) {
       seq++;
       clearWires(false);
       fillAll();
       showMatch(false);
     }
+    if (onBack && match.classList.contains('on')) unlock(false);
   }
   // Every touch or key counts as playing (the kit also asks the home page to wait).
   addEventListener('pointerdown', takeOver, true);
@@ -1417,10 +1550,12 @@
       reveal();
     }
   });
+  // The bar opens the panel and, pressed again, closes it (on a small card it is the only close).
   cta.addEventListener('click', () => {
+    if (!onBack && !picker.hidden) { closePicker(false); return; }
     if (onBack) { seq++; clearWires(false); flipTo(false); }
     if (layout() !== 2) hideAdvice();
-    if (picker.hidden) openPicker();
+    openPicker();
     requestAnimationFrame(() => $('button', monthRow).focus({ preventScroll: true }));
   });
   $('.pk-x').addEventListener('click', () => closePicker(true));

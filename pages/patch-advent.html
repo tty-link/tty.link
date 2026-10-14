@@ -45,7 +45,7 @@
   button { font: inherit; color: inherit; }
   :focus-visible { outline: 3px solid var(--warm-1); outline-offset: 3px; }
 
-  .snow { position: absolute; inset: 0; pointer-events: none; }
+  .snow { position: absolute; inset: 0; overflow: clip; pointer-events: none; } /* drifting flakes must not widen the page on phones */
   .snow i { position: absolute; top: -2%; width: var(--s); height: var(--s); border-radius: 50%; background: rgba(255,255,255,.75); animation: fall var(--t) linear var(--d) infinite; }
   @keyframes fall { to { transform: translate(var(--x), 106cqh); } }
 
@@ -91,7 +91,7 @@
   .lights i { position: absolute; width: 1.9cqi; height: 2.4cqi; border-radius: 50% 50% 45% 45%; translate: -50% -20%; box-shadow: 0 0 1.6cqi currentColor; background: currentColor; animation: twinkle 1.8s ease-in-out infinite alternate; }
   @keyframes twinkle { from { opacity: .45; } to { opacity: 1; } }
 
-  .bays { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1.6cqi; perspective: 600px; }
+  .bays { position: relative; display: grid; grid-template-columns: repeat(6, 1fr); gap: 1.6cqi; perspective: 600px; }
   .bay {
     position: relative;
     aspect-ratio: 1.45;
@@ -100,7 +100,17 @@
     box-shadow: inset 0 .5cqi 1cqi rgba(0,0,0,.6);
   }
   .inside { position: absolute; inset: 0; display: grid; place-items: center; }
-  .inside svg { width: 62%; height: 62%; }
+  .inside svg { width: 90%; height: 90%; overflow: visible; }
+  .inside svg.power { width: 62%; height: 62%; }
+  /* Behind each door a cracked drive; the plaster drops onto the crack and sticks. */
+  .plaster { transform-box: view-box; transform-origin: 30px 24px; }
+  .bay.open .plaster { animation: slap .42s cubic-bezier(.3, 1.3, .5, 1) .12s both; }
+  @keyframes slap {
+    0% { transform: translateY(-26px) rotate(-8deg) scale(1.12); opacity: 0; }
+    55% { transform: translateY(1px) scale(1.06, .7); opacity: 1; }
+    78% { transform: scale(.97, 1.07); }
+    100% { transform: none; }
+  }
   .door {
     position: absolute;
     inset: 0;
@@ -124,15 +134,42 @@
   @keyframes blink { 50% { opacity: .25; } }
   .waiting .snow i, .waiting .lights i, .waiting .door .led, .waiting .restart .now { animation-play-state: paused; }
   .bay.open .door { transform: rotateY(-108deg); opacity: .0; pointer-events: none; }
-  .bay.open .inside { animation: pop .45s cubic-bezier(.3, 1.5, .5, 1) both; }
+  .bay.last.open .inside { animation: pop .45s cubic-bezier(.3, 1.5, .5, 1) both; }
   @keyframes pop { from { transform: scale(.4); } }
   .bay.last .door { background: linear-gradient(160deg, #ffe8a3, #e8b34a); }
   .bay.last .door .led { background: var(--warm-2); box-shadow: 0 0 1.4cqi var(--warm-2); }
   .bay.green .inside svg .glow { fill: var(--led); }
-  /* After the restart, the power bay asks again. */
-  .bay.again .inside svg path { stroke: var(--amber); }
-  .bay.again .inside svg { animation: nag 1s steps(2, end) infinite; }
-  @keyframes nag { 50% { opacity: .3; } }
+
+  /* After the restart, one more door: taped onto the corner of the 24-door calendar, its light
+     amber again. It sits over bay 24 and does not move the grid. */
+  .extra {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    width: calc((100% - (var(--cols, 6) - 1) * 1.6cqi) / var(--cols, 6));
+    aspect-ratio: 1.45;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    padding: 1.2cqi 1.4cqi;
+    border: 0;
+    border-radius: 1.2cqi;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 .4cqi, transparent .4cqi 1.2cqi) 0 0 / 100% 52% no-repeat,
+      linear-gradient(160deg, #ffe8a3, #e8b34a);
+    color: var(--ink);
+    box-shadow: 0 1.2cqi 2.6cqi rgba(0,0,0,.55);
+    translate: 34% 30%;
+    rotate: 8deg;
+    cursor: pointer;
+  }
+  .extra[hidden] { display: none; }
+  .extra b { font-family: 'Lexend', sans-serif; font-size: max(11px, 4.2cqi); font-weight: 700; line-height: 1; text-align: left; }
+  .extra .led { width: 2.1cqi; height: 2.1cqi; border-radius: 50%; background: #ff7413; box-shadow: 0 0 0 .4cqi #7a3a06, 0 0 2cqi #ff8a1a; animation: blink 1s steps(2, end) infinite; } /* deeper than the bays' amber: it sits on gold */
+  .extra .tape { position: absolute; left: -18%; top: -40%; width: 54%; overflow: visible; pointer-events: none; }
+  .rack.dark .extra { filter: brightness(.45); }
+  .rack.dark .extra .led { animation: none; opacity: .15; }
 
   .rack.dark .bay { filter: brightness(.45); transition: filter .4s; }
   /* The printer goes quiet during the restart too; its old slips are cleared after it anyway, and
@@ -184,7 +221,11 @@
   .restart.on { opacity: 1; pointer-events: auto; }
   .restart h2 { font-family: 'Lilita One', 'Lexend', sans-serif; font-weight: 400; font-size: 9cqi; line-height: 1.05; }
   .restart h2 > font-kku { color: var(--ink); }
+  /* The second time round, the title counts: (2/∞). */
+  .restart h2 .round { margin-left: .25em; font-family: 'Lexend', sans-serif; font-weight: 700; font-size: .62em; color: #a8681a; white-space: nowrap; }
   .restart p { margin-top: 2cqi; font-size: max(11px, 4.2cqi); color: #5a6274; }
+  .restart .why { text-wrap: pretty; }
+  .restart .why span { display: inline-block; } /* on two lines, break between the sentences */
   .restart .now {
     display: grid;
     place-items: center;
@@ -208,7 +249,11 @@
   .restart .total:empty { display: none; }
   /* Five snoozes in, the policy takes over: a final countdown that can't be snoozed. */
   .restart.forced .why { color: var(--ink); font-weight: 600; }
-  .restart .later:disabled { opacity: .32; text-decoration-style: dotted; cursor: not-allowed; }
+  /* Faded but still pressable (aria-disabled, not disabled): pressing it gets a shake and the
+     line every managed PC has somewhere in its settings. */
+  .restart .later[aria-disabled="true"] { opacity: .32; text-decoration-style: dotted; cursor: not-allowed; }
+  .restart .managed { display: none; margin-top: 1cqi; font-size: max(11px, 3.3cqi); color: #7d8495; }
+  .restart .managed.on { display: block; }
   .restart .deadline { display: none; align-items: center; gap: 2.6cqi; margin-top: 3.4cqi; }
   .restart.forced .deadline { display: flex; }
   .deadline .track { flex: 1; height: 2cqi; border-radius: 99px; background: #f3dcd8; overflow: hidden; }
@@ -239,7 +284,10 @@
   .ring circle { fill: none; stroke-width: 6; }
   .progress { position: absolute; left: 50%; top: calc(50% + clamp(60px, 14cqmin, 110px) / 2 + 1.6cqmin); translate: -50% 0; text-align: center; white-space: nowrap; color: var(--text); font-size: clamp(12px, 2.2cqmin, 17px); opacity: 0; pointer-events: none; }
   .progress b { display: block; font-weight: 600; }
-  .progress span { display: block; margin-top: .3em; font-size: .85em; color: #b8c4dc; }
+  .progress span { display: block; margin-top: .3em; color: #c9d3e8; } /* carries the joke: as big as the line above */
+  /* The answer comes in under the warning, which stays up for the whole ring. */
+  .progress .still { color: #fff3cf; opacity: 0; transition: opacity .25s; }
+  .progress .still.on { opacity: 1; }
 
   .title h1 > font-kku { color: #fff3cf; }
 
@@ -256,7 +304,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .snow i, .lights i, .door .led, .restart .now, .bay.again .inside svg { animation: none; }
+    .snow i, .lights i, .door .led, .restart .now, .extra .led, .bay.open .plaster { animation: none; }
     .door { transition: none; }
   }
 </style>
@@ -270,8 +318,8 @@
       <span data-lang="ko"><font-kku font="geumbak" size="clamp(28px, 7cqmin, 60px)">패치 달력</font-kku></span>
     </h1>
     <p>
-      <span data-lang="en">One door a day. One fix behind each.</span>
-      <span data-lang="ko">하루에 문 하나, 문마다 패치 하나.</span>
+      <span data-lang="en">Counting down to the last patch.</span>
+      <span data-lang="ko">마지막 패치까지 카운트다운.</span>
     </p>
     <p class="hint" id="door-hint">
       <span data-lang="en">Tap a door to open it. Save 24 for last.</span>
@@ -285,7 +333,9 @@
     </div>
     <div class="ear l"><i></i><i></i><i></i></div>
     <div class="ear r"><i></i><i></i><i></i></div>
-    <div class="bays" role="group" aria-describedby="door-hint"></div>
+    <div class="bays" role="group" aria-describedby="door-hint">
+      <button class="extra" type="button" hidden><b>25</b><i class="led"></i><svg class="tape" viewBox="0 0 40 40" aria-hidden="true"><g transform="rotate(38 20 20)"><rect x="1" y="15" width="38" height="10" rx="5" fill="#f2c9a0"/><rect x="15" y="15" width="10" height="10" fill="#e7b386"/></g><g transform="rotate(-38 20 20)"><rect x="1" y="15" width="38" height="10" rx="5" fill="#f5d2ad"/><rect x="15" y="15" width="10" height="10" fill="#e7b386"/><circle cx="18" cy="18" r=".9" fill="#c98f5f"/><circle cx="22" cy="18" r=".9" fill="#c98f5f"/><circle cx="18" cy="22" r=".9" fill="#c98f5f"/><circle cx="22" cy="22" r=".9" fill="#c98f5f"/></g></svg></button>
+    </div>
   </div>
 
   <div class="printer">
@@ -300,13 +350,14 @@
   <div class="deadline"><span class="track"><i></i></span><b></b></div>
   <button class="now" type="button"></button>
   <button class="later" type="button"></button>
+  <p class="managed" aria-live="polite"></p>
   <p class="total"></p>
 </section>
 <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
   <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,.15)"/>
   <circle class="arc" cx="50" cy="50" r="42" stroke="#38d996" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 50 50)"/>
 </svg>
-<p class="progress" aria-hidden="true"><b></b><span></span></p>
+<p class="progress" aria-hidden="true"><b></b><span class="unplug"></span><span class="still"></span></p>
 <p class="done"></p>
 
 <script>
@@ -365,26 +416,31 @@
       required: 'Restart required.',
       restartTitle: 'Restart required.',
       restartWhy: '23 patches are waiting for one small act of courage.',
+      restartAgainWhy: 'The last restart needs a restart. One more small act of courage.',
       now: 'Restart now',
       later: 'Remind me in 10 minutes',
       snoozed: ['It has been 10 minutes.', 'It has been 10 more minutes.'],
       total: (t) => 'Snoozed so far: ' + t,
       forced: 'Your organization will restart this device in 5 minutes.',
+      managed: '*Some of these settings are managed by your organization.',
       units: { d: 'd', h: 'h', m: 'min' },
       working: 'Working on updates',
       unplug: "Don't unplug the rack.",
-      done: ['All 24 patches applied.', 'Uptime: 0 days.'],
+      still: "Still 99%. Still don't.",
+      done: ['All 23 patches applied.', 'Uptime: 0 days.'],
+      doneAgain: ['Restart done. Again.', 'Uptime: 0 days.'],
+      door: (n) => `Door ${n}`,
     },
     ko: {
       pool: [
-        '업데이트: 모두의 프린터 드라이버. 또.',
+        '업데이트: 전 직원 프린터 드라이버. 또.',
         "삭제: 너무 많은 걸 기억하던 '로그인 유지' 체크박스",
         "변경: 'Spring2026!'을 'Summer2026!'로",
         '차단: 커피 머신의 22번 포트',
-        '수정: 쿠키 동의를 두 번 묻던 쿠키 배너',
+        '삭제: 인터넷 뱅킹이 깔아 둔 보안 프로그램 일곱 개',
         "정리: 인턴의 '임시' 관리자 계정 (2019년부터 임시)",
-        "폐기: '첫 반려동물 이름' 보안 질문",
-        '갱신: 일요일 새벽 3시에 만료되던 인증서',
+        "폐기: '나의 보물 1호는?' 보안 질문",
+        '갱신: 일요일 새벽 3시에 만료돼 버린 인증서',
         '비활성화: 경비 정산 엑셀의 매크로',
         '이동: 원본과 같은 디스크에 있던 백업',
         '추가: 2단계 인증. 같은 폰 말고요.',
@@ -396,10 +452,10 @@
         '기록: 전부. 읽은 사람: 아직 없음.',
         "암호화: 노트북. 이름표: '별거 없음'",
         '삭제: 아무도 설치한 적 없는 툴바',
-        '초기화: 공유기. 뽑았다가 다시 꽂아서.',
+        '재부팅: 공유기. 뽑았다가 다시 꽂아서.',
         '적용: 최소 권한 원칙. 예상: 원성.',
         '개정: 침해 대응 계획서. 이제 2쪽도 있음.',
-        '비활성화: SMBv1. 누가 소리 지르나 기다리는 중.',
+        '비활성화: SMBv1. 어느 부서에서 전화 오나 기다리는 중.',
         "닫음: '임시'로 열어 둔 방화벽 규칙 any → any",
         '삭제: 운영 서버의 /test.php. 그리고 /test2.php.',
         '업데이트: log4j. 네, 아직도요.',
@@ -415,26 +471,41 @@
       backups: '백업: 백업의 백업',
       required: '재시작이 필요합니다.',
       restartTitle: '재시작이 필요합니다',
-      restartWhy: '패치 23개가 작은 용기 하나를 기다리고 있어요.',
+      restartWhy: '패치 23개가 기다리고 있어요. 딱 한 번만 용기 내 주세요.',
+      restartAgainWhy: '방금 한 재시작에 재시작이 필요해요. 한 번만 더 용기 내 주세요.',
       now: '지금 재시작',
       later: '10분 뒤에 다시 알림',
       snoozed: ['10분 지났습니다.', '또 10분 지났습니다.'],
       total: (t) => '지금까지 미룬 시간: ' + t,
       forced: '관리자 정책에 따라 5분 뒤 재시작됩니다.',
+      managed: '*일부 설정은 조직에서 관리합니다.',
       units: { d: '일', h: '시간', m: '분' },
       working: '업데이트 작업 중',
       unplug: '랙 전원을 뽑지 마세요.',
-      done: ['패치 24개 적용 완료.', '가동 시간 0일.'],
+      still: '아직 99%예요. 그래도 뽑지 마세요.',
+      done: ['패치 23개 적용 완료.', '가동 시간 0일.'],
+      doneAgain: ['재시작 완료. 또.', '가동 시간 0일.'],
+      door: (n) => `${n}번 문`,
     },
   });
 
-  // Behind the doors: 22 notes drawn from the pool each round, then the backups, then the
-  // one everyone knows. A 25th slip prints after the restart.
+  // Behind the doors: 22 notes, then the backups, then the one everyone knows. A 25th slip
+  // prints after the restart. Only doors 1-4 open slowly enough to read, so they get strong
+  // notes: in the first round always the same four (the port-22 coffee machine and the
+  // Spring-to-Summer password are the ones the explanation quotes), from the second round on
+  // those two plus two from STRONG, shuffled. The fast doors 5-22 draw from the rest.
+  const FIRST = TTY.t({ en: [3, 2, 32, 25], ko: [3, 2, 4, 25] });
+  const STRONG = TTY.t({ en: [5, 25, 32, 16, 29, 14, 17], ko: [4, 5, 6, 25, 32, 16, 29, 14, 17] });
+  const mix = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((x) => x[1]);
   let notes = [];
+  let deals = 0;
   const shuffleNotes = () => {
-    notes = [...T.pool].sort(() => Math.random() - .5).slice(0, 22).concat(T.backups, T.required, T.required);
+    const lead = deals++ ? mix([3, 2, ...mix(STRONG).slice(0, 2)]) : FIRST;
+    const rest = mix(T.pool.map((_, i) => i).filter((i) => !lead.includes(i))).slice(0, 22 - lead.length);
+    notes = lead.concat(rest).map((i) => T.pool[i]).concat(T.backups, T.required, T.required);
   };
   shuffleNotes();
+  const noteAt = (n) => notes[n] || T.required; // #26, #27 … after more restarts
 
   /* ---- Snow and lights ---- */
   const snow = $('.snow');
@@ -463,8 +534,16 @@
   }
 
   /* ---- Bays ---- */
-  const PATCH = '<svg viewBox="0 0 60 40" aria-hidden="true"><g transform="rotate(-18 30 20)"><rect x="4" y="12" width="52" height="16" rx="8" fill="#f2c9a0"/><rect x="21" y="12" width="18" height="16" fill="#e7b386"/><circle cx="26" cy="17" r="1.3" fill="#c98f5f"/><circle cx="34" cy="17" r="1.3" fill="#c98f5f"/><circle cx="26" cy="23" r="1.3" fill="#c98f5f"/><circle cx="34" cy="23" r="1.3" fill="#c98f5f"/></g><circle class="glow" cx="52" cy="6" r="3.5" fill="#ffb84d"/></svg>';
-  const POWER = '<svg viewBox="0 0 60 40" aria-hidden="true"><path d="M30 6 V20" stroke="#38d996" stroke-width="4" stroke-linecap="round"/><path d="M20 11 A13 13 0 1 0 40 11" stroke="#38d996" stroke-width="4" fill="none" stroke-linecap="round"/></svg>';
+  // A drive front with a crack across it and its status light; the plaster lands on the crack.
+  const PATCH = '<svg viewBox="0 0 60 40" aria-hidden="true">'
+    + '<rect x="4" y="5" width="52" height="30" rx="3" fill="#323a4a" stroke="#4a5468" stroke-width="1"/>'
+    + '<path d="M9 11 V29 M12 11 V29" stroke="#262c38" stroke-width="1.4"/>'
+    + '<path d="M19 6 L27 16 L22 21 L31 27 L28 34" stroke="#07090e" stroke-width="2.4" fill="none" stroke-linejoin="round"/>'
+    + '<path d="M20 6.4 L28.2 16.1 L23.3 20.9 L32 26.8" stroke="#8792a8" stroke-width=".7" fill="none"/>'
+    + '<circle class="glow" cx="49" cy="11" r="2.6" fill="#ffb84d"/>'
+    + '<g class="plaster"><g transform="rotate(-18 30 21)"><rect x="9" y="15" width="42" height="13" rx="6.5" fill="#f2c9a0"/><rect x="24" y="15" width="12" height="13" fill="#e7b386"/><circle cx="27.5" cy="19" r="1.1" fill="#c98f5f"/><circle cx="32.5" cy="19" r="1.1" fill="#c98f5f"/><circle cx="27.5" cy="24" r="1.1" fill="#c98f5f"/><circle cx="32.5" cy="24" r="1.1" fill="#c98f5f"/></g></g>'
+    + '</svg>';
+  const POWER = '<svg class="power" viewBox="0 0 60 40" aria-hidden="true"><path d="M30 6 V20" stroke="#38d996" stroke-width="4" stroke-linecap="round"/><path d="M20 11 A13 13 0 1 0 40 11" stroke="#38d996" stroke-width="4" fill="none" stroke-linecap="round"/></svg>';
   const order = Array.from({ length: 24 }, (_, i) => i);
   const all = order.map((i) => {
     const bay = document.createElement('div');
@@ -475,10 +554,13 @@
     bays.append(bay);
     return bay;
   });
+  const extra = $('.extra');
+  bays.append(extra); // after door 24 in the tab order
   // Tall screens get a 4 × 6 rack.
   const fit = () => {
     const tall = innerWidth < innerHeight * .9;
     bays.style.gridTemplateColumns = tall ? 'repeat(4, 1fr)' : 'repeat(6, 1fr)';
+    bays.style.setProperty('--cols', tall ? 4 : 6);
     rack.classList.toggle('tall', tall);
   };
   fit();
@@ -493,8 +575,8 @@
   function renderReceipt() {
     const last = printed.slice(-3);
     receipt.innerHTML = last.map((n) => `<p class="row"><span class="no">#${String(n + 1).padStart(2, '0')}</span><span></span></p>`).join('');
-    receipt.classList.toggle('again', last[last.length - 1] === 24);
-    receipt.querySelectorAll('.row').forEach((row, k) => { row.lastChild.textContent = notes[last[k]]; });
+    receipt.classList.toggle('again', last[last.length - 1] >= 24);
+    receipt.querySelectorAll('.row').forEach((row, k) => { row.lastChild.textContent = noteAt(last[k]); });
     while (receipt.children.length > 1 && receipt.offsetTop + receipt.offsetHeight > printer.clientHeight + 1) receipt.firstElementChild.remove();
   }
   function print(i, quick) {
@@ -513,8 +595,12 @@
 
   /* ---- Restart ---- */
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const managed = $('.restart .managed');
   let restartTitle = '';
-  let snoozes = 0;
+  let snoozes = 0;      // every snooze so far: the total keeps growing for someone who keeps going
+  let roundSnoozes = 0; // this round's snoozes: five of them and the policy takes over
+  let round = 1;        // the restart window's title counts from the second time: (2/∞)
+  let restartsDone = 0; // slips #25, #26 … and the door taped onto the rack
   // 10 minutes per snooze, added up the way a calendar would: 1 h 20 min, 2 d 3 h.
   const snoozedFor = () => {
     const m = snoozes * 10, u = T.units;
@@ -526,34 +612,60 @@
   };
   function showRestart(snoozed) {
     const title = snoozed ? T.snoozed[Math.min(snoozes, 2) - 1] : T.restartTitle;
-    if (restartTitle !== title) {
-      restartTitle = title;
+    const count = !snoozed && round > 1 ? `(${round}/∞)` : '';
+    if (restartTitle !== title + count) {
+      restartTitle = title + count;
+      const h2 = restart.querySelector('h2');
       if (ko) {
         const el = document.createElement('font-kku');
         el.setAttribute('font', 'dunggeun');
         el.setAttribute('size', '8.4cqi');
         el.textContent = title;
-        restart.querySelector('h2').replaceChildren(el);
+        h2.replaceChildren(el);
       } else {
-        restart.querySelector('h2').textContent = title;
+        h2.textContent = title;
+      }
+      if (count) {
+        const c = document.createElement('span');
+        c.className = 'round';
+        c.textContent = count;
+        h2.append(c);
       }
     }
     // After the fifth snooze the policy decides: no more snoozing, five minutes on the clock.
-    const forced = snoozes >= FORCE_AFTER;
+    const forced = roundSnoozes >= FORCE_AFTER;
     restart.classList.toggle('forced', forced);
-    laterBtn.disabled = forced;
+    laterBtn.setAttribute('aria-disabled', String(forced));
+    managed.classList.remove('on');
     if (forced) startDeadline();
-    restart.querySelector('.why').textContent = forced ? T.forced : T.restartWhy;
+    // From the second window on, the 23 patches are already in ("All 23 patches applied."):
+    // what is waiting now is the restart the last restart asked for.
+    const why = forced ? T.forced : round > 1 ? T.restartAgainWhy : T.restartWhy;
+    restart.querySelector('.why').replaceChildren(...why.split(/(?<=\.) /).flatMap((text, k) => {
+      const sentence = document.createElement('span');
+      sentence.textContent = text;
+      return k ? [' ', sentence] : [sentence];
+    }));
     restart.querySelector('.total').textContent = snoozes ? T.total(snoozedFor()) : '';
     nowBtn.textContent = T.now;
     laterBtn.textContent = T.later;
     restart.classList.add('on');
     if (!TTY.reduce) restart.animate([{ opacity: 0, transform: 'scale(.85)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
   }
+  let snoozing = false;
   async function snooze() {
+    snoozing = true;
     snoozes += 1;
+    roundSnoozes += 1;
     if (!TTY.reduce) await restart.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(30%) scale(.9)' }], { duration: 260, easing: 'ease-in' }).finished;
     restart.classList.remove('on');
+    snoozing = false;
+  }
+  // The faded snooze button still answers: a shake, and the line from every managed PC's settings.
+  function refuse() {
+    managed.textContent = T.managed;
+    managed.classList.add('on');
+    if (!TTY.reduce) laterBtn.animate([0, -4, 4, -4, 4, 0].map((x) => ({ transform: `translateX(${x}px)` })), { duration: 360 });
   }
   // A real five minutes: wait it out and the rack restarts on its own.
   const FORCE_AFTER = 5;
@@ -579,38 +691,65 @@
     clearInterval(deadlineTimer);
     deadlineAt = 0;
     restart.classList.remove('forced');
-    laterBtn.disabled = false;
+    laterBtn.setAttribute('aria-disabled', 'false');
+    managed.classList.remove('on');
+  }
+  // The door taped onto the 24-door calendar after a restart: 25, then 26 …
+  function showExtra(n) {
+    extra.querySelector('b').textContent = n;
+    extra.setAttribute('aria-label', T.door(n));
+    extra.hidden = false;
+    if (TTY.reduce) return;
+    extra.animate([
+      { transform: 'translateY(-150%) rotate(-14deg)', opacity: 0 },
+      { transform: 'translateY(6%)', opacity: 1, offset: .62 },
+      { transform: 'translateY(-4%) rotate(2deg)', offset: .82 },
+      { transform: 'none' },
+    ], { duration: 460, easing: 'ease-in' });
+    rack.animate([{ transform: 'none' }, { transform: 'translateY(3px)' }, { transform: 'none' }], { duration: 200, delay: 280 });
   }
   let restarting = false;
+  let finished = false; // the restart has played out to the taped-on door; that door asks again
+  let restartId = 0;
   async function doRestart() {
     if (restarting) return;
     restarting = true;
+    finished = false;
+    const me = ++restartId;
     stopDeadline();
     restart.classList.remove('on');
+    done.style.opacity = 0;
+    extra.hidden = true; // this restart takes care of it; the next one drops in at the end
     all.forEach((b, i) => { if (!b.classList.contains('open')) { b.classList.add('open'); if (i < 23) printed.push(i); } });
     rack.classList.add('dark');
     printer.classList.add('dark');
     ring.style.opacity = 1;
     const arc = ring.querySelector('.arc');
     if (!TTY.reduce) {
-      // Quick to 99%, then the long 99%, as every restart does.
-      const steps = [[0, 0], [.09, 7], [.23, 31], [.36, 64], [.45, 99], [.9, 99], [1, 100]];
-      progress.querySelector('span').textContent = T.unplug;
+      // Quick to 99%, then the long 99%, as every restart does: half a second to 99, 1.7 s there.
+      const RING = 2400;
+      const steps = [[0, 0], [.05, 7], [.12, 31], [.18, 64], [.22, 99], [.92, 99], [1, 100]];
+      const still = progress.querySelector('.still');
+      progress.querySelector('.unplug').textContent = T.unplug;
+      still.textContent = T.still;
+      still.classList.remove('on');
       const say = (pct) => { progress.querySelector('b').textContent = `${T.working} ${pct}%`; };
       say(0);
       progress.style.opacity = 1;
-      steps.forEach(([at, pct]) => setTimeout(() => say(pct), at * 2000));
-      await arc.animate(steps.map(([at, pct]) => ({ offset: at, strokeDashoffset: 1 - pct / 100 })), { duration: 2000, easing: 'linear', fill: 'forwards' }).finished;
+      steps.forEach(([at, pct]) => setTimeout(() => say(pct), at * RING));
+      setTimeout(() => still.classList.add('on'), 1000); // half a second into the long 99%, under the warning
+      await arc.animate(steps.map(([at, pct]) => ({ offset: at, strokeDashoffset: 1 - pct / 100 })), { duration: RING, easing: 'linear', fill: 'forwards' }).finished;
       progress.style.opacity = 0;
     }
     ring.style.opacity = 0;
     rack.classList.remove('dark');
-    for (const b of all) { b.classList.add('green'); if (!TTY.reduce) await wait(35); }
+    for (const b of all) { b.classList.add('green'); if (!TTY.reduce) await wait(22); }
     receipt.innerHTML = '';
     printer.classList.remove('dark');
     // Two sentences, each in its own span: on narrow screens opened on their own they go on two
-    // lines, so the band stays clear of the kit's "?" and ":)" in the corner.
-    done.replaceChildren(...T.done.map((text, k) => {
+    // lines, so the band stays clear of the kit's "?" and ":)" in the corner. The 23 patches go in
+    // once; a restart after that only restarts (door 25 and on, visitors only).
+    done.replaceChildren(...(restartsDone ? T.doneAgain : T.done).map((text, k) => {
       const line = document.createElement('span');
       line.className = 'done-line';
       if (ko) {
@@ -628,19 +767,39 @@
     if (!TTY.reduce) done.animate([{ opacity: 0, transform: 'translateY(30%)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.1)' });
     // And then, on a fresh slip: one more.
     if (!TTY.reduce) await wait(1000);
-    if (!restarting) return;
+    if (me !== restartId) return;
     printed.length = 0;
-    print(24);
-    all[23].classList.add('again');
+    const n = 24 + restartsDone++;
+    print(n);
+    // A beat later the calendar grows a door for it.
+    if (!TTY.reduce) await wait(700);
+    if (me !== restartId) return;
+    showExtra(n + 1);
+    finished = true;
+  }
+  // The taped-on door opens the same window again, counting.
+  function again() {
+    if (!finished) return;
+    run++;
+    finished = false;
+    restarting = false;
+    round += 1;
+    roundSnoozes = 0;
+    done.style.opacity = 0;
+    showRestart(false);
   }
 
   /* ---- Autoplay ---- */
   let run = 0;
   function resetAll() {
+    restartId++;
     restarting = false;
-    snoozes = 0;
+    finished = false;
+    snoozes = roundSnoozes = restartsDone = 0;
+    round = 1;
     stopDeadline();
-    all.forEach((b) => b.classList.remove('open', 'green', 'again'));
+    all.forEach((b) => b.classList.remove('open', 'green'));
+    extra.hidden = true;
     printed.length = 0;
     receipt.innerHTML = '';
     restart.classList.remove('on');
@@ -652,14 +811,18 @@
   async function play() {
     const mine = ++run;
     const live = () => run === mine;
+    let first = true;
     while (live()) {
       resetAll();
-      shuffleNotes();
+      if (!first) shuffleNotes(); // the first round keeps the notes dealt at load
+      first = false;
       await wait(400);
+      // Doors 1-4 slowly, one readable note each (the fourth a little longer: the rush wipes it
+      // off the paper); then the rest in a rush.
       for (let i = 0; i < 23; i++) {
         if (!live()) return;
-        open(i, i >= 6);
-        await wait(i < 6 ? 900 : 190);
+        open(i, i >= 4);
+        await wait(i < 3 ? 1400 : i === 3 ? 1800 : 100);
       }
       await wait(500); if (!live()) return;
       all[23].animate([{ transform: 'none' }, { transform: 'scale(1.08)' }, { transform: 'none' }], { duration: 500, iterations: 2 });
@@ -668,7 +831,7 @@
       await wait(600); if (!live()) return;
       showRestart(false);
       for (let k = 0; k < 2; k++) {
-        await wait(1000); if (!live()) return;
+        await wait(k === 0 ? 1400 : 1000); if (!live()) return; // the first window has a line to read
         laterBtn.animate([{ transform: 'none' }, { transform: 'scale(.92)' }, { transform: 'none' }], { duration: 200 });
         await snooze(); await wait(500); if (!live()) return;
         showRestart(true);
@@ -682,16 +845,25 @@
   }
 
   /* ---- A visitor opens doors ---- */
+  // Open doors let clicks through (pointer-events: none), so after a restart the only door left
+  // to press is the taped-on one.
   bays.addEventListener('click', (e) => {
+    if (!e.isTrusted) return;
+    if (e.target.closest('.extra')) { again(); return; }
     const door = e.target.closest('.door');
-    if (!door || !e.isTrusted) return;
+    if (!door) return;
     run++;
-    if (restarting) resetAll();
     const i = all.indexOf(door.closest('.bay'));
     open(i);
     if (i === 23) setTimeout(() => showRestart(false), 400);
   });
-  laterBtn.addEventListener('click', async (e) => { if (!e.isTrusted) return; run++; await snooze(); setTimeout(() => showRestart(true), 1500); });
+  laterBtn.addEventListener('click', async (e) => {
+    if (!e.isTrusted || snoozing) return;
+    if (laterBtn.getAttribute('aria-disabled') === 'true') { refuse(); return; }
+    run++;
+    await snooze();
+    setTimeout(() => { if (!restarting) showRestart(true); }, 1500);
+  });
   nowBtn.addEventListener('click', (e) => { if (!e.isTrusted) return; run++; doRestart(); });
 
   /* ---- Start ---- */

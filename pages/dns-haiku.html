@@ -102,7 +102,18 @@
   .line > font-kku { color: var(--ink); filter: drop-shadow(0 0 .5px var(--ink)) drop-shadow(0 0 .5px var(--ink)); }
   .js-hide { visibility: hidden; }
 
-  .sign { position: absolute; left: 8cqi; bottom: 7cqi; font-size: 3cqi; color: #5a5045; }
+  /* The signature keeps clear of the seal (it wraps instead) and never drops under 10 px. */
+  .sign {
+    position: absolute;
+    left: 8cqi;
+    right: 23cqi;
+    bottom: 7cqi;
+    font-size: max(10px, 3cqi);
+    line-height: 1.35;
+    color: #5a5045;
+    word-break: keep-all;
+    text-wrap: balance;
+  }
   .lang-en .sign { font-family: 'Yuji Boku', serif; }
 
   .seal {
@@ -139,14 +150,14 @@
     top: 5.5cqi;
     display: grid;
     place-items: center;
-    width: 5.6cqi;
-    height: 8.6cqi;
+    width: max(5.6cqi, 14px);
+    height: max(8.6cqi, 22px);
     border-radius: 50%;
     background:
       radial-gradient(40% 30% at 35% 30%, rgba(255, 255, 255, .14), transparent 70%),
       var(--seal);
     color: var(--paper);
-    font: 800 2.7cqi/.92 'Shippori Mincho B1', serif;
+    font: 800 max(10px, 2.7cqi)/.92 'Shippori Mincho B1', serif;
     text-align: center;
     rotate: 3deg;
     opacity: 0;
@@ -172,6 +183,8 @@
   /* The dojang seal stands taller than the English one (three stacked characters), so in
      Korean it sits a little lower and the footnote a little higher. */
   .lang-ko .foot { bottom: 27.5cqi; }
+  /* Until the page is on stage the scroll is still rolled up (play() unrolls it). */
+  .roll.unshown { visibility: hidden; }
   /* Once written, tapping the scroll writes the next verse. */
   .roll.done .sheet { cursor: pointer; }
   .sheet:focus-visible { outline: .6cqi solid #e9d9a8; outline-offset: .6cqi; }
@@ -232,7 +245,7 @@
 </main>
 <p class="hint" id="verse-hint">
   <span data-lang="en">Tap the scroll for the next verse.</span>
-  <span data-lang="ko">족자를 누르면 다음 수를 써요.</span>
+  <span data-lang="ko">족자를 누르면 다음 시를 써요.</span>
 </p>
 
 <script>
@@ -248,34 +261,38 @@
   const paper = document.querySelector('.paper');
 
   /* ---- The series. English lines scan 5-7-5; Korean ones keep a natural three-beat rhythm.
-     A Korean line is a list of pieces: 'lat' is brushed letter by letter in Yuji Boku,
-     'kku' jamo by jamo in butgeul. The classic comes first and turns up most often. ---- */
+     In a Korean line, Latin runs (with the space before them) are brushed letter by letter in
+     Yuji Boku and the Hangul jamo by jamo in butgeul. The classic always plays first: the hasty
+     seal is its joke. The other three are for whoever taps the finished scroll. ---- */
   const VERSES = [
     {
       en: { lines: ["It's not DNS", "There's no way it's DNS", 'It was DNS'], sign: 'a sysadmin, 3 a.m.', foot: "(It's always DNS.)" },
-      ko: { lines: [[['lat', 'DNS'], ['kku', '일 리 없다']], [['kku', '절대'], ['lat', ' DNS'], ['kku', '일 리 없다']], [['lat', 'DNS'], ['kku', '였다']]], sign: '새벽 세 시, 어느 시스템 관리자', foot: '(언제나 DNS다.)' },
+      ko: { lines: ['DNS일 리 없다', '절대 DNS일 리 없다', 'DNS였다'], sign: '새벽 세 시, 어느 시스템 관리자', foot: '(언제나 DNS다.)' },
     },
     {
       en: { lines: ['I changed the record', 'The TTL was one day', 'See you tomorrow'], sign: 'a sysadmin, Friday 6 p.m.', foot: '(TTL 86400)' },
-      ko: { lines: [[['kku', '레코드를 바꿨다']], [['lat', 'TTL'], ['kku', '은 하루']], [['kku', '내일 뵙겠습니다']]], sign: '금요일 저녁 여섯 시, 어느 시스템 관리자', foot: '(TTL 86400)' },
+      ko: { lines: ['레코드를 바꿨다', 'TTL은 하루', '내일 뵙겠습니다'], sign: '금요일 저녁 여섯 시, 어느 시스템 관리자', foot: '(TTL 86400)' },
     },
     {
-      en: { lines: ['Asked once, too early', 'It replied: no such domain', 'Now cached for an hour'], sign: 'a developer, slightly early', foot: '(NXDOMAIN · SOA minimum 3600)' },
-      ko: { lines: [[['kku', '레코드 만들기 전에']], [['kku', '딱 한 번 물어봤을 뿐']], [['kku', '한 시간째 없단다']]], sign: '조금 성급했던 어느 개발자', foot: '(NXDOMAIN · SOA 최솟값 3600)' },
+      en: { lines: ['Asked once, too early', 'It replied: no such domain', 'And will, for an hour'], sign: 'a developer, slightly early', foot: '(NXDOMAIN · SOA minimum 3600)' },
+      ko: { lines: ['레코드 만들기 전에', '딱 한 번 물어봤을 뿐', '한 시간째 없단다'], sign: '조금 성급했던 어느 개발자', foot: '(NXDOMAIN · SOA 최솟값 3600)' },
     },
     {
-      en: { lines: ['Wait for it to spread', "It doesn't. It never did", 'Caches die of age'], sign: 'a sysadmin, hour 47', foot: '(TTL 3412, 3411, 3410…)' },
-      ko: { lines: [[['kku', '전파되길 기다렸다']], [['kku', '퍼지는 게 아니었다']], [['kku', '캐시가 늙어 죽을 뿐']]], sign: '마흔일곱 시간째, 어느 시스템 관리자', foot: '(TTL 3412, 3411, 3410…)' },
+      en: { lines: ['Wait for it to spread', "It doesn't. It never did", 'Caches age and die'], sign: 'a sysadmin, hour 47', foot: '(TTL 3412, 3411, 3410…)' },
+      ko: { lines: ['전파되길 기다렸다', '퍼지는 게 아니었다', '캐시가 늙어 죽을 뿐'], sign: '마흔일곱 시간째, 어느 시스템 관리자', foot: '(TTL 3412, 3411, 3410…)' },
     },
   ];
-  let verse = Math.random() < .4 ? 0 : 1 + Math.floor(Math.random() * (VERSES.length - 1));
+  let verse = 0;
 
   /* ---- Build each line: Latin letters as spans, Hangul as font-kku hosts ---- */
   const shown = new WeakMap();
   let lines = [];
   function build(v) {
     const text = VERSES[v][TTY.lang];
-    const segsOf = (l) => (typeof l === 'string' ? [['lat', l]] : l);
+    // English lines are all Latin. A Korean line splits into Latin runs and Hangul pieces:
+    // '절대 DNS일 리 없다' → '절대', ' DNS', '일 리 없다'.
+    const segsOf = (l) => (TTY.lang === 'en' ? [['lat', l]]
+      : l.split(/( ?[A-Za-z][A-Za-z0-9]*)/).filter(Boolean).map((s) => [/[A-Za-z]/.test(s) ? 'lat' : 'kku', s]));
     h1.setAttribute('aria-label', text.lines.map((l) => segsOf(l).map(([, t]) => t).join('') + '.').join(' '));
     sign.textContent = text.sign;
     foot.textContent = text.foot;
@@ -408,15 +425,20 @@
   addEventListener('resize', () => { sizeCanvas(); fitLines(); });
 
   /* ---- Seal and its footnote ---- */
+  // Once a verse is finished its footnote is part of the scroll and stays (with reduced motion
+  // from the start); before that, pointing at the seal or focusing it shows it for a moment.
   let footTimer;
-  const showFoot = (ms) => { foot.classList.add('show'); clearTimeout(footTimer); if (ms) footTimer = setTimeout(() => foot.classList.remove('show'), ms); };
-  // With reduced motion the footnote is part of the finished scroll and stays.
-  const hideFoot = () => { if (!TTY.reduce) foot.classList.remove('show'); };
+  let footPinned = false;
+  const showFoot = (ms) => {
+    foot.classList.add('show');
+    clearTimeout(footTimer);
+    if (ms && !footPinned) footTimer = setTimeout(() => foot.classList.remove('show'), ms);
+  };
+  const hideFoot = () => { if (!footPinned) foot.classList.remove('show'); };
   seal.addEventListener('pointerenter', () => showFoot(0));
   seal.addEventListener('pointerleave', hideFoot);
   seal.addEventListener('focus', () => showFoot(0));
   seal.addEventListener('blur', hideFoot);
-  seal.addEventListener('click', (e) => { e.stopPropagation(); if (!TTY.reduce) showFoot(2600); });
 
   /* ---- The whole piece ---- */
   const STAMP = [
@@ -425,51 +447,92 @@
     { transform: 'scale(1)', opacity: 1 },
   ];
   const THUD = [{ transform: 'none' }, { transform: 'translateY(.4%)' }, { transform: 'none' }];
+  // The seal's return is the punchline, so it lands harder than the hasty first stamp.
+  const SLAM = [
+    { transform: 'scale(2.6) rotate(-10deg)', opacity: 0 },
+    { transform: 'scale(.9) rotate(1deg)', opacity: 1, offset: .75 },
+    { transform: 'scale(1)', opacity: 1 },
+  ];
+  const THUD_BIG = [{ transform: 'none' }, { transform: 'translateY(.9%)' }, { transform: 'none' }];
+  // Shakes its head (side to side, so it reads on a phone too), then is flicked off the paper.
+  const FLICK = [
+    { transform: 'none', opacity: 1 },
+    { transform: 'translateX(-20%) rotate(-12deg)', opacity: 1, offset: .1 },
+    { transform: 'translateX(16%) rotate(10deg)', opacity: 1, offset: .2 },
+    { transform: 'translateX(-10%) rotate(-7deg)', opacity: 1, offset: .3 },
+    { transform: 'none', opacity: 1, offset: .38 },
+    { transform: 'translateY(-5%) scale(1.08)', opacity: 1, offset: .46, easing: 'cubic-bezier(.5, 0, .8, .6)' },
+    { transform: 'translate(85%, -55%) rotate(26deg) scale(.95)', opacity: 1, offset: .8 },
+    { transform: 'translate(125%, -80%) rotate(44deg) scale(.85)', opacity: 0 },
+  ];
+  const DROP = 'cubic-bezier(.5, 0, .9, .4)';
+
+  // While the seal is off the paper it cannot be pointed at, tapped or focused, so nobody
+  // reaches the conclusion's footnote before the third line does.
+  function sealOn(on) {
+    seal.style.opacity = on ? 1 : 0;
+    seal.style.pointerEvents = on ? '' : 'none';
+    seal.tabIndex = on ? 0 : -1;
+    if (!on && document.activeElement === seal) seal.blur();
+  }
+  // Tapping the finished seal stamps it once more (on touch, the first tap also shows the footnote).
+  seal.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showFoot(2600);
+    if (footPinned && !TTY.reduce) {
+      seal.animate(STAMP, { duration: 380, easing: DROP });
+      roll.animate(THUD, { duration: 240, delay: 290 });
+    }
+  });
+
   const hint = document.querySelector('.hint');
+  let hintTimer;
   function finished() {
     roll.classList.add('done');
     sheet.tabIndex = 0;
     sheet.setAttribute('aria-describedby', 'verse-hint');
-    hint.classList.add('on');
+    footPinned = true;
+    showFoot(0);
+    // The footnote lands first; the hint follows once it has been read.
+    clearTimeout(hintTimer);
+    if (TTY.reduce) hint.classList.add('on');
+    else hintTimer = setTimeout(() => hint.classList.add('on'), 1400);
   }
 
-  // The 3-second gag: the conclusion turns up first. The seal stamps itself on the blank paper
-  // as soon as it unrolls, then shakes its head and is flicked away while the first line of
-  // denial is written. It comes back for good once the third line admits it.
+  // The 3-second gag (the classic only): the conclusion turns up first. The seal stamps itself on
+  // the blank paper as soon as it unrolls; once the first line of denial is written it shakes its
+  // head and is flicked away (flick(), called from the brush). It comes back for good, harder,
+  // once the third line admits it.
   let run = 0;
   async function hastySeal(mine) {
     await wait(1000);
     if (mine !== run) return;
-    seal.style.opacity = 1;
-    seal.animate(STAMP, { duration: 380, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+    sealOn(true);
+    seal.animate(STAMP, { duration: 380, easing: DROP });
     roll.animate(THUD, { duration: 240, delay: 290 });
-    await wait(1150);
+  }
+  function flick(mine) {
     if (mine !== run) return;
-    // Set first so nothing flashes back when the flick ends.
-    seal.style.opacity = 0;
-    seal.animate([
-      { transform: 'none', opacity: 1 },
-      { transform: 'rotate(-10deg)', opacity: 1, offset: .12 },
-      { transform: 'rotate(8deg)', opacity: 1, offset: .24 },
-      { transform: 'rotate(-6deg)', opacity: 1, offset: .36 },
-      { transform: 'translateY(-5%) scale(1.08)', opacity: 1, offset: .46, easing: 'cubic-bezier(.5, 0, .8, .6)' },
-      { transform: 'translate(85%, -55%) rotate(26deg) scale(.95)', opacity: 1, offset: .8 },
-      { transform: 'translate(125%, -80%) rotate(44deg) scale(.85)', opacity: 0 },
-    ], { duration: 1000 });
+    // Hidden first (the keyframes keep it visible) so nothing flashes back when the flick ends.
+    sealOn(false);
+    seal.animate(FLICK, { duration: 1100 });
   }
 
   let playing = false;
   async function play() {
-    if (TTY.reduce) { full(); document.fonts.ready.then(fitLines); showFoot(0); finished(); return; }
+    if (TTY.reduce) { full(); document.fonts.ready.then(fitLines); sealOn(true); finished(); return; }
     if (playing) return;
     playing = true;
     const mine = ++run;
-    roll.classList.remove('done');
+    const hasty = verse === 0;
+    roll.classList.remove('done', 'unshown');
     // Taps wait until this verse is written, so the hint goes quiet until then (finished() brings it back).
+    clearTimeout(hintTimer);
     hint.classList.remove('on');
-    foot.classList.remove('show');
+    footPinned = false;
+    hideFoot();
     [sheet, bottomRod, seal, leadSeal, sign].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
-    seal.style.opacity = 0;
+    sealOn(false);
     leadSeal.style.opacity = 0;
     sign.style.opacity = 0;
     build(verse);
@@ -479,12 +542,15 @@
     const ease = 'cubic-bezier(.45, .05, .2, 1)';
     sheet.animate([{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 1300, easing: ease, fill: 'both' });
     bottomRod.animate([{ transform: `translateY(${-h}px)` }, { transform: 'none' }], { duration: 1300, easing: ease, fill: 'both' });
-    hastySeal(mine);
+    if (hasty) hastySeal(mine);
     await Promise.all([wait(1500), document.fonts.ready]);
     fitLines();
     petalsOn();
-    for (const line of lines) {
+    for (const [i, line] of lines.entries()) {
       for (const p of line._parts) await (p.kind === 'lat' ? brushLatin(p) : brushHangul(p));
+      // The seal reacts once the denial is on the paper, whichever end of the line it sits at
+      // ("It's not DNS" / "DNS일 리 없다"), even when the fonts were late.
+      if (i === 0 && hasty) setTimeout(() => flick(mine), 150);
       await wait(420);
     }
     sign.style.opacity = 1;
@@ -492,14 +558,18 @@
     await wait(500);
     // Two stamps: the small oval where the writing begins, then the seal, back for good.
     leadSeal.style.opacity = .92;
-    leadSeal.animate(STAMP, { duration: 320, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+    leadSeal.animate(STAMP, { duration: 320, easing: DROP });
     await wait(520);
     seal.getAnimations().forEach((a) => a.cancel());
-    seal.style.opacity = 1;
-    seal.animate(STAMP, { duration: 380, easing: 'cubic-bezier(.5, 0, .9, .4)' });
-    roll.animate(THUD, { duration: 240, delay: 290 });
+    sealOn(true);
+    if (hasty) {
+      seal.animate(SLAM, { duration: 460, easing: DROP });
+      roll.animate(THUD_BIG, { duration: 300, delay: 350 });
+    } else {
+      seal.animate(STAMP, { duration: 380, easing: DROP });
+      roll.animate(THUD, { duration: 240, delay: 290 });
+    }
     await wait(1600);
-    showFoot(3000);
     finished();
     playing = false;
   }
@@ -508,6 +578,9 @@
     if (!roll.classList.contains('done')) return;
     verse = (verse + 1) % VERSES.length;
     if (TTY.reduce) build(verse);
+    // The longest verse (ko negative cache) has its footnote up about 12.5 s after the tap, past
+    // the 12 s the kit asks for on every tap, so ask for enough to read it on the home stage.
+    else TTY.hold(15000);
     play();
   }
   sheet.addEventListener('click', next);
@@ -518,7 +591,9 @@
   });
 
   build(verse);
-  if (TTY.reduce) { full(); leadSeal.style.opacity = .92; document.fonts.ready.then(fitLines); } else blank();
+  // Before the page is on stage it looks like the first frame of play(): rolled up, no seal.
+  if (TTY.reduce) { full(); leadSeal.style.opacity = .92; document.fonts.ready.then(fitLines); }
+  else { blank(); sealOn(false); roll.classList.add('unshown'); }
   TTY.onShow(play);
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);

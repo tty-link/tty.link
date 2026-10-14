@@ -4,3 +4,5 @@
 node_modules/
 .cloudflare/
 .env
+# Claude Code project files (the tty-page skill is a link into ../docs-internal/skills/).
+.claude/

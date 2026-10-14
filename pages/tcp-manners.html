@@ -131,34 +131,53 @@
   .lang-ko .sub { font-style: normal; font-weight: 700; color: var(--blue-t); }
 
   /* The cover picture, the page's joke from the first second: two gentlemen who cannot finish
-     saying goodbye. Korean: on the phone, bowing in turns to someone who cannot see it.
-     English: at the door and by the car, waving back in turns. It never stops. */
-  .cover { --cvh: clamp(54px, 9.5cqh, 92px); --cva: .83; padding-right: calc(var(--cvh) * var(--cva) + 10px); min-height: calc(var(--cvh) + clamp(6px, 1.2cqh, 12px)); align-content: center; }
+     saying goodbye. Korean: on the phone, each on his own side of a split panel, bowing in turns
+     to someone who cannot see it. English: the guest keeps heading for his car and turning back
+     to wave, and the host waves him off from the door every time. It never stops. */
+  .cover { --cvh: clamp(54px, 9.5cqh, 92px); --cva: 1; padding-right: calc(var(--cvh) * var(--cva) + 10px); min-height: calc(var(--cvh) + clamp(6px, 1.2cqh, 12px)); align-content: center; }
   .lang-en .cover { --cva: 1.4; }   /* with Mr. Client's car */
   .cvart { position: absolute; z-index: 3; right: 0; bottom: clamp(5px, 1cqh, 10px); height: var(--cvh); aspect-ratio: var(--cva); pointer-events: none; transform-origin: 0 0; }
+  /* With motion, the picture first appears blown up (coverIntro); until then the corner is empty. */
+  @media (prefers-reduced-motion: no-preference) { .cover:not(.go) .cvart { opacity: 0; } }
   .cvart .who { position: static; width: 100%; height: 100%; aspect-ratio: auto; translate: none; }
   .cvart .pc { color: var(--pink); }
   .cvart .ps { color: var(--blue); }
   .cvart .pc, .cvart .ps { mix-blend-mode: multiply; }
+  /* the split panel of a comic-strip phone call, printed in both inks, a little off */
+  .cvart .split path { fill: none; stroke-width: 2.2; mix-blend-mode: multiply; }
+  .cvart .split .sp { stroke: var(--pink); }
+  .cvart .split .sb { stroke: var(--blue); opacity: .8; }
   .cvart .up { transform: none; transition: none; }
   .cvart .say { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; opacity: 0; }
   .cvart .who .pz, .cvart .who .pz[data-k] { display: inline; }   /* both arms are drawn; opacity picks one */
   .cvart .pz[data-k], .cvart .pc .pz[data-koff] { opacity: 0; }
-  /* the still picture (before the page shows, and with less motion): Mr. Client mid-goodbye */
+  /* the still picture (with less motion): Mr. Client mid-goodbye */
   .cvart .pc .up { transform: rotate(var(--bow)); }
   .cvart .pc .say, .cvart .pc .pz[data-k] { opacity: 1; }
-  /* in turns, every half second */
+  /* Korean: in turns, every half second */
   .cover.go .cvart .up { animation: cv-bow 1s ease-in-out infinite; }
   .cover.go .cvart .say { animation: cv-say 1s ease-out infinite; }
-  .cover.go .cvart .pz[data-k] { animation: cv-up 1s steps(1, end) infinite; }
-  .cover.go .cvart .pz[data-k]:last-child { animation: cv-up 1s steps(1, end) infinite, cv-wave 1s ease-in-out infinite; transform-origin: 6.5px -32px; }
-  .cover.go .cvart .pz[data-koff] { animation: cv-down 1s steps(1, end) infinite; }
-  .cover.go .cvart .ps .up, .cover.go .cvart .ps .say, .cover.go .cvart .ps .pz, .cover.go .cvart .ps .pz[data-k]:last-child { animation-delay: .5s; animation-fill-mode: backwards; }
+  .cover.go .cvart .ps .up, .cover.go .cvart .ps .say { animation-delay: .5s; animation-fill-mode: backwards; }
   @keyframes cv-bow { 0%, 58%, 100% { transform: none; } 16%, 40% { transform: rotate(var(--bow)); } }
   @keyframes cv-say { 0%, 10% { opacity: 0; translate: 0 2px; } 20%, 44% { opacity: 1; translate: 0 0; } 56%, 100% { opacity: 0; translate: 0 -3px; } }
-  @keyframes cv-up { 0% { opacity: 0; } 4% { opacity: 1; } 50% { opacity: 0; } }
-  @keyframes cv-down { 0% { opacity: 1; } 4% { opacity: 0; } 50% { opacity: 1; } }
-  @keyframes cv-wave { 0%, 4%, 50%, 100% { rotate: 0deg; } 14% { rotate: -12deg; } 26% { rotate: 10deg; } 38% { rotate: -10deg; } }
+  /* English: one way out every 1.2 s. Phase 1: the guest turns for his car and takes half a step,
+     and the host waves him off. Phase 2: the guest turns back, waves, and drifts back up the drive. */
+  .cover.go .cvart .cv-go { animation: cv-leave 1.2s ease-in-out infinite; transform-origin: 1px 0; }
+  .cover.go .cvart .pc .pz[data-koff], .cover.go .cvart .ps .pz[data-k] { animation: cv-p1 1.2s linear infinite; }
+  .cover.go .cvart .pc .pz[data-k], .cover.go .cvart .ps .pz[data-koff] { animation: cv-p2 1.2s linear infinite; }
+  .cover.go .cvart .pc .pz[data-k]:last-child { animation: cv-p2 1.2s linear infinite, cv-wave2 1.2s ease-in-out infinite; transform-origin: 6.5px -32px; }
+  .cover.go .cvart .ps .pz[data-k]:last-child { animation: cv-p1 1.2s linear infinite, cv-wave1 1.2s ease-in-out infinite; transform-origin: 6.5px -32px; }
+  @keyframes cv-leave {
+    0% { transform: translate(0, 0) scale(1, 1); }
+    7% { transform: translate(0, 0) scale(-1, 1); }
+    40% { transform: translate(-12px, 0) scale(-1, 1); }
+    47% { transform: translate(-12px, 0) scale(1, 1); }
+    100% { transform: translate(0, 0) scale(1, 1); }
+  }
+  @keyframes cv-p1 { 0%, 45% { opacity: 1; } 46.5%, 100% { opacity: 0; } }
+  @keyframes cv-p2 { 0%, 45% { opacity: 0; } 46.5%, 100% { opacity: 1; } }
+  @keyframes cv-wave1 { 0%, 6%, 44%, 100% { rotate: 0deg; } 16% { rotate: -12deg; } 26% { rotate: 10deg; } 36% { rotate: -10deg; } }
+  @keyframes cv-wave2 { 0%, 50%, 96%, 100% { rotate: 0deg; } 61% { rotate: -12deg; } 73% { rotate: 10deg; } 85% { rotate: -10deg; } }
 
   /* ---------- Index tabs: on the page's right edge (a row on top when narrow) ---------- */
   .tabs {
@@ -327,7 +346,7 @@
     gap: clamp(7px, 1.6cqh, 14px) clamp(8px, 1.6cqi, 16px);
   }
   .fgrid.l3 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "a b" "c d" "e e"; }
-  .fgrid.l4 { grid-template-rows: repeat(2, minmax(0, 1fr)); }   /* lesson 4 has two pictures */
+  .fgrid.l2, .fgrid.l4 { grid-template-rows: repeat(2, minmax(0, 1fr)); }   /* lessons 2 and 4 have two pictures */
   .fgrid.l3 .fig:nth-child(1) { grid-area: a; }
   .fgrid.l3 .fig:nth-child(2) { grid-area: b; }
   .fgrid.l3 .fig:nth-child(3) { grid-area: c; }
@@ -340,7 +359,7 @@
       grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
       grid-template-areas: "a b e" "c d e";
     }
-    .fgrid.l4 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
+    .fgrid.l2, .fgrid.l4 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
   }
 
   .fig {
@@ -455,6 +474,8 @@
     .fig:not(.apart) .bub.c { grid-column: 1; justify-self: end; max-width: 100%; }
     .fig:not(.apart) .bub.s { grid-column: 3; justify-self: start; max-width: 100%; }
     .apart .bubs { font-size: clamp(12px, min(2.7cqi, 11.5cqh), 16px); }
+    /* 4-1: the browser's note sits a little nearer Mr. Client, clear of "Click." */
+    .fig[data-id="rst"] .bubs { left: calc(var(--side) + var(--h) * .5); }
   }
 
   .bub {
@@ -759,7 +780,7 @@
     .hang-hint { font-size: clamp(11px, 3.2cqi, 12.5px); }
     .hang-hint .l { display: none; }
     .hang-hint .s { display: inline; }
-    .fgrid, .fgrid.l3, .fgrid.l4 { grid-template: minmax(0, 1fr) / minmax(0, 1fr) !important; }
+    .fgrid, .fgrid.l2, .fgrid.l3, .fgrid.l4 { grid-template: minmax(0, 1fr) / minmax(0, 1fr) !important; }
     .fgrid .fig { grid-area: 1 / 1 !important; }
     .fgrid .fig:not(.cur) { visibility: hidden; }
     .fig figcaption { font-size: clamp(11px, 3.1cqi, 13px); }
@@ -776,13 +797,28 @@
     .moral { font-size: clamp(12px, 3.5cqi, 16px); padding: .45em .7em .5em .55em; gap: .6em; }
     /* Opened on its own, the kit's "? :)" sits over the band's right end: keep the words clear of it. */
     html:not(.embedded) .moral { padding-right: 78px; }
-    .bubs .bub.old { display: none; }
+    .fig[data-id="tw"] .bubs .bub.old { display: none; }
+    /* Short phone stages (358×396: a figure strip about 70 px tall): figure 3-5's two-line
+       caption goes beside the picture, so the goodbye-again bubbles get the strip's full height
+       instead of landing on the caption. */
+    @container figs (min-aspect-ratio: 3 / 1) {
+      .fig[data-id="tw"] { grid-template: minmax(0, 1fr) / minmax(0, 1fr) minmax(0, .78fr); column-gap: 4px; }
+      .fig[data-id="tw"] figcaption { align-self: center; padding: 0 .3em 0 0; }
+      .fig[data-id="tw"] .bubs { right: calc(var(--side) + var(--h) * .78); }   /* clear of "TIME_WAIT" */
+      .bubs .bub.old { display: none; }   /* two bubbles at most fit the strip */
+      /* 4-1: no room over Mr. Server's head, so "Click." lands beside him and the browser's
+         note keeps to Mr. Client's side */
+      .fig[data-id="rst"] .bub.note { align-self: flex-start; }
+      .fig[data-id="rst"] .sfx { right: calc(var(--side) + var(--h) * .64); bottom: 22cqh; font-size: 20px; }   /* clear of the note's edge */
+    }
   }
   /* Short phones: the subtitle folds away under the title row. */
   @container page (max-height: 560px) and (max-width: 759px) {
     .sub { display: none; }
     .cover { --cvh: clamp(36px, 9cqh, 48px); }
     .seq { height: clamp(74px, 17cqh, 120px); }
+    /* the box is only about 50 px tall: a 14 px fade would eat the newest row ("FIN · again") */
+    .seq-box { -webkit-mask: linear-gradient(transparent, #000 4px); mask: linear-gradient(transparent, #000 4px); }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -868,26 +904,24 @@
       seq: 'Sequence diagram',
       lanes: ['Client', 'Server'],
       wrong: "Don't",
-      l1: ["Hello, would you like to hear a TCP joke? (I'm number 100.)", "Yes, I'd like to hear a TCP joke. (I'll listen from 101. I'm number 300.)", "OK, I'll tell you a TCP joke. (Listening from 301.)"],
+      // "How do you do?" is answered with "How do you do?": a greeting returned with your own, a SYN-ACK.
+      l1: ["How do you do? (I'm number 100.)", 'How do you do? (From 101, please. I\'m number 300.)', 'Charmed. (From 301, please.)'],
       m1: 'Offer your number with both hands. Return theirs, plus one.',
       ok: ['Mm-hm.', 'Mm-hm.'],
       sorry: 'Sorry? I got up to 2.',
       again: 'Third point, again:',
-      hold: "Hold on, I'm still writing that down. (window 0)",
-      ready: 'Ready now?',
       m2: "Nod at every sentence. Ask three times and they'll say it again.",
       l3: ['Well, we should probably get going.', 'Oh, sure!', 'Drive safe now!', 'You too!'],
-      tw: 'Waving from the driveway until the car is out of sight. TIME_WAIT: 60 s (Linux).',
+      tw: 'Keys in hand, still waving, in case they wave again. TIME_WAIT: 60 s (Linux).',
       m3: 'Whoever says goodbye first waits the longest.',
       hang: 'Drive off',
-      hangHint: ["Press it: they'll wave again →", "They'll wave again →"],
-      // Mr. Server's goodbye, sent again each time: the first four times the same, then it wanders.
-      byes: ['Bye now!'],
-      byesLater: ['Okay, bye-bye!', 'Take care now!', 'Bye!'],
+      hangHint: ['Go on, try to leave →', 'Try to leave →'],
+      // Mr. Server's goodbye, sent again each time (the autoplay uses the first): a new one every time.
+      byes: ['Bye now!', 'Okay, bye-bye!', 'Say hi to your mom!', 'Watch out for deer!', 'Take care now!', 'Bye!'],
       byeAck: 'You too!',
       secs: (n) => `${n} s`,
       click: 'Click.',
-      note: ["This site can't be reached", 'ERR_CONNECTION_RESET'],
+      note: ['The connection was reset.', 'ERR_CONNECTION_RESET'],
       udp: "I'd tell you a UDP joke, but you might not get it.",
       m4: 'Never hang up without a goodbye. Never talk without checking.',
       seqLabel: (l) => `Sequence diagram for lesson ${l}: Mr. Client on the left, Mr. Server on the right.`,
@@ -902,25 +936,23 @@
       lanes: ['클라이언트 씨', '서버 씨'],
       wrong: '틀린 예',
       l1: ['처음 뵙겠습니다. 제 번호는 100번입니다.', '네, 101번부터 듣겠습니다. 제 번호는 300번입니다.', '301번부터 듣겠습니다. 잘 부탁드립니다.'],
-      m1: '명함은 두 손으로. 내 번호를 주고, 상대 번호에 하나를 더해 돌려준다.',
+      m1: '명함은 두 손으로. 받은 번호에는 하나를 더해 돌려드립니다.',
       ok: ['네,', '네.'],
       sorry: '네? 2번까지 들었어요.',
       again: '다시, 세 번째 말씀은요,',
-      hold: '잠깐만요, 받아 적는 중이에요. (창 0)',
-      ready: '이제 될까요?',
       m2: '말할 때마다 고개를 끄덕여 줍니다. 세 번 되물으면 다시 말해 줍니다.',
       l3: ['그럼 이만 들어가세요~', '네~ 들어가세요~', '네 조심히 들어가시고요~', '네네~ 들어가세요~'],
-      tw: '상대가 끊는 걸 확인할 때까지 수화기를 들고 기다립니다. TIME_WAIT 60초(리눅스).',
+      tw: '마지막 "네네~"가 안 들렸을까 봐 수화기를 든 채 기다립니다. TIME_WAIT 60초(리눅스).',
       m3: '먼저 작별을 꺼낸 쪽이 마지막까지 기다립니다.',
       hang: '전화 끊기',
-      hangHint: ['누르면 상대가 또 "네~" 해요 →', '누르면 상대가 또 "네~" 해요 →'],
-      byes: ['네~'],
-      byesLater: ['네 들어가세요~', '아 네네 조심히요~', '네~ 감사합니다~', '네네네~'],
+      hangHint: ['끊을 수 있으면 끊어 보세요 →', '끊어 보세요 →'],
+      byes: ['네~', '네 들어가세요~', '언제 밥 한번 먹어요~', '아 네네 조심히요~', '네~ 감사합니다~', '네네네~'],
       byeAck: '네네~',
       secs: (n) => `${n}초`,
       click: '뚝.',
       note: ['연결이 재설정되었습니다', 'ERR_CONNECTION_RESET'],
-      udp: 'UDP 농담 하나 할게요. 못 알아들어도 상관없어요.',
+      // 던지다/받다: a joke thrown and maybe caught, like a datagram sent and maybe received.
+      udp: 'UDP 농담 하나 던질게요. 받든 말든 상관없어요.',
       m4: '인사 없이 끊지 않고, 확인 없이 말하지 않습니다.',
       seqLabel: (l) => `제${l}과 순서도: 왼쪽은 클라이언트 씨, 오른쪽은 서버 씨.`,
     },
@@ -936,7 +968,6 @@
     talk: { back: 'M-4 -32 Q-7 -19 -6 -7', front: 'M6.5 -32 Q15.5 -27 18 -37', hands: [[-6, -6], [18.3, -38]] },
     ear: { back: 'M-4 -32 Q-7 -19 -6 -7', front: 'M6.5 -32 Q14 -31 -0.5 -44.5', hands: [[-6, -6], [-1, -45.5]] },
     phone: { back: 'M-4 -32 Q-7 -19 -6 -7', front: 'M6.5 -32 Q17 -31 4.5 -42.5', hands: [[-6, -6], [4, -43]] },
-    pad: { back: 'M-3 -31 Q4 -21 13 -24', front: 'M6.5 -31 Q14 -24 19 -31', hands: [[13, -24], [19, -31.5]] },
     mega: { back: 'M-3 -31 Q5 -27 13 -32', front: 'M6.5 -31 Q12 -32 16.5 -34', hands: [[13, -32], [16.5, -34]] },
     slam: { back: 'M-4 -32 Q-7 -19 -6 -7', front: 'M6.5 -31 Q15 -26 19.5 -14', hands: [[-6, -6], [19.5, -13.5]] },
     wave: { back: 'M-4 -32 Q-7 -19 -6 -7', front: 'M6.5 -32 Q18 -35 18 -48', hands: [[-6, -6], [18, -49.5]] },
@@ -951,11 +982,10 @@
         + `<g transform="translate(22 -27.2) scale(${m} 1)"><text class="cardtx" y="2.5">${esc(card || '')}</text></g>`;
     } else if (pose === 'phone') {
       extra = `<g class="suit" transform="translate(2.6 -44.5) rotate(60)" style="stroke:#fff;stroke-width:.8">${HANDSET}</g>`;
-    } else if (pose === 'pad') {
-      extra = `<rect class="paper" x="10.5" y="-39" width="11" height="14" rx=".8"/><path class="ln" d="M12.5 -35.5 h7 M12.5 -32.5 h7 M12.5 -29.5 h4"/><path class="ln" style="stroke-width:1.6" d="M19 -31.5 l4 -6"/>`;
     } else if (pose === 'mega') {
       extra = `<path class="suit" d="M14.5 -37.5 L31 -45.5 L31 -22.5 L14.5 -30.5 Z" style="stroke:#fff;stroke-width:.8"/>`
-        + `<g transform="translate(23.5 -34) scale(${m} 1)"><text class="cardtx" y="2.4" style="fill:#fff;font-size:6.2px">UDP</text></g>`
+        // "UDP" printed on the megaphone: drawn, like the rest of the picture (as text it would be 2-10 px)
+        + `<g transform="translate(23.5 -34) scale(${m} 1)"><path d="M-5.5 -2.2 V1 Q-5.5 2.2 -4 2.2 Q-2.5 2.2 -2.5 1 V-2.2 M-1.5 -2.2 V2.2 H-.6 Q1.5 2.2 1.5 0 Q1.5 -2.2 -.6 -2.2 Z M2.5 2.2 V-2.2 H4 Q5.5 -2.2 5.5 -.9 Q5.5 .4 4 .4 H2.5" fill="none" stroke="#fff" stroke-width=".95" stroke-linejoin="round"/></g>`
         + `<path class="ln" d="M35 -42 q3 8 0 16 M39 -45 q4.5 11 0 22"/>`;
     } else if (pose === 'slam') {
       extra = `<g class="suit" transform="translate(21 -16.5) rotate(4)" style="stroke:#fff;stroke-width:.8">${HANDSET}</g>`;
@@ -1049,20 +1079,25 @@
   const noise = (k) => `<svg class="noise rv" data-k="${k}" viewBox="0 0 40 100" preserveAspectRatio="none" aria-hidden="true"><path style="stroke:var(--blue)" d="M22 0 L10 16 L28 30 L8 46 L30 60 L12 76 L26 90 L18 100"/><path style="stroke:var(--pink);opacity:.7" d="M24 2 L12 18 L30 32 L10 48 L32 62 L14 78 L28 92 L20 102"/></svg>`;
 
   /* ---------- The cover picture: the goodbye that never ends, from the first second ----------
-     One drawing, two gentlemen 58 units apart facing each other; the CSS keeps them at it.
-     Korean: both on the phone, bowing. English: Mr. Server at his front door, Mr. Client by his
-     car, both waving. */
+     One drawing, two gentlemen facing each other; the CSS keeps them at it.
+     Korean: both on the phone, bowing, 80 units apart with a comic strip's split-panel line
+     between them (each bows at a wall). English: Mr. Server at his front door, 58 units from
+     Mr. Client, who keeps turning for his car (g.cv-go, the car stays put) and coming back. */
   const cvart = $('.cvart');
   {
     const c = ko ? { pose: 'phone', bow: 26 } : { pose: 'stand', pose2: 'wave', k2: 'w' };
     const s = ko ? { pose: 'phone', bow: 26 } : { pose: 'stand', pose2: 'wave', k2: 'w', back: DOOR };
-    // "~", above and in front of the head (inside the bowing upper body, so it goes down with him)
-    const say = ko ? '<path class="say" d="M9 -61.5 q2.2 -3.2 4.4 0 t4.4 0"/>' : '';
+    // "~", just above the head (inside the bowing upper body, so it goes down with him and stays
+    // on his own side of the line)
+    const say = ko ? '<path class="say" d="M-3 -63 q2.2 -3.2 4.4 0 t4.4 0"/>' : '';
+    const withSay = (svg) => svg.replace(/(<g class="up"[^>]*>)/, `$1${say}`);
     // English: Mr. Client's car waits behind him in the driveway (the same car as figure 3-5)
     const carG = ko ? '' : `<g transform="translate(-75 -31.5) scale(.583)">${car().replace(/^\s*<svg[^>]*>|<\/svg>\s*$/g, '')}</g>`;
-    cvart.innerHTML = `<svg class="who" viewBox="${ko ? '-15 -104 88 106' : '-76 -104 149 106'}" preserveAspectRatio="xMidYMax meet">
-        <g class="pc ink-p">${carG}${body(c, 1).replace(/(<g class="up"[^>]*>)/, `$1${say}`)}</g>
-        <g class="ps ink-b" transform="translate(58 0) scale(-1 1)">${body(s, -1).replace(/(<g class="up"[^>]*>)/, `$1${say}`)}</g>
+    const split = ko ? '<g class="split"><path class="sp" d="M40 -106 V2"/><path class="sb" d="M41.6 -107.1 V.9"/></g>' : '';
+    cvart.innerHTML = `<svg class="who" viewBox="${ko ? '-15 -108 110 110' : '-76 -104 149 106'}" preserveAspectRatio="xMidYMax meet">
+        ${split}
+        <g class="pc ink-p">${carG}<g class="cv-go">${withSay(body(c, 1))}</g></g>
+        <g class="ps ink-b" transform="translate(${ko ? 80 : 58} 0) scale(-1 1)">${withSay(body(s, -1))}</g>
       </svg>`;
   }
 
@@ -1074,16 +1109,19 @@
   /* ---------- The four lessons ----------
      figs: the figures, drawn once per visit to the lesson.
      rows: the sequence diagram, top to bottom.
-     ms: how long the autoplay stays on the lesson (6 s unless given; 7 + 6 + 6 + 5 = 24 s).
+     ms: how long the autoplay stays on the lesson (6 s unless given). On the home stage:
+       7.65 + 4.4 + 7.6 + 6.2 = 25.85 s, longer than the stage's 25 s, so the page leaves on Mr. UDP's
+       joke instead of a blank lesson 1 (on its own: 7.5 + 4.4 + 7.6 + 5 = 24.5 s a round).
      steps: the lesson's timeline (ms from the start of the lesson). fig = print figure i,
        on = cue keys (space separated) to switch on, row = draw diagram row i, nod = Mr. Server
-       nods, moral = print the lesson's moral, fn = something special. */
+       nods, moral = print the lesson's moral, old = speech to step back (dimmed; gone where
+       the figure is a short strip, as on the 358×396 phone stage), fn = something special. */
   const LESSON_MS = 6000;
   const en = !ko;
   // The cover picture's opening (the autoplay arriving at lesson 1): on the home stage it waits
-  // for the stage's wipe (about 0.6 s, from the bottom up), fills the lesson for 2 s, and flies to
-  // its corner; lesson 1's first figure prints as it leaves.
-  const COVER_IN = TTY.embedded ? 450 : 100;
+  // out the stage's wipe (0.6 s from the bottom up, but nine tenths open after 0.25 s), fills the
+  // lesson for 2 s, and flies to its corner; lesson 1's first figure prints as it leaves.
+  const COVER_IN = TTY.embedded ? 250 : 100;
   const COVER_HOLD = 2000;
   const COVER_FLY = 450;
   const L1 = COVER_IN + COVER_HOLD + 150;
@@ -1104,19 +1142,19 @@
       steps: [
         { t: 200, fig: 0 }, { t: 450, on: '1a', row: 0 },
         { t: 1950, fig: 1 }, { t: 2200, on: '2a', row: 1 },
-        { t: 3650, fig: 2 }, { t: 3900, on: '3a', row: 2 },
-        { t: 4300, row: 3, moral: 1 },
+        { t: 3650, fig: 2, moral: 1 }, { t: 3900, on: '3a', row: 2 },
+        { t: 4300, row: 3 },
       ],
       // When the autoplay comes round to lesson 1, the cover picture first fills the lesson
       // (the gag, big, 2 s), then flies up into its corner; the lesson follows a little faster
-      // than from its tab, and takes 1.3-1.7 s longer than the others for it (lesson 4, with two
-      // pictures, a second less): 7.65 + 6 + 6 + 5 = 24.65 s on the home stage.
-      ms: L1 + 5050,
+      // than from its tab: 7.65 s on the home stage, 7.5 s on its own. The moral prints with the
+      // third picture, so it stays up a little over 2 s.
+      ms: L1 + 5250,
       intro: [
         { t: L1, fig: 0 }, { t: L1 + 200, on: '1a', row: 0 },
         { t: L1 + 1600, fig: 1 }, { t: L1 + 1800, on: '2a', row: 1 },
-        { t: L1 + 3200, fig: 2 }, { t: L1 + 3400, on: '3a', row: 2 },
-        { t: L1 + 3750, row: 3, moral: 1 },
+        { t: L1 + 3200, fig: 2, moral: 1 }, { t: L1 + 3400, on: '3a', row: 2 },
+        { t: L1 + 3750, row: 3 },
       ],
     },
     {
@@ -1132,10 +1170,6 @@
             + bub('s', 'b2', `<b class="times">×3</b>${say(T.sorry)}`, 'x3')
             + bub('c', 'b3', `${say(T.again)} ${sentence(3)}`),
         },
-        {
-          c: { pose: 'stand' }, s: { pose: 'pad' },
-          bubs: bub('s', 'c1', say(T.hold)) + bub('c', 'c2', say(T.ready)),
-        },
       ],
       rows: [
         { f: 'c', label: 'seq=1' }, { f: 's', label: 'ACK ack=2' },
@@ -1144,15 +1178,16 @@
         { f: 'c', label: 'seq=4, 5, 6', n: 3 },
         { f: 's', label: 'ACK ack=3 ×3', n: 3, note: 'dup ACK' },
         { f: 'c', label: 'seq=3', note: 'fast retransmit' },
-        { f: 's', label: 'ACK ack=7 win=0', note: 'zero window' },
-        { f: 'c', label: 'probe', note: 'window probe', dash: true },
       ],
+      // Two pictures: the ×3 "Sorry?" is the lesson's laugh, so it gets the last 2.15 s (phones
+      // show one picture at a time), with the moral. Figure 2-1 is only nods ("Mm-hm."), so it
+      // goes quickly, and the time saved is lesson 3's.
+      ms: 4400,
       steps: [
-        { t: 200, fig: 0 }, { t: 450, on: 'a1', row: 0 }, { t: 800, on: 'a2', row: 1, nod: 1 },
-        { t: 1150, on: 'a3', row: 2 }, { t: 1500, on: 'a4', row: 3, nod: 1 },
-        { t: 1950, fig: 1 }, { t: 2200, on: 'b1', row: 4 }, { t: 2550, on: 'b1b', row: 5 },
-        { t: 2900, on: 'b2', row: 6 }, { t: 3400, on: 'b3', row: 7 },
-        { t: 3900, fig: 2, moral: 1 }, { t: 4150, on: 'c1', row: 8 }, { t: 4900, on: 'c2', row: 9 },
+        { t: 200, fig: 0 }, { t: 350, on: 'a1', row: 0 }, { t: 600, on: 'a2', row: 1, nod: 1 },
+        { t: 850, on: 'a3', row: 2 }, { t: 1100, on: 'a4', row: 3, nod: 1 },
+        { t: 1400, fig: 1 }, { t: 1600, on: 'b1', row: 4 }, { t: 1900, on: 'b1b', row: 5 },
+        { t: 2250, on: 'b2', row: 6, moral: 1, old: 'b1' }, { t: 2750, on: 'b3', row: 7 },
       ],
     },
     {
@@ -1173,15 +1208,23 @@
         { f: 'c', label: 'FIN' }, { f: 's', label: 'ACK' }, { f: 's', label: 'FIN' }, { f: 'c', label: 'ACK' },
         { tag: ['c', 'TIME_WAIT'] },
       ],
+      // The punchline: at 5 s, with nobody touching anything, the button is pressed once by itself
+      // and Mr. Server says goodbye again; Mr. Client answers and the hourglass turns back to 60
+      // (hangOnce). Both bubbles then stay over 2 s, and the button 3.8 s for the visitor to try.
+      ms: 7600,
       steps: [
         { t: 200, fig: 0, on: 'a', row: 0 }, { t: 1100, fig: 1, on: 'b', row: 1 },
         { t: 2000, fig: 2, on: 'c', row: 2 }, { t: 2900, fig: 3, on: 'd', row: 3 },
         { t: 3800, fig: 4, row: 4, fn: 'timewait' }, { t: 4100, moral: 1 },
+        { t: 5000, fn: 'again' },
       ],
     },
     {
       // The rule comes first, with the first picture; the two ✕ follow, and Mr. UDP has the
-      // last word (no moral after the joke).
+      // last word (no moral after the joke). "Click." lands 2.4 s after lesson 3's endless
+      // goodbye (Mr. Client's last "You too!"): the rude way to end a call. Mr. UDP's line prints
+      // with his picture, 1.65 s in, so on the home stage it is up about 3.75 s before the next
+      // page's wipe covers it (the lesson outlasts the stage: the joke is what the page leaves on).
       moral: T.m4,
       figs: [
         {
@@ -1195,10 +1238,10 @@
         { f: 's', label: 'RST', note: 'reset' },
         { f: 'c', label: 'UDP', dash: true }, { f: 'c', label: 'UDP', dash: true, lost: true }, { f: 'c', label: 'UDP', dash: true },
       ],
-      ms: 5000,
+      ms: TTY.embedded ? 6200 : 5000,
       steps: [
-        { t: 200, fig: 0, moral: 1 }, { t: 450, on: 'a', row: 0 }, { t: 1000, on: 'a2' },
-        { t: 2200, fig: 1 }, { t: 2450, on: 'b', row: 1 }, { t: 2800, row: 2 }, { t: 3150, row: 3 },
+        { t: 150, fig: 0, moral: 1 }, { t: 350, on: 'a', row: 0 }, { t: 650, on: 'a2' },
+        { t: 1650, fig: 1, on: 'b', row: 1 }, { t: 2000, row: 2 }, { t: 2350, row: 3 },
       ],
     },
   ];
@@ -1356,6 +1399,7 @@
   function apply(step, anim) {
     if (step.fig !== undefined) { printFig(figs[step.fig], anim); setCur(step.fig); }
     if (step.on) cue(step.on, anim);
+    if (step.old) $$(`.bub[data-k="${step.old}"]`, figsEl).forEach((el) => el.classList.add('old'));
     if (step.row !== undefined) seqPush(LESSONS[cur].rows[step.row], anim);
     if (step.nod) nod(anim);
     if (step.moral) printIn(moral, anim);
@@ -1364,6 +1408,8 @@
       hangBtn.hidden = hangHint.hidden = false;
       if (anim) { [hangBtn, hangHint].forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 })); twRun(); } else twSet(1);
     }
+    // the autoplay's own goodbye-again, unless the visitor has already pressed the button
+    if (step.fn === 'again' && !hangs) hangOnce(false, anim);
   }
 
   /* ---------- Sequence diagram ---------- */
@@ -1423,8 +1469,9 @@
     const xc = 6;
     const xs = W - 6;
     const planned = Math.max(LESSONS[cur].rows.length, seqRows.length);
-    const rowH = Math.max(27, Math.min(46, (H - 12) / planned));
-    const contentH = seqRows.length * rowH + 14;
+    // (a short box, as on the 358×396 phone stage, packs its rows tighter so the newest label clears the top)
+    const rowH = Math.max(H < 70 ? 22 : 27, Math.min(46, (H - 12) / planned));
+    const contentH = seqRows.length * rowH + (H < 70 ? 9 : 14);
     const top = Math.min(4, H - contentH);
     // Once Mr. Server starts saying goodbye again, the older arrows fade.
     const extras = seqRows.filter((r) => r.extra).length;
@@ -1487,38 +1534,46 @@
 
   /* ---------- Hang up: Mr. Server says goodbye once more ----------
      (He never heard the last "네네~", so he sends his FIN again; Mr. Client answers, and the
-     60 seconds start over. The first four times he says the same thing; then it wanders.) */
+     60 seconds start over.) The autoplay does it once by itself (lesson 3 at 5 s, the page's
+     punchline); every press of the button does it again, and Mr. Server finds a new goodbye
+     each time (T.byes, round and round). Mr. Client's answer never changes. */
   let hangs = 0;
-  function addBubble(who, text, cls = '') {
+  function addBubble(who, text, anim) {
     const box = $('.fig[data-id="tw"] .bubs', figsEl);
     if (!box) return;
     const p = document.createElement('p');
-    p.className = `bub ${who} rv on ${cls}`.trim();
+    p.className = `bub ${who} rv on`;
     p.innerHTML = say(text);
     box.append(p);
     const all = $$('.bub', box);
     while (all.length > 4) all.shift().remove();
     all.forEach((b, i) => b.classList.toggle('old', i < all.length - 2));
-    if (!TTY.reduce) p.animate([{ opacity: 0, transform: 'scale(.86) translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'ease-out' });
+    if (anim) p.animate([{ opacity: 0, transform: 'scale(.86) translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'ease-out' });
   }
-  hangBtn.addEventListener('click', () => {
+  const PRESS = [{ translate: '0 0', boxShadow: '2px 2px 0 #0078bf' }, { translate: '2px 2px', boxShadow: '0 0 0 #0078bf', offset: .3 }, { translate: '0 0', boxShadow: '2px 2px 0 #0078bf' }];
+  function hangOnce(byVisitor, anim = !TTY.reduce) {
     if (cur !== 2) return;
-    interacted();
-    const n = hangs++;
-    const bye = n < 4 ? T.byes[0] : T.byesLater[(n - 4) % T.byesLater.length];
+    if (byVisitor) interacted();
+    else if (anim) hangBtn.animate(PRESS, { duration: 380, easing: 'ease-out' });   // the page tries the button itself
+    const bye = T.byes[hangs++ % T.byes.length];
     const reply = () => {
       if (cur !== 2) return;
-      addBubble('c', T.byeAck);
-      seqPush({ f: 'c', label: 'ACK', extra: 1 }, !TTY.reduce);
+      addBubble('c', T.byeAck, anim);
+      seqPush({ f: 'c', label: 'ACK', extra: 1 }, anim);
       if (!tw) twMount();
-      if (TTY.reduce) { twSet(1); return; }
+      if (!anim) { twSet(1); return; }
       tw.turn.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(180deg)' }], { duration: 420, easing: 'ease-in-out' });
       twRun();
     };
-    addBubble('s', bye);
-    seqPush({ f: 's', label: 'FIN', note: 'again', extra: 1 }, !TTY.reduce);
-    if (TTY.reduce) reply(); else later(520, reply);
-  });
+    addBubble('s', bye, anim);
+    seqPush({ f: 's', label: 'FIN', note: 'again', extra: 1 }, anim);
+    if (anim) later(520, reply); else reply();
+  }
+  hangBtn.addEventListener('click', () => hangOnce(true));
+  // A mouse resting on the button or its hint is someone about to press it: stay on lesson 3.
+  [hangBtn, hangHint].forEach((el) => el.addEventListener('pointerenter', (e) => {
+    if (e.pointerType !== 'touch' && cur === 2 && !el.hidden) interacted();
+  }));
 
   /* ---------- Playing ---------- */
   let timers = [];
@@ -1577,17 +1632,24 @@
     ], { duration: total });
     coverFades = under.map((el) => el.animate([{ opacity: 0 }, { opacity: 0, offset: off(COVER_IN + COVER_HOLD) }, { opacity: 1 }], { duration: total }));
   }
-  function printCover() {
+  function printTitle() {
     const t = $('.cover .title');
     const s = $('.cover .sub');
     t.animate([{ opacity: 0, transform: 'translate(6px, -4px)' }, { opacity: 1, transform: 'none' }], { duration: 500, easing: EASE });
     if (s) s.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 200, fill: 'backwards' });
-    $('.cover').classList.add('go');
   }
 
   if (TTY.reduce) go(2, false);
   else render(0);
-  TTY.onShow(() => { if (!TTY.reduce) { printCover(); go(0); } });
+  // The opening measures the page (where the cover picture blows up to), so it waits for the
+  // fonts. On the home stage they are nearly always in by the time the page is shown; opened on
+  // its own, the title prints at once and the cover picture follows when the fonts are in.
+  TTY.onShow(() => {
+    if (TTY.reduce) return;
+    printTitle();
+    // (a tab pressed before that keeps its lesson)
+    TTY.drawn.then(() => { $('.cover').classList.add('go'); if (auto) go(0); });
+  });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
 })();

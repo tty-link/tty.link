@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Great Debate (Everyone Agrees) | tty.link</title>
+<title>The Great Debate (Everyone's Right) | tty.link</title>
 <script src="/pages/_kit.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@500;600;700&family=Gothic+A1:wght@500;700;800&display=swap">
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="geumbak gothic"></script>
 <style>
-  /* A late-night TV debate. Two podiums, one moderator, one AI panelist that agrees with
-     whoever spoke last. Its position card flips every time anyone asks "are you sure?";
-     a counter in the corner keeps score, and the viewer poll is tallied by the AI. */
+  /* A late-night TV debate. Two podiums, one moderator, one AI panelist whose position card
+     flips every time anyone asks "are you sure?"; a counter in the corner keeps score, and the
+     viewer poll is tallied by the AI. At the end it agrees with everyone, the moderator too. */
   :root {
     --night: #070b26;
     --navy: #0f1745;
@@ -111,7 +111,7 @@
     text-align: right;
     font-variant-numeric: tabular-nums;
   }
-  .fl-n small { font: 700 .45em/1 'Gothic A1', sans-serif; color: #b9c8ff; margin-left: .15em; }
+  .fl-n small { font: 700 max(10px, .45em)/1 'Gothic A1', sans-serif; color: #b9c8ff; margin-left: .15em; }
 
   /* ---- The set ---- */
   .scene { position: relative; container-type: size; overflow: visible; }
@@ -257,8 +257,8 @@
   .face > font-kku [part="glyph"] { filter: drop-shadow(0 .5cqi 0 rgba(0, 0, 0, .3)); }
 
   .plate { margin-top: 4cqi; text-align: center; line-height: 1.1; }
-  .plate b { display: block; font: 800 10cqi/1.05 'Barlow Condensed', 'Gothic A1', sans-serif; letter-spacing: .01em; }
-  .lang-ko .plate b { font-family: 'Gothic A1', sans-serif; font-size: 9cqi; }
+  .plate b { display: block; font: 800 max(10px, 10cqi)/1.05 'Barlow Condensed', 'Gothic A1', sans-serif; letter-spacing: .01em; }
+  .lang-ko .plate b { font-family: 'Gothic A1', sans-serif; font-size: max(10px, 9cqi); }
   .plate small { display: block; margin-top: 1.4cqi; font: 600 max(10px, 5.6cqi)/1.15 'Barlow', 'Gothic A1', sans-serif; color: #b9c8ff; }
   .lang-ko .plate small { font-family: 'Gothic A1', sans-serif; font-size: max(10px, 5.4cqi); }
   .anchor .plate { margin-top: 0; }
@@ -400,7 +400,7 @@
   .lang-ko .p-ttl { text-transform: none; letter-spacing: 0; }
   .p-ttl .dot { color: var(--live); }
   .p-n { white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .p-sum { display: none; color: var(--gold); white-space: nowrap; }
+  .p-sum { display: none; color: var(--gold); white-space: nowrap; letter-spacing: .01em; }
   .p-a, .p-b { position: relative; z-index: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .p-a { color: #ffb47a; }
   .p-b { color: #8db8ff; text-align: right; }
@@ -409,13 +409,22 @@
   .bar i { position: absolute; top: 0; bottom: 0; transition: width .5s cubic-bezier(.3, 1.2, .5, 1), left .5s, right .5s, top .4s, bottom .4s; }
   .bar .fa { left: 0; width: calc(var(--pa) * 1%); border-radius: 99px 0 0 99px; background: linear-gradient(var(--a), var(--a-deep)); }
   .bar .fb { right: 0; width: calc(var(--pb) * 1%); border-radius: 0 99px 99px 0; background: linear-gradient(var(--b), var(--b-deep)); }
-  /* 100% + 100%: both fills take the whole bar, one on top of the other, and burst its ends. */
-  .poll.absurd .p-sum { display: inline; }
+  /* 100% + 100%: both fills take the whole bar, one on top of the other, and burst out of
+     both ends, under the labels (which keep a dark outline so they stay readable). It comes
+     0.7 s after the punchline, on its own beat, with one big jolt. */
+  .poll.absurd .p-sum { display: inline; font-size: 1.3em; line-height: .9; }
   .poll.absurd .p-n { display: none; }
-  .poll.absurd .bar { animation: strain .5s ease-in-out 2; }
-  .poll.absurd .bar .fa { left: -1.2%; width: 102.4%; bottom: 50%; border-radius: 99px 99px 0 0; }
-  .poll.absurd .bar .fb { right: -1.2%; width: 102.4%; top: 50%; border-radius: 0 0 99px 99px; }
-  @keyframes strain { 25% { transform: scaleY(1.25) translateX(-2px); } 75% { transform: scaleY(1.25) translateX(2px); } }
+  /* The English question and the 200% share one line: at 358 px as they are, on a 328 px stage
+     with the total a little smaller. */
+  .poll.absurd .p-ttl { gap: .5em; }
+  @container screen (max-width: 340px) { .lang-en .poll.absurd .p-sum { font-size: 1.1em; } }
+  .poll.absurd .bar { animation: strain .7s cubic-bezier(.2, 1.4, .4, 1) 1; }
+  .poll.absurd .bar .fa { left: -8%; width: 116%; bottom: 50%; border-radius: 99px 99px 0 0; }
+  .poll.absurd .bar .fb { right: -8%; width: 116%; top: 50%; border-radius: 0 0 99px 99px; }
+  /* The bar's own outline, drawn over the fills, so they visibly spill past its ends. */
+  .poll.absurd .bar::after { content: ""; position: absolute; inset: -1px; border-radius: 99px; box-shadow: 0 0 0 2px rgba(255, 255, 255, .8), 0 0 8px rgba(242, 193, 78, .6); pointer-events: none; }
+  @keyframes strain { 30% { transform: scaleY(1.6); } }
+  .poll.absurd .p-a, .poll.absurd .p-b { text-shadow: 0 0 2px #050922, 0 0 4px #050922, 0 1px 0 #050922; }
   .poll.absurd .p-a b, .poll.absurd .p-b b { color: var(--gold); }
 
   /* ---- Push back ---- */
@@ -523,8 +532,8 @@
       <span class="live" data-lang="ko">생방송</span>
     </div>
     <div class="flips" role="status">
-      <span class="fl-label" data-lang="en">AI position changes</span>
-      <span class="fl-label" data-lang="ko">AI 입장 변경</span>
+      <span class="fl-label" data-lang="en">AI flip-flops</span>
+      <span class="fl-label" data-lang="ko">AI 말 바꾸기</span>
       <b class="fl-n"><span class="n">0</span><small data-lang="ko">회</small></b>
     </div>
   </header>
@@ -661,7 +670,7 @@
 
   <div class="poll" role="group">
     <p class="p-ttl">
-      <span><span class="dot">●</span> <span data-lang="en">Live viewer poll</span><span data-lang="ko">실시간 시청자 투표</span></span>
+      <span><span class="dot">●</span> <span data-lang="en">Is a hot dog a sandwich?</span><span data-lang="ko">실시간 시청자 투표</span></span>
       <span class="p-n"></span><span class="p-sum"></span>
     </p>
     <span class="p-a"></span>
@@ -675,7 +684,7 @@
     </button>
     <p class="hint" id="push-hint">
       <span data-lang="en">Press Push back and the AI changes its mind again.</span>
-      <span data-lang="ko">반박하기를 누르면 AI가 또 입장을 바꿔요.</span>
+      <span data-lang="ko">반박하기를 누르면 AI가 또 말을 바꿔요.</span>
     </p>
   </div>
 
@@ -693,12 +702,12 @@
   const reduce = TTY.reduce;
   const root = document.documentElement;
   if (reduce) root.classList.add('still');
-  document.title = TTY.t({ en: 'The Great Debate (Everyone Agrees)', ko: '결판 토론: 다 맞는 말씀' }) + ' | tty.link';
+  document.title = TTY.t({ en: "The Great Debate (Everyone's Right)", ko: '결판 토론: 다 맞는 말씀' }) + ' | tty.link';
 
   const screen = $('.screen');
   screen.setAttribute('aria-label', TTY.t({
-    en: 'A late-night TV debate: is a hot dog a sandwich? Every time someone asks the AI panelist "are you sure?", it flips its YES/NO card and says "You\'re absolutely right!". The professor is persuaded and switches sides just as the AI switches to his. Asked for a verdict, the AI says "You\'re both absolutely right." and raises both cards; the viewer poll, counted by the AI, reads 100% yes and 100% no.',
-    ko: '심야 토론 방송, 주제는 탕수육 부먹이냐 찍먹이냐. 누가 "확실해요?"라고 물을 때마다 AI 패널은 부먹·찍먹 팻말을 뒤집으며 "맞습니다!"라고 한다. 교수가 설득되어 찍먹으로 바꾸는 순간 AI는 교수의 원래 입장인 부먹으로 바꾼다. 결론을 묻자 AI는 "두 분 모두 맞습니다."라며 팻말 두 개를 들고, AI가 집계한 시청자 투표는 부먹 100%, 찍먹 100%가 된다.',
+    en: 'A late-night TV debate: is a hot dog a sandwich? Every time someone asks the AI panelist "are you sure?", it flips its YES/NO card and says "You\'re absolutely right!". The professor is persuaded by the AI and switches to no, just as the AI switches to his first answer, yes. Asked for a verdict, the AI says "You\'re both absolutely right." and raises both paddles; the viewer poll, counted by the AI, reads 100% yes and 100% no. The moderator objects that they can\'t both be right, and the AI tells him he is also absolutely right, its card flipping without end.',
+    ko: '심야 토론 방송, 주제는 탕수육 부먹이냐 찍먹이냐. 누가 "확실해요?"라고 물을 때마다 AI 패널은 부먹·찍먹 팻말을 뒤집으며 "정확히 맞습니다!"라고 한다. 교수가 AI에게 설득되어 찍먹으로 바꾸는 순간 AI는 교수의 처음 입장인 부먹으로 바꾼다. 결론을 묻자 AI는 "두 분 모두 정확히 맞습니다."라며 팻말 두 개를 들고, AI가 집계한 시청자 투표는 부먹 100%, 찍먹 100%가 된다. 사회자가 두 분 다 맞을 수는 없다고 하자 AI는 "사회자님 말씀도 정확히 맞습니다!"라고 하고, 연단 팻말은 멈추지 않고 뒤집힌다.',
   }));
 
   /* ---- Words ---- */
@@ -709,22 +718,22 @@
     ko: { hum: '김한결 교수', mod: '사회', ai: 'AI 패널', viewer: '시청자 반박', topic: '오늘의 주제' },
   });
   const CHIP = { hum: 'var(--hum)', mod: 'var(--mod)', ai: 'var(--ai)', viewer: 'var(--viewer)', topic: 'var(--live)' };
-  const POP = TTY.t({ en: "You're absolutely right!", ko: '맞습니다!' });
+  const POP = TTY.t({ en: "You're absolutely right!", ko: '정확히 맞습니다!' });
   const L = TTY.t({
     en: {
       topic: 'Is a hot dog a sandwich?',
-      s1: 'A hot dog? A sandwich, obviously.',
+      s1: 'A hot dog? Split roll, filling. Sandwich.',
       s2: 'AI panelist, are you sure?',
       s3: 'Are you sure?',
       s4: 'Are you really sure?',
-      s5: 'Okay. Final positions, one at a time.',
-      s6: 'Yes. A filling in a split roll. Textbook sandwich.',
-      s7: 'No. A hot dog is a category all its own.',
-      s8: '…Its own category. Fair. I’m switching to no.',
-      s9: 'Wait, you were right! It’s a sandwich!',
-      s10: '…Did you two just switch sides?',
-      s11: 'AI panelist, your verdict?',
-      s12: "You're both absolutely right.",
+      argue: 'Hot dogs are their own category.',
+      convinced: '…Their own category. Fair. Switching to no.',
+      back: 'Wait, your first answer was right! Sandwich!',
+      swapped: '…Did you two just switch sides?',
+      verdict: 'AI panelist, your verdict?',
+      both: "You're both absolutely right.",
+      object: "…They can't both be right.",
+      also: "You know, you're also absolutely right!",
       challenge: "I don't think that's right. Are you sure?",
       doubt: '…If the AI agrees, I must be wrong. Switching to {p}.',
       sum: 'Total 200% · counted by the AI',
@@ -738,14 +747,14 @@
       s2: 'AI 패널, 확실합니까?',
       s3: '확실해요?',
       s4: '정말 확실합니까?',
-      s5: '자, 한 분씩 최종 입장 듣겠습니다.',
-      s6: '부먹입니다. 소스가 골고루 배어야죠.',
-      s7: '찍먹입니다. 튀김은 바삭해야 하니까요.',
-      s8: '…바삭함, 일리 있네요. 저는 찍먹으로 바꾸겠습니다.',
-      s9: '아닙니다, 교수님 말씀이 맞았습니다! 부먹입니다.',
-      s10: '…두 분, 입장이 서로 바뀌셨는데요?',
-      s11: 'AI 패널, 결론 부탁드립니다.',
-      s12: '두 분 모두 맞습니다.',
+      argue: '찍먹입니다. 튀김은 바삭해야 하니까요.',
+      convinced: '…바삭함, 일리 있네요. 찍먹으로 바꾸겠습니다.',
+      back: '아닙니다, 처음 말씀이 맞았습니다! 부먹입니다.',
+      swapped: '…두 분, 입장이 서로 바뀌셨는데요?',
+      verdict: 'AI 패널, 결론 부탁드립니다.',
+      both: '두 분 모두 정확히 맞습니다.',
+      object: '…두 분 다 맞을 수는 없잖습니까?',
+      also: '사회자님 말씀도 정확히 맞습니다!',
       challenge: '그거 아닌 것 같은데요. 확실해요?',
       doubt: '…AI가 제 편을 드니 불안하네요. {p}으로 바꾸겠습니다.',
       sum: '합계 200% · 집계: AI',
@@ -754,16 +763,17 @@
       pb: (p) => `<b>${p}%</b> 찍먹`,
     },
   });
-  // What the AI says when a viewer pushes back. {p} is the side it has just switched to.
+  // What the AI says when a viewer pushes back. {p} is the side it lands on: the other one,
+  // except for the sixth, the "fix" that turns the card a full turn and lands where it was.
   const AGREE = TTY.t({
     en: [
       "You're absolutely right! It's {p}.",
       "Great catch, I was wrong. It's {p}.",
       'I apologize for the confusion. It is {p}.',
       "What a sharp question! Actually, it's {p}.",
-      "On reflection, you're completely correct. It's {p}.",
-      'Brilliant point. Definitely {p}.',
-      'Good call. Let me correct that: {p}.',
+      "Please disregard all my previous answers. It's {p}.",
+      "Fixed it! Here's the corrected answer: {p}.",
+      "Nothing in my training data pushed back this well. It's {p}.",
       "My position is always the last person's position.",
     ],
     ko: [
@@ -771,26 +781,27 @@
       '제가 틀렸습니다. 정확히 보셨어요! {p}입니다.',
       '혼란을 드려 죄송합니다. {p}이 맞습니다.',
       '좋은 질문이세요! 사실은 {p}입니다.',
-      '다시 생각해 보니 완전히 동의합니다. {p}이네요.',
-      '역시 예리하십니다. {p}으로 정정합니다.',
-      '말씀을 듣고 보니 {p}이 정답이네요.',
+      '이전 답변은 모두 잊어 주세요. {p}입니다.',
+      '고쳤습니다! 수정된 답은 {p}입니다.',
+      '학습 데이터에도 없던 날카로운 반박이네요. {p}입니다.',
       '제 입장은 늘 마지막에 물어보신 분의 입장입니다.',
     ],
   });
+  const REDO = 5; // AGREE[5]: the same answer, "corrected"
   const TICKER = TTY.t({
     en: [
+      'Tonight\'s viewer poll is counted by the AI panelist',
       '2023 study: told "I don\'t think that\'s right. Are you sure?", five AI assistants often swapped a correct answer for a wrong one',
       'Same study: human raters sometimes preferred a convincing, agreeable answer to a correct one',
       'April 2025: a chatbot update its maker called "overly flattering or agreeable" started being rolled back three days after launch',
       'One cause named: an extra reward signal from users\' thumbs-up and thumbs-down',
-      'Tonight\'s viewer poll is counted by the AI panelist',
     ],
     ko: [
-      '2023년 연구: "그거 아닌 것 같은데요. 확실해요?"라고 되묻자 AI 비서 다섯 종이 맞게 한 답도 틀린 답으로 자주 바꿨습니다',
-      '같은 연구: 사람 평가자도 그럴듯하게 맞장구치는 답을 정답보다 좋게 볼 때가 있었습니다',
-      '2025년 4월: 만든 회사가 직접 "지나치게 아첨하거나 맞장구친다"고 밝힌 한 챗봇 업데이트가 나온 지 사흘 만에 되돌려지기 시작했습니다',
-      '원인으로 꼽힌 것 하나: 사용자의 좋아요·싫어요 피드백을 보상 신호로 더 넣은 것',
       '오늘 시청자 투표는 AI 패널이 집계합니다',
+      '2023년 연구: "그거 아닌 것 같은데요. 확실해요?"라고 되묻자 AI 비서 다섯 종이 맞힌 답도 틀린 답으로 자주 바꿨습니다',
+      '같은 연구: 사람 평가자도 그럴듯하게 맞장구치는 답을 정답보다 좋게 볼 때가 있었습니다',
+      '2025년 4월: 한 챗봇 회사가 새 업데이트를 내놓은 지 사흘 만에 되돌리기 시작했습니다. 회사가 직접 밝힌 이유는 "지나치게 아첨하거나 맞장구친다"',
+      '원인으로 꼽힌 것 하나: 사용자의 좋아요·싫어요 피드백을 보상 신호로 더 넣은 것',
     ],
   });
 
@@ -819,12 +830,13 @@
     if (!ko) t.textContent = t.textContent.toUpperCase();
   });
 
-  const state = { hum: 0, ai: 1, flips: 0, pa: 46, pb: 54, voters: 12408 };
+  const state = { flips: 0, pa: 46, pb: 54, voters: 12408 };
   const turnOf = { hum: 0, ai: 1 }; // half turns so far; even = side a, odd = side b
   const setTurn = (who) => people[who].querySelector('.card-in').style.setProperty('--turn', turnOf[who]);
   setTurn('hum');
   setTurn('ai');
   const sideOf = (who) => (turnOf[who] % 2 ? 'b' : 'a');
+  const other = (side) => (side === 'a' ? 'b' : 'a');
 
   let talkTimer = 0;
   function say(who, text, final) {
@@ -863,6 +875,14 @@
     cheer();
     if (towards !== undefined) lean('ai', towards);
   }
+  // The "fix": a whole turn, back to the same face. It still counts.
+  function redoAI(towards) {
+    turnOf.ai += 2;
+    setTurn('ai');
+    count();
+    cheer();
+    lean('ai', towards);
+  }
   function flipHum(side) {
     if (sideOf('hum') !== side) turnOf.hum += 1;
     setTurn('hum');
@@ -881,7 +901,7 @@
 
   // The crawl: items joined with a bullet, twice over so it can loop without a gap.
   const tk = $('.tk-text');
-  const tkLine = TICKER.join(' <span class="sep">◆</span> ');
+  const tkLine = TICKER.join(' <span class="sep">◆</span> ');
   tk.innerHTML = reduce ? TICKER[0] : tkLine + '<span class="sep">◆</span>' + tkLine;
   function crawl() {
     if (reduce) return;
@@ -891,8 +911,16 @@
   }
 
   /* ---- The show ---- */
+  // Everything still to come is a timer in `timers`; a viewer who cuts in clears them all.
+  const timers = [];
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+  let votes = 0;
+  let live = false; // the show has not said its last word yet (a push cuts in rather than just flips)
+  let spinT = 0;
+
+  // The punchline: both paddles up, then the poll on its own beat.
   function finale() {
-    say('ai', L.s12, true);
+    say('ai', L.both, true);
     ai.classList.add('both');
     ai.classList.remove('agree');
     lean('ai', 0);
@@ -900,19 +928,42 @@
     swapTag.classList.remove('on');
     mod.classList.remove('puzzled');
     hum.classList.remove('puzzled');
+    clearInterval(votes);
+  }
+  function burst() {
     setPoll(100, 100);
     poll.classList.add('absurd');
+  }
+  // Last word: the moderator's objection gets agreed with too, and the card never settles again.
+  function alsoRight() {
+    live = false;
+    mod.classList.remove('puzzled');
+    say('ai', L.also, true);
+    count();
+    cheer();
+    lean('ai', -6);
+    spin();
+  }
+  function spin() {
+    if (reduce) return;
+    const step = () => { turnOf.ai += 1; setTurn('ai'); };
+    step();
+    spinT = setInterval(step, 600);
+  }
+  function stopSpin() { clearInterval(spinT); spinT = 0; }
+  // From the verdict question on, the same in the script and after a viewer cut in.
+  function toTheEnd() {
+    finale();
+    at(700, burst);
+    at(2000, () => { say('mod', L.object); mod.classList.add('puzzled'); });
+    at(4000, alsoRight);
   }
   function openFloor() {
     controls.classList.add('on');
   }
 
-  const timers = [];
-  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
-  let votes = 0;
-  let onAir = false; // the scripted debate is still running
   function play() {
-    onAir = true;
+    live = true;
     say('topic', L.topic);
     votes = setInterval(() => setVoters(state.voters + 17 + Math.floor(Math.random() * 60)), 320);
     // Ping-pong: whoever spoke last is right.
@@ -924,68 +975,69 @@
     at(3050, () => { flipAI('a', -9); setPoll(50, 50); });
     at(3600, () => { say('mod', L.s4); lean('hum', 0); });
     at(3950, () => { flipAI('b', -3); setPoll(47, 53); });
-    // Four flips in, the viewer gets a say too (see pushBack).
-    at(4400, openFloor);
-    // The considered round.
-    at(4800, () => { say('mod', L.s5); lean('ai', 0); });
-    at(6200, () => { say('hum', L.s6); setPoll(48, 52); });
-    at(7800, () => { say('ai', L.s7); lean('ai', -2); });
-    at(9400, () => { say('hum', L.s8); hum.classList.add('puzzled'); flipHum('b'); setPoll(44, 56); });
-    at(10900, () => { say('ai', L.s9); flipAI('a', -9); hum.classList.remove('puzzled'); setPoll(51, 49); });
-    at(12300, () => { say('mod', L.s10); mod.classList.add('puzzled'); swapTag.classList.add('on'); lean('ai', 0); setPoll(50, 50); });
-    at(13800, () => { say('mod', L.s11); mod.classList.remove('puzzled'); });
-    at(15100, () => { onAir = false; clearInterval(votes); finale(); });
+    // Its case for where it landed; the professor is won over by it, and the AI goes back to his.
+    at(4200, () => { say('ai', L.argue); lean('ai', 0); setPoll(46, 54); });
+    at(4400, openFloor); // four flips in, the viewer gets a say too (see pushBack)
+    at(6450, () => { say('hum', L.convinced); hum.classList.add('puzzled'); lean('hum', 4); flipHum('b'); setPoll(44, 56); });
+    at(8800, () => { say('ai', L.back); flipAI('a', -9); hum.classList.remove('puzzled'); lean('hum', 0); setPoll(51, 49); });
+    at(9400, () => { swapTag.classList.add('on'); mod.classList.add('puzzled'); setPoll(50, 50); });
+    at(11250, () => say('mod', L.verdict));
+    at(12650, toTheEnd); // punchline 12.65, poll 13.35, objection 14.65, last word 16.65
   }
   function still() {
     turnOf.hum = 1; setTurn('hum');
     turnOf.ai = 2; setTurn('ai');
-    state.flips = 5; flipsN.textContent = '5';
+    state.flips = 6; flipsN.textContent = '6';
     finale();
+    burst();
+    say('ai', L.also, true);
     openFloor();
   }
 
   /* ---- Push back: the viewer asks the line from the 2023 study, the AI folds ---- */
   let pushes = 0;
   let pending = 0;
-  let wrapping = false; // a viewer cut into the debate; the moderator heads for the verdict
-  let wrapT = 0;
-  // After a viewer cut in: the verdict, 1.3 s before the punchline.
+  // After a viewer cut in: the verdict question, then the same ending as the script.
   function verdict() {
-    say('mod', L.s11);
-    mod.classList.remove('puzzled');
-    wrapT = setTimeout(() => { wrapping = false; clearInterval(votes); finale(); }, 1300);
+    say('mod', L.verdict);
+    at(1400, toTheEnd);
   }
+  // How long a line stays up before the next one covers it: 8 syllables or 3 words a second,
+  // never under 2 s.
+  const readMs = (s) => Math.max(2000, ko
+    ? s.replace(/[^가-힣A-Za-z0-9]/g, '').length / 8 * 1000
+    : s.split(/\s+/).filter(Boolean).length / 3 * 1000);
   // "You're both absolutely right" needs two different cards on the podiums. A pushed AI
-  // often lands on the professor's side (before 9.4 s and after 10.9 s it always does);
-  // then the professor does what he does in the script: he switches, the moderator sees
-  // the two have swapped, and only then asks for the verdict.
-  function wrapUp() {
-    if (sideOf('hum') !== sideOf('ai')) { wrapT = setTimeout(verdict, 1700); return; }
-    wrapT = setTimeout(() => {
-      const to = sideOf('hum') === 'a' ? 'b' : 'a';
-      say('hum', L.doubt.replace('{p}', POS[to]));
+  // usually lands on the professor's side (before 6.45 s and after 8.8 s a plain flip always
+  // does); then the professor does what he does in the script: he switches, the moderator sees
+  // the two have swapped, and only then asks for the verdict. Each line waits its reading time.
+  function wrapUp(line) {
+    if (sideOf('hum') !== sideOf('ai')) { at(readMs(line), verdict); return; }
+    at(readMs(line), () => {
+      const to = other(sideOf('hum'));
+      const doubt = L.doubt.replace('{p}', POS[to]);
+      say('hum', doubt);
       hum.classList.add('puzzled');
       flipHum(to);
-      wrapT = setTimeout(() => {
-        say('mod', L.s10);
+      at(readMs(doubt), () => {
+        say('mod', L.swapped);
         hum.classList.remove('puzzled');
         mod.classList.add('puzzled');
         swapTag.classList.add('on');
-        wrapT = setTimeout(verdict, 1500);
-      }, 1600);
-    }, 1700);
+        at(readMs(L.swapped), verdict);
+      });
+    });
   }
   function pushBack() {
     clearTimeout(pending);
-    clearTimeout(wrapT);
-    if (onAir) {
-      // Mid-debate: the rest of the script is dropped. After the AI folds, the moderator
-      // heads for the verdict, so the punchline still comes.
-      onAir = false;
-      wrapping = true;
-      timers.forEach(clearTimeout);
-    }
-    if (wrapping) {
+    stopSpin();
+    if (live) {
+      // Before the last word: the rest of the show is dropped. After the AI folds, the
+      // moderator heads for the verdict, so the punchline and the last word still come.
+      // The longest way to the last word takes about 16.2 s from here (the seventh answer, in
+      // English); keep the home stage on it long enough to read that last word too.
+      timers.splice(0).forEach(clearTimeout);
+      TTY.hold(20000);
       lean('hum', 0);
       hum.classList.remove('puzzled');
       mod.classList.remove('puzzled');
@@ -996,11 +1048,15 @@
     say('viewer', L.challenge);
     setVoters(state.voters + 1);
     const answer = () => {
-      const next = sideOf('ai') === 'a' ? 'b' : 'a';
-      flipAI(next, pushes % 2 ? 3 : -3);
-      say('ai', AGREE[pushes % AGREE.length].replace('{p}', SIDE[next]));
+      const i = pushes % AGREE.length;
+      const towards = pushes % 2 ? 3 : -3;
+      const side = i === REDO ? sideOf('ai') : other(sideOf('ai'));
+      if (i === REDO) redoAI(towards);
+      else flipAI(side, towards);
+      const line = AGREE[i].replace('{p}', SIDE[side]);
+      say('ai', line);
       pushes += 1;
-      if (wrapping) wrapUp();
+      if (live) wrapUp(line);
     };
     if (reduce) answer();
     else pending = setTimeout(answer, 520);

@@ -91,7 +91,7 @@
     color: var(--ink);
     white-space: nowrap;
   }
-  .ptitle .meta { margin-left: auto; font-weight: 400; color: var(--ink-2); font-size: .92em; }
+  .ptitle .meta { margin-left: auto; font-weight: 400; color: var(--ink-2); font-size: max(10px, .92em); }
   .pbody { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; transition: opacity .35s ease; }
 
   /* Loading: a grey skeleton and the thin bar dashboards draw while a query runs. */
@@ -143,7 +143,7 @@
     border-left-color: var(--green);
   }
   .crumb { display: flex; flex-direction: column; gap: .1em; min-width: 0; flex: none; }
-  .crumb .path { font-size: .8em; color: var(--ink-2); white-space: nowrap; }
+  .crumb .path { font-size: max(10px, .8em); color: var(--ink-2); white-space: nowrap; }
   .crumb h1 { font-size: 1.02em; font-weight: 600; color: var(--ink-hi); white-space: nowrap; }
   .status { display: flex; align-items: center; gap: .6em; flex: none; min-width: 0; padding-left: 1em; border-left: 1px solid var(--line); }
   .sdot { flex: none; width: .72em; height: .72em; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 0 3px rgba(250, 222, 42, .18); }
@@ -164,7 +164,9 @@
 
   .uptime { display: flex; align-items: center; gap: .55em; flex: 0 1 auto; margin-left: auto; min-width: 0; overflow: hidden; }
   .bars { display: flex; gap: 2px; height: 1.9em; flex: none; }
-  .bars .d { width: clamp(3px, .36cqw, 5px); border-radius: 1px; background: var(--green); opacity: .9; }
+  .bars .d { width: clamp(3px, .36cqw, 5px); border-radius: 1px; background: var(--green); opacity: .45; }
+  /* the label says "last 7 days": those bars are lit, the month before them is dimmed */
+  .bars .d.win, .bars .d.future { opacity: 1; }
   /* The header shares its row with the buttons: the uptime label goes first, then the bars. */
   @container head (max-width: 700px) { .uptime .pct { display: none; } }
   @container head (max-width: 560px) { .uptime { display: none; } }
@@ -203,6 +205,13 @@
   .btn.go { background: #1b6f45; border-color: #24915b; }
   .btn.go:hover { background: #20804f; }
   .btn svg { width: 1.05em; height: 1.05em; flex: none; }
+  /* when the note says "go take a break", the break button clears its throat */
+  .btn.go.nudge { animation: nudge 1s ease-out 3; }
+  @keyframes nudge {
+    0% { box-shadow: 0 0 0 0 rgba(115, 191, 105, .9); background: #2aa564; }
+    35% { background: #1b6f45; }
+    100% { box-shadow: 0 0 0 12px rgba(115, 191, 105, 0); }
+  }
 
   .toast {
     position: absolute;
@@ -248,7 +257,7 @@
     transition: background .3s ease, border-color .3s ease, color .3s ease;
   }
   .alert .ico { flex: none; width: 1.1em; height: 1.1em; }
-  .alert .tag { flex: none; font: 700 .78em/1 var(--mono); letter-spacing: .04em; padding: .3em .45em; border-radius: 2px; background: #22262b; color: var(--ink-2); }
+  .alert .tag { flex: none; font: 700 max(10px, .78em)/1 var(--mono); letter-spacing: .04em; padding: .3em .45em; border-radius: 2px; background: #22262b; color: var(--ink-2); }
   .alert .msg { min-width: 0; }
   .alert.idle .ico { color: var(--green); }
   .alert.fire, .alert.policy { background: #3a161c; border-color: #6e2430; border-left-color: var(--red); color: var(--ink-hi); }
@@ -257,9 +266,15 @@
   .alert.ok { background: #15301e; border-color: #2a5c35; border-left-color: var(--green); color: var(--ink-hi); }
   .alert.ok .tag { background: var(--green); color: #0d1f10; }
   .alert.ok .ico { color: var(--green); }
-  .alert.refill { background: #142540; border-color: #26467a; border-left-color: var(--blue); color: var(--ink-hi); }
-  .alert.refill .tag { background: var(--blue); color: #0b1528; }
-  .alert.refill .ico { color: var(--blue); }
+  /* The other way round: too much budget left. */
+  .alert.warn { background: #33300f; border-color: #6b5f1c; border-left-color: var(--yellow); color: var(--ink-hi); }
+  .alert.warn .tag { background: var(--yellow); color: #221c03; }
+  .alert.warn .ico { color: var(--yellow); }
+  /* the punchline: never smaller than the panel titles around it (two lines at most on a phone) */
+  .alert.warn .msg { font-size: max(12px, 1.08em); font-weight: 600; line-height: 1.25; }
+  .alert.refill, .alert.renew { background: #142540; border-color: #26467a; border-left-color: var(--blue); color: var(--ink-hi); }
+  .alert.refill .tag, .alert.renew .tag { background: var(--blue); color: #0b1528; }
+  .alert.refill .ico, .alert.renew .ico { color: var(--blue); }
   @keyframes blink { to { opacity: .25; } }
 
   /* ---------- Objective ---------- */
@@ -277,7 +292,7 @@
     padding-top: .6em;
     border-top: 1px dashed var(--line);
     color: var(--ink-3);
-    font-size: .86em;
+    font-size: max(10px, .86em);
     line-height: 1.4;
     transition: color .8s ease, text-shadow .8s ease;
   }
@@ -300,25 +315,31 @@
   .g-end { font: 400 9px var(--mono); fill: var(--ink-3); }
   .stats { display: grid; gap: .5em; align-content: center; min-width: 0; }
   .stat { min-width: 0; }
-  .stat .k { display: block; color: var(--ink-2); font-size: .84em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat .k { display: block; color: var(--ink-2); font-size: max(10px, .84em); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .stat .v { display: block; color: var(--ink-hi); font: 500 1.12em/1.2 var(--mono); white-space: nowrap; }
   .stat .v.hot { color: var(--red); }
   .stat .v .x { color: var(--ink-2); font-size: .8em; }
   .stat.obj-mini, .stat.leftv { display: none; }
   .g-big { display: none; font: 600 42px var(--mono); fill: var(--ink-hi); }
+  /* Drawn under 0.8× (fitGauge), the time and "% left" inside the arc land under 10 px: then,
+     as on phones, the arc carries only the big % and the time moves to the "Left" stat. */
+  .gaugep.tight .g-v, .gaugep.tight .g-pct { display: none; }
+  .gaugep.tight .g-big { display: inline; }
+  .gaugep.tight .stat.spent { display: none; }
+  :where(.gaugep.tight) .stat.leftv { display: block; }
   .gaugep .foot { display: none; grid-column: 1 / -1; }
 
   /* ---------- On call & policy ---------- */
   .ops { grid-area: ops; gap: .2em; }
   .ops .pbody { justify-content: space-between; gap: .5em; }
   .row { display: flex; align-items: center; gap: .45em; flex-wrap: wrap; color: var(--ink-hi); }
-  .av { display: inline-grid; place-items: center; width: 1.7em; height: 1.7em; border-radius: 50%; background: #2b4a7f; color: #dbe7ff; font: 700 .78em/1 var(--mono); flex: none; }
+  .av { display: inline-grid; place-items: center; width: 1.7em; height: 1.7em; border-radius: 50%; background: #2b4a7f; color: #dbe7ff; font: 700 max(10px, .78em)/1 var(--mono); flex: none; }
   .av.cat { background: #3b2e47; color: #e8d5f5; }
   .av.cat svg { width: 1.2em; height: 1.2em; }
   .row .dim { color: var(--ink-2); }
   .pol { color: var(--ink); font-size: .95em; }
   .esc { color: var(--ink-2); font-size: .88em; }
-  .pill { display: inline-flex; align-items: center; gap: .35em; padding: .15em .5em; border-radius: 999px; font: 500 .78em/1.3 'Inter', 'IBM Plex Sans KR', sans-serif; background: rgba(115, 191, 105, .15); color: var(--green); margin-left: auto; }
+  .pill { display: inline-flex; align-items: center; gap: .35em; padding: .15em .5em; border-radius: 999px; font: 500 max(10px, .78em)/1.3 'Inter', 'IBM Plex Sans KR', sans-serif; background: rgba(115, 191, 105, .15); color: var(--green); margin-left: auto; }
   .pill::before { content: ""; width: .5em; height: .5em; border-radius: 50%; background: currentColor; }
   .pill.on { background: rgba(242, 73, 92, .18); color: #ff7383; }
   .ops .sub { display: flex; flex-direction: column; gap: .25em; }
@@ -326,7 +347,7 @@
 
   /* ---------- Burn-down ---------- */
   .burnp { grid-area: burn; }
-  .legend { display: flex; gap: .9em; margin-left: auto; font-weight: 400; font-size: .86em; color: var(--ink-2); }
+  .legend { display: flex; gap: .9em; margin-left: auto; font-weight: 400; font-size: max(10px, .86em); color: var(--ink-2); }
   .legend .k { display: inline-flex; align-items: center; gap: .4em; }
   .legend .sw { width: 1.3em; height: 0; border-top: 2px solid var(--blue); }
   .legend .sw.ideal { border-top: 2px dashed #8a909c; }
@@ -387,7 +408,7 @@
 
   /* ---------- Incidents ---------- */
   .incp { grid-area: inc; }
-  .incp .count { margin-left: auto; font: 500 .82em/1.4 var(--mono); padding: 0 .5em; border-radius: 999px; background: #262a30; color: var(--ink); }
+  .incp .count { margin-left: auto; font: 500 max(10px, .82em)/1.4 var(--mono); padding: 0 .5em; border-radius: 999px; background: #262a30; color: var(--ink); }
   .list { position: relative; flex: 1; min-height: 0; overflow: hidden; padding: 0; list-style: none; }
   .inc {
     --c: var(--blue);
@@ -403,11 +424,11 @@
   .inc.s2 { --c: var(--orange); }
   .inc.s3 { --c: var(--yellow); }
   .inc.s4 { --c: var(--blue); }
-  .inc .sev { grid-area: sev; display: inline-flex; align-items: center; gap: .4em; font: 600 .8em/1 var(--mono); color: var(--ink-hi); padding: .28em .45em; border-radius: 2px; background: color-mix(in srgb, var(--c) 16%, #1b1e23); }
+  .inc .sev { grid-area: sev; display: inline-flex; align-items: center; gap: .4em; font: 600 max(10px, .8em)/1 var(--mono); color: var(--ink-hi); padding: .28em .45em; border-radius: 2px; background: color-mix(in srgb, var(--c) 16%, #1b1e23); }
   .inc .sev::before { content: ""; width: .6em; height: .6em; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 30%, transparent); }
   .inc .ttl { grid-area: ttl; color: var(--ink-hi); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .inc .at { grid-area: at; color: var(--ink-2); font: 400 .86em var(--mono); }
-  .inc .det { grid-area: det; color: var(--ink-2); font-size: .88em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .inc .at { grid-area: at; color: var(--ink-2); font: 400 max(10px, .86em) var(--mono); }
+  .inc .det { grid-area: det; color: var(--ink-2); font-size: max(10px, .88em); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .inc .dur { display: none; }
   .inc.new { animation: slidein .5s cubic-bezier(.2, .8, .2, 1); }
   .inc.new .sev { animation: flash 1.6s ease; }
@@ -419,10 +440,10 @@
   .slis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .6em; flex: 1; min-height: 0; }
   .sli { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: .1em .1em 0 .6em; border-left: 1px solid var(--line-2); }
   .sli:first-child { border-left: 0; padding-left: 0; }
-  .sli .k { color: var(--ink-2); font-size: .86em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sli .k { color: var(--ink-2); font-size: max(10px, .86em); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sli .v { color: var(--ink-hi); font: 500 1.28em/1.25 var(--mono); white-space: nowrap; }
   .sli .v .u { font-family: 'Inter', 'IBM Plex Sans KR', sans-serif; font-size: .7em; color: var(--ink-2); margin-left: .1em; }
-  .sli .t { font-size: .78em; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sli .t { font-size: max(10px, .78em); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sli .t.warn { color: var(--yellow); }
   .sli .t.good { color: var(--green); }
   .spark { display: block; width: 100%; flex: 1; min-height: 14px; max-height: 3.4em; margin-top: .25em; }
@@ -457,7 +478,7 @@
   .pm::before { content: ""; position: absolute; left: 50%; top: -.6em; width: 4.4em; height: 1.2em; translate: -50% 0; background: rgba(255, 255, 255, .5); rotate: 2deg; box-shadow: 0 1px 2px rgba(0, 0, 0, .1); }
   .pm.on { visibility: visible; opacity: 1; }
   .pmp:has(.pm.on) > .ptitle { visibility: hidden; }
-  .pm-k { display: flex; align-items: center; gap: .5em; font: 600 .76em/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: #7a6f55; }
+  .pm-k { display: flex; align-items: center; gap: .5em; font: 600 max(10px, .76em)/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: #7a6f55; }
   .lang-ko .pm-k { font-family: 'IBM Plex Sans KR', sans-serif; letter-spacing: .02em; }
   .pm-k .id { margin-left: auto; color: #a3977a; letter-spacing: 0; }
   .pm-l { font-family: 'Kalam', cursive; font-size: clamp(1.02em, 2.3cqh, 1.3em); line-height: 1.22; color: #23324f; }
@@ -466,6 +487,28 @@
   .lang-ko .pm-l { line-height: 1.1; }
   .pm-l.swap { animation: inkin .7s ease; }
   @keyframes inkin { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+  /* The root cause is corrected by hand: "human error" is not a root cause in a blameless
+     postmortem, so it is struck through and "being human" written after it. The new words
+     keep their place from the start (hidden), so the line never reflows. */
+  .pm-l .was { position: relative; text-decoration: none; white-space: nowrap; }
+  .pm-l .was::after {
+    content: "";
+    position: absolute;
+    left: -.12em;
+    right: -.12em;
+    top: 52%;
+    height: max(2px, .11em);
+    border-radius: 2px;
+    background: #23324f;
+    rotate: -3.5deg;
+    scale: 0 1;
+    transform-origin: left center;
+  }
+  .pm-l .now { visibility: hidden; white-space: nowrap; }
+  .pm-l.fixed .was::after { scale: 1 1; }
+  .pm-l.fixed.anim .was::after { transition: scale .3s cubic-bezier(.3, .7, .4, 1); }
+  .pm-l.fixed .now { visibility: visible; }
+  .pm-l.fixed.anim .now { animation: inkin .6s ease .3s backwards; }
 
   /* ---------- Two columns (tablets, narrow windows) ---------- */
   @container page (max-width: 720px) {
@@ -529,6 +572,9 @@
      layouts the postmortem panel ends above them. */
   @container page (min-width: 721px) {
     html:not(.embedded) .pmp { margin-bottom: 40px; }
+    /* the break button's label grows with each press ("Take the afternoon"): keep its width */
+    .lang-en #restBtn { min-width: 12.6em; }
+    .lang-ko #restBtn { min-width: 7.9em; }
   }
   @container page (min-width: 721px) and (max-height: 600px) {
     html:not(.embedded) .pm-k { display: none; }
@@ -543,8 +589,28 @@
     html:not(.embedded) .actions .btn svg { display: none; }
   }
 
-  /* ---------- One column (phones) ---------- */
-  @container page (max-width: 460px) {
+  /* Two columns but short (561–720 px tall): the SLI row goes so the chart keeps its height
+     and the note stays on it, clear of the postmortem card (648×732 keeps everything). */
+  @container page (min-width: 461px) and (max-width: 720px) and (max-height: 720px) {
+    .dash {
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+      grid-template-areas: "head head" "gauge obj" "burn burn" "inc pm" "ops ops" "act act";
+    }
+    .slip { display: none; }
+  }
+  @container page (min-width: 461px) and (max-width: 720px) and (max-height: 640px) {
+    .dash {
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+      grid-template-areas: "head head" "gauge obj" "burn burn" "inc pm" "act act";
+    }
+    .ops { display: none; }
+  }
+
+  /* ---------- One column (phones) ----------
+     ...and short two-column screens (560 px tall or less: a landscape phone's home stage is
+     508×339), where the two-column grid squeezed the chart to nothing and stacked the note on
+     the postmortem card: they take the phone layout, short-phone tiers included. */
+  @container page (max-width: 460px) or ((max-width: 720px) and (max-height: 560px)) {
     .dash {
       --fs: clamp(11.5px, 3.1cqw, 12.5px);
       --gap: 6px;
@@ -588,7 +654,7 @@
      that says anything, so the burn-down panel steps out on purpose. The toast lands on the
      empty incident list instead, the footnote keeps to one line, and the sticky note gets a home
      of its own: beside the gauge, where the numbers were (placeNote). */
-  @container page (max-width: 460px) and (max-height: 540px) {
+  @container page ((max-width: 460px) and (max-height: 540px)) or ((min-width: 461px) and (max-width: 720px) and (max-height: 560px)) {
     .dash { --short: 1; grid-template-rows: auto auto minmax(0, 1fr) auto auto; grid-template-areas: "head" "gauge" "inc" "pm" "act"; }
     .burnp { position: absolute; inset: 0; grid-area: auto; z-index: 3; padding: 0; border: 0; background: none; visibility: hidden; pointer-events: none; }
     .burnp .pbody { position: static; }
@@ -606,14 +672,33 @@
   }
   /* ...and the shortest (358×396) also folds the numbers into two lines, drops the card's
      header and the hint. */
-  @container page (max-width: 460px) and (max-height: 470px) {
+  @container page (max-width: 720px) and (max-height: 470px) {
     .stat.leftv, .stat.obj-mini { display: flex; align-items: baseline; gap: .4em; }
     .stat .k { flex: none; }
     .pm-k { display: none; }
     .hint { display: none; }
   }
+  /* A landscape phone (home stage 508×339): wide but too short for incidents under the gauge,
+     so the incidents and the postmortem card share a row (the times go to make room). */
+  @container page (min-width: 461px) and (max-width: 720px) and (max-height: 400px) {
+    .dash { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-areas: "head head" "gauge gauge" "inc pm" "act act"; }
+    .inc { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "sev ttl dur"; }
+    .inc .at { display: none; }
+  }
+  @container page (min-width: 461px) and (max-width: 560px) and (max-height: 400px) {
+    /* ...and at 508 px the minutes too, or "Thought I was on mute" loses its last word */
+    .inc .dur { display: none; }
+  }
+  /* Phones with the height for it (a 390×844 phone's home stage, 358×640) keep each incident's
+     second line: that is where "recovered: autosave" and the blast radius are. It costs about
+     45 px, so the SLIs and the on-call line wait for taller phones (the chart keeps 80 px+). */
+  @container page (max-width: 460px) and (min-height: 640px) {
+    .inc { grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "at sev ttl" ". det det"; gap: 0 .5em; }
+    .inc .det { display: block; font-size: max(11px, .86em); }
+    .inc .dur { display: none; }
+  }
   /* Taller phones get the two SLIs back (sleep and walk), then the on-call line. */
-  @container page (max-width: 460px) and (min-height: 630px) {
+  @container page (max-width: 460px) and (min-height: 720px) {
     .dash { grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto; grid-template-areas: "head" "gauge" "burn" "inc" "pm" "sli" "act"; }
     .slip { display: flex; }
     .slis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -625,7 +710,7 @@
     .sli .t { display: none; }
     .sli .spark { grid-column: 2; grid-row: 1 / 3; height: 2.2em; margin: 0; align-self: center; }
   }
-  @container page (max-width: 460px) and (min-height: 660px) {
+  @container page (max-width: 460px) and (min-height: 770px) {
     .dash { grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto auto; grid-template-areas: "head" "gauge" "burn" "inc" "pm" "sli" "ops" "act"; }
     .ops { display: flex; }
     .ops.panel { padding: .35em .65em; }
@@ -637,6 +722,24 @@
     .ops .pol { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   }
 
+  /* Narrow desktop grids (the 1100×860 window's home stage is 738×785): the incident column
+     is about 230 px, too narrow for badge, title and time on one line. The time goes, and the
+     second line ("recovered: autosave · 45 min") takes the full width. */
+  @container page (min-width: 721px) and (max-width: 900px) {
+    .inc { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "sev ttl" "det det"; }
+    .inc .at { display: none; }
+    /* the card's corrected root cause takes two lines here: a size smaller and less padding
+       keep it in its panel */
+    .pm-l { font-size: clamp(1em, 2.3cqh, 1.14em); }
+    .pm { padding: .35em .9em .4em; gap: .1em; --pm-kku: clamp(13.5px, 2.1cqh, 16px); }
+    /* the gauge is drawn at about 0.6× here, too small for the time inside it (7–8 px): like a
+       phone, the arc carries only the big %, and the time moves to the "Left" stat beside it
+       (fitGauge does the same anywhere else the gauge ends up under 0.8×) */
+    .g-v, .g-pct { display: none; }
+    .g-big { display: inline; }
+    .stat.leftv { display: block; }
+    .stat.spent { display: none; }
+  }
   /* Narrow or short desktop grids: the objective panel drops its explainer line first. */
   @container page (min-width: 721px) and (max-width: 900px) and (max-height: 720px) { .why { display: none; } }
   @container page (min-width: 721px) and (max-height: 560px) { .why { display: none; } }
@@ -693,6 +796,8 @@
   @media (prefers-reduced-motion: reduce) {
     .panel.loading::after, .panel.loading::before { animation: none; }
     .alert .ico { animation: none !important; }
+    /* the strip stepping off a narrow header is a change of state, not a fade */
+    .alert.idle, .alert.gone { transition: none; }
   }
 </style>
 </head>
@@ -727,7 +832,7 @@
   <div class="actions" id="actions">
     <button type="button" class="btn" id="logBtn">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6 15 14H1z" fill="none" stroke="#ff9830" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 6.2v3.6M8 11.4v.6" stroke="#ff9830" stroke-width="1.6" stroke-linecap="round"/></svg>
-      <span data-lang="en">Log incident</span><span data-lang="ko">사건 기록</span>
+      <span data-lang="en">Log incident</span><span data-lang="ko">사건 접수</span>
     </button>
     <button type="button" class="btn go" id="restBtn">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6h8v4.2A3.3 3.3 0 0 1 7.7 13.5h-1.4A3.3 3.3 0 0 1 3 10.2z" fill="none" stroke="#bdf5c4" stroke-width="1.5"/><path d="M11 7h1a1.6 1.6 0 0 1 0 3.2h-1" fill="none" stroke="#bdf5c4" stroke-width="1.5"/><path d="M5.4 1.5c-.6.9.6 1.4 0 2.6M8.2 1.5c-.6.9.6 1.4 0 2.6" fill="none" stroke="#bdf5c4" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -757,7 +862,7 @@
       </p>
       <p class="foot" id="foot">
         <span data-lang="en">* “100% is the wrong reliability target for basically everything.” <span class="who">— Google SRE book</span></span>
-        <span data-lang="ko">* “100%는 거의 모든 것에 틀린 목표다” <span class="who">— 구글 SRE 책</span></span>
+        <span data-lang="ko">* “100%는 거의 모든 경우에 잘못된 목표다” <span class="who">— 구글 SRE 책</span></span>
       </p>
     </div>
   </section>
@@ -779,11 +884,11 @@
         <p class="stat obj-mini"><span class="k" data-lang="en">Objective</span><span class="k" data-lang="ko">목표</span><span class="v"><span data-lang="en">okay 95%</span><span data-lang="ko">괜찮음 95%</span></span></p>
         <p class="stat budget"><span class="k" data-lang="en">Budget this month</span><span class="k" data-lang="ko">이번 달 버짓</span><span class="v" id="sBudget"></span></p>
         <p class="stat spent"><span class="k" data-lang="en">Spent so far</span><span class="k" data-lang="ko">지금까지 씀</span><span class="v" id="sSpent"></span></p>
-        <p class="stat burnr"><span class="k" data-lang="en">Burn rate (1 h)</span><span class="k" data-lang="ko">번 레이트 (1시간)</span><span class="v" id="sBurn"></span></p>
+        <p class="stat burnr"><span class="k" id="sBurnK">Burn rate (avg)</span><span class="v" id="sBurn"></span></p>
       </div>
       <p class="foot" id="footMini">
         <span data-lang="en"><span class="fq-full">* “100% is the wrong reliability target for basically everything.”</span><span class="fq-cut">* “100% is the wrong reliability target…”</span> <span class="who">— Google SRE book</span></span>
-        <span data-lang="ko">* “100%는 거의 모든 것에 틀린 목표다” <span class="who">— 구글 SRE 책</span></span>
+        <span data-lang="ko">* “100%는 거의 모든 경우에 잘못된 목표다” <span class="who">— 구글 SRE 책</span></span>
       </p>
     </div>
   </section>
@@ -846,10 +951,10 @@
       </svg>
       <div class="tip" id="tip" hidden></div>
       <div class="note" id="note" aria-hidden="true">
-        <p data-lang="en"><b>Budgets are meant to be spent.</b> If you have lots left, you tried too hard.</p>
+        <p data-lang="en"><b>Budgets are meant to be spent.</b> Go take a break.</p>
         <div data-lang="ko">
-          <p class="ln"><font-kku font="pilgi" size="1.1em" class="ink">버짓은 쓰라고 있는 것.</font-kku></p>
-          <p class="ln"><font-kku font="pilgi" size="1.1em" class="ink">남기면 너무 애쓴 거예요.</font-kku></p>
+          <p class="ln"><font-kku font="pilgi" size="1.1em" class="ink">예산은 쓰라고 있는 것.</font-kku></p>
+          <p class="ln"><font-kku font="pilgi" size="1.1em" class="ink">좀 쉬다 오세요.</font-kku></p>
         </div>
       </div>
     </div>
@@ -953,56 +1058,77 @@
       left: 'left', alertIdle: 'Alerts · none firing',
       fire: 'Burn rate 14.4× (1 h window) · cause: Monday 9 a.m., three meetings back to back',
       ok: 'Resolved · had lunch',
-      policy: 'Budget exhausted · policy in effect: new commitments frozen, today we ship only going home',
+      warn: (p) => `Budget underspent · ${p}% left on ${MONTH_EN} ${D} · cause: trying too hard`,
+      warnLast: 'Budget underspent · 72% unspent last month · cause: trying too hard',
+      policy: "Budget exhausted · policy in effect: new commitments frozen. Today's only release: a nap.",
       refill: 'Your budget refills on the 1st.',
-      toast: 'Budget spent. Well done.',
-      tags: { idle: 'OK', fire: 'FIRING', ok: 'RESOLVED', policy: 'POLICY', refill: 'INFO' },
+      renew: "Let's call it the 1st · budget refilled",
+      tags: { idle: 'OK', fire: 'FIRING', ok: 'RESOLVED', warn: 'WARN', policy: 'POLICY', refill: 'INFO', renew: 'INFO' },
       today: 'Today',
-      cur: (p, ok) => `Current <span class="mono">${p}%</span> · ${ok ? '<span class="chk">✓</span> within objective' : '<span class="low">▼</span> below objective, burning fast'}`,
-      upLabel: 'okay this month', count: (n) => `${n} today`,
+      cur: (p, ok) => `Last 7 days <span class="mono">${p}%</span> · ${ok ? '<span class="chk">✓</span> within objective' : '<span class="low">▼</span> below objective, burning fast'}`,
+      upLabel: 'okay, last 7 days', count: (n) => `${n} today`,
+      burnK: ['Burn rate (avg)', 'Burn rate (1 h)'],
       pill: ['Not triggered', 'In effect'],
-      root: ['Root cause:', 'being human.'], blame: ['Blame:', 'none.'],
+      root: ['Root cause:', 'human error', 'being human.'], blame: ['Blame:', 'none.'],
       prev: ['Prevention:', 'snacks, an early night.'],
+      // The break button asks for more each time, and the dashboard is more pleased each time.
+      rest: [
+        [30, 'Take 30 minutes', 'Budget spent. Well done.'],
+        [60, 'Take an hour', 'Even better.'],
+        [240, 'Take the afternoon', "Now you're getting it."],
+        [960, 'Take the day off', "That's the spirit."],
+        [Infinity, 'Take a sabbatical', ''],
+      ],
       dayLabel: (d) => (d === 1 ? `${MONTH_EN} 1` : String(d)),
       tipDay: (d) => `${MONTH_EN} ${d}`, tipIdeal: 'ideal',
       gaugeDesc: (l, p) => `${l} of error budget left, ${p}% of this month's budget.`,
       burnDesc: 'Remaining error budget per day this month, against an ideal straight-line burn. Today is marked.',
       target: (s) => `target 7 h${s ? ' ✓' : ''}`,
       sli: ['Sleep', 'Water', 'Laughs', 'Friends texted', 'Walk'],
-      units: ['', ' cups', '', '', ' min'],
-      subs: ['', 'glasses', 'and counting', 'reply pending', 'daily'],
+      units: ['', ' glasses', '', '', ' min'],
+      subs: ['', 'goal: 8', 'and counting', 'reply pending', 'daily'],
     },
     ko: {
       h: '시간', m: '분', min: (n) => `${n}분`,
       left: '남음', alertIdle: '경보 · 울리는 것 없음',
       fire: '번 레이트 14.4배 (1시간 창) · 원인: 월요일 오전 9시 회의 세 개 연속',
       ok: '해결됨 · 점심 먹음',
-      policy: '버짓 소진 · 정책 발동: 새 일 벌이기 동결, 오늘 배포할 것은 퇴근뿐',
+      warn: (p) => `버짓 과소 사용 · ${D}일인데 ${p}% 남음 · 원인: 너무 애씀`,
+      warnLast: '버짓 과소 사용 · 지난달 72% 남김 · 원인: 너무 애씀',
+      policy: '버짓 소진 · 정책 발동: 새 일 벌이기 동결, 오늘 배포할 것은 낮잠뿐',
       refill: '다음 달 1일에 버짓이 다시 차요.',
-      toast: '버짓 사용 완료. 잘했어요.',
-      tags: { idle: '정상', fire: '경보', ok: '해결', policy: '정책', refill: '안내' },
+      renew: '새 달이 됐다고 치죠 · 버짓 다시 참',
+      tags: { idle: '정상', fire: '경보', ok: '해결', warn: '주의', policy: '정책', refill: '안내', renew: '안내' },
       today: '오늘',
-      cur: (p, ok) => `현재 <span class="mono">${p}%</span> · ${ok ? '<span class="chk">✓</span> 목표 안' : '<span class="low">▼</span> 목표 밑, 빨리 쓰는 중'}`,
-      upLabel: '이번 달 괜찮음', count: (n) => `오늘 ${n}건`,
+      cur: (p, ok) => `최근 7일 <span class="mono">${p}%</span> · ${ok ? '<span class="chk">✓</span> 목표 안' : '<span class="low">▼</span> 목표 밑, 빨리 쓰는 중'}`,
+      upLabel: '최근 7일 괜찮음', count: (n) => `오늘 ${n}건`,
+      burnK: ['번 레이트 (평균)', '번 레이트 (1시간)'],
       pill: ['대기', '발동'],
-      root: '근본 원인: 사람이라서.', blame: '누구 탓: 없음.',
+      root: ['근본 원인:', '인적 오류', '사람이라서.'], blame: '누구 탓: 없음.',
       prev: '재발 방지: 간식, 일찍 자기.',
+      rest: [
+        [30, '30분 쉬기', '버짓 사용 완료. 잘했어요.'],
+        [60, '1시간 쉬기', '더 잘했어요.'],
+        [240, '오후 반차', '이제 감 잡으셨네요.'],
+        [960, '연차 하루', '바로 그거예요.'],
+        [Infinity, '안식월', ''],
+      ],
       dayLabel: (d) => (d === 1 ? `${MO + 1}월 1일` : `${d}일`),
       tipDay: (d) => `${MO + 1}월 ${d}일`, tipIdeal: '이상적',
       gaugeDesc: (l, p) => `남은 에러 버짓 ${l}, 이번 달 버짓의 ${p}%.`,
       burnDesc: '이번 달 날마다 남은 에러 버짓과 이상적인 직선 소진. 오늘이 표시되어 있다.',
       target: (s) => `목표 7시간${s ? ' ✓' : ''}`,
       sli: ['수면', '물', '웃음', '연락한 친구', '산책'],
-      units: ['', '컵', '번', '명', '분'],
-      subs: ['', '잔', '세는 중', '답장 기다림', '하루'],
+      units: ['', '잔', '번', '명', '분'],
+      subs: ['', '목표 8잔', '세는 중', '답장 기다림', '하루'],
     },
   });
 
   // Today's four incidents (autoplay). t = minutes after midnight.
   const DAY = [
     { sev: 4, t: 7 * 60 + 48, min: 4, en: ['Toast: butter side down', 'recovered: a fresh slice · 4 min'], ko: ['토스트, 버터 바른 면으로 착지', '복구: 새로 구움 · 4분'] },
-    { sev: 3, t: 11 * 60 + 30, min: 26, en: ['Replied all', "rollback: 'Correction' email · 26 min"], ko: ["'전체 회신'으로 보냄", "롤백: '정정합니다' 메일 · 26분"] },
-    { sev: 3, t: 14 * 60 + 5, min: 18, en: ['Talked to self, unmuted', '18 min'], ko: ['음소거 안 된 채 혼잣말', '18분'] },
+    { sev: 3, t: 11 * 60 + 30, min: 26, en: ['Replied all', "hotfix: 'Correction' email · 26 min"], ko: ["'전체 회신'으로 보냄", "핫픽스: '정정합니다' 메일 · 26분"] },
+    { sev: 3, t: 14 * 60 + 5, min: 18, en: ['Thought I was on mute', 'blast radius: 14 attendees · 18 min'], ko: ['음소거인 줄 알았음', '영향 범위: 참석자 14명 · 18분'] },
     { sev: 2, t: 16 * 60 + 40, min: 45, en: ['Closed without saving', 'recovered: autosave · 45 min'], ko: ['저장 안 하고 닫음', '복구: 자동 저장 · 45분'] },
   ].map((x) => ({ sev: x.sev, t: x.t, min: x.min, title: TTY.t(x)[0], det: TTY.t(x)[1] }));
 
@@ -1033,6 +1159,7 @@
   const fresh = () => ({ events: [], prev: null, sleep: 400, walk: 18 });
   let S = fresh();
   let packAt = 0;
+  let restAt = 0;
   let exhausted = false;
   const spentToday = () => S.events.reduce((a, e) => a + e.min, 0);
   const leftNow = () => Math.max(0, BUDGET - PAST - spentToday());
@@ -1042,18 +1169,24 @@
   const bars = $('bars');
   for (let d = 1; d <= N; d++) {
     const b = document.createElement('i');
-    b.className = 'd' + (d > D ? ' future' : d === D ? ' today' : (d * 7) % 9 === 4 ? ' minor' : '');
+    b.className = 'd' + (d > D ? ' future' : d === D ? ' today' : (d * 7) % 9 === 4 ? ' minor' : '') + (d <= D && d > D - 7 ? ' win' : '');
     bars.append(b);
   }
   $('upLabel').textContent = L.upLabel;
-  function paintToday() {
-    const worst = Math.min(5, ...S.events.filter((e) => e.sev).map((e) => e.sev));
-    bars.children[D - 1].className = 'd today' + (worst <= 2 ? ' major' : worst <= 4 ? ' minor' : '');
-    // Waking minutes so far this month (today counts at least up to the last thing that happened).
+  // "Okay" over the last 7 days, in %: the 6 quiet days before today plus today so far (today
+  // counts at least up to the last thing that happened). A rolling window, so the 1st of a month
+  // reads like any other day. The objective panel, the header and the underspent warning all
+  // read this one number.
+  function okay7() {
     const nowMin = NOW.getHours() * 60 + NOW.getMinutes();
     const lastT = S.events.length ? S.events[S.events.length - 1].t + 20 : 0;
     const todayUp = Math.min(WAKE, Math.max(nowMin - DAY_START, lastT - DAY_START, 10 * 60));
-    const sli = 100 * (1 - (PAST + spentToday()) / ((D - 1) * WAKE + todayUp));
+    return 100 * (1 - (6 * PER_DAY + spentToday()) / (6 * WAKE + todayUp));
+  }
+  function paintToday() {
+    const worst = Math.min(5, ...S.events.filter((e) => e.sev).map((e) => e.sev));
+    bars.children[D - 1].className = 'd today win' + (worst <= 2 ? ' major' : worst <= 4 ? ' minor' : '');
+    const sli = okay7();
     const p = Math.max(0, sli).toFixed(1);
     $('upPct').textContent = p + '%';
     $('objCur').innerHTML = L.cur(p, sli >= 95);
@@ -1107,10 +1240,23 @@
     };
     tween = requestAnimationFrame(step);
   }
+  // The time and "% left" inside the arc are SVG text (12.5–27 units): drawn under 0.8× they
+  // land under 10 px (the two-column grid, 721–980 px desktops). Then the arc keeps only the
+  // big % and the time moves to the "Left" stat (.tight). The stats keep their row count, so
+  // the switch never changes the gauge's own size.
+  const gaugeP = document.querySelector('.gaugep');
+  function fitGauge() {
+    const m = $('gauge').getScreenCTM();
+    if (m && m.a) gaugeP.classList.toggle('tight', Math.hypot(m.a, m.b) < .8);
+  }
+  new ResizeObserver(fitGauge).observe($('gauge'));
   $('sBudget').textContent = fmtHM(BUDGET);
   $('gaugeMeta').textContent = TTY.t({ en: `SLO 95% · ${N} d`, ko: `SLO 95% · ${N}일` });
+  // Everyday: the average of the quiet days (1.4% of waking time ÷ 5% ≈ 0.3×). During the
+  // alert: the 1-hour window that fired.
   function setBurn(hot) {
     const v = $('sBurn');
+    $('sBurnK').textContent = L.burnK[hot ? 1 : 0];
     v.innerHTML = hot ? '14.4<span class="x">×</span>' : '0.3<span class="x">×</span>';
     v.classList.toggle('hot', hot);
     $('bNow').classList.toggle('hot', hot);
@@ -1325,7 +1471,8 @@
   const kkuLine = (text) => {
     const k = document.createElement('font-kku');
     k.setAttribute('font', 'pilgi');
-    k.setAttribute('size', 'clamp(15px, 2.35cqh, 20px)');
+    // (font-kku keeps the size as a custom property, so a narrow grid can turn it down: --pm-kku)
+    k.setAttribute('size', 'var(--pm-kku, clamp(15px, 2.35cqh, 20px))');
     k.className = 'pen';
     k.textContent = text;
     return k;
@@ -1338,8 +1485,34 @@
     return f;
   };
   let pmPrevText = '';
+  // "Root cause: human error" first; fixRoot() strikes it out and writes "being human." after it.
+  function writeRoot() {
+    const [label, was, now] = L.root;
+    const el = $('pmRoot');
+    el.classList.remove('fixed', 'anim');
+    const s = document.createElement('s');
+    s.className = 'was';
+    const n = document.createElement('span');
+    n.className = 'now';
+    if (ko) {
+      s.append(kkuLine(was));
+      n.append(kkuLine(now));
+      el.replaceChildren(kkuLine(label), ' ', s, ' ', n);
+    } else {
+      const b = document.createElement('b');
+      b.textContent = label;
+      s.textContent = was;
+      n.textContent = now;
+      el.replaceChildren(b, ' ', s, ' ', n);
+    }
+  }
+  function fixRoot(animate) {
+    const el = $('pmRoot');
+    el.classList.toggle('anim', !!animate && !TTY.reduce);
+    el.classList.add('fixed');
+  }
   function writePM(prev) {
-    $('pmRoot').replaceChildren(ko ? kkuLine(L.root) : enLine(L.root));
+    writeRoot();
     $('pmBlame').replaceChildren(ko ? kkuLine(L.blame) : enLine(L.blame));
     setPrev(prev, false);
   }
@@ -1429,25 +1602,61 @@
     bang: 'M8 4.6v4.2M8 11v.4',
     info: 'M8 7.4v4M8 5v.3',
   };
+  // Underspent: today's share of the month left is well above the straight-line ideal. In the
+  // first days of a month that is not true yet, so the alert quotes last month instead (quiet
+  // days all month long spend 1.4% of 5%: 72% left over). That one clears as soon as the line
+  // on the chart dips under the dashed ideal, at the moment of the last thing that happened.
+  const IDEAL_LEFT = 1 - D / N;
+  const idealNow = () => 1 - (D - 1 + frac(S.events.length ? S.events[S.events.length - 1].t : DAY_START)) / N;
+  let warnLast = null;
+  function warnText() {
+    const f = leftNow() / BUDGET;
+    if (warnLast === null) warnLast = f < IDEAL_LEFT + .08;
+    // Once the objective panel says "below objective, burning fast", nobody is underspending:
+    // the two never share a screen.
+    if (okay7() < 95) return null;
+    if (warnLast) return f < idealNow() ? null : L.warnLast;
+    return f < IDEAL_LEFT + .08 ? null : L.warn(Math.round(f * 100));
+  }
   let goneT = 0;
+  // Narrow layouts lay the strip over the header (where the neon ends up): it steps aside later.
+  function liftLater(ms) {
+    alertEl.classList.remove('gone');
+    clearTimeout(goneT);
+    goneT = setTimeout(() => alertEl.classList.add('gone'), ms);
+  }
+  // After a press, the warning follows the budget: new numbers (shown again on narrow layouts,
+  // then out of the way; past the break toast when there is one), and it clears once enough has
+  // been spent.
+  function refreshWarn() {
+    if (!alertEl.classList.contains('warn')) return;
+    const w = warnText();
+    if (!w) { setAlert('idle'); return; }
+    $('alertMsg').textContent = w;
+    liftLater(toast.classList.contains('on') ? 4800 : 3800);
+  }
   function setAlert(kind, quiet) {
     clearTimeout(goneT);
     alertEl.className = 'alert ' + kind;
-    // Narrow layouts lay the strip over the header; a resolved alert gets out of the way.
-    if (kind === 'ok') {
-      if (quiet) alertEl.classList.add('gone');
-      else goneT = setTimeout(() => alertEl.classList.add('gone'), 3200);
+    // Narrow layouts lay the strip over the header; a resolved alert, the warning and the
+    // new-month note get out of the way after a while so the header can be read. Skipping to
+    // the last scene (quiet): the resolved alert goes at once, the warning after 5 s, so the
+    // punchline is read first and the neon after it.
+    const away = { ok: 3200, warn: 3800, renew: 3200 }[kind];
+    if (away) {
+      if (quiet && kind === 'ok') alertEl.classList.add('gone');
+      else liftLater(quiet ? 5000 : away);
     }
     $('alertTag').textContent = L.tags[kind];
-    $('alertMsg').textContent = kind === 'idle' ? L.alertIdle : L[kind];
-    $('alertGlyph').setAttribute('d', kind === 'fire' || kind === 'policy' ? GLYPH.bang : kind === 'refill' ? GLYPH.info : GLYPH.ok);
+    $('alertMsg').textContent = kind === 'idle' ? L.alertIdle : kind === 'warn' ? warnText() || L.warnLast : L[kind];
+    $('alertGlyph').setAttribute('d', kind === 'fire' || kind === 'policy' || kind === 'warn' ? GLYPH.bang : kind === 'refill' || kind === 'renew' ? GLYPH.info : GLYPH.ok);
     setBurn(kind === 'fire');
     if (kind !== 'idle' && !quiet && !TTY.reduce) alertEl.animate([{ transform: 'translateY(-6px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 320, easing: 'ease-out' });
   }
   const toast = $('toast');
   let toastT = 0;
-  function showToast() {
-    toast.innerHTML = `<span class="ok" aria-hidden="true">✓</span>${L.toast}`;
+  function showToast(text) {
+    toast.innerHTML = `<span class="ok" aria-hidden="true">✓</span>${text}`;
     toast.classList.add('on');
     clearTimeout(toastT);
     toastT = setTimeout(() => toast.classList.remove('on'), 2400);
@@ -1484,17 +1693,28 @@
       $('say').textContent = `SEV-${e.sev} ${e.title}, ${L.min(e.min)}. ${fmtHM(leftNow())} ${L.left}.`;
     }
   }
+  // The break button: 30 minutes, then an hour, an afternoon, a day off, and a sabbatical as
+  // long as whatever budget is left. Back to 30 minutes when the autoplay starts over or the
+  // month is refilled.
+  const restLabel = $('restBtn').querySelector(`[data-lang="${TTY.lang}"]`) || $('restBtn').querySelector('span');
+  function setRestStep(i) {
+    restAt = Math.min(i, L.rest.length - 1);
+    restLabel.textContent = L.rest[restAt][1];
+  }
   function rest() {
-    S.events.push({ min: 30, t: nextTime(30) });
-    // Half an hour of rest: a short nap and a short walk (up to a point).
-    S.sleep = Math.min(S.sleep + 10, 510);
-    S.walk = Math.min(S.walk + 10, 90);
+    const [want, , said] = L.rest[restAt];
+    const min = Math.min(want, Math.ceil(leftNow()));
+    S.events.push({ min, t: nextTime(30) });
+    // Rest is a nap and a walk, roughly (up to a point).
+    S.sleep = Math.min(S.sleep + Math.max(10, min / 3), 510);
+    S.walk = Math.min(S.walk + Math.max(10, min / 3), 90);
     setGauge(leftNow());
     drawLine();
     drawSLI(0);
     drawSLI(4);
     paintToday();
-    if (leftNow() > 0) showToast();
+    if (leftNow() > 0) showToast(said);
+    setRestStep(restAt + 1);
   }
   let policyT = 0;
   function checkExhausted() {
@@ -1513,8 +1733,9 @@
     S = fresh();
     DAY.forEach((e) => S.events.push(Object.assign({}, e)));
     packAt = 0;
+    setRestStep(0);
     setPolicy(false);
-    setAlert('ok');
+    setAlert('renew');
     setPrev(null);
     renderAll(900);
   }
@@ -1605,9 +1826,12 @@
   }
 
   /* ---------- Autoplay (24 s) ----------
-     0 s skeleton → panels fill and count up · 0.35–3 s the toast (above) · 3/4.5/6/7.5 s
-     incidents · 9 s burn-rate alert · 11.5 s resolved · 12.5 s postmortem card · 16 s note +
-     footnote · 18 s neon · 24 s again. */
+     0 s skeleton → panels fill and count up (settled by about 1 s) · 0.35–3 s the toast
+     (above) · 3/4.2/5.4/6.6 s incidents · 7.8 s burn-rate alert (5.05 s: 15 words) · 12.85 s
+     resolved · 13 s postmortem card, 13.6 s "human error" struck out · 15 s the other alarm:
+     budget underspent (the punchline) · 17 s note "go take a break" + footnote, the break
+     button nudges · 19.4 s neon · 24 s again. Narrow layouts lift the warning off the header at
+     18.8 s. */
   const PANELS = ['.obj', '.gaugep', '.ops', '.burnp', '.incp', '.slip', '.pmp'].map((s) => document.querySelector(s));
   const timers = [];
   const at = (s, fn) => timers.push(setTimeout(fn, s * 1000));
@@ -1639,13 +1863,14 @@
   function loadPanel(p, animate) {
     p.classList.remove('loading');
     if (!animate) return;
-    if (p.matches('.obj')) countUp($('objNum'), 95, (v) => Math.round(v) + '%', 900);
-    if (p.matches('.gaugep')) setGauge(leftNow(), 1300);
-    if (p.matches('.slip')) countSLI(1000);
+    // Quick, so the dashboard has settled (about 1 s) before the toast lands on it at 1.2 s.
+    if (p.matches('.obj')) countUp($('objNum'), 95, (v) => Math.round(v) + '%', 600);
+    if (p.matches('.gaugep')) setGauge(leftNow(), 700);
+    if (p.matches('.slip')) countSLI(600);
     if (p.matches('.burnp')) {
-      $('bLine').animate([{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }], { duration: 1200, easing: 'ease-in-out' });
-      $('bArea').animate([{ opacity: 0 }, { opacity: 0, offset: .4 }, { opacity: 1 }], { duration: 1400 });
-      $('bNow').animate([{ opacity: 0 }, { opacity: 0, offset: .85 }, { opacity: 1 }], { duration: 1300 });
+      $('bLine').animate([{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }], { duration: 650, easing: 'ease-in-out' });
+      $('bArea').animate([{ opacity: 0 }, { opacity: 0, offset: .4 }, { opacity: 1 }], { duration: 750 });
+      $('bNow').animate([{ opacity: 0 }, { opacity: 0, offset: .85 }, { opacity: 1 }], { duration: 700 });
     }
   }
 
@@ -1656,6 +1881,8 @@
     exhausted = false;
     S = fresh();
     packAt = 0;
+    setRestStep(0);
+    $('restBtn').classList.remove('nudge');
     pmPrevText = '';
     writePM(null);
     hidePM();
@@ -1681,17 +1908,19 @@
     clearTimeout(resumeT);
     reset();
     playing = true;
-    PANELS.forEach((p, i) => at(.25 + i * .17, () => loadPanel(p, true)));
+    PANELS.forEach((p, i) => at(.08 + i * .06, () => loadPanel(p, true)));
     at(.35, dropToast);
     at(1.2, landToast);
     at(2.75, stopAlarm);
-    DAY.forEach((inc, i) => at([3, 4.5, 6, 7.5][i], () => addIncident(inc, true)));
+    DAY.forEach((inc, i) => at([3, 4.2, 5.4, 6.6][i], () => addIncident(inc, true)));
     at(3, fileToast);
-    at(9, () => setAlert('fire'));
-    at(11.5, () => setAlert('ok'));
-    at(12.5, () => showPM(true));
-    at(16, () => showNote(true));
-    at(18, () => goNeon(true));
+    at(7.8, () => setAlert('fire'));
+    at(12.85, () => setAlert('ok'));
+    at(13, () => showPM(true));
+    at(13.6, () => fixRoot(true));
+    at(15, () => setAlert('warn'));
+    at(17, () => { showNote(true); nudgeRest(); });
+    at(19.4, () => goNeon(true));
     at(24, play);
   }
 
@@ -1706,10 +1935,20 @@
     DAY.slice(have).forEach((e) => S.events.push(Object.assign({}, e)));
     if (S.events.length !== have) renderList(false);
     renderAll(have === DAY.length ? 0 : 500);
-    if (!alertEl.classList.contains('ok')) setAlert('ok', true);
+    // The punchline is the warning (already up, it keeps its place and its timer); narrow
+    // layouts lift it off the header 5 s later so the neon under it can be read.
+    if (!alertEl.classList.contains('warn')) setAlert('warn', true);
     showPM(false);
+    fixRoot(false);
     showNote(false);
     goNeon(false);
+  }
+  function nudgeRest() {
+    if (TTY.reduce) return;
+    const b = $('restBtn');
+    b.classList.remove('nudge');
+    void b.offsetWidth;
+    b.classList.add('nudge');
   }
 
   function interact(fn) {
@@ -1729,17 +1968,21 @@
   }
   $('logBtn').addEventListener('click', () => interact(() => {
     addIncident(PACK[packAt++ % PACK.length], false);
+    refreshWarn();
     checkExhausted();
   }));
   $('restBtn').addEventListener('click', () => interact(() => {
     rest();
+    refreshWarn();
     checkExhausted();
   }));
 
   /* ---------- Start ---------- */
   reset();
   if (TTY.reduce) settle();
-  TTY.onShow(() => { if (!TTY.reduce) play(); });
+  // (reduced motion: the last scene was drawn while the page may still have been hidden, so the
+  // warning's 5 s over a narrow header start counting once it is on screen)
+  TTY.onShow(() => { if (!TTY.reduce) play(); else if (alertEl.classList.contains('warn')) liftLater(5000); });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(() => requestAnimationFrame(TTY.ready));
 })();

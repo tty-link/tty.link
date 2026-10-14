@@ -190,8 +190,15 @@
   .lbl { display: flex; flex-direction: column; min-width: 0; }
   .nm { font-weight: 700; font-size: 1em; line-height: 1.15; }
   .sub { color: var(--soft); font-size: max(11px, .82em); line-height: 1.2; }
+  /* The cloud word for the line, shown beside the name only where the second line is hidden. */
+  .key { display: none; color: var(--soft); font-size: max(11px, .82em); font-weight: 400; white-space: nowrap; }
+  .key::before { content: "· "; }
   .amt { display: flex; flex-direction: column; align-items: flex-end; font-weight: 600; white-space: nowrap; }
   .amt .was { color: var(--soft); font-weight: 400; font-size: max(11px, .8em); }
+  /* Under line 8's amount. When the amount is the last column, it starts under the amount's left
+     edge, inside the pen loop (flush right, the loop's right end runs through it). */
+  .amt .more { align-self: flex-start; color: var(--pen); font: 700 max(11px, .78em)/1.2 'Barlow', 'Nanum Gothic', sans-serif; white-space: nowrap; }
+  @container page (min-width: 560px) { .amt .more { align-self: auto; } }
   .prev { color: var(--soft); text-align: right; white-space: nowrap; }
   .delta { text-align: right; white-space: nowrap; font-size: .92em; }
   .delta.up { color: var(--red); }
@@ -209,7 +216,7 @@
     line-height: 1.35;
   }
   .row.same .tag { display: inline-block; }
-  .row.same .sub { display: none; }
+  .row.same .sub, .row.same .key { display: none; }
   /* Row 8 before it prints: still looking itself up. */
   .row .wait { display: none; color: var(--soft); font-weight: 700; }
   .row.pending .wait { display: block; }
@@ -228,12 +235,12 @@
     position: absolute;
     right: .4em;
     top: -.2em;
-    z-index: 3;
+    z-index: 7;   /* above the phone card, which sits just over line 8 */
     color: var(--pen);
     font: 700 1.05em/1 'Caveat', 'Nanum Gothic', cursive;
     pointer-events: none;
   }
-  .lang-ko .plus { font: 700 .9em/1 'Nanum Gothic', sans-serif; }
+  .lang-ko .plus { font: 700 max(11px, .9em)/1 'Nanum Gothic', sans-serif; }
 
   /* ---------- Notices / memo (wide: a box on the bill; phone: a card next to the line) ---------- */
   .panel {
@@ -267,6 +274,11 @@
   .pn-memo { display: grid; gap: .25em; }
   .mh { color: var(--green); font-weight: 800; font-size: max(11px, .84em); letter-spacing: .02em; }
   .mt { font-size: 1em; line-height: 1.4; }
+  /* The punchline and its tag line read bigger than the 11 px rows on a phone (_rules 5). */
+  .pn-memo.punch .mt { font-size: max(13px, 1.15em); }
+  .foot { color: var(--soft); font-size: max(11px, .9em); line-height: 1.35; }
+  .foot.tagline { color: var(--ink); font-size: 1em; font-weight: 700; }
+  .foot b { color: var(--pen); }
   .pen { display: flex; align-items: center; gap: .3em; color: var(--pen); }
   .pen .p-en { font: 700 1.6em/1 'Caveat', cursive; }
   .pen font-kku { color: var(--pen); }
@@ -292,7 +304,7 @@
   .late b { color: var(--ink); font-weight: 600; }
   .fine { font-size: max(11px, .92em); }
   .apply { grid-area: apply; display: flex; align-items: center; gap: .5em; justify-self: start; font-weight: 700; font-size: max(11px, .9em); cursor: pointer; }
-  .apply small { font-weight: 400; color: var(--soft); }
+  .apply small { font-weight: 400; color: var(--soft); font-size: max(11px, .86em); }
   .apply input { position: absolute; opacity: 0; width: 1px; height: 1px; }
   .box { position: relative; flex: none; width: 1.25em; height: 1.25em; border: 1.5px solid var(--ink); background: #fff; }
   .box svg { position: absolute; inset: -30% -20% -10% -10%; width: 140%; height: 140%; overflow: visible; }
@@ -361,6 +373,8 @@
     .panel.memo .pn-notice { display: none; }
     .panel.memo .pn-memo { display: grid; }
     .mt { font-size: .98em; }
+    .pn-memo.punch .mt { font-size: .98em; }
+    .pn-memo.punch .tagline { font-size: 1em; }
     .pen { margin-left: -2.7em; }
     .parrow { display: block; }
     .band {
@@ -390,6 +404,9 @@
     .paper { gap: .45em .8em; padding: .65em .7em .55em; }
     .lbl { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: .45em; }
     .sub { display: none; }
+    .key { display: inline; }
+    .amt .more { display: none; }   /* no second lines here; the tag line under the punchline says it */
+    .plot { height: clamp(56px, 16cqh, 150px); }
     .tag { margin-top: 0; }
     .amt { flex-direction: row; align-items: baseline; gap: .4em; }
     .hint { margin-bottom: .15em; }
@@ -456,7 +473,7 @@
     </header>
 
     <section class="chart" aria-labelledby="ch-title">
-      <h2 class="ch-title" id="ch-title"><span data-lang="en">Usage history</span><span data-lang="ko">전월 대비</span></h2>
+      <h2 class="ch-title" id="ch-title"><span data-lang="en">Usage history</span><span data-lang="ko">관리비 추이</span></h2>
       <div class="plot">
         <div class="ticks"></div>
         <ol class="bars" aria-hidden="true"></ol>
@@ -481,15 +498,15 @@
       <h2 class="pn-title"><span data-lang="en">Notices from the office</span><span data-lang="ko">관리사무소 알림</span></h2>
       <ol class="pn-notice" data-lang="en">
         <li>Please turn the lights off in empty units over the weekend.</li>
-        <li>Moving in is free. Moving out is charged by the box.</li>
         <li>Empty parking spaces are billed too.</li>
-        <li>Please put out only the trash you need.</li>
+        <li>Trash is billed by the bag. Please don't bag every little thing.</li>
+        <li>Check your balance in the app anytime, as often as you like.</li>
       </ol>
       <ol class="pn-notice" data-lang="ko">
         <li>주말에는 빈집 소등을 부탁드립니다.</li>
-        <li>들어오실 땐 무료, 이사 나가실 땐 이사비가 있습니다.</li>
         <li>비어 있는 주차 자리도 자리값이 나옵니다.</li>
         <li>음식물 쓰레기는 꼭 필요한 만큼만 내놓아 주세요.</li>
+        <li>관리비는 앱에서 언제든, 몇 번이든 조회하실 수 있습니다.</li>
       </ol>
       <div class="pn-memo"></div>
     </aside>
@@ -506,7 +523,7 @@
       <label class="apply">
         <input type="checkbox" id="weekend">
         <span class="box" aria-hidden="true"><svg viewBox="0 0 20 20"><path pathLength="1" d="M3 10.5l4.5 5L18 1.5"/></svg></span>
-        <span data-lang="en">Lights-out weekends <small>(stop the server Sat–Sun)</small></span>
+        <span data-lang="en">Lights-out weekends <small>(server off Sat–Sun)</small></span>
         <span data-lang="ko">주말 소등 신청 <small>(주말엔 서버 끄기)</small></span>
       </label>
     </footer>
@@ -589,64 +606,86 @@
   const AXIS = 450;                                           // the chart's top, in dollars
 
   // ---------- The lines ----------
+  // Each line: the apartment word, the cloud one (second line; on short phones, where second lines
+  // are hidden, `key` stands beside the name instead), and the office's note.
   const LINES = [
     { icon: 'bulb',
       en: ['Electricity', 'dev server, on all weekend'],
       ko: ['세대 전기료', '개발 서버 · 주말 내내 켜 둠'],
-      memo: { en: 'The server stayed on all weekend with nobody home. A running server is billed by the hour or the second. Lights on in an empty flat.',
+      key: { en: 'dev server', ko: '개발 서버' },
+      memo: { en: 'The server stayed on all weekend with nobody home. A running server is billed by the hour or the second. Lights on in an empty unit.',
               ko: '아무도 없는 주말에도 서버가 켜져 있었어요. 켜져 있는 동안은 시간(또는 초) 단위로 요금이 쌓입니다. 빈집에 불 켜 두신 셈이에요.' } },
     { icon: 'room',
       en: ['Vacant room', "stopped server's 500 GB disk"],
       ko: ['빈방 관리비', '꺼 둔 서버의 디스크 500GB'],
-      memo: { en: 'A stopped server still pays for the disk attached to it. Rent on the room you never use.',
-              ko: '서버를 꺼도 붙어 있는 디스크는 요금이 나와요. 안 쓰는 방도 월세는 냅니다.' } },
+      key: { en: 'idle disk', ko: '꺼 둔 디스크' },
+      memo: { en: 'A stopped server still pays for the disk attached to it. Still paying for the room you never use.',
+              ko: '서버를 꺼도 붙어 있는 디스크는 요금이 나와요. 안 쓰는 방도 관리비는 평수대로 나옵니다.' } },
     { icon: 'truck',
       en: ['Move-out fee', '1.2 TB out · moving in is free'],
       ko: ['이사비', '나간 데이터 1.2TB · 들어온 건 무료'],
-      memo: { en: 'Data coming in from the internet is generally free. Data going out is charged per GB. Moving in: free. Moving out: movers.',
+      key: { en: 'egress', ko: '나간 데이터' },
+      memo: { en: 'Data coming in from the internet is generally free. Data going out is charged per GB. Moving in: free. Moving out: you pay the movers.',
               ko: '인터넷에서 들어오는 데이터는 대개 무료, 나가는 데이터는 GB마다 요금이에요. 들어올 땐 공짜, 나갈 땐 이사비.' } },
     { icon: 'gate',
       en: ['Front gate toll', 'NAT gateway · per hour + per GB'],
       ko: ['공동 현관 통행료', 'NAT 게이트웨이 · 시간당 + GB당'],
+      key: { en: 'NAT', ko: 'NAT' },
       memo: { en: 'Private servers go out to the internet through a NAT gateway. It bills for every hour it is open, and again for every GB that passes.',
               ko: '사설망 서버들이 밖으로 나갈 때 지나는 문(NAT 게이트웨이)은 열어 둔 시간만큼, 그리고 지나간 데이터만큼 따로 받습니다.' } },
     { icon: 'park',
       en: ['Parking', '6 public IPv4 spaces · 4 empty'],
       ko: ['주차 자리', '공인 IPv4 6개 · 4개는 빈자리'],
+      key: { en: 'IPv4', ko: '공인 IPv4' },
       memo: { en: 'Public IPv4 addresses are billed by the hour, in use or not. An empty space is still a space.',
               ko: '공인 IPv4 주소는 쓰든 안 쓰든 시간당 요금이 붙어요. 비어 있는 주차 자리도 자리값입니다.' } },
     { icon: 'boxes',
       en: ['Storage locker', '212 snapshots · oldest from 2019'],
       ko: ['지하 창고', '스냅숏 212개 · 2019년 것부터'],
+      key: { en: 'snapshots', ko: '스냅숏' },
       memo: { en: 'Snapshots (disk backups) are billed by size every month until someone deletes them. Boxes from 2019, still down there.',
               ko: '스냅숏(디스크 백업)은 누가 지울 때까지 용량만큼 매달 나가요. 2019년 짐이 아직 창고에 있어요.' } },
     { icon: 'bin',
       en: ['Trash pickup', '400 GB of logs · level DEBUG'],
       ko: ['음식물 쓰레기', '로그 400GB · 레벨 DEBUG'],
+      key: { en: 'DEBUG logs', ko: 'DEBUG 로그' },
       memo: { en: "Logs are billed per GB taken in. At DEBUG level every 'got here' line goes out with the trash.",
-              ko: "로그는 받아 쌓는 양(GB)만큼 요금이에요. 레벨이 DEBUG면 '여기 지나감' 같은 줄까지 전부 내놓게 됩니다." } },
+              ko: "로그는 받아 쌓는 양(GB)만큼 요금이에요. 레벨이 DEBUG면 '여기1', '여기2' 같은 줄까지 전부 내놓게 됩니다." } },
     { icon: 'look',
-      en: ['Statement lookup fee', ''],
+      en: ['Balance inquiry fee', ''],
       ko: ['관리비 조회 수수료', ''],
-      memo: { en: 'Looking at the bill on screen is free, but some providers charge for every cost-API request. The numbers only change a few times a day.',
-              ko: '요금 화면은 무료지만, 비용 조회 API는 물을 때마다 요금을 받는 곳이 있어요. 요금 숫자는 하루에 몇 번만 바뀝니다.' } },
+      key: { en: 'bill-alert bot', ko: '요금 알림 봇' },
+      memo: { en: 'Looking at the bill on screen is free, but some providers charge for every cost-API request. The alert bot called it every minute.',
+              ko: '요금 화면은 무료지만, 비용 조회 API는 물을 때마다 요금을 받는 곳이 있어요. 알림 봇이 그 API를 1분마다 불렀습니다.' } },
   ];
+  // Line 8's second line is the bot: one lookup for every minute of the month. The office notes
+  // read after line 8 printed are counted on their own, under the amount, so "every minute" stays true.
   const lookupSub = () => TTY.t({
-    en: `cost API, every minute · ${count(MINUTES + extraLookups)}×`,
-    ko: `비용 API 1분마다 조회 · ${count(MINUTES + extraLookups)}회`,
+    en: `bill-alert bot · every minute · ${count(MINUTES)}×`,
+    ko: `요금 알림 봇 · 1분마다 · ${count(MINUTES)}회`,
   });
+  const notesMore = (x) => TTY.t({ en: `+${count(x)} note${x > 1 ? 's' : ''}`, ko: `메모 +${count(x)}회` });
   const STAYS = { en: 'billed anyway', ko: '꺼도 그대로' };
   const PUNCH = {
     pen: { en: '#1 this month', ko: '이번 달 1위' },
-    text: { en: 'You checked it every minute. The numbers change a few times a day.',
-            ko: '1분마다 조회하셨습니다. 요금 숫자는 하루에 몇 번만 바뀝니다.' },
+    text: { en: 'You checked your balance every minute to avoid bill shock. It changes a few times a day.',
+            ko: '요금 폭탄 막으시려고 1분마다 조회하셨습니다. 요금은 하루에 몇 번만 바뀝니다.' },
   };
+  // The tag beat: reading the punchline note was one more lookup (n = that lookup's number).
+  const TAG = (n) => TTY.t({ en: `Reading this note just now was lookup <b>${n}</b>.`,
+                             ko: `방금 이 메모를 보신 것이 <b>${n}번째</b> 조회입니다.` });
+  // Under every note opened after line 8 printed: the notes come from the cost API too.
+  const FOOT = { en: '※ This note came from the cost API too. +1 lookup.', ko: '※ 이 메모도 비용 API로 불러왔습니다. 조회 +1회.' };
   const WEEKEND_MEMO = {
     on: { title: { en: 'Lights-out weekends: on', ko: '주말 소등 신청 완료' },
-          text: { en: 'Electricity, move-out, gate and trash went down. The empty room, the parking, the locker and the lookups bill you anyway.',
-                  ko: '전기료·이사비·통행료·음식물은 줄었어요. 빈방·주차 자리·창고·조회 수수료는 꺼도 그대로 나옵니다.' } },
+          text: { en: 'The server now takes weekends off. The room, the parking and the locker bill you anyway.',
+                  ko: '서버는 이제 주말에 쉽니다. 빈방·주차 자리·창고는 꺼도 그대로 나옵니다.' } },
+    // Once line 8 is on the bill, the box can say what it could not before.
+    onLater: { title: { en: 'Lights-out weekends: on', ko: '주말 소등 신청 완료' },
+               text: { en: "The server now takes weekends off. The lookups don't.",
+                       ko: '서버는 이제 주말에 쉽니다. 조회는 주말에도 1분마다 합니다.' } },
     off: { title: { en: 'Lights-out weekends: off', ko: '주말 소등 해지' },
-           text: { en: 'The server stays on over the weekend again.', ko: '주말에도 서버가 다시 켜져 있습니다.' } },
+           text: { en: 'The server works weekends again.', ko: '서버가 다시 주말에도 출근합니다.' } },
   };
 
   // Build the rows.
@@ -655,16 +694,16 @@
     const li = document.createElement('li');
     li.innerHTML = `<button type="button" class="row" aria-describedby="hint">
         <svg class="ico" aria-hidden="true"><use href="#i-${line.icon}"/></svg>
-        <span class="lbl"><b class="nm">${name}</b><small class="sub">${sub}</small><span class="tag">${TTY.t(STAYS)}</span>
+        <span class="lbl"><b class="nm">${name}</b><small class="sub">${sub}</small><span class="key">${TTY.t(line.key)}</span><span class="tag">${TTY.t(STAYS)}</span>
           ${i === 7 ? `<span class="wait">${TTY.t({ en: 'looking up', ko: '조회 중' })}<span class="dots"><i>.</i><i>.</i><i>.</i></span></span>` : ''}</span>
-        <span class="amt mono"><s class="was" hidden></s><span class="now"></span></span>
+        <span class="amt mono"><s class="was" hidden></s><span class="now"></span>${i === 7 ? '<small class="more" hidden></small>' : ''}</span>
         <span class="prev mono"></span>
         <span class="delta mono"></span>
         ${i === 7 ? '<svg class="ring" aria-hidden="true"><path pathLength="1"/></svg>' : ''}
       </button>`;
     rowsEl.append(li);
     const btn = li.firstElementChild;
-    return { btn, now: $('.amt .now', btn), was: $('.was', btn), prev: $('.prev', btn), delta: $('.delta', btn), sub: $('.sub', btn) };
+    return { btn, now: $('.amt .now', btn), was: $('.was', btn), prev: $('.prev', btn), delta: $('.delta', btn), sub: $('.sub', btn), more: $('.more', btn) };
   });
   rows[7].sub.textContent = lookupSub();
 
@@ -716,6 +755,8 @@
       r.delta.className = 'delta mono' + (d > .005 ? ' up' : d < -.005 ? ' down' : '');
     });
     rows[7].sub.textContent = lookupSub();
+    rows[7].more.hidden = !extraLookups;
+    rows[7].more.textContent = extraLookups ? notesMore(extraLookups) : '';
     const tot = $('[data-total]');
     tot.innerHTML = ko ? `${won(total).toLocaleString('ko-KR')}<span class="won">원</span>` : money(total);
     $('[data-late]').textContent = money(total * 1.02);
@@ -802,12 +843,15 @@
   function shootBar(run) {
     nowFill.style.transform = 'none';
     const gray = Math.max(...HISTORY) / AXIS / (total / AXIS);   // where the gray months end, as a share of this bar
+    // Up to the gray months' height, a hair over and back (it has arrived), a long stop as if this
+    // were a normal month, then it goes.
     barAnim = nowFill.animate([
       { transform: 'scaleY(0)', easing: 'cubic-bezier(.2, .7, .3, 1)' },
-      { transform: `scaleY(${gray * 1.04})`, offset: .26 },
-      { transform: `scaleY(${gray * 1.04})`, offset: .46, easing: 'cubic-bezier(.6, 0, 1, .5)' },
+      { transform: `scaleY(${gray * 1.08})`, offset: .21, easing: 'ease-in-out' },
+      { transform: `scaleY(${gray * 1.04})`, offset: .27 },
+      { transform: `scaleY(${gray * 1.04})`, offset: .56, easing: 'cubic-bezier(.6, 0, 1, .5)' },
       { transform: 'scaleY(1)' },
-    ], { duration: 1600 });
+    ], { duration: 2000 });
     const tick = () => {
       if (run !== runId || !barAnim) return;
       const top = nowFill.getBoundingClientRect().top;
@@ -820,7 +864,10 @@
   }
 
   // ---------- Notes from the office ----------
+  // What the open note is: a line's index (0-7), the checkbox note (-2), nothing (-1), or the
+  // punchline note (PUNCH_NOTE). The punchline note sits over line 8 but is not line 8's note.
   let memoFor = -1;
+  const PUNCH_NOTE = 8;
   const isWide = () => wideMQ.matches;
   function showMemo(html, anchor, where) {
     memoEl.innerHTML = html;
@@ -851,30 +898,51 @@
   }
   function closeMemo() {
     memoFor = -1;
+    memoEl.classList.remove('punch');
     rows.forEach((r) => r.btn.classList.remove('sel'));
     panel.classList.remove('memo', 'open', 'above', 'below');
     panel.style.cssText = '';
   }
   const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  function memoHtml(title, text, pen) {
+  const tagHtml = (n) => `<p class="mt foot tagline">${TAG(count(n))}</p>`;
+  function memoHtml(title, text, pen, foot = '') {
     const penHtml = !pen ? '' : `<p class="pen"><svg class="parrow" viewBox="0 0 60 24" aria-hidden="true"><path d="M58 9 C 44 4, 26 6, 5 15 M5 15 L 15 8.5 M5 15 L 16 18.5"/></svg>${
-      ko ? `<font-kku font="pilgi" size="clamp(16px, 1.7em, 26px)">${pen}</font-kku>` : `<span class="p-en">${pen}</span>`}</p>`;
-    return `${title ? `<p class="mh">${esc(title)}</p>` : ''}<p class="mt">${esc(text)}</p>${penHtml}`;
+      ko ? `<font-kku font="pilgi" size="clamp(22px, 2em, 30px)">${pen}</font-kku>` : `<span class="p-en">${pen}</span>`}</p>`;
+    return `${title ? `<p class="mh">${esc(title)}</p>` : ''}<p class="mt">${esc(text)}</p>${foot}${penHtml}`;
   }
-  function rowMemo(i) {
+  let memoFoot = false;      // the open line note was fetched (and counted) after line 8 printed
+  let memoAt = -Infinity;    // when the visitor last opened a note or ticked the box
+  let punchNote = 0;         // the lookup number that reading the punchline note became (0: not yet)
+  function rowMemo(i, foot = memoFoot) {
     rows.forEach((r, k) => r.btn.classList.toggle('sel', k === i));
     memoFor = i;
+    memoFoot = foot;
+    memoEl.classList.remove('punch');
     const title = TTY.t({ en: 'Office note · ', ko: '관리사무소 메모 · ' }) + TTY.t(LINES[i])[0];
-    showMemo(memoHtml(title, TTY.t(LINES[i].memo)), rows[i].btn, i <= 3 ? 'below' : 'above');
+    showMemo(memoHtml(title, TTY.t(LINES[i].memo), '', foot ? `<p class="foot">${TTY.t(FOOT)}</p>` : ''),
+      rows[i].btn, i <= 3 ? 'below' : 'above');
   }
   function punchMemo() {
     rows.forEach((r) => r.btn.classList.remove('sel'));
-    memoFor = 7;
-    showMemo(memoHtml('', TTY.t(PUNCH.text), TTY.t(PUNCH.pen)), rows[7].btn, 'above');
+    memoFor = PUNCH_NOTE;
+    memoEl.classList.add('punch');
+    showMemo(memoHtml('', TTY.t(PUNCH.text), TTY.t(PUNCH.pen), punchNote ? tagHtml(punchNote) : ''), rows[7].btn, 'above');
+  }
+  // "+1" rising off line 8, and its amount ticking over.
+  function bumpLookup() {
+    if (TTY.reduce) return;
+    const plus = document.createElement('span');
+    plus.className = 'plus';
+    plus.textContent = TTY.t({ en: '+1', ko: '+1회' });
+    rows[7].btn.append(plus);
+    plus.animate([{ transform: 'translateY(4px)', opacity: 0 }, { transform: 'translateY(-6px)', opacity: 1, offset: .3 }, { transform: 'translateY(-14px)', opacity: 0 }],
+      { duration: 1100, easing: 'ease-out' }).finished.then(() => plus.remove());
+    rows[7].now.animate([{ color: 'var(--pen)' }, { color: 'var(--pen)', offset: .6 }, { color: 'inherit' }], { duration: 900 });
   }
 
   // ---------- Timeline ----------
-  const T = { gray: 120, bar: 450, pct: 2250, rows: 3300, gap: 1150, wait: 11300, last: 12500, ring: 13600, punch: 14200, loop: 21500 };
+  // tag is counted from the moment the punchline note actually opens.
+  const T = { gray: 120, bar: 450, pct: 2600, rows: 3300, gap: 1000, wait: 10300, last: 11500, ring: 12600, punch: 13200, tag: 2800, loop: 21500 };
   let runId = 0;
   let timers = [];
   let revealed = false;     // has line 8 printed?
@@ -909,10 +977,35 @@
     el.classList.add('on');
   }
 
+  // The punchline note waits while the visitor is still reading a note they just opened.
+  const READ_MS = 3500;
+  function autoPunch() {
+    const since = performance.now() - memoAt;
+    if (memoFor !== -1 && memoFor !== PUNCH_NOTE && since < READ_MS) { at(READ_MS - since + 50, autoPunch); return; }
+    punchMemo();
+    at(T.tag, tagBeat);
+  }
+  // Tag: reading the punchline note was itself a lookup. Line 8 and the total go up by one.
+  function tagBeat() {
+    if (memoFor !== PUNCH_NOTE || punchNote) return;
+    extraLookups++;
+    punchNote = MINUTES + extraLookups;
+    render();
+    bumpLookup();
+    const tmp = document.createElement('div');
+    tmp.innerHTML = tagHtml(punchNote);
+    const line = tmp.firstElementChild;
+    memoEl.insertBefore(line, $('.pen', memoEl));
+    if (!TTY.reduce) line.animate([{ opacity: 0, transform: 'translateY(3px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'ease-out' });
+  }
+
   function reset() {
     stop();
     closeMemo();
     extraLookups = 0;
+    punchNote = 0;
+    memoFoot = false;
+    memoAt = -Infinity;
     weekend.checked = false;
     revealed = false;
     pierced = exited = false;
@@ -928,6 +1021,9 @@
 
   function finalScene() {
     stop();
+    // The last scene includes the tag: the punchline note has been read once.
+    extraLookups = Math.max(extraLookups, 1);
+    punchNote = punchNote || MINUTES + extraLookups;
     render();
     grayFills.forEach((f) => { f.style.transform = 'none'; });
     nowFill.style.transform = 'none';
@@ -958,7 +1054,7 @@
     at(T.wait, () => rows[7].btn.classList.add('pending'));
     at(T.last, () => { revealed = true; printRow(7); });
     at(T.ring, () => ring(true));
-    at(T.punch, punchMemo);
+    at(T.punch, autoPunch);
     at(T.loop, maybeLoop);
   }
 
@@ -977,28 +1073,24 @@
     r.btn.addEventListener('click', () => {
       if (!r.btn.classList.contains('on')) return;
       if (memoFor === i && !isWide()) { closeMemo(); return; }
-      rowMemo(i);
-      // Once the lookup fee is on the bill, looking at the bill is one more lookup.
+      memoAt = performance.now();
+      // Once the lookup fee is on the bill, every note is fetched from the cost API: one more lookup.
       if (revealed) {
         extraLookups++;
         render();
-        if (!TTY.reduce) {
-          const plus = document.createElement('span');
-          plus.className = 'plus';
-          plus.textContent = TTY.t({ en: '+1', ko: '+1회' });
-          rows[7].btn.append(plus);
-          plus.animate([{ transform: 'translateY(4px)', opacity: 0 }, { transform: 'translateY(-6px)', opacity: 1, offset: .3 }, { transform: 'translateY(-14px)', opacity: 0 }],
-            { duration: 1100, easing: 'ease-out' }).finished.then(() => plus.remove());
-        }
+        bumpLookup();
       }
+      rowMemo(i, revealed);
     });
   });
   weekend.addEventListener('change', () => {
     const before = total;
     render();
-    const m = weekend.checked ? WEEKEND_MEMO.on : WEEKEND_MEMO.off;
+    const m = !weekend.checked ? WEEKEND_MEMO.off : revealed ? WEEKEND_MEMO.onLater : WEEKEND_MEMO.on;
     rows.forEach((r) => r.btn.classList.remove('sel'));
     memoFor = -2;
+    memoAt = performance.now();
+    memoEl.classList.remove('punch');
     showMemo(memoHtml(TTY.t(m.title), TTY.t(m.text)), $('.band'), 'above');
     if (!TTY.reduce && nowFill.style.transform === 'none' && !barAnim) {
       nowFill.animate([{ transform: `scaleY(${before / total})` }, { transform: 'none' }], { duration: 600, easing: 'cubic-bezier(.3, .8, .3, 1)' });
@@ -1021,11 +1113,13 @@
     drawRing();
     if (wasWide !== isWide()) {
       wasWide = isWide();
-      if (memoFor === 7) punchMemo();
+      if (memoFor === PUNCH_NOTE) punchMemo();
       else if (memoFor >= 0) rowMemo(memoFor);
       else if (memoFor === -2) closeMemo();
     } else if (!isWide() && panel.classList.contains('open')) {
-      if (memoFor >= 0) placeCard(rows[memoFor].btn, memoFor <= 3 ? 'below' : 'above');
+      // rows[PUNCH_NOTE] does not exist: the punchline note is placed over line 8 by hand.
+      if (memoFor === PUNCH_NOTE) placeCard(rows[7].btn, 'above');
+      else if (memoFor >= 0) placeCard(rows[memoFor].btn, memoFor <= 3 ? 'below' : 'above');
       else if (memoFor === -2) placeCard($('.band'), 'above');
     }
   });

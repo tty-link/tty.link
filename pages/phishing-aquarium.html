@@ -11,8 +11,8 @@
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="sticker pixel"></script>
 <style>
   /* An aquarium of phishing messages that swim like fish and circle a hook baited with a key.
-     Tap one to report it: it gets tagged, blushes and leaves. The cat on the lid is on duty,
-     in its own way. */
+     Whoever bites the key gets reported by the cat on the lid: tagged, blushing, gone. One
+     fish is a real text from Mom, and nobody answers her. Tap a phish to report it yourself. */
   :root {
     --wall: #dcebe7;
     --wall-2: #c9e0da;
@@ -103,20 +103,24 @@
 
   /* ---- Fish: a message with fins ---- */
   .school { position: absolute; inset: 0; }
+  /* The head (eye, rounder end) leads: a fish going right is tail, then body; .left flips it. */
   .fish {
     position: absolute;
     left: 0;
     top: 0;
     display: flex;
+    flex-direction: row-reverse;
     align-items: center;
     width: 30cqw;
     cursor: pointer;
     will-change: transform;
   }
-  .fish.left { flex-direction: row-reverse; }
+  .fish.left { flex-direction: row; }
   .fish .body {
     position: relative;
     flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
     padding: 1.3cqw 4.2cqw 1.3cqw 2.4cqw;
     border-radius: 3.2cqw 4.2cqw 4.2cqw 3.2cqw;
     background: var(--fc);
@@ -125,7 +129,10 @@
     font-weight: 700;
     line-height: 1.2;
     box-shadow: inset -.6cqw -.5cqw 0 rgba(0,0,0,.08);
+    transition: background-color .3s;
   }
+  /* Caught: the whole fish flushes, not just the cheek, so it reads at any size. */
+  .fish.reported .body, .fish.reported .tail, .fish.reported .fin { background-color: color-mix(in srgb, var(--fc), #ff7d9b 28%); }
   .fish.left .body { border-radius: 4.2cqw 3.2cqw 3.2cqw 4.2cqw; padding: 1.3cqw 2.4cqw 1.3cqw 4.2cqw; }
   .fish .body small { display: block; margin-bottom: .3cqw; font-size: max(10px, 1.45cqw); font-weight: 400; opacity: .7; }
   .fish .eye { position: absolute; top: 34%; right: 1.6cqw; width: 1.4cqw; aspect-ratio: 1; border-radius: 50%; background: #1a2228; box-shadow: inset .35cqw .35cqw 0 #fff; }
@@ -133,15 +140,16 @@
   .fish .cheek { position: absolute; top: 56%; right: 1.2cqw; width: 2.2cqw; height: 1cqw; border-radius: 50%; background: #ff7d9b; opacity: 0; transition: opacity .3s; }
   .fish.left .cheek { right: auto; left: 1.2cqw; }
   .fish.reported .cheek { opacity: .85; }
-  .fish .tail { width: 4.6cqw; height: 6cqw; background: var(--fc); clip-path: polygon(100% 50%, 0 0, 22% 50%, 0 100%); animation: wag .5s ease-in-out infinite alternate; transform-origin: 100% 50%; }
+  .fish .tail { flex-shrink: 0; width: 4.6cqw; height: 6cqw; background: var(--fc); clip-path: polygon(100% 50%, 0 0, 22% 50%, 0 100%); animation: wag .5s ease-in-out infinite alternate; transform-origin: 100% 50%; }
   .fish.left .tail { clip-path: polygon(0 50%, 100% 0, 78% 50%, 100% 100%); transform-origin: 0 50%; }
   @keyframes wag { from { transform: scaleY(.8) skewY(-8deg); } to { transform: scaleY(1) skewY(8deg); } }
   .fish:focus { outline: none; }
   .fish:focus-visible .body { outline: .5cqw solid #fff; outline-offset: .5cqw; box-shadow: 0 0 0 1.1cqw rgba(30, 42, 51, .55), inset -.6cqw -.5cqw 0 rgba(0,0,0,.08); }
   .fish .fin { position: absolute; left: 40%; top: -1.3cqw; width: 4cqw; height: 1.8cqw; background: var(--fc); border-radius: 60% 60% 0 0; filter: brightness(.92); }
+  /* Stamped right of centre, clear of the sender line (who it is from is half the clue). */
   .tag {
     position: absolute;
-    left: 50%;
+    left: 70%;
     top: -2.6cqw;
     padding: .4cqw 1cqw;
     border: .35cqw solid var(--report);
@@ -156,7 +164,7 @@
   }
   .tag > font-kku { color: var(--report); }
   /* A tag for the one message that was real. */
-  .tag.fp { border-color: var(--fp); color: var(--fp); rotate: 6deg; }
+  .tag.fp { left: 50%; border-color: var(--fp); color: var(--fp); rotate: 6deg; }
   .tag.fp > font-kku { color: var(--fp); }
 
   /* ---- The cat on the lid ---- */
@@ -169,8 +177,10 @@
   .cat.peek .shut { display: none; }
   /* The z's float in the empty space above the cat's back, inside the cat's own box, so
      they stay on screen whatever the stage. */
-  .zz { position: absolute; left: 66%; top: 4%; font-family: 'Young Serif', serif; font-size: max(9px, 2.2cqmin); line-height: 1; color: rgba(30,42,51,.55); animation: zz 3s ease-in-out infinite; }
-  .zz:nth-child(2) { left: 76%; top: -4%; font-size: max(8px, 1.6cqmin); animation-delay: -1.5s; }
+  .zz { position: absolute; left: 66%; top: 4%; font-family: 'Young Serif', serif; font-size: max(11px, 2.2cqmin); line-height: 1; color: rgba(30,42,51,.55); animation: zz 3s ease-in-out infinite; }
+  .zz:nth-child(2) { left: 76%; top: -4%; font-size: max(10px, 1.6cqmin); animation-delay: -1.5s; }
+  /* Awake: no z's while the eye is open. */
+  .cat.peek .zz { visibility: hidden; }
   @keyframes zz { 0%, 100% { opacity: 0; translate: 0 1cqmin; } 50% { opacity: 1; translate: .6cqmin -.6cqmin; } }
 
   /* ---- Stand, counter, plaque ---- */
@@ -224,6 +234,7 @@
     .fish .body, .fish.left .body { padding-top: .9cqw; padding-bottom: .9cqw; }
     .fish .body small { margin-bottom: 0; font-size: max(10px, 2.4cqw); }
     .tag { font-size: max(10px, 2.4cqw); }
+    .fish .cheek { width: 4cqw; height: 1.8cqw; }
   }
   @media (prefers-reduced-motion: reduce) {
     .rays, .bubbles i, .hook, .fish .tail, .cat .tail, .zz { animation: none; }
@@ -281,13 +292,13 @@
     </div>
     <div data-lang="ko">
       <h1><font-kku font="sticker" size="6.4cqi">피싱에게 먹이를 주지 마세요</font-kku></h1>
-      <p class="sci">분류: 개인정보과 낚시꾼속</p>
+      <p class="sci">분류: 사칭어과 낚시꾼속</p>
       <p class="facts">서식지: 문자함, 메일함. 먹이: 비밀번호, 인증번호, 상품권. 천적: 신고 버튼과 고양이.</p>
     </div>
   </div>
   <p class="hint">
     <span data-lang="en">Tap a phish to report it.</span>
-    <span data-lang="ko">피싱을 누르면 신고돼요.</span>
+    <span data-lang="ko">낚이기 전에 눌러서 신고하세요.</span>
   </p>
 </div>
 
@@ -297,17 +308,20 @@
   const school = document.querySelector('.school');
   const tank = document.querySelector('.tank');
   const cat = document.querySelector('.cat');
+  const hook = document.querySelector('.hook');
   const counter = document.querySelector('.counter');
 
+  // The first two open every visit (see play()); the rest come shuffled. A zero-width space
+  // lets a file name break right before its real extension.
   const MESSAGES = TTY.t({
     en: [
+      ['Unknown number', 'Hi Mom, dropped my phone. New number'],
+      ['accounting', 'Invoice_FINAL_final​.pdf.exe'],
       ['Security team', 'Your account is suspended'],
       ['The CEO (real)', 'Need gift cards. Quietly.'],
-      ['Lucky Draw', 'You won a prize!!'],
+      ['npm Support', 'Update your 2FA or get locked out'],
       ['Parcel Service', 'Parcel held. Pay $1.99'],
-      ['accounting', 'Invoice_FINAL_final.pdf.exe'],
       ['IT Helpdesk', 'Password expires in 1 hour'],
-      ['Unknown number', 'Hi Mom, dropped my phone. New number'],
       ['Sign-in alert', 'Unusual login. Verify here'],
       ['Toll Services', 'Unpaid toll: $3.75. Pay today to avoid fees'],
       ['HR', 'Updated salary bands. Sign in to view'],
@@ -315,13 +329,13 @@
       ['Tax Refund Dept.', 'You are owed $412.80. Claim in 24 hours'],
     ],
     ko: [
-      ['[택배]', '주소 불일치로 배송 보류 중'],
       ['모르는 번호', '엄마 나 폰 깨졌어 이 번호로 문자 줘'],
+      ['거래처', '견적서_최종_진짜최종​.pdf.exe'],
+      ['[택배]', '주소 불일치로 배송 보류 중'],
       ['서울중앙지검', '명의 도용 사건 관련 확인 바랍니다'],
       ['[국외발신]', '해외결제 980,000원 승인'],
       ['정부지원', '저금리 대출 승인 대상자입니다'],
       ['부고', '삼가 고인의 명복을… 장례식장 링크'],
-      ['[Web발신]', '계정이 일시 정지되었습니다'],
       ['건강보험', '건강검진 결과를 확인하세요'],
       ['모르는 번호', '저희 결혼합니다♡ 모바일 청첩장'],
       ['[구청 알림]', '쓰레기 무단투기 과태료 부과 안내'],
@@ -329,10 +343,28 @@
       ['[국세청]', '연말정산 미수령 환급금 조회'],
     ],
   });
-  // One message in the tank is not a scam: no link, no hurry, a saved contact. Reporting it
-  // earns a false-positive tag, and the cat never reports it.
-  const REAL = TTY.t({ en: ['Mom', 'Coming Sunday? Bring a jacket'], ko: ['엄마', '밥은 먹고 다니니?'] });
-  const COLORS = ['#ffe9a8', '#ffd0dc', '#d6f5c9', '#ffe1c2', '#e2dcff', '#c9f0ff'];
+  // One fish is not a scam: a saved contact, no link, no hurry. She keeps the top lane, the cat
+  // never reports her, and when nobody answers she tries to prove she is real, which only
+  // makes her sound like the rest of the tank. Tapping her earns a false-positive tag.
+  const MOM = TTY.t({
+    en: { from: 'Mom', lines: ['Coming Sunday? Bring a jacket', "It's really Mom. Not a scam.", 'Want my verification code?'], fp: 'Did you just report me?' },
+    ko: { from: '엄마', lines: ['밥은 먹고 다니니?', '엄마야. 진짜 엄마야. 사기 아니야', '엄마 인증번호 보내 줄까?'], fp: '방금 엄마 신고했니?' },
+  });
+  // Peach (#ffe1c2) is Mom's alone, so no scam looks like her.
+  const COLORS = ['#ffe9a8', '#ffd0dc', '#d6f5c9', '#f6d6ff', '#e2dcff', '#c9f0ff'];
+  const ARIA = TTY.t({ en: 'Report: ', ko: '신고: ' });
+
+  // The first round is the same for everyone, so a visitor who never taps still gets the story
+  // (seconds after the page is on screen):
+  //   0     the fake kid in the hook's lane heads for the key; by about 1.9 it is nibbling
+  //         (about 1.0 on a phone, where fish are wider and it starts nearer)
+  //   3.0   the cat opens an eye; 3.4 the hook jerks, the stamp lands, 4.05 it flees
+  //   7.2   the cat again: the invoice, nearest the key now
+  //   9.6   Mom, still unanswered, insists she is real; 12.4 she offers proof
+  //   15.0  the cat is back on duty every 4.2 s, and the hook's lane is lured every 2.6 s
+  // With reduced motion nothing moves and the story is only Mom's texts, so they come sooner:
+  // 3.0 and 5.8.
+  const T = { firstCat: 3.0, secondCat: 7.2, momProof: 9.6, momCode: 12.4, catBack: 15.0, catEvery: 4.2, catToStamp: 0.4, stillProof: 3.0 };
 
   let reported = 0;
   function renderCounter(bump) {
@@ -363,57 +395,61 @@
   measure();
   addEventListener('resize', measure);
 
-  // Messages come from a shuffled deck; the real one is dealt third to fifth, so it turns
-  // up early in a visit, and never twice in the tank at once.
-  let msgOrder = [];
-  const nextMessage = () => {
-    if (!msgOrder.length) {
-      msgOrder = MESSAGES.map((_, i) => i).sort(() => Math.random() - .5);
-      msgOrder.splice(msgOrder.length - 2 - Math.floor(Math.random() * 3), 0, 'real');
-    }
-    let i = msgOrder.pop();
-    if (i === 'real' && fish.some((f) => f.real)) i = msgOrder.pop() ?? 0;
-    return i === 'real' ? REAL : MESSAGES[i];
-  };
   const fish = [];
+  // Every fish is the same width (a share of the tank), the tail included.
+  const fw = () => (fish[0] ? fish[0].el.offsetWidth / (W || 1) : 0.3);
 
-  // Each fish keeps to its own lane so messages never pile up on each other.
-  const laneCount = () => 3;
-  // Lane 0 starts low enough that a tag above its fish (they sit above the body, tilted)
-  // stays inside the glass.
-  const laneY = (i) => 0.12 + i * 0.27;
-  const freeLane = () => {
-    const taken = new Set(fish.filter((f) => f.state === 'swim').map((f) => f.lane));
-    for (let i = 0; i < laneCount(); i++) if (!taken.has(i)) return i;
-    return Math.floor(Math.random() * laneCount());
+  // Messages come from a shuffled deck, never one that is already swimming.
+  const shuffle = (a) => a.sort(() => Math.random() - .5);
+  let deck = shuffle([...MESSAGES.keys()].slice(2));
+  const nextMessage = () => {
+    for (let tries = 0; tries < 30; tries++) {
+      if (!deck.length) deck = shuffle([...MESSAGES.keys()]);
+      const i = deck.pop();
+      if (!fish.some((f) => f.msg === i)) return i;
+    }
+    return 2;
   };
 
-  function spawn(fromEdge, lane = freeLane()) {
-    const msg = nextMessage();
-    const [from, subject] = msg;
+  // Three lanes, so messages never pile up. Mom keeps the top one; the key hangs in the middle
+  // one. The top lane starts low enough that a tag above its fish stays inside the glass.
+  const MOM_LANE = 0, HOOK_LANE = 1;
+  const laneY = (i) => 0.12 + i * 0.27;
+
+  function say(f, text, pop) {
+    f.el.querySelector('.subject').textContent = text;
+    f.el.setAttribute('aria-label', ARIA + f.from + ' ' + text);
+    if (pop && !TTY.reduce) f.el.querySelector('.body').animate([{ transform: 'none' }, { transform: 'translateY(-1.2cqw) scale(1.1)', offset: .4 }, { transform: 'none' }], { duration: 480, easing: 'ease-out' });
+  }
+
+  // `at` places a fish inside the glass; without it the fish starts just outside and hurries in.
+  function spawn(msg, lane, at) {
+    const real = msg === 'mom';
+    const [from, subject] = real ? [MOM.from, MOM.lines[0]] : MESSAGES[msg];
     const el = document.createElement('div');
     el.className = 'fish';
     el.innerHTML = `<div class="body"><small></small><span class="subject"></span><i class="eye"></i><i class="cheek"></i><i class="fin"></i></div><div class="tail"></div>`;
     el.querySelector('small').textContent = from;
-    el.querySelector('.subject').textContent = subject;
-    el.style.setProperty('--fc', COLORS[Math.floor(Math.random() * COLORS.length)]);
+    el.style.setProperty('--fc', real ? '#ffe1c2' : COLORS[Math.floor(Math.random() * COLORS.length)]);
     el.setAttribute('role', 'button');
     el.setAttribute('tabindex', '0');
-    el.setAttribute('aria-label', TTY.t({ en: 'Report: ', ko: '신고: ' }) + from + ' ' + subject);
     school.append(el);
-    const dir = Math.random() < .5 ? 1 : -1;
+    const dir = at ? at.dir : Math.random() < .5 ? 1 : -1;
     const f = {
-      el, dir, lane,
-      // New arrivals start just outside the glass and hurry in (see frame()).
-      x: fromEdge ? (dir > 0 ? -el.offsetWidth / (W || 1) : 1) : 0.05 + Math.random() * 0.5,
-      entering: fromEdge,
+      el, msg, real, from, dir, lane,
+      x: at ? at.x : dir > 0 ? -el.offsetWidth / (W || 1) : 1,
+      entering: !at,
       y: laneY(lane),
-      speed: 0.035 + Math.random() * 0.03,
+      speed: at && at.speed ? at.speed : 0.035 + Math.random() * 0.03,
       phase: Math.random() * 6,
-      state: 'swim',
-      curious: 0,
-      real: msg === REAL,
+      state: 'swim',  // swim, caught (blushing in place), leaving
+      curious: false, // heading for the key
+      nib: 0,         // seconds spent nibbling it
+      jolt: 0,
+      fp: 0,
+      busy: false,
     };
+    say(f, subject, false);
     el.classList.toggle('left', dir < 0);
     el.addEventListener('pointerdown', (e) => { e.stopPropagation(); idleUntil = performance.now() + 9000; report(f); });
     el.addEventListener('keydown', (e) => {
@@ -426,29 +462,43 @@
     return f;
   }
 
-  function report(f, stay) {
-    if (f.state !== 'swim') return;
-    if (f.real) return falsePositive(f);
-    f.state = 'leaving';
-    reported += 1;
-    renderCounter(true);
-    f.el.classList.add('reported');
+  function stamp(f, text, kind) {
     const tag = document.createElement('span');
-    tag.className = 'tag';
+    tag.className = 'tag' + (kind ? ' ' + kind : '');
     if (ko) {
       const k = document.createElement('font-kku');
       k.setAttribute('font', 'pixel');
       k.setAttribute('size', '1em');
-      k.textContent = '신고 완료';
+      k.textContent = text;
       tag.append(k);
     } else {
-      tag.textContent = 'Reported';
+      tag.textContent = text;
     }
     f.el.querySelector('.body').append(tag);
     if (!TTY.reduce) tag.animate([{ transform: 'scale(2.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.5,0,.9,.4)' });
+    return tag;
+  }
+
+  // The cat opens one eye while it works, and the z's stop.
+  let catSleepAt = 0, catTimer = 0;
+  function wakeCat(ms) {
     cat.classList.add('peek');
-    setTimeout(() => cat.classList.remove('peek'), 1300);
-    if (stay) return;
+    catSleepAt = Math.max(catSleepAt, performance.now() + ms);
+    clearTimeout(catTimer);
+    catTimer = setTimeout(() => { cat.classList.remove('peek'); catSleepAt = 0; }, catSleepAt - performance.now());
+  }
+
+  function report(f, how = {}) {
+    if (f.state !== 'swim') return;
+    if (f.real) return falsePositive(f);
+    f.state = 'caught';
+    f.curious = false;
+    reported += 1;
+    renderCounter(true);
+    f.el.classList.add('reported');
+    stamp(f, TTY.t({ en: 'Reported', ko: '신고 완료' }));
+    if (!how.byCat) wakeCat(1300);
+    if (how.stay) return;
     // Reduced motion: no darting off. The reported fish fades out where it is and a new
     // message takes its place in the same lane.
     if (TTY.reduce) {
@@ -458,120 +508,201 @@
           const hadFocus = document.activeElement === f.el;
           f.el.remove();
           fish.splice(fish.indexOf(f), 1);
-          const g = spawn(false, f.lane);
+          const dir = Math.random() < .5 ? 1 : -1;
+          const g = spawn(nextMessage(), f.lane, { x: 0.05 + Math.random() * Math.max(0, 0.9 - fw()), dir });
           g.el.style.transform = `translate(${g.x * W}px, ${g.y * H}px)`;
           if (hadFocus) g.el.focus({ preventScroll: true });
         });
       }, 900);
       return;
     }
-    // Embarrassed: turn around, then dart off.
+    // Embarrassed: a beat to blush, then turn to the nearer edge and dart off.
     setTimeout(() => {
-      f.dir = f.x > 0.45 ? 1 : -1;
+      f.state = 'leaving';
+      f.dir = f.x + fw() / 2 > 0.5 ? 1 : -1;
       f.el.classList.toggle('left', f.dir < 0);
       f.speed = 0.32;
     }, 650);
   }
 
-  // Reporting the real message: a blue tag for a moment, no count, and it swims on.
+  // Reporting Mom: a blue tag, no count, and she swims on. When the tag drops, she has
+  // noticed.
   function falsePositive(f) {
     if (f.el.querySelector('.tag')) return;
-    const tag = document.createElement('span');
-    tag.className = 'tag fp';
-    if (ko) {
-      const k = document.createElement('font-kku');
-      k.setAttribute('font', 'pixel');
-      k.setAttribute('size', '1em');
-      k.textContent = '오탐: 진짜 엄마';
-      tag.append(k);
-    } else {
-      tag.textContent = 'False positive: real Mom';
-    }
-    f.el.querySelector('.body').append(tag);
-    if (!TTY.reduce) tag.animate([{ transform: 'scale(2.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.5,0,.9,.4)' });
-    cat.classList.add('peek');
-    setTimeout(() => cat.classList.remove('peek'), 1300);
+    const token = ++f.fp;
+    f.busy = true;
+    const tag = stamp(f, TTY.t({ en: 'False positive: real Mom', ko: '오탐: 진짜 엄마' }), 'fp');
+    wakeCat(1300);
     setTimeout(() => {
-      if (TTY.reduce) { tag.remove(); return; }
-      tag.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' }).finished.then(() => tag.remove());
+      const gone = TTY.reduce ? Promise.resolve(tag.remove())
+        : tag.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' }).finished.then(() => tag.remove());
+      gone.then(() => {
+        say(f, MOM.fp, true);
+        setTimeout(() => {
+          if (token !== f.fp) return;
+          f.busy = false;
+          momCatchUp(f);
+        }, 4000);
+      });
     }, 2600);
   }
 
-  // Now and then the fish in the hook's lane gets curious about the key.
+  // Mom's lines move on by themselves. A false-positive reply is never cut short: a line that
+  // falls due meanwhile waits, and comes straight after it.
+  let momLine = 0, momDue = 0;
+  function momSays(line) {
+    if (line <= momDue) return;
+    momDue = line;
+    const mom = fish.find((f) => f.real);
+    if (mom && !mom.busy) momCatchUp(mom);
+  }
+  function momCatchUp(mom) {
+    const moved = momDue !== momLine;
+    momLine = momDue;
+    say(mom, MOM.lines[momLine], true);
+    const next = momLine + 1;
+    if (moved && next < MOM.lines.length) setTimeout(() => momSays(next), (T.momCode - T.momProof) * 1000);
+  }
+
+  /* ---- The key ---- */
   const HOOK = { x: 0.63, y: 0.47 };
-  const hookLane = () => 1;
-  setInterval(() => {
-    const f = fish.find((g) => g.state === 'swim' && !g.curious && !g.real && g.lane === hookLane());
-    if (f) f.curious = 1;
-  }, 2600);
+  // Where a fish stops so that its mouth (the head leads) is at the key.
+  const keyX = (f) => (f.dir > 0 ? HOOK.x - fw() - 0.01 : HOOK.x + 0.03);
+  // A fish only goes for the key if it can swim there head first.
+  function lure(f) {
+    if (!f || f.real || f.state !== 'swim' || f.entering) return false;
+    const dir = f.x <= HOOK.x - fw() - 0.01 ? 1 : f.x >= HOOK.x + 0.03 ? -1 : 0;
+    if (!dir) return false;
+    f.dir = dir;
+    f.el.classList.toggle('left', dir < 0);
+    f.curious = true;
+    f.nib = 0;
+    return true;
+  }
+  const lureSomeone = () => {
+    if (fish.some((f) => f.curious && f.state === 'swim')) return;
+    lure(fish.find((f) => f.lane === HOOK_LANE && f.state === 'swim'));
+  };
 
   let last = 0;
   function frame(t) {
     const dt = Math.min(0.05, (t - (last || t)) / 1000);
     last = t;
-    const fw = fish[0] ? fish[0].el.offsetWidth / W : 0.3;
+    const w = fw();
     fish.forEach((f) => {
+      let dx = 0;
+      let dy = Math.sin(t / 700 + f.phase) * 0.018;
       if (f.curious && f.state === 'swim') {
-        // Swim toward the hook with the mouth (the leading edge) at the key, then nibble.
-        const tx = f.dir > 0 ? HOOK.x - fw - 0.01 : HOOK.x + 0.03;
-        f.x += (tx - f.x) * Math.min(1, dt * 1.4);
-        if (Math.abs(tx - f.x) < 0.01) f.curious += dt;
-        if (f.curious > 3.4) f.curious = 0;
-      } else {
-        if (f.entering && f.x > 0 && f.x < 1 - fw) f.entering = false;
+        const d = keyX(f) - f.x;
+        if (!f.nib && Math.abs(d) > 0.004) {
+          f.x += Math.sign(d) * Math.min(Math.abs(d), Math.min(0.18, 0.02 + Math.abs(d) * 2.2) * dt);
+        } else {
+          // Nibbling: pull back and peck at the key, about 3.5% of the tank's width.
+          f.x = keyX(f);
+          f.nib += dt;
+          dx = -f.dir * 0.035 * (0.5 - 0.5 * Math.cos(f.nib * Math.PI * 2 / 0.5));
+          dy *= 0.3;
+          if (f.nib > 3.6) { f.curious = false; f.nib = 0; }
+        }
+      } else if (f.state !== 'caught') {
+        if (f.entering && f.x > 0 && f.x < 1 - w) f.entering = false;
         f.x += f.dir * f.speed * (f.entering && f.state === 'swim' ? 4 : 1) * dt;
-        if (f.state === 'swim' && ((f.dir > 0 && f.x > 0.985 - fw) || (f.dir < 0 && f.x < 0.015))) {
+        if (f.state === 'swim' && ((f.dir > 0 && f.x > 0.985 - w) || (f.dir < 0 && f.x < 0.015))) {
           f.dir *= -1;
           f.el.classList.toggle('left', f.dir < 0);
         }
       }
-      const bob = Math.sin(t / 700 + f.phase) * 0.018 + (f.curious > 1 ? Math.sin(t / 90) * 0.006 : 0);
-      f.el.style.transform = `translate(${f.x * W}px, ${(f.y + bob) * H}px)`;
+      // Hooked: the fish jerks up with the line.
+      if (f.jolt) {
+        const k = (t - f.jolt) / 340;
+        if (k < 1 && k >= 0) dy -= 0.06 * Math.sin(Math.PI * k);
+        else if (k >= 1) f.jolt = 0;
+      }
+      f.el.style.transform = `translate(${(f.x + dx) * W}px, ${(f.y + dy) * H}px)`;
     });
     // Reported fish that have left are replaced by new arrivals.
     for (let i = fish.length - 1; i >= 0; i--) {
       const f = fish[i];
-      if (f.state === 'leaving' && (f.x > 1.2 || f.x < -0.6)) {
+      if (f.state === 'leaving' && (f.x > 1.02 || f.x < -w - 0.02)) {
         if (document.activeElement === f.el) {
           const next = fish.find((g) => g.state === 'swim');
           if (next) next.el.focus({ preventScroll: true });
         }
         f.el.remove();
         fish.splice(i, 1);
-        setTimeout(() => spawn(true, f.lane), 900);
+        setTimeout(() => spawn(nextMessage(), f.lane), 900);
       }
     }
     if (running) requestAnimationFrame(frame);
   }
 
-  // If nobody reports anything, the cat does (eventually).
+  // If nobody reports anything, the cat does: whoever has the key in its mouth first,
+  // otherwise the phish whose mouth is nearest the key. Never Mom.
   let idleUntil = 0;
   addEventListener('pointerdown', () => { idleUntil = performance.now() + 9000; });
-  function autoReport() {
-    if (performance.now() > idleUntil) {
-      const swimmers = fish.filter((f) => f.state === 'swim' && !f.real);
-      const near = swimmers.sort((a, b) => Math.hypot(a.x - HOOK.x, a.y - HOOK.y) - Math.hypot(b.x - HOOK.x, b.y - HOOK.y))[0];
-      if (near) report(near);
-    }
-    setTimeout(autoReport, 4200);
+  const mouthToKey = (f) => Math.hypot((f.dir > 0 ? f.x + fw() : f.x) - HOOK.x, f.y + 0.07 - HOOK.y);
+  const prey = () => fish.filter((f) => f.state === 'swim' && !f.real && !f.entering);
+  function catTurn() {
+    if (performance.now() < idleUntil || !prey().length) return;
+    wakeCat(T.catToStamp * 1000 + 1800);
+    setTimeout(() => {
+      if (performance.now() < idleUntil) return;
+      const pool = prey();
+      const f = pool.find((g) => g.nib > 0) || pool.sort((a, b) => mouthToKey(a) - mouthToKey(b))[0];
+      if (!f) return;
+      if (f.nib > 0 && !TTY.reduce) {
+        hook.animate([{ transform: 'none' }, { transform: 'translateY(-14%)', offset: .35 }, { transform: 'none' }], { duration: 420, easing: 'ease-out' });
+        f.jolt = performance.now();
+      }
+      report(f, { byCat: true });
+    }, T.catToStamp * 1000);
   }
 
-  let running = false;
-  for (let i = 0; i < laneCount(); i++) spawn(false, i);
-  // Place the first school before anything moves.
-  fish.forEach((f, i) => { f.x = [0.04, 0.5, 0.16, 0.56][i]; f.el.style.transform = `translate(${f.x * W}px, ${f.y * H}px)`; });
-
-  // Reduced motion: one fish near the hook is already reported, so the counter (1) has a
+  // The opening school: Mom up top, the fake kid in the hook's lane on the key's left, the
+  // invoice below. A fish's width is only known once one exists (about .3 of the tank on a
+  // desktop, .52 on a phone), so spawn first, then place them inside the glass.
+  {
+    spawn('mom', MOM_LANE, { x: 0.5, dir: -1, speed: 0.04 });
+    spawn(0, HOOK_LANE, { x: 0, dir: 1, speed: 0.05 });
+    spawn(1, 2, { x: 0.6, dir: -1, speed: 0.05 });
+    const w = fw();
+    fish[0].x = Math.min(0.5, 0.97 - w);
+    fish[1].x = Math.max(0, HOOK.x - w - 0.01 - 0.26);
+    fish[2].x = Math.min(0.6, 0.97 - w);
+  }
+  const kid = fish[1];
+  // Reduced motion: the fake kid is already caught at the key, so the counter (1) has a
   // tagged fish to match.
-  if (TTY.reduce) report(fish.find((f) => f.lane === 1 && !f.real) || fish.find((f) => !f.real), true);
-  TTY.onShow(() => {
-    if (TTY.reduce) return;
+  if (TTY.reduce) { kid.x = keyX(kid); report(kid, { stay: true }); }
+  const place = () => fish.forEach((f) => { f.el.style.transform = `translate(${f.x * W}px, ${f.y * H}px)`; });
+  place();
+
+  let running = false, t0 = 0;
+  const at = (s, fn) => setTimeout(fn, Math.max(0, t0 + s * 1000 - performance.now()));
+  function play() {
+    measure();
+    t0 = performance.now();
+    at(TTY.reduce ? T.stillProof : T.momProof, () => momSays(1));
+    if (TTY.reduce) { place(); return; }
     running = true;
     requestAnimationFrame(frame);
-    setTimeout(autoReport, 3600);
-  });
+    lure(kid);
+    // Keep the key quiet while Mom talks, so the eye goes to her.
+    setInterval(() => {
+      const s = (performance.now() - t0) / 1000;
+      if (s > T.secondCat && s < T.catBack - 1) return;
+      lureSomeone();
+    }, 2600);
+    at(T.firstCat, catTurn);
+    at(T.secondCat, catTurn);
+    at(T.catBack, () => { catTurn(); setInterval(catTurn, T.catEvery * 1000); });
+  }
+  // Not gated on TTY.drawn: fish are a fixed share of the tank wide, so nothing here measures
+  // text, and the punch should not move with font loading (a font arriving late only swaps the
+  // face of text already on screen).
+  TTY.onShow(play);
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
-  Promise.all([loaded, document.fonts.ready]).then(() => { measure(); TTY.ready(); });
+  Promise.all([loaded, document.fonts.ready]).then(() => { measure(); place(); TTY.ready(); });
 })();
 </script>
 </body>

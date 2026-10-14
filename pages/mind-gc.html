@@ -138,6 +138,20 @@
   }
   .moth { position: absolute; left: var(--head-x); top: calc(var(--head-y) + 1.4cqmin); width: 3px; height: 3px; border-radius: 50%; background: #fff2c4; box-shadow: 0 0 4px #ffcf70; animation: flutter 2.3s ease-in-out infinite; pointer-events: none; }
   .moth.m2 { animation-duration: 3.1s; animation-direction: reverse; }
+  /* The cat's moth: just ahead of its front paws at the top of the leap (placeCat puts it
+     there). The world stops them both; on waking the cat finishes its leap and the moth is gone. */
+  .moth.prey {
+    z-index: 11; width: 9px; height: 7px; margin: -3.5px 0 0 -4.5px; border-radius: 50% 50% 45% 45%;
+    background: #fff4cc; box-shadow: 0 0 5px 1px rgba(255, 207, 112, .9);
+    animation: hover 1.3s ease-in-out infinite;
+  }
+  .moth.prey::before, .moth.prey::after { content: ""; position: absolute; top: -3px; width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 244, 204, .7); animation: wing .16s ease-in-out infinite alternate; }
+  .moth.prey::before { left: -5px; transform-origin: 100% 80%; }
+  .moth.prey::after { right: -5px; transform-origin: 0 80%; }
+  @keyframes wing { to { scale: .3 1; } }
+  .stw .moth.prey::before, .stw .moth.prey::after { animation-play-state: paused; }
+  @keyframes hover { 0%, 100% { transform: translate(0, 0); } 30% { transform: translate(.8cqmin, -.7cqmin); } 65% { transform: translate(-.6cqmin, .5cqmin); } }
+  .dawn .moth.prey { opacity: 0; }
   @keyframes flutter {
     0% { transform: translate(-2.2cqmin, .6cqmin); } 25% { transform: translate(.4cqmin, 2.4cqmin); }
     50% { transform: translate(2.6cqmin, .2cqmin); } 75% { transform: translate(.2cqmin, -.6cqmin); } 100% { transform: translate(-2.2cqmin, .6cqmin); }
@@ -215,6 +229,9 @@
     touch-action: none; user-select: none; -webkit-user-select: none;
     transition: opacity .5s;
   }
+  /* On short phones the five-line opinions tag reaches down to the cringe box below it: the tag
+     goes on top, and in English the box steps down out of its way (the short-phone block). */
+  .item[data-id="opinions"] { z-index: 7; }
   .item:focus { outline: none; }
   .item:focus-visible .tag { outline: 2px solid var(--amber); outline-offset: 2px; }
   .item.dragging { z-index: 30; cursor: grabbing; }
@@ -227,6 +244,18 @@
   .prop { position: relative; display: block; width: var(--prop); height: var(--prop); rotate: var(--r, 0deg); transition: filter .4s, translate .2s; filter: drop-shadow(0 .5cqmin .4cqmin rgba(0, 0, 0, .45)); }
   .prop svg { display: block; width: 100%; height: 100%; overflow: visible; }
   .item[data-id="cringe"] .prop { width: calc(var(--prop) * 1.3); height: calc(var(--prop) * 1.3); margin-top: calc(var(--prop) * -.3); }
+  /* Before 11 p.m. the worries will not lie still: they fidget, the two worries lean on each
+     other, the cringe box kicks from inside. Stop-the-world freezes them mid-move. */
+  .item.restless .prop { animation: fidget var(--fd, .6s) ease-in-out var(--fdl, 0s) infinite alternate; }
+  .item.restless[data-id="worry"] .prop { animation-name: lean-r; }
+  .item.restless[data-id="worry2"] .prop { animation-name: lean-l; }
+  .item.restless[data-id="cringe"] .prop { animation: kick 1.15s ease-out var(--fdl, 0s) infinite; transform-origin: 50% 100%; }
+  @keyframes fidget { from { transform: rotate(-5deg); } to { transform: rotate(5deg) translateY(-4%); } }
+  @keyframes lean-r { from { transform: rotate(3deg); } to { transform: rotate(11deg) translateY(-3%); } }
+  @keyframes lean-l { from { transform: rotate(-3deg); } to { transform: rotate(-11deg) translateY(-3%); } }
+  @keyframes kick { 0%, 55%, 100% { transform: none; } 64% { transform: translateY(-9%) rotate(-4deg); } 74% { transform: none; } 84% { transform: translateY(-5%) rotate(3deg); } 92% { transform: none; } }
+  .stw .item .prop { animation-play-state: paused !important; }
+  .dawn .item .prop, .item:is(.held, .dragging, .parked) .prop { animation: none !important; }
   .item.marked .prop { filter: drop-shadow(0 0 .7cqmin rgba(185, 242, 124, .95)) drop-shadow(0 .4cqmin .4cqmin rgba(0, 0, 0, .4)); }
   .tag {
     position: relative; display: block; margin-top: .15em; max-width: 100%;
@@ -238,6 +267,7 @@
   }
   .lang-ko .tag { font-weight: 400; line-height: 1.22; }
   .tag .sub { display: block; color: #6a6c7c; font-weight: 600; }
+  .lang-ko .item[data-id="slip"] .tag .sub { display: inline; } /* one line fewer: on short phones its prop then clears the compliment's tag */
   .item.marked .tag { box-shadow: 0 0 0 2px var(--ref), 0 .3cqmin .8cqmin rgba(0,0,0,.3); }
   .check {
     position: absolute; right: -18%; top: -14%; width: 46%; aspect-ratio: 1; border-radius: 50%;
@@ -334,6 +364,7 @@
   .stw .vignette { opacity: 1; }
   .stw .band { opacity: 1; translate: 0 0; }
   .stw .cloud, .stw .moth, .stw .clock .colon, .stw .sit .tail { animation-play-state: paused; }
+  .stw .cat .leg { animation-play-state: paused !important; } /* a visitor who starts before 11 p.m. stops it mid-step */
   .stw .town { filter: saturate(.4) brightness(.8); }
   /* Freeze frame (1.5–3 s): the picture goes grey like a paused video and a big pause sign
      comes up in the middle; it then shrinks into the band's own pause sign. The cat sits above
@@ -377,20 +408,24 @@
   .memo.note { background: #e8f6ff; color: #12304a; rotate: 2deg; }
 
   /* ---- Receipt ---- */
+  /* Phones: top left, clear of the 06:12 clock in the top right corner. */
   .receipt {
-    position: absolute; left: 50%; top: 2%; z-index: 14; width: min(86cqw, 27em); max-height: 47%;
-    translate: -50% 0; padding: clamp(8px, 1.6cqmin, 16px) clamp(10px, 2cqmin, 18px) clamp(14px, 2.4cqmin, 22px);
+    position: absolute; left: 1.6%; top: 1.4%; z-index: 14; width: min(77.6cqw, 27em); max-height: 47%;
+    padding: clamp(8px, 1.6cqmin, 16px) clamp(10px, 2cqmin, 18px) clamp(14px, 2.4cqmin, 22px);
     background: #f7f5ee; color: #1f2230;
-    font: 400 clamp(11px, min(2.9cqw, 2.2cqh), 15px)/1.4 'IBM Plex Mono', monospace;
+    font: 400 clamp(11px, min(2.9cqw, 2.2cqh), 15px)/1.32 'IBM Plex Mono', monospace;
     box-shadow: 0 1cqmin 3cqmin rgba(0, 0, 0, .55);
     -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 12px 100%;
     mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 12px 100%;
     opacity: 0; visibility: hidden; pointer-events: none;
   }
+  /* Wider phones and tablets (648×732, the desktop home stage) have room on both sides: centred,
+     clear of the roots on the left and the clock on the right. */
+  @container page (min-width: 600px) { .receipt { left: 50%; translate: -50% 0; width: min(86cqw, 27em); } }
   .lang-ko .receipt { font-family: 'IBM Plex Mono', 'Gowun Dodum', monospace; }
   .receipt.on { opacity: 1; visibility: visible; }
   .receipt .r-head { display: flex; justify-content: space-between; gap: 1em; font-size: max(11px, .86em); color: #6a6d7c; }
-  .receipt .r-title { margin: .25em 0 .35em; padding-bottom: .3em; border-bottom: 1px dashed #9a9cab; text-align: center; font-weight: 600; font-size: 1.18em; letter-spacing: .04em; }
+  .receipt .r-title { margin: .15em 0 .3em; padding-bottom: .25em; border-bottom: 1px dashed #9a9cab; text-align: center; font-weight: 600; font-size: 1em; letter-spacing: .08em; }
   .lang-ko .receipt .r-title, .lang-ko .receipt .r-foot, .lang-ko .receipt .r-line { font-family: 'Gowun Dodum', sans-serif; }
   .receipt .r-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.2em; padding: 0; list-style: none; font-size: max(11px, .92em); }
   .receipt .r-rows li { display: flex; justify-content: space-between; gap: .5em; }
@@ -401,6 +436,23 @@
   .receipt .r-head, .receipt .barcode { display: none; }
   @container page (min-height: 700px) { .receipt .r-head { display: flex; } .receipt .barcode { display: block; } }
   @container page (max-height: 560px) { .receipt .r-rows { display: none; } }
+  /* The tag: the office stamps the sleeper's request for five more minutes. Short screens: at the
+     right of the title row (the receipt grows no taller); with a barcode: beside the barcode. */
+  .receipt .r-title:has(.stamp) { text-align: left; }
+  .receipt .stamp {
+    float: right; margin: -.1em 0 -.4em .5em; padding: .14em .45em .18em; border: 2px solid #c8322b; border-radius: .3em;
+    color: #c8322b; font: 800 11px/1.15 'Nunito', sans-serif; letter-spacing: .01em; white-space: nowrap;
+    rotate: -5deg; mix-blend-mode: multiply; opacity: 0;
+  }
+  .receipt .stamp b { margin-left: .3em; font-size: 1.2em; font-weight: 900; letter-spacing: .06em; }
+  .lang-ko .receipt .stamp { font-family: 'Gowun Dodum', sans-serif; font-weight: 400; }
+  .lang-ko .receipt .stamp b { font-weight: 400; }
+  .receipt.stamped .stamp { opacity: .9; }
+  @container page (min-height: 700px) {
+    .receipt .r-title:has(.stamp) { text-align: center; }
+    .receipt .barcode { width: 38%; }
+    .receipt .stamp { float: none; position: absolute; right: clamp(10px, 2cqmin, 18px); bottom: clamp(14px, 2.4cqmin, 22px); margin: 0; font-size: 1em; }
+  }
   .receipt .barcode { height: 1.6em; margin-top: .55em; background: repeating-linear-gradient(90deg, #1f2230 0 2px, transparent 2px 4px, #1f2230 4px 5px, transparent 5px 8px, #1f2230 8px 11px, transparent 11px 12px); opacity: .8; }
 
   /* ---- Button ---- */
@@ -510,12 +562,19 @@
     /* the bulky sticker sits low on its box here, over the bin pictures, clear of the kept
        things on the floor just above */
     .item.parked .sticker { bottom: 40%; translate: -40% 0; }
+    /* English only: the right-hand column is tight here, and the five-line opinions tag reached
+       halfway down the cringe box (and its kick). The box and burnout step down into the gap
+       above the bins, and the box's sticker rides higher, clear of the compliment. (The Korean
+       tag is three lines; moving the box there would only put burnout's tag on the bins.) */
+    .lang-en .item[data-id="cringe"] { --y: 60% !important; }
+    .lang-en .item[data-id="burnout"] { --y: 92% !important; }
+    .lang-en .item:not(.parked) .sticker { bottom: 100%; }
     .start { min-height: 30px; padding: .2em .85em .2em .4em; }
     .start .knob { width: 1.3em; height: 1.3em; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .cloud, .moth, .clock .colon, .cat .leg, .cat .tail { animation: none !important; }
+    .cloud, .moth, .moth::before, .moth::after, .clock .colon, .cat .leg, .cat .tail, .item .prop { animation: none !important; }
     .sky, .band, .vignette, .item, .prop, .check, .bin, .bin-label, .pa, .bubble, .memo, .rc { transition: none !important; }
   }
 </style>
@@ -535,7 +594,7 @@
       <i class="pole"></i><i class="arm"></i><i class="head"></i><i class="bulb"></i>
       <svg class="speaker" viewBox="0 0 30 22"><path d="M2 8h6l10-6v18L8 14H2z" fill="#59618a" stroke="#1b2038" stroke-width="1.6" stroke-linejoin="round"/><path d="M21 6c2 1.4 3 3 3 5s-1 3.6-3 5" fill="none" stroke="#8b93bd" stroke-width="1.8" stroke-linecap="round"/></svg>
     </div>
-    <i class="moth" aria-hidden="true"></i><i class="moth m2" aria-hidden="true"></i>
+    <i class="moth" aria-hidden="true"></i><i class="moth m2" aria-hidden="true"></i><i class="moth prey" aria-hidden="true"></i>
 
     <svg class="sign" viewBox="0 0 64 40" aria-hidden="true"><rect x="1" y="1" width="62" height="38" rx="4" fill="#2f7d4f" stroke="#cfe8d6" stroke-width="2"/><g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M27 12l5-6 5 6M32 6l6 10"/><path d="M42 22l3 7h-8M45 29H31"/><path d="M22 29l-5-6 6-2M17 23l7-12"/></g></svg>
     <div class="clock" aria-hidden="true"><span class="hh">22</span><span class="colon">:</span><span class="mm">59</span></div>
@@ -553,12 +612,12 @@
         <ol class="rules" data-lang="en">
           <li>1. Anything reachable from a root (you, family, friends, tomorrow-you) is never collected.</li>
           <li>2. Everything else is collected by type.</li>
-          <li>3. While we collect, the world pauses for a moment (stop-the-world: sleep).</li>
+          <li>3. While we collect, the world pauses for a moment (stop-the-world).</li>
         </ol>
         <ol class="rules" data-lang="ko">
           <li>1. 뿌리(나·가족·친구·내일의 나)에서 이어진 것은 수거하지 않습니다.</li>
           <li>2. 이어지지 않은 것은 종류별로 수거합니다.</li>
-          <li>3. 수거하는 동안 세상이 잠시 멈춥니다(Stop-the-world: 수면).</li>
+          <li>3. 수거하는 동안 세상이 잠시 멈춥니다(Stop-the-world).</li>
         </ol>
         <table class="sched">
           <caption></caption>
@@ -658,15 +717,22 @@
     en: {
       bell: 'Collection starting.',
       band: 'The world pauses for a moment (stop-the-world).',
-      cycle: "They only hold each other. Reference counting can't clear them; tracing can, because no root reaches them.",
+      cycle: "Holding each other up. Nobody's holding them.",
       chew: 'Things you kept chewing on go in food waste.',
       holiday: 'Burnout: not in general waste. Special collection: a holiday.',
-      sticker: ['Reported', 'fee: tell one friend about it'],
-      refuse: "Someone's still holding this one. Can't throw it out.",
-      receipt: ['Collection complete', 'freed {gb} GB of mind', 'paused 7 h 12 min (sleep)', 'next collection: tonight, 11 p.m.'],
+      sticker: ['Bulky waste', 'fee: 3 years of cringing (paid)'],
+      // who still holds it, by root
+      refuse: {
+        me: "You're still holding on to this one. Can't throw it out.",
+        family: "Your family's still holding on to this one. Can't throw it out.",
+        friends: "Your friends are still holding on to this one. Can't throw it out.",
+        tomorrow: "Tomorrow-you is still holding on to this one. Can't throw it out.",
+      },
+      receipt: ['Collection done', 'freed {gb} GB of mind', 'paused “for a moment”: 7 h 12 min (sleep; longer is better)', 'next collection: tonight, 11 p.m.'],
       weak: "Most worries don't survive a single day (the weak generational hypothesis).",
+      stamp: ['Snooze', 'DENIED'],
       start: 'Start collection',
-      hint: 'Drag an item into a bin.',
+      hint: 'Try throwing out the compliment.',
       days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       daily: 'every day · 23:00',
       roots: 'Roots',
@@ -679,15 +745,21 @@
     ko: {
       bell: '수거를 시작합니다.',
       band: '세상이 잠시 멈춥니다(Stop-the-world).',
-      cycle: '서로만 붙잡고 있음. 참조 세기로는 못 치우지만, 뿌리에서 안 닿으니 수거.',
+      cycle: '서로 붙잡고 버티는 중. 정작 이 둘을 붙잡은 사람은 없음.',
       chew: '곱씹은 건 음식물.',
       holiday: '번아웃은 일반 쓰레기 아님. 전용 수거함: 휴가.',
-      sticker: ['대형 폐기물 신고 완료', '수수료: 친구에게 털어놓기 1회'],
-      refuse: '아직 붙잡고 있는 사람이 있어요. 버릴 수 없음.',
-      receipt: ['수거 완료', '확보된 마음 {gb}GB', '일시 정지 7시간 12분(수면)', '다음 수거: 오늘 밤 23:00'],
+      sticker: ['대형 폐기물 신고 완료', '수수료: 이불킥 3년\u00a0치(완납)'],
+      refuse: {
+        me: '내가 아직 붙잡고 있어요. 못 버려요.',
+        family: '가족이 아직 붙잡고 있어요. 못 버려요.',
+        friends: '친구가 아직 붙잡고 있어요. 못 버려요.',
+        tomorrow: '내일의 내가 아직 붙잡고 있어요. 못 버려요.',
+      },
+      receipt: ['수거 완료', '확보된 마음 {gb}GB', '‘잠시’ 멈춤: 7시간 12분(수면 · 길수록 좋음)', '다음 수거: 오늘 밤 23:00'],
       weak: '대부분의 걱정은 하루를 넘기지 못합니다(약한 세대 가설).',
+      stamp: ['‘5분만 더’', '반려'],
       start: '수거 시작',
-      hint: '물건을 수거함으로 끌어 보세요.',
+      hint: '‘들은 칭찬’을 버려 보세요.',
       days: ['월', '화', '수', '목', '금', '토', '일'],
       daily: '매일 23:00',
       roots: '뿌리',
@@ -719,21 +791,24 @@
   const binById = Object.fromEntries(BINS.map((b) => [b.id, b]));
 
   // The heap. root: which root refers to it (null: none). refs: what it refers to. t: when the
-  // autoplay sweeps it (if it is garbage). gb: what it frees.
+  // autoplay sweeps it (if it is garbage). gb: what it frees. dawn: its label once it is morning
+  // (tomorrow's lunch is today's by 06:12). fd/fdl: how a worry fidgets before 11 p.m.
   const ITEMS = [
     { id: 'compliment', root: 'me', refs: [], r: -5, label: { en: 'a compliment you got', ko: '들은 칭찬 한 마디' } },
-    { id: 'shortcut', root: 'tomorrow', refs: [], r: 4, label: { en: 'a shortcut you learned today', ko: '오늘 배운 단축키' } },
-    { id: 'lunch', root: 'friends', refs: [], r: -3, label: { en: 'lunch plans tomorrow', ko: '내일 점심 약속' } },
+    { id: 'shortcut', root: 'tomorrow', refs: [], r: 4, label: { en: 'a shortcut you learned today', ko: '오늘 배운 단축키' }, dawn: { en: 'a shortcut you learned yesterday', ko: '어제 배운 단축키' } },
+    { id: 'lunch', root: 'friends', refs: [], r: -3, label: { en: 'lunch plans tomorrow', ko: '내일 점심 약속' }, dawn: { en: 'lunch plans today', ko: '오늘 점심 약속' } },
     { id: 'voice', root: 'family', refs: [], r: 5, label: { en: "Mom's voice", ko: '엄마 목소리' } },
-    { id: 'todo', root: null, refs: [], bin: 'paper', t: 8.6, gb: 0.1, r: 6, label: { en: 'a finished to-do list', ko: '다 끝낸 할 일 목록' } },
-    { id: 'opinions', root: null, refs: [], bin: 'plastic', t: 9.4, gb: 0.3, r: -6, label: { en: "other people's opinions", ko: '남의 평가' }, sub: { en: '(light, never rots)', ko: '(가볍고 오래 안 썩음)' } },
-    { id: 'lecture', root: null, refs: [], bin: 'food', t: 10.2, gb: 0.3, r: -4, note: 'chew', label: { en: 'a lecture you kept chewing on', ko: '곱씹던 잔소리' } },
-    { id: 'slip', root: null, refs: [], bin: 'general', t: 11.0, gb: 0.2, r: 8, label: { en: 'a slip of the tongue in the meeting', ko: '회의에서 한 말실수' } },
-    { id: 'worry', root: null, refs: ['worry2'], bin: 'general', t: 11.8, gb: 0.2, r: -3, label: { en: 'worry', ko: '걱정' } },
-    { id: 'worry2', root: null, refs: ['worry'], bin: 'general', gb: 0.2, r: 4, label: { en: 'worrying about the worry', ko: '걱정에 대한 걱정' } },
-    { id: 'burnout', root: null, refs: [], bin: 'battery', t: 12.5, gb: 0.5, r: -8, note: 'holiday', label: { en: 'burnout', ko: '번아웃' } },
-    { id: 'cringe', root: null, refs: [], bin: 'bulky', t: 14.8, gb: 0.5, r: 3, label: { en: 'the cringe from three years ago', ko: '3년 전 흑역사' } },
+    { id: 'todo', root: null, refs: [], bin: 'paper', t: 7.4, gb: 0.1, r: 6, fd: .7, fdl: -.2, label: { en: 'a finished to-do list', ko: '다 끝낸 할 일 목록' } },
+    { id: 'opinions', root: null, refs: [], bin: 'plastic', t: 8.0, gb: 0.3, r: -6, fd: .55, fdl: -.4, label: { en: "other people's opinions", ko: '남의 평가' }, sub: { en: '(light, never rot)', ko: '(가볍고 오래 안 썩음)' } },
+    { id: 'lecture', root: null, refs: [], bin: 'food', t: 8.4, gb: 0.3, r: -4, fd: .45, fdl: -.1, note: 'chew', label: { en: 'a lecture you kept chewing on', ko: '곱씹던 잔소리' } },
+    { id: 'slip', root: null, refs: [], bin: 'general', t: 9.2, gb: 0.2, r: 8, fd: .5, fdl: -.3, label: { en: 'a slip in the meeting', ko: '회의에서 한 말실수' }, sub: { en: '(forgotten)', ko: ' (다들 벌써 잊음)' } },
+    { id: 'worry', root: null, refs: ['worry2'], bin: 'general', t: 9.9, gb: 0.2, r: -3, fd: .65, fdl: 0, label: { en: 'worry', ko: '걱정' } },
+    { id: 'worry2', root: null, refs: ['worry'], bin: 'general', gb: 0.2, r: 4, fd: .65, fdl: -.325, label: { en: 'worrying about the worry', ko: '걱정에 대한 걱정' } },
+    { id: 'burnout', root: null, refs: [], bin: 'battery', t: 11.6, gb: 0.5, r: -8, fd: .8, fdl: -.5, note: 'holiday', label: { en: 'burnout', ko: '번아웃' } },
+    { id: 'cringe', root: null, refs: [], bin: 'bulky', t: 12.9, gb: 0.5, r: 3, fdl: -.6, label: { en: 'the cringe from three years ago', ko: '3년 전 흑역사' } },
   ];
+  // How long a note stays up (s): long enough to read at 8 Korean characters or 3 English words a second.
+  const NOTE_MS = { chew: 3000, holiday: 3000 };
   const byId = Object.fromEntries(ITEMS.map((it) => [it.id, it]));
 
   // Where things lie on the floor, in % of the floor box: [x, y]. The four kept things are
@@ -863,6 +938,11 @@
     el.dataset.id = it.id;
     el.setAttribute('aria-describedby', 'howto');
     el.style.setProperty('--r', it.r + 'deg');
+    if (it.fdl !== undefined) {
+      el.classList.add('restless');
+      if (it.fd) el.style.setProperty('--fd', it.fd + 's');
+      el.style.setProperty('--fdl', it.fdl + 's');
+    }
     const label = TTY.t(it.label);
     const sub = it.sub ? `${ko ? '' : ' '}<span class="sub">${TTY.t(it.sub)}</span>` : '';
     el.innerHTML = `<span class="prop" aria-hidden="true"><svg viewBox="0 0 48 48">${PROPS[it.id]}</svg><i class="check"></i>${RC[it.id] && !reachable(it) ? `<i class="rc">rc=${RC[it.id]}</i>` : ''}</span><span class="tag">${label}${sub}</span>`;
@@ -1011,14 +1091,16 @@
   /* ------------------------------------------------------------ speech */
   let bubbleTimer = 0, memoTimer = 0, paTimer = 0;
   function say(text) { sayEl.textContent = ''; setTimeout(() => { sayEl.textContent = text; }, 30); }
-  // Put a floating box above (or below) a point, inside the stage.
-  function placeNear(box, x, y, gap, prefer = 'above') {
+  // Put a floating box above (or below) a point, inside the stage. While the world is stopped it
+  // keeps below the band, unless overBand (the cycle bubble on phones, where the worry pair sits
+  // right under the band and a bubble below the band would hide them).
+  function placeNear(box, x, y, gap, prefer = 'above', overBand = false) {
     const s = sRect();
     const w = box.offsetWidth, h = box.offsetHeight;
     let side = prefer;
     let top = side === 'above' ? y - gap - h : y + gap;
     let min = 6;
-    if (scene.classList.contains('stw')) { const b = $('.band').getBoundingClientRect(); min = b.bottom - s.top + 4; }
+    if (scene.classList.contains('stw') && !overBand) { const b = $('.band').getBoundingClientRect(); min = b.bottom - s.top + 4; }
     if (top < min && side === 'above' && y - gap - h > min - h * .35) top = min;
     if (top < min) { side = 'below'; top = y + gap; }
     if (top + h > s.height - 6) { side = 'above'; top = y - gap - h; }
@@ -1029,12 +1111,12 @@
     box.dataset.side = side;
     box.style.setProperty('--tail', Math.max(14, Math.min(w - 14, x - left)) + 'px');
   }
-  function showBubble(text, el, cls, ms = 3200) {
+  function showBubble(text, el, cls, ms = 3200, overBand = false) {
     bubble.className = 'bubble ' + (cls || '');
     bubble.textContent = text;
     const s = sRect();
     const p = $('.prop', el).getBoundingClientRect();
-    placeNear(bubble, p.left + p.width / 2 - s.left, p.top - s.top, 10, 'above');
+    placeNear(bubble, p.left + p.width / 2 - s.left, p.top - s.top, overBand ? 16 : 10, 'above', overBand);
     bubble.classList.add('on');
     say(text);
     clearTimeout(bubbleTimer);
@@ -1124,7 +1206,7 @@
     it.state = 'binned';
     lightBin(bin);
     lidBounce(bin);
-    if (it.note) showMemo(L[it.note], bin, 'note', 2400);
+    if (it.note) showMemo(L[it.note], bin, 'note', NOTE_MS[it.note]);
     settled();
   }
 
@@ -1178,15 +1260,18 @@
     setOffset(it, 0, 0);
     if (!reduce) {
       const a = it.el.animate([{ transform: from }, { transform: 'translate(0, 0)' }], { duration: 560, easing: 'cubic-bezier(.3, 1.45, .5, 1)' });
-      const follow = () => { if (g !== gen) return; redrawLinks(it.id); if (a.playState === 'running') requestAnimationFrame(follow); else showBubble(L.refuse, it.el, 'held'); };
+      const follow = () => { if (g !== gen) return; redrawLinks(it.id); if (a.playState === 'running') requestAnimationFrame(follow); else showBubble(refuseLine(it), it.el, 'held'); };
       requestAnimationFrame(follow);
     } else {
       redrawLinks(it.id);
-      showBubble(L.refuse, it.el, 'held');
+      showBubble(refuseLine(it), it.el, 'held');
     }
   }
+  // The root that holds it (the kept things all hang straight off one).
+  const rootOf = (it) => ROOTS.find((root) => out(root.id).includes(it.id));
+  const refuseLine = (it) => L.refuse[(rootOf(it) || ROOTS[0]).id];
   function holdLine(it) {
-    const r = ROOTS.find((root) => out(root.id).includes(it.id));
+    const r = rootOf(it);
     if (r) drawRef(r.id, it.id, false);
   }
 
@@ -1264,6 +1349,7 @@
     const x0 = Math.min(s.width - w - 4, ax + w * .9);
     return { top, bx, by, ax, ay, x0, x1: Math.max(ax + w * .2, x0 - .05 * s.width), x2: Math.max(n.right - s.left + 4, ax - .12 * s.width), dir: -1 };
   }
+  const prey = $('.moth.prey');
   function placeCat() {
     const p = catPoints();
     cat.classList.toggle('flip', p.dir < 0);
@@ -1272,6 +1358,17 @@
     halo.style.top = p.by + 'px';
     if (catPhase === 'walk') cat.style.left = p.x0 + 'px';
     if (catPhase === 'sit') cat.style.left = p.x2 + 'px';
+    // the moth it leaps at: a paw's length ahead of its front paws at the top of the leap
+    const w = cat.offsetWidth, h = w * 40 / 60;
+    prey.style.left = (p.dir > 0 ? p.ax + w * .98 : p.ax + w * .02) + 'px';
+    prey.style.top = (p.ay + h * .55) + 'px';
+  }
+  // Waking: the cat finishes the leap it started seven hours ago; the moth, stopped with it, gets away.
+  function mothFlees() {
+    prey.getAnimations().filter((a) => !(a instanceof CSSAnimation)).forEach((a) => a.cancel());
+    if (reduce) return;
+    const dir = cat.classList.contains('flip') ? -1 : 1;
+    prey.animate([{ translate: '0 0', opacity: 1 }, { translate: `${dir * 9}cqmin -15cqmin`, opacity: 0 }], { duration: 480, easing: 'cubic-bezier(.3, 0, .8, .5)' });
   }
   function catWalk() {
     catPhase = 'walk';
@@ -1283,7 +1380,7 @@
   }
   // A curve from the walk's end to the landing that passes the apex halfway (t = .5).
   const LEAP = 1100;
-  function catJump() {
+  function catJump(stopAtTop = true) {
     if (reduce) return;
     const p = catPoints();
     catPhase = 'leap';
@@ -1299,7 +1396,8 @@
     }
     catAnim = cat.animate(frames, { duration: LEAP, fill: 'forwards' });
     // Stop the world: the cat stays at the top of its leap, on the light.
-    setTimeout(() => { if (catPhase === 'leap' && catAnim && catAnim.playState === 'running') { catAnim.pause(); catAnim.currentTime = LEAP / 2; } }, LEAP / 2);
+    const mine = catAnim;
+    if (stopAtTop) setTimeout(() => { if (catPhase === 'leap' && catAnim === mine && catAnim.playState === 'running') { catAnim.pause(); catAnim.currentTime = LEAP / 2; } }, LEAP / 2);
   }
   function catLand() {
     if (catPhase === 'sit') return;
@@ -1310,8 +1408,11 @@
       cat.dataset.pose = 'sit';
       placeCat();
     };
-    if (reduce || !catAnim || catPhase !== 'leap') return finish();
-    catAnim.play();
+    if (reduce || !catAnim) return finish();
+    // stopped mid-step (a visitor started before 11 p.m.): it walks on into its leap
+    if (catPhase === 'walk') catJump(false);
+    else if (catPhase !== 'leap') return finish();
+    else catAnim.play();
     catAnim.finished.then(finish).catch(() => {});
   }
 
@@ -1343,10 +1444,12 @@
     bigpause.classList.remove('on');
   }
 
-  let wakeTimer = 0;
-  function stopTheWorld() {
+  // quiet: a visitor's first touch before 11 p.m. starts the collection by hand, without the
+  // freeze frame and the bell.
+  function stopTheWorld(quiet) {
     setClock('23', '00');
     scene.classList.add('stw');
+    if (quiet) { lights(.14); say(L.band); return; }
     freezeFrame();
     const s = sRect();
     const sp = $('.lamp .speaker').getBoundingClientRect();
@@ -1368,7 +1471,18 @@
     scene.classList.add('dawn');
     setClock('06', '12');
     lights(.16, true);
+    mothFlees();
+    newDay(true);
     catLand();
+  }
+  // By 06:12 tomorrow's lunch is today's, and today's shortcut was learned yesterday.
+  function newDay(on) {
+    ITEMS.forEach((it) => {
+      if (!it.dawn) return;
+      const label = TTY.t(on ? it.dawn : it.label);
+      $('.tag', it.el).textContent = label;
+      it.name = label;
+    });
   }
 
   /* ------------------------------------------------------------ receipt */
@@ -1382,7 +1496,7 @@
     const rows = BINS.filter((b) => freed[b.id]).map((b) => `<li><span class="nm">${TTY.t(b.name)}</span><span>${L.gb(fmt(freed[b.id]))}</span></li>`).join('');
     const [title, gb, paused, next] = L.receipt;
     receipt.innerHTML = `<div class="r-head"><span>${date}</span><span>23:00–06:12</span></div>
-      <p class="r-title">${title}</p>
+      <p class="r-title">${title}<span class="stamp">${L.stamp[0]}<b>${L.stamp[1]}</b></span></p>
       <ul class="r-rows">${rows}</ul>
       <p class="r-line total">${gb.replace('{gb}', fmt(total))}</p>
       <p class="r-line">${paused}</p>
@@ -1390,19 +1504,34 @@
       <p class="r-foot">${L.weak}</p>
       <div class="barcode"></div>`;
   }
-  function showReceipt() {
+  // The receipt, then (stampIn ms later) the office's stamp on it. Only a reset cancels the stamp.
+  const STAMP_IN = 2200;
+  function showReceipt(stampIn = STAMP_IN) {
     writeReceipt();
+    receipt.classList.remove('stamped');
     receipt.classList.add('on');
     receipt.setAttribute('aria-hidden', 'false');
     say(L.receipt.map((s) => s.replace('{gb}', '2.3')).join(' · ') + ' ' + L.weak);
     if (!reduce) receipt.animate([{ transform: 'translateY(18%)', clipPath: 'inset(0 0 100% 0)', opacity: 1 }, { transform: 'none', clipPath: 'inset(0 0 0 0)', opacity: 1 }], { duration: 1100, easing: 'cubic-bezier(.2, .7, .2, 1)' });
+    if (reduce || !stampIn) return stampReceipt();
+    const g = gen;
+    setTimeout(() => { if (g === gen && receipt.classList.contains('on')) stampReceipt(); }, stampIn);
   }
-  function hideReceipt() { receipt.classList.remove('on'); receipt.setAttribute('aria-hidden', 'true'); }
-  // When the visitor has finished the job by hand, they get the receipt too.
+  function stampReceipt() {
+    if (receipt.classList.contains('stamped')) return;
+    receipt.classList.add('stamped');
+    if (reduce) return;
+    say(L.stamp.join(' '));
+    $('.stamp', receipt).animate([{ transform: 'scale(2.3) rotate(8deg)', opacity: 0 }, { transform: 'scale(.93)', opacity: .95, offset: .7 }, { transform: 'none', opacity: .9 }], { duration: 300, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+    receipt.animate([{ transform: 'none' }, { transform: 'translateY(3px)' }, { transform: 'none' }], { duration: 200, delay: 200 });
+  }
+  function hideReceipt() { receipt.classList.remove('on', 'stamped'); receipt.setAttribute('aria-hidden', 'true'); }
+  // When the visitor has finished the job by hand, morning comes and they get the receipt too.
   function settled() {
     if (!manual && !reduceDone) return;
-    if (garbage.every((it) => it.state === 'binned' || it.state === 'parked')) {
-      setTimeout(() => { if (garbage.every((it) => it.state === 'binned' || it.state === 'parked')) { wake(); showReceipt(); } }, reduce ? 0 : 700);
+    const done = () => garbage.every((it) => it.state === 'binned' || it.state === 'parked');
+    if (done()) {
+      setTimeout(() => { if (done() && !receipt.classList.contains('on')) { wake(); showReceipt(); } }, reduce ? 0 : 700);
     }
   }
 
@@ -1427,6 +1556,8 @@
       setOffset(it, 0, 0);
     });
     held = null;
+    newDay(false);
+    prey.getAnimations().filter((a) => !(a instanceof CSSAnimation)).forEach((a) => a.cancel());
     catWalk();
     redrawLinks();
   }
@@ -1448,7 +1579,7 @@
     hideCycle(true);
     wake();
     catLand();
-    showReceipt();
+    showReceipt(0);
   }
 
   let run = 0;
@@ -1467,34 +1598,43 @@
     const at = (sec, fn) => timers.push(setTimeout(() => { if (run === mine) fn(); }, sec * 1000));
     at(1.5 - LEAP / 2000, catJump);
     at(1.5, stopTheWorld);
-    // Mark: the edges in the order the collector walked them, one a second from 3 s.
-    GC.walked.forEach(([from, to], k) => at(3 + k * 1.0, () => drawRef(from, to, true)));
+    // Mark: the edges in the order the collector walked them, one every 0.6 s from 3 s.
+    GC.walked.forEach(([from, to], k) => at(3 + k * 0.6, () => drawRef(from, to, true)));
     // The pair that only holds each other: reference counts (1 each) and the bubble.
-    at(7, () => {
+    at(5.6, () => {
       garbage.filter((it) => it.refs.length).forEach((it) => it.el.classList.add('counted'));
       edgeEls.forEach((p) => { if (p.classList.contains('cyc')) { p.classList.remove('blink'); void p.getBBox(); p.classList.add('blink'); } });
-      showBubble(L.cycle, byId.worry2.el, 'cyc', 5400);
+      showBubble(L.cycle, byId.worry2.el, 'cyc', 3400, !wide);
     });
     // Sweep: everything the mark did not reach, each at its time.
     garbage.filter((it) => it.t !== undefined).forEach((it) => at(it.t, () => collect(it)));
-    at(17.0, wake);
-    at(17.4, showReceipt);
+    at(16.7, wake);
+    at(17.5, () => showReceipt(STAMP_IN)); // fully up at 18.6, stamped at 19.7
     at(22, play);
   }
 
-  // A visitor takes over: the autoplay stops, the world wakes, and 12 s after the last
-  // touch the collection starts again from the top.
+  // A visitor takes over: the autoplay stops and their hands do the collecting, inside the same
+  // stopped world (the freeze frame goes; the night, 23:00, the band and the cat in mid-air stay).
+  // Morning comes only once everything is sorted (settled). Touched before 11 p.m., the world
+  // stops there and then; touched in the morning, the receipt stays. 12 s after the last touch
+  // the collection starts again from the top.
   function takeOver() {
     if (reduce) return;
     if (!manual) {
       manual = true;
       run++;
       clearTimers();
-      if (scene.classList.contains('stw')) wake();
-      else if (catPhase === 'leap') catLand();
-      else if (catPhase === 'walk') { catPhase = 'rest'; cat.dataset.pose = 'sit'; }
-      hideReceipt();
       pa.classList.remove('on');
+      if (scene.classList.contains('dawn')) {
+        if (!receipt.classList.contains('on')) showReceipt();
+      } else {
+        if (!scene.classList.contains('stw')) {
+          if (catAnim && catPhase !== 'sit') catAnim.pause();
+          stopTheWorld(true);
+        }
+        unfreeze();
+        settled();
+      }
     }
     bumpIdle();
   }

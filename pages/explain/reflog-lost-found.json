@@ -4,14 +4,16 @@
     "en": "Git Lost & Found",
     "ko": "git 유실물 센터"
   },
-  "updated": "2026-10-14",
+  "updated": "2026-10-15",
   "ko": {
-    "line": "git으로 작업을 '다 날렸다'고 식은땀 흘리는 순간을 놀린다. 사실 git은 지운 줄 안 커밋도 한동안 기록(reflog)에 맡아 두고 있어서, 당황하기 전에 `git reflog`부터 보면 대개 찾는다.",
+    "line": "git으로 작업을 '다 날렸다'고 식은땀 흘리는 순간을 놀린다. 사실 git은 커밋한 것이라면 지운 줄 안 것도 한동안 기록(reflog)에 맡아 두고 있어서, 당황하기 전에 `git reflog`부터 보면 대개 찾는다.",
     "points": [
-      "혼비백산 뛰어 들어온 손님과 장부에서 눈도 안 떼고 등 뒤로 팔만 뻗는 직원 → 손님에겐 인생 최대의 사고인데 직원에겐 오늘도 흔한 일이다. 실제로 `git reset --hard`로 지운 줄 안 커밋은 reflog에 남아 있고 `git reset --hard HEAD@{1}`로 돌아온다.",
-      "같은 손님이 또 뛰어 들어오는데 직원은 이미 나뭇가지를 꺼내 두었다 → 브랜치(branch)가 영어로 나뭇가지라는 말장난이다. 게다가 브랜치를 지우면 git이 정말로 `(was c4cf0e5)`라고 번호를 불러 주고, 그 번호만 있으면 `git branch login c4cf0e5`로 브랜치를 되살린다.",
-      "'add만 함'을 고르면 이름표 없는 병이 나온다 → `git add`만 한 내용은 `git fsck --lost-found`로 되찾을 수 있지만, 파일 이름 없이 내용만 `.git/lost-found/other/` 폴더에 번호를 달고 나온다. git에는 진짜로 lost-found(유실물) 폴더가 있다.",
-      "\"접수된 적이 없는 물건은 저희도 없어요.\" → `git add`도 안 한 변경은 git이 본 적이 없어서 git도 찾아 줄 수 없다. 유실물 센터의 논리 그대로다."
+      "혼비백산 뛰어 들어온 손님과 장부에서 눈도 안 떼고 등 뒤로 팔만 뻗는 직원 → 손님에겐 인생 최대의 사고인데 직원에겐 오늘도 흔한 일이다. \"커밋하신 건 늘 여기로 와요.\" 실제로 `git reset --hard`로 지운 줄 안 커밋은 reflog에 남아 있고 `git reset --hard HEAD@{1}`로 돌아온다.",
+      "손님이 가방을 안고 나가는 사이 직원이 또 팔을 뻗어 빈 창구에 나뭇가지를 올려 두고, 같은 손님이 다시 뛰어 들어와 \"브랜치를 지워 버…\"까지 말하다 그 나뭇가지를 본다 → 직원은 다음 사고까지 미리 안다. 브랜치(branch)가 영어로 나뭇가지라는 말장난이다(영어판은 \"I deleted my—\"에서 말이 끊기고 나뭇가지가 낱말을 채운다).",
+      "\"지우실 때 git이 번호도 불러 드렸는데요. (was c4cf0e5)\" → 브랜치를 지우면 git이 정말로 `Deleted branch login (was c4cf0e5).`라고 번호를 알려 주는데 다들 흘려 넘긴다. 그 번호만 있으면 `git branch login c4cf0e5`로 브랜치를 되살린다.",
+      "세 번째로 뛰어 들어온 손님이 \"저기요, 이번엔 진짜로…\"를 다 말하기도 전에 직원이 손을 번쩍 들고 현수막 '당황하면 먼저 git reflog'가 내려온다 → 직원이 매번 해 준 일이 사실 `git reflog` 한 줄이었다. 다음부턴 직접 찾아보시라는 대답이고, 그제야 직원이 처음으로 고개를 들어 화면 쪽(보는 사람)에게 끄덕인다.",
+      "(신고서에서 누르면) 'add만 함'은 이름표 없는 병이 나온다 → `git add`만 한 내용은 `git fsck --lost-found`로 되찾을 수 있지만, 파일 이름 없이 내용만 `.git/lost-found/other/` 폴더에 번호를 달고 나온다. git에는 진짜로 lost-found(유실물) 폴더가 있다.",
+      "(신고서에서 누르면) 'add도 안 함'은 \"접수된 적이 없는 물건은 저희도 없어요.\" → `git add`도 안 한 변경은 git이 본 적이 없어서 git도 찾아 줄 수 없다. 안내 한 줄의 '거의 다요'가 이것이다. 보관증 메모는 그래도 남은 출구를 알려 준다: VS Code 타임라인 같은 에디터의 로컬 기록."
     ],
     "terms": [
       {
@@ -24,7 +26,7 @@
       },
       {
         "term": "git reset --hard",
-        "plain": "지금 위치를 다른 커밋으로 옮기고 파일도 그 상태로 덮어쓰는 명령. 커밋이 사라진 것처럼 보이지만 지워지지는 않는다."
+        "plain": "지금 위치를 다른 커밋으로 옮기고 파일도 그 상태로 덮어쓰는 명령. 커밋이 사라진 것처럼 보이지만 지워지지는 않는다. 단, 커밋도 add도 안 한 변경은 정말로 사라진다."
       },
       {
         "term": "ORIG_HEAD",
@@ -66,7 +68,7 @@
     ],
     "deep": [
       "직원 이름표의 `reflog` → 직원이 곧 reflog다. 장부를 펴 놓고 읽는 것도 reflog를 보는 것.",
-      "꼬리표의 짧은 해시 다섯 개(`8254348`, `c4cf0e5`, `7c9ec1f`, `447ac12`, `f04834b`) → 이 사건들을 git으로 실제로 재현해 나온 번호다.",
+      "보관증 번호 다섯 개(`8254348`, `c4cf0e5`, `7c9ec1f`, `447ac12`, `f04834b`. 뒤의 셋은 신고서를 눌러야 나온다) → 이 사건들을 git으로 실제로 재현해 나온 번호다.",
       "rebase 상자의 1·2·3 번호와 끈 → rebase는 커밋을 새로 만들어 다시 쌓는다. 끈으로 묶어 둔 것은 rebase 전 원래 순서 그대로의 원본 묶음이다.",
       "amend 봉투의 'v1' → 고쳐 쓴 편지(v2)가 나가도 첫 편지는 그대로 남아 있다.",
       "창구 끝 화분의 꼬리표 '양호' → 잃어버린 것이 아니다. 늘 멀쩡하다."
@@ -75,10 +77,12 @@
   "en": {
     "line": "It pokes fun at the cold-sweat moment of \"I just destroyed my work\" in git. Git actually keeps the commits you think you destroyed in its log (the reflog) for weeks, so a calm `git reflog` usually finds them.",
     "points": [
-      "A customer sprints in, arms flailing, and the clerk doesn't even look up from the ledger, just reaches back for the bag → the worst moment of your week is the clerk's most routine request. After `git reset --hard` the commit really is still in the reflog, and `git reset --hard HEAD@{1}` brings it back.",
-      "The same customer runs in again, and the clerk already has a twig on the counter → a branch, literally. And when you delete a branch, git really does read out its number, `(was c4cf0e5)`, and that number is all `git branch login c4cf0e5` needs to bring the branch back.",
-      "\"Added only\" brings back a jar with a blank name tag → `git fsck --lost-found` can recover content you `git add`-ed but never committed, but only the contents, filed by number under `.git/lost-found/other/`. Git literally has a lost-and-found folder.",
-      "\"If it was never handed in, we never had it.\" → changes you never `git add`-ed were never seen by git, so git can't give them back."
+      "A customer sprints in, arms flailing, and the clerk doesn't even look up from the ledger, just reaches back for the bag → the worst moment of your week is the clerk's most routine request: \"Committed work always ends up here.\" After `git reset --hard` the commit really is still in the reflog, and `git reset --hard HEAD@{1}` brings it back.",
+      "While the customer is still running out with his bag, the clerk reaches back again and leaves a twig on the empty counter. The same customer bursts back in, \"I deleted my—\", and sees it → the clerk knows the next accident before it walks in, and the twig finishes the sentence: a branch, literally. (The Korean version says \"branch\" and then breaks off, so the twig answers it.)",
+      "\"Git did read out its number when you deleted it: (was c4cf0e5)\" → `git branch -D` really prints `Deleted branch login (was c4cf0e5).`, and nobody reads it. That number is all `git branch login c4cf0e5` needs to bring the branch back.",
+      "The third time, he gets as far as \"Okay, this time I really—\" before the clerk, still reading, raises a hand and the banner drops: \"Panic? git reflog first.\" → everything the clerk did for him was one `git reflog`. Next time, look it up yourself. Only then does the clerk look up for the first time, at you.",
+      "(When you click it) \"Added only\" brings back a jar with a blank name tag → `git fsck --lost-found` can recover content you `git add`-ed but never committed, but only the contents, filed by number under `.git/lost-found/other/`. Git literally has a lost-and-found folder.",
+      "(When you click it) \"Never added\" gets \"If it was never handed in, we never had it.\" → changes you never `git add`-ed were never seen by git, so git can't give them back. That is the \"almost\" in the hint. The claim tag still points to the one way out: your editor's local history, like VS Code's Timeline."
     ],
     "terms": [
       {
@@ -91,7 +95,7 @@
       },
       {
         "term": "git reset --hard",
-        "plain": "moves you to another commit and overwrites your files to match. Commits look gone, but they aren't deleted."
+        "plain": "moves you to another commit and overwrites your files to match. Commits look gone, but they aren't deleted. Changes you never committed or added really are gone, though."
       },
       {
         "term": "ORIG_HEAD",
@@ -131,7 +135,7 @@
     ],
     "deep": [
       "The clerk's name badge says `reflog` → the clerk is the reflog. The open ledger on the counter is the reflog, too.",
-      "The five short hashes on the tags (`8254348`, `c4cf0e5`, `7c9ec1f`, `447ac12`, `f04834b`) → real ones, from actually doing each of these things in a test repository.",
+      "The five claim-tag numbers (`8254348`, `c4cf0e5`, `7c9ec1f`, `447ac12`, `f04834b`; the last three only show when you click) → real ones, from actually doing each of these things in a test repository.",
       "The boxes numbered 1, 2, 3 and tied with string → a rebase makes new commits and stacks them again; the tied bundle is the original stack, in its original order.",
       "The envelope marked \"v1\" → the corrected letter went out, and the first draft is still here.",
       "The potted plant at the end of the counter has a tag too: \"fine\". It isn't lost. It never is."

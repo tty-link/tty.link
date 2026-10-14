@@ -49,8 +49,9 @@
   .wifi path:nth-child(2) { animation-delay: .3s; }
   .wifi path:nth-child(3) { animation-delay: .6s; }
   @keyframes wifi { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+  /* The toast flies clear of the slot: 42 units is about 10 px on the 358 × 396 phone stage. */
   .toast { transition: transform .12s ease-out; }
-  .toaster.up .toast { transform: translateY(-16px); }
+  .toaster.up .toast { transform: translateY(-42px); }
   .steam path { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; animation: steam 2.6s ease-in-out infinite; opacity: 0; }
   .steam path:nth-child(2) { animation-delay: -1.3s; }
   @keyframes steam { 0% { opacity: 0; transform: translateY(6px); } 40% { opacity: .9; } 100% { opacity: 0; transform: translateY(-14px); } }
@@ -65,6 +66,7 @@
   .ring.on { animation: ring 1.1s ease-out 3; }
   @keyframes ring { 0% { opacity: .95; transform: scale(.5); } 100% { opacity: 0; transform: scale(1.5); } }
   .hot { fill: transparent; cursor: pointer; }
+  .hot:focus:not(:focus-visible) { outline: none; }
   .coin { opacity: 0; }
   .vacuum { transition: transform 1.2s ease-in-out; }
   .vacuum.go { transform: translateX(-34px); }
@@ -105,9 +107,12 @@
   .ico { display: grid; place-items: center; width: 10cqi; height: 10cqi; border-radius: 3cqi; background: var(--c); }
   .ico svg { width: 6.4cqi; height: 6.4cqi; }
   .who { display: flex; justify-content: space-between; align-items: center; gap: 2cqi; font-size: 3.8cqi; font-weight: 800; }
-  .who time { font-weight: 400; font-size: 3.2cqi; color: var(--soft); }
+  .who time { font-weight: 400; font-size: max(10px, 3.2cqi); color: var(--soft); }
   .who > font-kku { color: var(--ink); }
   .what { margin-top: .8cqi; font-size: 3.8cqi; line-height: 1.38; }
+  /* Group-chat style system lines under an alert ("X added Y", "Y left"). */
+  .sys { width: fit-content; max-width: 100%; margin: -1.6cqi auto 1.6cqi; padding: .5cqi 2.6cqi; border-radius: 99px; background: #eceef3; color: #4f5464; font-size: 3.3cqi; line-height: 1.25; text-align: center; }
+  .sys + .sys { margin-top: 0; }
   .hint { margin-top: 2cqi; font-size: max(11px, 3.2cqi); color: var(--soft); text-align: center; }
 
   /* ---- Update all: one progress bar, one update, seven farewells ---- */
@@ -133,6 +138,7 @@
   @container (min-aspect-ratio: 1/1) {
     .app-top { font-size: max(11px, 3.6cqi); }
     .status, .who, .what { font-size: max(12px, 3.8cqi); }
+    .sys { font-size: max(11.5px, 3.3cqi); }
     .who time { font-size: max(10.5px, 3.2cqi); }
   }
   @container (max-aspect-ratio: 1/1) {
@@ -145,6 +151,12 @@
     .app { justify-self: center; width: min(100%, 80cqh); padding: 4.6cqi 5cqi 3cqi; border-radius: 6cqi; height: 100%; }
     .app h1 { font-size: 7cqi; margin-top: 2cqi; }
     .feed { --fade: 24px; margin-top: 3cqi; }
+    /* The two system lines after the plant are compact (as big as the "now" beside the alert,
+       never smaller), and while they are the newest thing in the feed the hint gives them its
+       line (as it does to the update screen), in reduced motion too. */
+    .sys { font-size: max(10.5px, 3.2cqi); padding: min(.5cqi, 3px) min(2.6cqi, 12px); margin: max(-1.8cqi, -9px) auto min(1.2cqi, 6px); }
+    .sys + .sys { margin-top: 0; }
+    .app.tagged .hint { display: none; }
     /* On a phone the update screen takes the place of the status line and the hint, and the
        results drop the device names (the icons and the badges in the picture say which is which). */
     /* Sizes are capped so a wide portrait stage (the home stage is about 650 × 730) fits too. */
@@ -176,6 +188,9 @@
   @container (max-aspect-ratio: 1/1) and (min-width: 520px) {
     .results, .lang-ko .results { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .results .tag { white-space: normal; }
+    /* "2FA → 3FA" stays on one line; slimmer padding (and a touch smaller below ~540 px)
+       keeps it inside a quarter-width cell. */
+    .results .tag.ok { white-space: nowrap; padding-inline: .6cqi; font-size: clamp(11px, 2.6cqi, 14px); }
   }
   @media (prefers-reduced-motion: reduce) {
     .wifi path, .steam path, .bulb-glow, .leaf { animation: none; }
@@ -242,7 +257,7 @@
       <path d="M58 384 H134" stroke="#adb5bd" stroke-width="3"/>
       <rect x="122" y="346" width="5" height="26" rx="2" fill="#868e96"/><rect x="122" y="396" width="5" height="40" rx="2" fill="#868e96"/>
       <rect x="68" y="342" width="46" height="22" rx="3" fill="#1d3557"/>
-      <text class="fridge-text" x="91" y="358" font-size="12" font-weight="800" text-anchor="middle" fill="#a8dadc" font-family="Figtree, sans-serif">2FA</text>
+      <text class="fridge-text" x="91" y="358.4" font-size="13" font-weight="800" text-anchor="middle" fill="#a8dadc" font-family="Figtree, sans-serif">2FA</text>
       <rect x="148" y="432" width="176" height="48" fill="#d4a373"/><rect x="144" y="426" width="184" height="8" rx="2" fill="#b07d4f"/>
       <g class="toaster">
         <g class="toast"><rect x="170" y="388" width="14" height="22" rx="3" fill="#f6bd60"/><rect x="190" y="388" width="14" height="22" rx="3" fill="#f6bd60"/></g>
@@ -293,7 +308,7 @@
     <p class="app-top">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 L12 3 L21 11 V21 H3 Z" fill="#e76f51"/><rect x="9" y="14" width="6" height="7" fill="#fff"/></svg>
       <span data-lang="en">HomeSweetHome</span>
-      <span data-lang="ko">우리집 스마트홈</span>
+      <span data-lang="ko">즐거운나의집</span>
       <button class="update-all" type="button"></button>
     </p>
     <h1 data-lang="en">Home, sweet attack surface</h1>
@@ -353,9 +368,19 @@
       say: { en: 'Soil: moist. Botnets joined: 0. Good plant.', ko: '흙 촉촉, 가입한 봇넷 0개. 기특한 화분이에요.' } },
   ];
   const byId = (id) => DEVICES.find((d) => d.id === id);
-  // Each visit: the fridge (which texts the toaster) and the toaster open, three of the rest
-  // follow, and the plant always gets the last word.
-  const TOUR = ['fridge', 'toaster', ...['bulb', 'kettle', 'lock', 'vacuum', 'camera'].sort(() => Math.random() - .5).slice(0, 3), 'plant'].map(byId);
+  // Each round: the fridge (which texts the toaster) and the toaster open, three of the rest
+  // follow, and the plant always gets the last word. The next round brings in the two that
+  // sat this one out, plus one of the three.
+  const MIDDLE = ['bulb', 'kettle', 'lock', 'vacuum', 'camera'];
+  const shuffle = (list) => list.map((v) => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map((p) => p[1]);
+  let middle = shuffle(MIDDLE).slice(0, 3);
+  const tour = () => ['fridge', 'toaster', ...middle, 'plant'].map(byId);
+  let TOUR = tour();
+  function nextRound() {
+    const benched = MIDDLE.filter((id) => !middle.includes(id));
+    middle = shuffle([...benched, shuffle(middle)[0]]);
+    TOUR = tour();
+  }
 
   // Rings that pulse around a device, and generous hit areas to tap it.
   const rings = {};
@@ -373,7 +398,8 @@
     hit.setAttribute('role', 'button');
     hit.setAttribute('aria-label', d.name[TTY.lang]);
     // A click and a key press do the same thing: the device acts up and the cycle waits.
-    const press = () => { idleUntil = performance.now() + 9000; closeUpdate(); notify(d); };
+    // Closing the update screen leaves its marks on the house: the visitor's result stays.
+    const press = () => { idleUntil = performance.now() + 9000; closePanel(); notify(d); };
     hit.addEventListener('click', press);
     hit.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); press(); } });
     svg.querySelector('.hits').append(hit);
@@ -391,11 +417,17 @@
   const live = svg.querySelector('.live');
   coin.textContent = TTY.t({ en: '+$0.0001', ko: '+0.13원' });
   let policyLength = 34;
+  // How many factors the fridge wants. Every "Update all" adds one: 2FA, 3FA, 4FA…
+  let factors = 2;
+  const fa = () => `${factors}FA`;
+  let fridgeTimers = [];
   const ACT = {
     fridge() {
       if (TTY.reduce) return;
-      const codes = ['****', '1?3?', 'code?', '2FA'];
-      codes.forEach((c, i) => setTimeout(() => { fridgeText.textContent = c; }, i * 650));
+      // Six digits, as the alert says; then back to however many factors it wants by now.
+      fridgeTimers.splice(0).forEach(clearTimeout);
+      const codes = ['******', '1?3?5?', 'code?', null];
+      codes.forEach((c, i) => fridgeTimers.push(setTimeout(() => { fridgeText.textContent = c || fa(); }, i * 650)));
     },
     toaster() { morseBurst(); },
     bulb() {
@@ -429,14 +461,16 @@
   };
 
   // The toaster's idle habit: popping toast in Morse. ... --- ...
+  // International Morse timing on a 170 ms dot: dash = 3 dots, gap inside a letter = 1 dot,
+  // gap between letters = 3 dots (the 170 after the last sign plus 340).
   const toaster = svg.querySelector('.toaster');
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   let morsing = false;
   async function morse(pattern) {
     for (const sym of pattern) {
-      if (sym === ' ') { await wait(420); continue; }
+      if (sym === ' ') { await wait(340); continue; }
       toaster.classList.add('up');
-      await wait(sym === '.' ? 170 : 520);
+      await wait(sym === '.' ? 170 : 510);
       toaster.classList.remove('up');
       await wait(170);
     }
@@ -450,9 +484,49 @@
 
   /* ---- The feed ---- */
   const icon = (d) => `<span class="ico" style="--c:${d.c}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[d.id]}</svg></span>`;
+  const notifs = () => feed.querySelectorAll('.notif');
   function stamp() {
     const labels = TTY.t({ en: ['now', '2m', '5m', '9m', '14m'], ko: ['방금', '2분 전', '5분 전', '9분 전', '14분 전'] });
-    [...feed.children].forEach((li, i) => { const t = li.querySelector('time'); if (t) t.textContent = labels[Math.min(i, labels.length - 1)]; });
+    notifs().forEach((li, i) => { li.querySelector('time').textContent = labels[Math.min(i, labels.length - 1)]; });
+  }
+  // The tag after the punchline: the toaster pulls the good plant into its group, and the
+  // plant leaves at once. Group-chat system lines (KakaoTalk wording in Korean).
+  const SYS = TTY.t({
+    en: { invite: 'Toaster added Plant sensor to the botnet.', left: 'Plant sensor left.' },
+    ko: { invite: '토스터님이 화분 센서님을 봇넷에 초대했습니다.', left: '화분 센서님이 나갔습니다.' },
+  });
+  function system(after, text) {
+    const li = document.createElement('li');
+    li.className = 'sys';
+    li.textContent = text;
+    after.after(li);
+    if (!TTY.reduce) li.animate([{ opacity: 0, transform: 'translateY(-40%) scale(.9)' }, { opacity: 1, transform: 'none' }], { duration: 360, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+    return li;
+  }
+  function pulse(id) {
+    const ring = rings[id];
+    ring.classList.remove('on');
+    void ring.getBoundingClientRect();
+    if (!TTY.reduce) ring.classList.add('on');
+  }
+  const INVITE_MS = 1300, LEFT_MS = 800;
+  function plantTag(card) {
+    // Reduced motion: the same last scene as 14.0 s of autoplay, so on a portrait stage the
+    // hint gives the two lines its place here too (a tap brings it back).
+    if (TTY.reduce) { system(system(card, SYS.invite), SYS.left); app.classList.add('tagged'); return; }
+    // Only while this alert is still the newest one: a tap in between cancels the joke.
+    const still = () => notifs()[0] === card;
+    setTimeout(() => {
+      if (!still()) return;
+      const invite = system(card, SYS.invite);
+      pulse('toaster');
+      setTimeout(() => {
+        if (!still() || !invite.isConnected) return;
+        system(invite, SYS.left);
+        app.classList.add('tagged');
+        ACT.plant();
+      }, LEFT_MS);
+    }, INVITE_MS);
   }
   function notify(d) {
     const li = document.createElement('li');
@@ -470,14 +544,14 @@
     }
     li.querySelector('.what').textContent = d.say[TTY.lang];
     feed.prepend(li);
+    app.classList.remove('tagged');
+    // Five alerts at most. System lines sit under their alert, so they go before it does.
+    while (notifs().length > 5) feed.lastElementChild.remove();
     stamp();
-    while (feed.children.length > 5) feed.lastElementChild.remove();
     if (!TTY.reduce) li.animate([{ transform: 'translateY(-30%) scale(.94)', opacity: 0 }, { transform: 'translateY(4%) scale(1.01)', opacity: 1, offset: .65 }, { transform: 'none', opacity: 1 }], { duration: 520, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
-    const ring = rings[d.id];
-    ring.classList.remove('on');
-    void ring.getBoundingClientRect();
-    if (!TTY.reduce) ring.classList.add('on');
+    pulse(d.id);
     ACT[d.id]();
+    if (d.id === 'plant') plantTag(li);
   }
 
   /* ---- Update all ---- */
@@ -492,9 +566,9 @@
   const badges = svg.querySelector('.badges');
   const UP = TTY.t({
     en: { btn: 'Update all', busy: 'Updating…', title: (n) => `Updating ${n} devices`, check: (name) => `Checking: ${name}`,
-      done: 'Update complete', sum: (ok, eos) => `${ok} updated · ${eos} end of support`, ok: 'Updated', eos: 'End of support' },
+      done: 'Update complete', sum: (ok, eos) => `${ok} updated · ${eos} end of support`, eos: 'End of support' },
     ko: { btn: '모두 업데이트', busy: '업데이트 중…', title: (n) => `기기 ${n}대 업데이트 중`, check: (name) => `확인 중: ${name}`,
-      done: '업데이트 완료', sum: (ok, eos) => `업데이트 ${ok}대 · 지원 종료 ${eos}대`, ok: '업데이트됨', eos: '지원 종료' },
+      done: '업데이트 완료', sum: (ok, eos) => `업데이트 ${ok}대 · 지원 종료 ${eos}대`, eos: '지원 종료' },
   });
   updateBtn.textContent = UP.btn;
   const UPDATED = ['fridge'];
@@ -513,11 +587,12 @@
     badges.append(g);
     if (!TTY.reduce) g.firstChild.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.25)', offset: .6 }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out' });
   }
+  // The one update there is, written as its changelog: the fridge wants one more factor.
   function result(d, ok) {
     const li = document.createElement('li');
     li.innerHTML = `${icon(d)}<span class="nm"></span><span class="tag${ok ? ' ok' : ''}"></span>`;
     li.querySelector('.nm').textContent = d.name[TTY.lang];
-    li.querySelector('.tag').textContent = ok ? UP.ok : UP.eos;
+    li.querySelector('.tag').textContent = ok ? `${factors - 1}FA → ${factors}FA` : UP.eos;
     results.append(li);
     if (!TTY.reduce) li.animate([{ opacity: 0, transform: 'translateY(20%)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'ease-out' });
   }
@@ -530,13 +605,15 @@
     updateBtn.disabled = false;
     updateBtn.textContent = UP.btn;
     // The fridge goes first, and gets the update it least needed: one more factor.
+    factors += 1;
     [...ok, ...DEVICES.filter((d) => !ok.includes(d))].forEach((d, i) => {
-      const go = () => { const yes = ok.includes(d); result(d, yes); badge(d, yes); if (d.id === 'fridge') fridgeText.textContent = '3FA'; };
+      const go = () => { const yes = ok.includes(d); result(d, yes); badge(d, yes); if (d.id === 'fridge') { fridgeTimers.splice(0).forEach(clearTimeout); fridgeText.textContent = fa(); } };
       if (TTY.reduce) go(); else later(i * 110, go);
     });
   }
   function update() {
-    closeUpdate();
+    closePanel();
+    badges.replaceChildren();
     // The cycle waits while the results are up.
     idleUntil = performance.now() + (TTY.reduce ? 0 : UP_MS) + 9000;
     app.classList.add('updating');
@@ -555,48 +632,60 @@
     DEVICES.forEach((d, i) => later(i * (UP_MS / DEVICES.length), () => { upNow.textContent = UP.check(d.name[TTY.lang]); }));
     later(UP_MS, finishUpdate);
   }
-  function closeUpdate() {
+  // Closes the update screen only. The ticks, the grey marks and the fridge's new factor stay
+  // on the house until the next "Update all".
+  function closePanel() {
     upTimers.splice(0).forEach(clearTimeout);
     if (upBar) { upBar.cancel(); upBar = null; }
     barFill.style.width = '';
     app.classList.remove('updating');
     updater.classList.remove('done');
     results.replaceChildren();
-    badges.replaceChildren();
     upPct.textContent = '';
     upNow.textContent = '';
-    fridgeText.textContent = '2FA';
     updateBtn.disabled = false;
     updateBtn.textContent = UP.btn;
   }
   updateBtn.addEventListener('click', update);
 
-  // One alert every 2.4 s from 0.4 s, so the plant lands at about 12.4 s of a 16 s slot.
-  // The plant has the last word: it stays on top for a while before the tour starts over.
-  let turn = 0;
+  // The toaster starts popping SOS at once (the first thing on stage), the fridge's alert
+  // follows at 0.4 s and then one alert every 2.3 s, so the plant lands at about 11.9 s of a
+  // 16 s slot, and the toaster's invite and the plant's exit follow at 13.2 and 14.0 s: the
+  // exit still has two seconds before the next page wipes in at 16 s.
+  // The plant has the last word: it stays on top for a while before the next round.
+  let step = 0;
   let idleUntil = 0;
+  let plantAt = -1e9;
+  const EVERY = 2300;
   function tick() {
-    let next = 2400;
+    let next = EVERY;
     if (performance.now() > idleUntil) {
-      if (app.classList.contains('updating')) closeUpdate();
-      notify(TOUR[turn % TOUR.length]);
-      turn += 1;
-      if (turn % TOUR.length === 0) next = 8000;
+      if (app.classList.contains('updating')) closePanel();
+      const d = TOUR[step];
+      notify(d);
+      if (d.id === 'plant') plantAt = performance.now();
+      step += 1;
+      if (step === TOUR.length) { step = 0; next = 8000; nextRound(); }
     }
     setTimeout(tick, next);
   }
 
-  // Reduced motion: the feed is fixed. The plant (the punchline) sits on top; the kettle's
+  // Reduced motion: the feed is fixed. The plant (the punchline) sits on top with the toaster's
+  // invite and its exit under it, then the toaster and the fridge that texted it. The kettle's
   // note is the one that doesn't fit, so its coin stays visible in the picture instead.
   if (TTY.reduce) {
-    ['kettle', 'toaster', 'camera', 'lock', 'fridge', 'plant'].forEach((id) => notify(byId(id)));
+    ['kettle', 'camera', 'lock', 'fridge', 'toaster', 'plant'].forEach((id) => notify(byId(id)));
     coin.style.opacity = 1;
   }
   TTY.onShow(() => {
     if (TTY.reduce) return;
+    morseBurst();
     setTimeout(tick, 400);
-    // An occasional SOS between alerts.
-    setInterval(() => { if (Math.random() < .5) morseBurst(); }, 6000);
+    // An occasional SOS between alerts, but not over the plant and the lines after it.
+    setInterval(() => {
+      const plantNext = TOUR[step] && TOUR[step].id === 'plant' && performance.now() > idleUntil;
+      if (Math.random() < .5 && !plantNext && performance.now() - plantAt > 3500) morseBurst();
+    }, 6000);
   });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);

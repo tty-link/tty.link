@@ -10,8 +10,9 @@
     "points": [
       "첫 두 줄 \"DNS일 리 없다 / 절대 DNS일 리 없다\" 뒤의 셋째 줄 \"DNS였다\" → 부정을 두 번 쌓은 만큼 셋째 줄에서 와르르 무너진다. 서버를 운영해 본 사람이면 다 겪어 본 순서다.",
       "붓글씨, 비단 표구, 날리는 벚꽃잎 → 새벽 장애 대응의 넋두리를 국보급 서예 작품처럼 대접하는 과장이 웃기다.",
-      "붉은 낙관 → 작가 도장 자리에 영어판은 'DNS', 한국어판은 '또 너냐'가 새겨져 있다. 범인이 작품에 서명한 셈이다. 게다가 이 낙관은 족자가 펼쳐지자마자 글씨보다 먼저 찍혔다가, 첫 줄 \"DNS일 리 없다\"를 쓰는 순간 고개를 젓고 치워진다. 결론은 처음부터 나와 있었는데 우기다가 결국 다시 찍히는 것이다.",
-      "다 쓴 족자를 누르면 나오는 다른 수 → \"TTL은 하루 / 내일 뵙겠습니다\"(서명을 보면 금요일 저녁 6시에 바꿨다), \"한 시간째 없단다\"(만들기 전에 한 번 물어본 대가), \"캐시가 늙어 죽을 뿐\"처럼 DNS를 다루는 사람이 실제로 겪는 일들이다."
+      "붉은 낙관 → 작가 도장 자리에 영어판은 범인 'DNS'가 제 이름을 새겼고, 한국어판은 당한 사람의 한마디 '또 너냐'를 팠다. 게다가 이 낙관은 족자가 펼쳐지자마자 글씨보다 먼저 찍혔다가, 첫 줄 \"DNS일 리 없다\"를 다 쓰자 고개를 젓고 치워진다. 결론은 처음부터 나와 있었는데 우기다가, 셋째 줄에서 실토하자 처음보다 더 세게 쾅 돌아와 찍힌다.",
+      "다시 찍힌 낙관 위에 붙는 각주 \"(언제나 DNS다.)\" → 이번 장애 하나가 아니라 늘 그랬다는 판결을 책의 각주처럼 작고 점잖게 덧붙였다. 운영자들이 이 농담을 줄여 부르는 말 \"It's always DNS\" 그대로다.",
+      "다 쓴 족자를 누르면 나오는 다른 수(누를 때만 나온다) → \"TTL은 하루 / 내일 뵙겠습니다\"(서명을 보면 금요일 저녁 6시에 바꿨다), \"한 시간째 없단다\"(만들기 전에 한 번 물어본 대가), \"캐시가 늙어 죽을 뿐\"처럼 DNS를 다루는 사람이 실제로 겪는 일들이다. 다 쓴 낙관을 누르면 '또 너냐'가 한 번 더 찍힌다."
     ],
     "terms": [
       {
@@ -32,7 +33,7 @@
       },
       {
         "term": "하이쿠",
-        "plain": "5·7·5음, 모두 17음으로 된 일본의 짧은 시. 일본어로는 보통 한 줄로 쓰고, 영어로 옮기면 흔히 세 줄로 나눠 쓴다. 이 족자의 영어판도 세 줄을 5·7·5음절로 맞췄다."
+        "plain": "5·7·5음, 모두 17음으로 된 일본의 짧은 시. 일본어로는 보통 한 줄로 쓰고, 영어로 옮기면 흔히 세 줄로 나눠 쓴다. 이 족자의 영어판은 세 줄을 5·7·5음절로 맞췄고, 한국어판은 음절 수 대신 세 박자로 읽히게 썼다."
       },
       {
         "term": "낙관",
@@ -87,8 +88,9 @@
     "points": [
       "\"It's not DNS / There's no way it's DNS / It was DNS\" → two lines of denial, then the collapse. Anyone who has run servers has lived this exact order; the short version of the joke is \"It's always DNS.\"",
       "Brush calligraphy, a silk mount, drifting cherry petals → a 3 a.m. outage complaint treated like a national-treasure artwork.",
-      "The red seal → where the artist's seal goes, the English one reads \"DNS\" and the Korean one reads 또 너냐 (\"You again?\"). The culprit signs the work. It even stamps itself onto the blank paper before a single word is written, shakes its head and gets flicked away as \"It's not DNS\" goes down, and then comes back at the end. The answer was there from the start.",
-      "Tap the finished scroll for more poems → \"The TTL was one day / See you tomorrow\" (signed Friday, 6 p.m.), \"Now cached for an hour\" (someone looked the name up before creating it), \"Caches die of age\". All things that really happen to people who run DNS."
+      "The red seal → where the artist's seal goes, the English scroll is signed by the culprit itself: DNS. The Korean one carries the victim's verdict instead, 또 너냐 (roughly, you again?). It even stamps itself onto the blank paper before a single word is written, shakes its head and gets flicked away once \"It's not DNS\" is down, and slams back harder than before when the third line confesses. The answer was there from the start.",
+      "The footnote that lands on the returned seal, \"(It's always DNS.)\" → not just this outage, every outage. The short name of the whole joke, added as a quiet scholarly footnote.",
+      "Tap the finished scroll for more poems (they only come when tapped) → \"The TTL was one day / See you tomorrow\" (signed Friday, 6 p.m.), \"And will, for an hour\" (someone looked the name up before creating it), \"Caches age and die\". All things that really happen to people who run DNS. Tap the finished seal and it stamps itself once more."
     ],
     "terms": [
       {
@@ -153,7 +155,7 @@
     "deep": [
       "The small oval seal at the top left, `5`/`3` → port 53, the port DNS uses (RFC 1035; both UDP and TCP).",
       "The TTL poem is signed \"Friday 6 p.m.\" and footnoted `TTL 86400` → 86400 seconds is exactly 24 hours, so \"See you tomorrow\" means Saturday, 6 p.m.",
-      "The negative-caching footnote, `SOA minimum 3600` → how long a \"no such name\" answer is remembered is the smaller of the SOA record's minimum field and the SOA's own TTL (RFC 2308). 3600 seconds, hence \"Now cached for an hour\".",
+      "The negative-caching footnote, `SOA minimum 3600` → how long an NXDOMAIN answer is remembered is the smaller of the SOA record's minimum field and the SOA's own TTL (RFC 2308). 3600 seconds, hence \"And will, for an hour\".",
       "The propagation poem is signed \"hour 47\" and footnoted `TTL 3412, 3411, 3410…` → the delegation (NS) records the .com servers hand out carry a TTL of 172800 seconds, two days (other top-level domains use other values). A 172800-second record with 3412 seconds left has been cached for 47 hours, 3 minutes and 8 seconds, so the signature and the footnote agree."
     ]
   }

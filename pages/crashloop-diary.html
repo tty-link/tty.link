@@ -12,7 +12,8 @@
 <style>
   /* A Kubernetes pod in CrashLoopBackOff, written up as a first-grader's picture diary:
      date and weather on top, a crayon drawing, then the day in pencil (원고지 squares in
-     Korean, primary-ruled lines in English). The teacher keeps the record in red pen. */
+     Korean, primary-ruled lines in English). The teacher keeps the record in red pen; the
+     grown-up who fixes the note is not the teacher and writes in blue ballpoint. */
   :root {
     --desk: #d8b98f;
     --paper: #fffdf6;
@@ -62,7 +63,9 @@
   }
   .owner .who { color: #6c675f; overflow: hidden; text-overflow: ellipsis; }
   .owner .who b { color: var(--pencil); font-weight: 700; }
-  .title-en { font-weight: 700; font-size: calc(var(--cell) * .95); line-height: 1; letter-spacing: .02em; filter: url(#wax); }
+  /* The titles stay a little under the pressed-hard last sentence (0.9 squares in Korean,
+     0.886 in English): the joke is the heaviest line on the page. */
+  .title-en { font-weight: 700; font-size: calc(var(--cell) * .86); line-height: 1; letter-spacing: .02em; filter: url(#wax); }
   .title-en .c0 { color: #e03131; } .title-en .c1 { color: #1c7ed6; } .title-en .c2 { color: #2f9e44; } .title-en .c3 { color: #f08c00; }
 
   /* Date and weather, printed boxes filled in by hand. */
@@ -100,6 +103,9 @@
   }
   .stage svg.art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .art text { font-family: 'Gaegu', cursive; }
+  /* Handwriting in the drawing: its own size, but never under 10px on screen (on the smallest
+     pages the drawing is about 210px wide). --k is screen px per drawing unit, set by fit(). */
+  .art text.fl { font-size: max(var(--fs), calc(10.2px / var(--k, 1))); }
 
   /* Labels laid over the drawing, placed in viewBox units (x/400, y/200). */
   .lab {
@@ -148,7 +154,9 @@
   .sq:last-child { border-right: 1.5px solid var(--rule); }
   .sq .p { position: absolute; left: 18%; bottom: 4%; font-size: .9em; }
   .sq .pr { position: absolute; right: 2%; bottom: 4%; font-size: .9em; }
-  .sq .n { font-size: .74em; letter-spacing: -.06em; }
+  .sq .n { font-size: max(10px, .74em); letter-spacing: -.06em; }
+  /* The last sentence is pressed hard: darker and a size up, still one letter per square. */
+  .sq.big { font-weight: 700; font-size: calc(var(--cell) * .9); }
   .sq.ink { animation: ink .18s ease-out; }
   @keyframes ink { from { opacity: 0; transform: scale(1.25) rotate(-6deg); } }
 
@@ -164,6 +172,7 @@
     overflow: hidden;
   }
   .lines p { text-indent: 1.2em; }
+  .lines p.big { font-weight: 700; font-size: calc(var(--lh) * .72); }
   .lines .ch { opacity: 0; }
   .lines .ch.on { opacity: 1; }
 
@@ -178,7 +187,7 @@
     font-size: max(11px, calc(var(--cell) * .52));
     white-space: nowrap;
   }
-  .teacher .k { color: #8a847b; font-size: .9em; }
+  .teacher .k { color: #8a847b; font-size: max(10px, .9em); }
   .teacher .pen { color: var(--red); font-weight: 700; rotate: -1.5deg; font-size: 1.12em; }
   .teacher .num { position: relative; display: inline-block; min-width: 1.7em; padding: 0 .2em; text-align: center; }
   .teacher .ring { position: absolute; inset: -.18em -.15em -.12em; overflow: visible; pointer-events: none; }
@@ -193,6 +202,7 @@
     line-height: 20px;
     text-align: center;
     white-space: nowrap;
+    word-break: keep-all;   /* when it wraps (a phone, opened on its own), break between words */
     opacity: 0;
     transition: opacity .5s;
   }
@@ -239,7 +249,7 @@
 
     <div class="owner">
       <span data-lang="en" class="title-en" aria-hidden="true"><span class="c0">M</span><span class="c1">y</span> <span class="c2">D</span><span class="c3">a</span><span class="c0">y</span></span>
-      <span data-lang="ko" class="title-ko" aria-hidden="true"><font-kku font="crayon" size="calc(var(--cell) * .92)" seed="diary" jamo-seeds>그림일기</font-kku></span>
+      <span data-lang="ko" class="title-ko" aria-hidden="true"><font-kku font="crayon" size="calc(var(--cell) * .88)" seed="diary" jamo-seeds>그림일기</font-kku></span>
       <span class="who" data-lang="en">Name: <b>Pod</b> · Class: node-1 · Teacher: Ms. Kubelet</span>
       <span class="who" data-lang="ko">노드1반 · 이름: <b>파드</b> · 담임: 큐블릿</span>
     </div>
@@ -320,7 +330,7 @@
             </g>
 
             <g id="hand" filter="url(#wax)" transform="translate(470 150)" opacity="0">
-              <path d="M0 0 L22 16" stroke="#d62f2f" stroke-width="4.5" stroke-linecap="round"/>
+              <path d="M0 0 L22 16" stroke="#1c7ed6" stroke-width="4.5" stroke-linecap="round"/>
               <path d="M14 8 q10 -8 22 -2 q12 4 26 2 l2 14 q-16 6 -30 4 q-10 6 -20 -2 q-6 -6 0 -16 Z" fill="#ffd8a8" stroke="#d9480f" stroke-width="2" stroke-linejoin="round"/>
               <path d="M20 14 q6 -2 10 2 M24 20 q6 -2 10 2" stroke="#d9480f" stroke-width="1.6" fill="none" stroke-linecap="round"/>
             </g>
@@ -333,25 +343,25 @@
 
           <!-- handwriting: labels, the note, the caret -->
           <g font-weight="700">
-            <text x="14" y="58" font-size="13" fill="#1c4fb8" data-lang="en">Falls</text>
-            <text x="14" y="58" font-size="13" fill="#1c4fb8" data-lang="ko">쓰러진 횟수</text>
-            <text x="272" y="127" font-size="13" fill="#5f3dc4" data-lang="en">Naps</text>
-            <text x="272" y="127" font-size="13" fill="#5f3dc4" data-lang="ko">낮잠</text>
-            <text id="capLabel" x="398" y="132" font-size="11" fill="#7048e8" text-anchor="end" opacity="0" data-lang="en">5 min, no more</text>
-            <text id="capLabel" x="398" y="132" font-size="11" fill="#7048e8" text-anchor="end" opacity="0" data-lang="ko">5분까지만</text>
-            <text id="clockLabel" x="248" y="74" font-size="12" fill="#e8590c" text-anchor="middle" opacity="0" data-lang="en">10 min!</text>
-            <text id="clockLabel" x="248" y="74" font-size="12" fill="#e8590c" text-anchor="middle" opacity="0" data-lang="ko">10분!</text>
+            <text class="fl" style="--fs: 13px" x="14" y="60" fill="#1c4fb8" data-lang="en">Falls</text>
+            <text class="fl" style="--fs: 13px" x="14" y="60" fill="#1c4fb8" data-lang="ko">쓰러진 횟수</text>
+            <text class="fl" style="--fs: 13px" x="266" y="127" fill="#5f3dc4" data-lang="en">Naps</text>
+            <text class="fl" style="--fs: 13px" x="266" y="127" fill="#5f3dc4" data-lang="ko">낮잠</text>
+            <text id="capLabel" class="fl" style="--fs: 11px" x="398" y="132" fill="#7048e8" text-anchor="end" opacity="0" data-lang="en">5 min max</text>
+            <text id="capLabel" class="fl" style="--fs: 11px" x="398" y="132" fill="#7048e8" text-anchor="end" opacity="0" data-lang="ko">5분까지만</text>
+            <text id="clockLabel" class="fl" style="--fs: 12px" x="231" y="49" fill="#e8590c" text-anchor="end" opacity="0" data-lang="en">10 min!</text>
+            <text id="clockLabel" class="fl" style="--fs: 12px" x="231" y="49" fill="#e8590c" text-anchor="end" opacity="0" data-lang="ko">10분!</text>
             <text id="huh" x="234" y="78" font-size="24" fill="#e8590c" opacity="0">?</text>
             <g transform="rotate(2 333 58)">
-              <text x="282" y="41" font-size="17" fill="#e03131" data-lang="en">NOTE</text>
-              <text x="282" y="41" font-size="17" fill="#e03131" data-lang="ko">알림장</text>
-              <text x="282" y="63" font-size="13.5" fill="#495057" font-weight="400" data-lang="en">Bring:</text>
-              <text x="282" y="63" font-size="13.5" fill="#495057" font-weight="400" data-lang="ko">준비물:</text>
-              <text x="324" y="88" font-size="17" fill="#343a40" text-anchor="end">DATAB</text>
-              <text x="324" y="88" font-size="17" fill="#343a40">SE_URL</text>
+              <text class="fl" style="--fs: 17px" x="282" y="40" fill="#e03131" data-lang="en">NOTE</text>
+              <text class="fl" style="--fs: 17px" x="282" y="40" fill="#e03131" data-lang="ko">알림장</text>
+              <text class="fl" style="--fs: 13.5px" x="282" y="60" fill="#495057" font-weight="400" data-lang="en">Bring:</text>
+              <text class="fl" style="--fs: 13.5px" x="282" y="60" fill="#495057" font-weight="400" data-lang="ko">준비물:</text>
+              <text class="fl" style="--fs: 17px" x="330" y="89" fill="#343a40" text-anchor="end">DATAB</text>
+              <text class="fl" style="--fs: 17px" x="330" y="89" fill="#343a40">SE_URL</text>
               <g id="caret" opacity="0">
-                <path d="M319 96.5 L324 90 L329 96.5" stroke="#d62f2f" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1"/>
-                <text x="324" y="75" font-size="15" fill="#d62f2f" text-anchor="middle">A</text>
+                <path d="M325 97.5 L330 91 L335 97.5" stroke="#1c7ed6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1"/>
+                <text class="fl" style="--fs: 15px" x="330" y="76" fill="#1c7ed6" text-anchor="middle">A</text>
               </g>
             </g>
           </g>
@@ -421,7 +431,9 @@
     const cell = Math.max(14, Math.min((W - 2 * margin) / 15.9, (avail - 6) / 23.7, 40));
     diary.style.setProperty('--cell', cell.toFixed(2) + 'px');
     diary.style.setProperty('--page-h', Math.min(avail, cell * 25.2 + 6).toFixed(1) + 'px');
+    stage.style.setProperty('--k', (stage.clientWidth / 400 || 1).toFixed(3));
     fitHead();
+    fitWho();
     fitTeacher();
   }
 
@@ -437,18 +449,29 @@
     head.classList.add('nokey');
   }
 
+  // The owner line: on the narrowest pages the labels go before the teacher is cut
+  // (the teacher is the kubelet: she has to stay).
+  const who = $('.owner .who');
+  const WHO = ko
+    ? [who.innerHTML, '노드1반 · <b>파드</b> · 담임: 큐블릿', '<b>파드</b> · 담임: 큐블릿']
+    : [who.innerHTML, '<b>Pod</b> · Class: node-1 · Teacher: Ms. Kubelet', '<b>Pod</b> · node-1 · Teacher: Ms. Kubelet', '<b>Pod</b> · Teacher: Ms. Kubelet'];
+  function fitWho() {
+    for (const h of WHO) { who.innerHTML = h; if (fits(who)) return; }
+  }
+
   /* ---------- words ---------- */
   const L = TTY.t({
     en: {
       fall1: 'Today I got up. I fell right down.',
       fall2: 'Got up again. Fell down again.',
       naps: ['Napped 10 seconds.', 'Then 20.', 'Then 40.', 'Then 80.', 'Then 160.', 'After that, always 5 minutes.'],
-      fixed: 'Someone fixed the typo in my note.',
-      reset: 'I stayed up 10 minutes, so my naps don\'t count anymore.',
+      // napped: a nap came after the fix (the back-off still runs out) / any nap at all
+      fixed: (napped) => napped ? 'Someone fixed my note. I finished my nap anyway.' : 'Someone fixed my note.',
+      reset: (napped) => napped ? 'I stayed up 10 minutes, so my naps don\'t count anymore.' : 'I stayed up 10 whole minutes.',
       punch: (n) => n === 1 ? 'But that one fall goes on my permanent record.' : n === 2 ? 'But both falls go on my permanent record.' : `But all ${n} falls go on my permanent record.`,
       napLen: ['10 sec', '20 sec', '40 sec', '80 sec', '160 sec', '5 min'],
       hintFix: 'Tap the picture to fix the typo yourself.',
-      hintWait: 'Fixed. The note is read again at the next wake-up.',
+      hintWait: 'Fixed! The pod reads it next time it wakes up.',
       hintReplay: 'Tap the picture to replay the day.',
       fixLabel: 'Fix the typo in the note: DATABSE_URL to DATABASE_URL',
       replayLabel: 'Replay the day',
@@ -456,12 +479,13 @@
     ko: {
       fall1: '오늘 나는 일어났다.바로 쓰러졌다.',
       fall2: '또 일어났다.또 쓰러졌다.',
-      naps: ['10초 잤다.', '20초 잤다.', '40초 잤다.', '80초.', '2분 40초.', '그다음은 계속 5분씩 잤다.'],
-      fixed: '누가 알림장 오타를 고쳐 줬다.',
-      reset: '10분 동안 안 쓰러지니 낮잠은 없던 일이 됐다.',
+      // 37 falls fill the 10 rows exactly (last square 144 of 150): longer lines spill off the paper.
+      naps: ['10초 잤다.', '20초 잤다.', '40초 잤다.', '80초.', '2분 40초.', '그다음은 계속 5분.'],
+      fixed: (napped) => napped ? '누가 알림장을 고쳐 줬다.그래도 마저 잤다.' : '누가 알림장을 고쳐 줬다.',
+      reset: (napped) => napped ? '10분 동안 안 쓰러지니 낮잠은 없던 일이 됐다.' : '10분 동안 한 번도 안 쓰러졌다.',
       punch: (n) => n === 1 ? '그런데 쓰러진 한 번은 생활기록부에 남는대요.' : `그런데 쓰러진 ${n}번은 생활기록부에 남는대요.`,
       napLen: ['10초', '20초', '40초', '80초', '160초', '5분'],
-      hintFix: '그림을 누르면 알림장 오타를 직접 고쳐 줘요.',
+      hintFix: '그림을 누르면 알림장 오타를 직접 고칠 수 있어요.',
       hintWait: '고쳤어요. 알림장은 다음에 일어날 때 읽어요.',
       hintReplay: '그림을 누르면 하루를 처음부터 봐요.',
       fixLabel: '알림장 오타 고치기: DATABSE_URL을 DATABASE_URL로',
@@ -499,7 +523,7 @@
     return out;
   };
   const paper = { placed: [] };   // every square written so far: {cell, tok, joined}
-  function placeKo(text, newPara) {
+  function placeKo(text, newPara, big) {
     let at = paper.placed.length ? paper.placed[paper.placed.length - 1].cell + 1 : 0;
     const out = [];
     if (newPara || !paper.placed.length) {
@@ -510,7 +534,7 @@
       const col = at % COLS;
       if (tok === ' ' && col === 0) continue;
       if (/^[.,]$/.test(tok) && col === 0 && at > 0) { out.push({ cell: at - 1, tok, joined: true }); continue; }
-      out.push({ cell: at, tok });
+      out.push({ cell: at, tok, big });
       at++;
     }
     return out;
@@ -527,14 +551,16 @@
     } else {
       sq.textContent = p.tok === ' ' ? '' : p.tok;
     }
+    if (!p.joined) sq.classList.toggle('big', !!p.big);
     if (!TTY.reduce && p.tok !== ' ') { sq.classList.remove('ink'); void sq.offsetWidth; sq.classList.add('ink'); }
   }
 
   const lines = $('.lines');
   let enPara = null;
-  function placeEn(text, newPara) {
+  function placeEn(text, newPara, big) {
     if (!enPara || newPara) { enPara = document.createElement('p'); lines.append(enPara); }
     else enPara.append(document.createTextNode(' '));
+    if (big) enPara.classList.add('big');
     const spans = [];
     // Keep each word in one piece so the hidden letters already take their place on the line.
     text.split(' ').forEach((word, i) => {
@@ -550,29 +576,41 @@
   // write(text, {para}) queues one piece of the diary; it is written letter by letter.
   function write(text, opts = {}) {
     said.textContent += (said.textContent ? ' ' : '') + text;
-    const items = ko ? placeKo(text, opts.para) : placeEn(text, opts.para);
+    const items = ko ? placeKo(text, opts.para, opts.big) : placeEn(text, opts.para, opts.big);
     if (ko) paper.placed.push(...items);
     const step = ko ? 40 : 17;
     if (TTY.reduce) { items.forEach((it) => (ko ? paintSquare(it) : it.classList.add('on'))); return; }
-    writer.queue.push({ items, step });
+    writer.queue.push({ items, step, next: performance.now() });
     if (!writer.busy) pump();
   }
+  // The letters keep to the clock, not to the timer: when a timer comes late (a busy machine),
+  // the letters it owes are written at once, so a sentence always ends on time. job.next is
+  // when its next letter is due: from the moment it was queued, or from when the one before ended.
   function pump() {
-    const job = writer.queue[0];
-    if (!job) { writer.busy = false; return; }
-    writer.busy = true;
-    const it = job.items.shift();
-    if (!it) { writer.queue.shift(); return pump(); }
-    if (ko) paintSquare(it); else it.classList.add('on');
-    const blank = ko ? it.tok === ' ' : it.textContent === ' ';
-    writer.timer = setTimeout(pump, blank ? job.step * .4 : job.step);
+    const now = performance.now();
+    for (;;) {
+      const job = writer.queue[0];
+      if (!job) { writer.busy = false; return; }
+      writer.busy = true;
+      if (job.next > now) break;
+      const it = job.items.shift();
+      if (!it) {
+        writer.queue.shift();
+        if (writer.queue[0]) writer.queue[0].next = Math.max(writer.queue[0].next, job.next);
+        continue;
+      }
+      if (ko) paintSquare(it); else it.classList.add('on');
+      const blank = ko ? it.tok === ' ' : it.textContent === ' ';
+      job.next += blank ? job.step * .4 : job.step;
+    }
+    writer.timer = setTimeout(pump, writer.queue[0].next - now);
   }
   function clearPaper() {
     clearTimeout(writer.timer);
     writer.queue = []; writer.busy = false;
     said.textContent = '';
     paper.placed = [];
-    squares.forEach((sq) => { sq.textContent = ''; sq.classList.remove('ink'); });
+    squares.forEach((sq) => { sq.textContent = ''; sq.classList.remove('ink', 'big'); });
     if (lines) lines.innerHTML = '';
     enPara = null;
   }
@@ -603,17 +641,32 @@
   const cancelled = (id) => id !== run;
   const sleep = (ms, id) => new Promise((res, rej) => setTimeout(() => (cancelled(id) ? rej('stop') : res()), ms));
   const frame = (id) => new Promise((res, rej) => requestAnimationFrame(() => (cancelled(id) ? rej('stop') : res())));
-  function tween(ms, fn, id, ease = (t) => t) {
+  function tween(ms, fn, id, ease = (t) => t, t0 = performance.now()) {
     return new Promise((res, rej) => {
-      const t0 = performance.now();
       const tick = (now) => {
         if (cancelled(id)) return rej('stop');
-        const t = Math.min(1, (now - t0) / ms);
+        const t = Math.max(0, Math.min(1, (now - t0) / ms));
         fn(ease(t));
         if (t < 1) requestAnimationFrame(tick); else res();
       };
       requestAnimationFrame(tick);
     });
+  }
+  // The day keeps to its plan on a busy machine too. `lag` is how far it has fallen behind
+  // (timers that fire late, slow frames); the day's own waits and moves are cut short by it until
+  // it is made up, so the last sentence does not slide toward the end of the stage. At most
+  // 1.5 s is ever made up (a tab that was hidden does not race), and a move always shows at
+  // least half of itself. The hand, the visitor's taps and the beats after the last sentence
+  // keep their own length. With nothing else running, lag stays near 0 and nothing changes.
+  let lag = 0;
+  const behind = (planEnd) => { lag = Math.min(1500, Math.max(0, performance.now() - planEnd)); };
+  function wait(ms, id) {
+    const end = performance.now() - lag + ms;
+    return sleep(Math.max(0, end - performance.now()), id).then(() => behind(end));
+  }
+  function glide(ms, fn, id, ease) {
+    const now = performance.now(), plan = now - lag;
+    return tween(ms, fn, id, ease, Math.max(plan, now - ms / 2)).then(() => behind(plan + ms));
   }
   const outBack = (t) => 1 + 2.4 * Math.pow(t - 1, 3) + 1.4 * Math.pow(t - 1, 2);
   const inQuad = (t) => t * t;
@@ -655,7 +708,10 @@
   const setStatus = (s, n) => { statusEl.textContent = 'STATUS ' + s; if (n !== undefined) restartsEl.textContent = n; };
 
   /* ---------- state ---------- */
-  const S = { falls: 0, restarts: 0, naps: 0, fixed: false, fixing: null, phase: 'idle' };
+  // fixed: the note is fixed (read at the next start) · fixing: the hand's animation ·
+  // noted: the A is on the note · napping: lying in a back-off nap · wrote: the diary says so
+  const FRESH = () => ({ falls: 0, restarts: 0, naps: 0, fixed: false, fixing: null, noted: false, napping: false, wrote: false, phase: 'idle' });
+  const S = FRESH();
 
   // The teacher's line stays inside the page: the full label, a short one, or none, and on
   // the narrowest pages slightly smaller letters. While the pod is still falling the room is
@@ -687,13 +743,22 @@
     statusEl.textContent = s; restartsEl.textContent = n;
   }
 
+  // The diary notes the fix once the A is on the note and the pod is lying down: in a nap that
+  // still runs out ("I finished my nap anyway"), or, after the very first fall, with no nap at all.
+  function writeFixed() {
+    if (S.wrote) return;
+    S.wrote = true;
+    write(L.fixed(S.naps > 0));
+  }
+
   function fixNote(id) {
     if (S.fixed) return;
     S.fixed = true;
     idle(true);
-    // A grown-up hand comes in with a red pen and inserts the missing A.
+    // A grown-up hand (not the teacher: the kubelet only restarts and counts) comes in with a
+    // blue ballpoint and inserts the missing A.
     hand.setAttribute('opacity', 1);
-    const from = [470, 150], to = [324, 94];
+    const from = [470, 150], to = [330, 95];
     S.fixing = (async () => {
       try {
         await tween(320, (t) => hand.setAttribute('transform', `translate(${lerp(from[0], to[0], t)} ${lerp(from[1], to[1], t)})`), id, (t) => 1 - Math.pow(1 - t, 3));
@@ -701,6 +766,8 @@
         caret.querySelector('path').animate([{ strokeDasharray: '1', strokeDashoffset: 1 }, { strokeDasharray: '1', strokeDashoffset: 0 }], { duration: 260, fill: 'forwards' });
         caret.querySelector('text').animate([{ opacity: 0, transform: 'translateY(-3px)' }, { opacity: 1, transform: 'none' }], { duration: 220, delay: 200, fill: 'backwards' });
         await sleep(440, id);
+        S.noted = true;                 // the A is on the note
+        if (S.napping) writeFixed();
         await tween(260, (t) => hand.setAttribute('transform', `translate(${lerp(to[0], from[0], t)} ${lerp(to[1], from[1], t)})`), id, inQuad);
         hand.setAttribute('opacity', 0);
       } catch (e) { /* replay */ }
@@ -712,47 +779,65 @@
     setStatus('Running', S.restarts);
     face('awake'); armsUp(true);
     const r0 = pose.rot, d0 = pose.dy;
-    await tween(260, (t) => { pose.rot = lerp(r0, 0, outBack(t)); pose.dy = lerp(d0, 0, t) - Math.sin(t * Math.PI) * 12; drawKid(); }, id);
+    await glide(260, (t) => { pose.rot = lerp(r0, 0, outBack(t)); pose.dy = lerp(d0, 0, t) - Math.sin(t * Math.PI) * 12; drawKid(); }, id);
     pose.rot = 0; pose.dy = 0; drawKid();
   }
   async function fall(id) {
     face('look'); armsUp(false);
     huh.setAttribute('opacity', 1);
-    await sleep(170, id);
+    await wait(170, id);
     huh.setAttribute('opacity', 0);
     face('dizzy'); armsUp(true);
-    await tween(250, (t) => { pose.rot = lerp(0, -90, t); pose.dy = lerp(0, LIE, t); drawKid(); }, id, inQuad);
+    await glide(250, (t) => { pose.rot = lerp(0, -90, t); pose.dy = lerp(0, LIE, t); drawKid(); }, id, inQuad);
     show(bonk, true);
     setStatus('Error');
     bonk.animate([{ scale: .4, opacity: 0 }, { scale: 1.15, opacity: 1, offset: .5 }, { scale: 1, opacity: 1 }], { duration: 220 });
     stage.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(1.5%)' }, { transform: 'translateY(0)' }], { duration: 160 });
-    await tween(110, (t) => { pose.rot = -90 + Math.sin(t * Math.PI) * 7; drawKid(); }, id);
+    await glide(110, (t) => { pose.rot = -90 + Math.sin(t * Math.PI) * 7; drawKid(); }, id);
     armsUp(false);
   }
-  async function nap(i, ms, id) {
-    await sleep(160, id);     // let the thud land first
+  const napping = (i) => {
     face('sleep');
     show(bonk, false);
     napLen.textContent = L.napLen[Math.min(i, 5)];
     show(zz, true);
     zz.animate([{ opacity: 0, translate: '-50% -30%' }, { opacity: 1, translate: '-50% -50%' }], { duration: 200 });
-    await sleep(ms, id);
+  };
+  async function nap(i, ms, id) {
+    S.napping = true;
+    await wait(160, id);     // let the thud land first
+    napping(i);
+    await wait(ms, id);
+    // Fixed late in the nap: it sleeps on until the A is there (the fix is saved at the tap).
+    if (S.fixed && !S.noted && S.fixing) { await S.fixing; if (cancelled(id)) throw 'stop'; }
     show(zz, false);
+    S.napping = false;
+  }
+  // The fixed note is read as the pod starts: the same look at the note, the same "?", a wobble
+  // where the bonk always came, and this time no bonk.
+  async function stayUp(id) {
+    face('look'); armsUp(false);
+    huh.setAttribute('opacity', 1);
+    await glide(480, (t) => { pose.rot = -10 * Math.sin(t * Math.PI); drawKid(); }, id);
+    huh.setAttribute('opacity', 0);
+    pose.rot = 0; drawKid();
+    await wait(150, id);
   }
 
   // One day. Real back-off: restart at once, then 10 s, 20 s, 40 s … capped at 5 minutes.
   // On screen those naps last a fraction of a second; the bars and the labels keep the real numbers.
   const NAP_MS = [340, 400, 460, 520, 560, 620];
+  const LAST_NAP = 1600;   // the 5-minute nap the fix lands in: it still runs out after the hand is gone
   async function day(id) {
-    await sleep(350, id);
+    const alive = () => { if (cancelled(id)) throw 'stop'; };
+    await wait(350, id);
     S.phase = 'loop';
-    setHint('fix');
     idle(false);
     for (;;) {
       // After the first 5-minute nap the rest of the morning goes by fast: 29 more falls.
       if (S.falls === 7 && !S.fixed) {
         show(ff, true);
-        const t0 = performance.now();
+        const t0 = performance.now() - lag;
         let flip = 0, flipped = 0;
         while (S.falls < 36 && !S.fixed) {
           const target = Math.min(36, 7 + Math.ceil((performance.now() - t0) / 1400 * 29));
@@ -771,14 +856,22 @@
           }
           await frame(id);
         }
+        behind(t0 + 1400);
         pose.rot = -90; pose.dy = LIE; drawKid(); face('dizzy');
         setStatus('CrashLoopBackOff', S.restarts);
+        // Fixed in the middle of it: the 5-minute nap it is in still runs out.
+        if (S.fixed) { show(ff, false); S.napping = true; napping(5); if (S.noted) writeFixed(); }
       }
       // Start (or restart): the container reads its note as it starts.
       const readFixed = S.fixed;
+      if (readFixed) {
+        if (S.fixing) { await S.fixing; alive(); }
+        writeFixed();
+        if (S.napping) { await wait(600, id); show(zz, false); S.napping = false; }
+      }
       show(ff, false);
       await pop(id);
-      if (readFixed) break;
+      if (readFixed) { await stayUp(id); break; }
       await fall(id);
       S.falls++;
       addTally(S.falls - 1, true);
@@ -793,13 +886,16 @@
         S.naps++;
         // The day's last nap: if nobody has fixed the note by now, a grown-up does.
         const last = S.falls >= 37 && !S.fixed;
-        const napDone = nap(k, last ? 950 : NAP_MS[Math.min(k, 5)], id);
+        const napDone = nap(k, last ? LAST_NAP : NAP_MS[Math.min(k, 5)], id);
         napDone.catch(() => {});
-        if (last) { await sleep(150, id); fixNote(id); }
+        // Fixed while it was up: it fell anyway (it had read the old note), and it naps now.
+        if (S.noted) writeFixed();
+        // The first nap is the first quiet moment: only now the hint (the first 3 s are the slapstick).
+        if (k === 0 && !S.fixed) setHint('fix');
+        if (last) { await sleep(150, id); fixNote(id); setHint(null); }
         await napDone;
-        if (S.fixing) await S.fixing;
       } else {
-        await sleep(140, id);
+        await wait(140, id);
         show(bonk, false);
       }
       S.restarts++;
@@ -810,22 +906,23 @@
     idle(true);
     face('happy'); armsUp(true);
     setHint(null);
-    write(L.fixed);
-    await sleep(400, id);
-    // Ten good minutes: the back-off is forgotten.
+    await wait(300, id);
+    // Ten good minutes: the back-off is forgotten (there is none to forget after one fall).
+    const napped = S.naps > 0;
     clock.setAttribute('opacity', 1);
     clockLabel.setAttribute('opacity', 1);
     clock.animate([{ opacity: 0, transform: 'translate(248px, 44px) scale(.5)' }, { opacity: 1, transform: 'translate(248px, 44px) scale(1)' }], { duration: 240 });
-    await tween(600, (t) => minute.setAttribute('transform', `rotate(${t * 60})`), id);
-    scribble.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 520, fill: 'forwards' });
-    write(L.reset);
-    await sleep(200, id);
+    // The diary starts on it as the clock comes out, so the last sentence is not kept waiting.
+    write(L.reset(napped));
+    await glide(600, (t) => minute.setAttribute('transform', `rotate(${t * 60})`), id);
+    if (napped) scribble.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 520, fill: 'forwards' });
+    await wait(200, id);
     // But the count stays. Crayon does not come off.
     face('sweat'); armsUp(false);
     eraser.setAttribute('opacity', 1);
-    write(L.punch(S.falls), { para: true });
+    write(L.punch(S.falls), { para: true, big: true });
     const rubs = 6;
-    await tween(1200, (t) => {
+    await glide(1200, (t) => {
       const x = 30 + 70 * (0.5 - 0.5 * Math.cos(t * rubs * Math.PI)) + t * 6;
       const y = 88 + Math.sin(t * rubs * 2 * Math.PI) * 6;
       eraser.setAttribute('transform', `translate(${x} ${y})`);
@@ -836,13 +933,17 @@
       }
     }, id);
     eraser.setAttribute('opacity', 0);
-    await sleep(300, id);
+    // The sentence lands first, then a breath, then the teacher's red pen; the hint comes last
+    // (these beats keep their length).
+    while (writer.busy) await sleep(50, id);
+    await sleep(900, id);
     ring.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 480, fill: 'forwards' });
+    await sleep(1400, id);
     S.phase = 'end';
     setHint('replay');
     idle(false);
     // On its own page the day starts again after a while; on the home stage the page moves on first.
-    await sleep(9000, id);
+    await sleep(8000, id);
     play();
   }
 
@@ -860,8 +961,9 @@
 
   function reset() {
     run++;
+    lag = 0;
     clearPaper();
-    Object.assign(S, { falls: 0, restarts: 0, naps: 0, fixed: false, fixing: null, phase: 'idle' });
+    Object.assign(S, FRESH());
     tally.innerHTML = ''; crumbs.innerHTML = ''; bars.innerHTML = '';
     [cap, capLabel].forEach((el) => el.setAttribute('opacity', 0));
     [scribble, ring].forEach((el) => { el.getAnimations().forEach((a) => a.cancel()); el.setAttribute('stroke-dashoffset', 1); });
@@ -885,7 +987,7 @@
     for (let i = 0; i < 9; i++) addBar(i);
     S.falls = n; S.restarts = n;
     write(L.fall1); write(L.fall2); L.naps.forEach((t) => write(t));
-    write(L.fixed); write(L.reset); write(L.punch(n), { para: true });
+    write(L.fixed(true)); write(L.reset(true)); write(L.punch(n), { para: true, big: true });
     caret.setAttribute('opacity', 1);
     clock.setAttribute('opacity', 1); clockLabel.setAttribute('opacity', 1); minute.setAttribute('transform', 'rotate(60)');
     scribble.setAttribute('stroke-dashoffset', 0);
