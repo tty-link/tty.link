@@ -38,7 +38,8 @@
  *   data-tty-line  on the copy that carries the joke: "punch", "setup" or "tag" (set it in JS too
  *                  when a line is built at run time); "title" on a title that is not an h1–h3;
  *                  "decor" on lettering inside a prop that is not meant to be read (a fridge
- *                  screen, a coin). None of these change how the page looks or plays.
+ *                  screen, a coin) and on montage lines whose speed is the joke. None of these
+ *                  change how the page looks or plays.
  */
 (() => {
   const params = new URLSearchParams(location.search);
