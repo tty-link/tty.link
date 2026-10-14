@@ -1,0 +1,143 @@
+{
+  "id": "cron-garden",
+  "title": {
+    "en": "The Cron Garden",
+    "ko": "크론 정원"
+  },
+  "updated": "2026-10-14",
+  "ko": {
+    "line": "좋은 습관을 크론(정해 둔 시각에 명령을 알아서 실행해 주는 프로그램)에 예약해 둔 화단이다. 크론의 진짜 버릇 세 가지, `*/50`의 함정, 영원히 오지 않는 2월 31일, 작업 결과를 주인에게 메일로 보내는 습관이 그대로 나온다.",
+    "points": [
+      "우편함으로 줄줄이 날아가는 편지 → 크론은 작업이 무언가를 출력하면 그것을 crontab 주인에게 메일로 보낸다. 스트레칭이 하루 37번 도니 편지도 37통, 하루 합계 41통이라 우편함이 넘쳐 아래에 편지 더미가 쌓인다. 첫 편지에 깃발이 서는 것은 옛 X 윈도 프로그램 xbiff의 우편함 그대로다.",
+      "\"50분마다 스트레칭\"인데 \"37번 완료\" → `*/50`은 '50분마다'가 아니라 '분이 0이나 50일 때'라서 매시 0분과 50분에 돈다. 50분에 하고 10분 뒤 또 한다. 로그에 16:50 바로 뒤 17:00이 찍힌다.",
+      "6번 '운동 시작하기'의 `0 9 31 2 *` → 2월 31일 아침 9시. 칸마다 허용된 숫자(일 1~31, 월 1~12)라 크론은 받아 주지만 그날은 오지 않는다. 화분은 끝까지 새싹이고 편지도 0통이다. '내일부터 운동'의 크론판.",
+      "마지막 \"모든 작업 성공. 당신도요.\" → 한 번도 안 돈 6번도 실패는 안 했으니 거짓말은 아니다."
+    ],
+    "terms": [
+      {
+        "term": "크론(cron)",
+        "plain": "정해 둔 시각마다 명령을 자동으로 실행해 주는 유닉스 프로그램."
+      },
+      {
+        "term": "크론탭(crontab)",
+        "plain": "크론에게 맡길 일과 시각을 적는 표. 앞의 다섯 칸이 분·시·일·월·요일이다."
+      },
+      {
+        "term": "`*/50`",
+        "plain": "분 칸에서 '0부터 50씩 건너뛰며'라는 뜻이라 0분과 50분만 해당한다. 다음 시간으로 이어서 세지 않는다."
+      },
+      {
+        "term": "`@weekly`",
+        "plain": "일주일에 한 번, 일요일 0시 0분(`0 0 * * 0`)과 같다."
+      },
+      {
+        "term": "MAILTO",
+        "plain": "크론탭에 적어 두면 작업 결과 메일을 그 사람에게 보낸다. 없으면 crontab 주인에게, `MAILTO=\"\"`이면 아무에게도 보내지 않는다."
+      }
+    ],
+    "links": [
+      {
+        "title": "cron - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/Cron",
+        "note": "크론이 무엇이고 crontab 파일로 일정을 어떻게 거는지",
+        "lang": "ko"
+      },
+      {
+        "title": "crontab(5) 설명서",
+        "url": "https://manpages.debian.org/trixie/cron/crontab.5.en.html",
+        "note": "시각 칸 쓰는 법, @weekly 같은 줄임말, MAILTO에 따라 출력 메일이 누구에게 가는지",
+        "lang": "en"
+      },
+      {
+        "title": "crontab guru: */50",
+        "url": "https://crontab.guru/#*/50_*_*_*_*",
+        "note": "표현식을 넣으면 다음 실행 시각을 보여 준다. `*/50`이 매시 0분·50분에 도는 것을 확인할 수 있다",
+        "lang": "en"
+      },
+      {
+        "title": "xbiff 설명서",
+        "url": "https://manpages.debian.org/bookworm/x11-apps/xbiff.1.en.html",
+        "note": "메일이 없으면 깃발이 내려가 있고, 메일이 오면 깃발이 서는 우편함 프로그램",
+        "lang": "en"
+      },
+      {
+        "title": "biff (Unix) - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Biff_(Unix)",
+        "note": "새 메일 알림 프로그램 biff와, 그 이름이 된 버클리 학생의 개",
+        "lang": "en"
+      }
+    ],
+    "deep": [
+      "37번 = 06:00부터 23:50까지 시간마다 두 번(18시간 × 2 = 36) + 일요일 00:00 한 번. `*/50`은 자정에도 빠짐없이 돈다.",
+      "로그 줄 `HH:MM:01 CRON[pid]: (you) CMD (stretch)`는 데비안·우분투의 syslog에 찍히는 크론 기록 모양 그대로이고, 초 자리가 :01인 것까지 같다. 크론은 1분마다 깨어나 그 분에 할 작업을 시작한다(cron(8)).",
+      "00:00에는 stretch(`*/50`의 0분)와 call --friend(`@weekly`)가 같은 분에 돌아, 로그 끝 두 줄이 둘 다 00:00:01이고 편지도 두 통 날아간다. 자정에 통화하면서 또 스트레칭.",
+      "편지는 MAILTO가 없을 때의 기본값대로 crontab 주인(로그의 `you`)에게 간다. 6번 줄은 한 번도 돌지 않아서 우편함에 6번 편지는 없다."
+    ]
+  },
+  "en": {
+    "line": "Good habits are scheduled as cron jobs (cron is the program that runs commands at set times), and the garden shows three real cron quirks: the `*/50` trap, a February 31st that never comes, and mailing each job's output to its owner.",
+    "points": [
+      "Letters flying into the mailbox → when a cron job prints anything, cron mails it to the crontab's owner. The stretch job runs 37 times, so that is 37 letters, 41 for the day, and the mailbox overflows into a heap. The flag popping up on the first letter is xbiff, an old X Window program: a little mailbox whose flag goes up when mail arrives.",
+      "\"Stretch every 50 minutes\" → \"ran ×37\" → `*/50` does not mean \"every 50 minutes\"; it means \"when the minute is 0 or 50\", so it runs at :00 and :50 of every hour, only ten minutes apart after :50. The log shows 16:50 right before 17:00.",
+      "Job 6, \"start working out\", is `0 9 31 2 *`: 9 a.m. on February 31st. Every field is within its allowed range (day 1–31, month 1–12), so cron accepts it, but the day never comes. The pot stays a seedling and sends no mail. \"I'll start tomorrow\", in crontab form.",
+      "The last line, \"All jobs succeeded. You did, too.\" → job 6 never ran, but it never failed either, so it is not a lie."
+    ],
+    "terms": [
+      {
+        "term": "cron",
+        "plain": "the Unix program that runs commands automatically at the times you set."
+      },
+      {
+        "term": "crontab",
+        "plain": "the table of jobs and times you give cron. The first five fields are minute, hour, day of month, month and day of week."
+      },
+      {
+        "term": "`*/50`",
+        "plain": "in the minute field, \"every 50th minute starting from 0\", which is only minutes 0 and 50. The count does not carry over into the next hour."
+      },
+      {
+        "term": "`@weekly`",
+        "plain": "once a week, the same as Sunday 00:00 (`0 0 * * 0`)."
+      },
+      {
+        "term": "MAILTO",
+        "plain": "a crontab setting that says who gets the jobs' output by mail. Without it, the crontab's owner does; `MAILTO=\"\"` sends none."
+      }
+    ],
+    "links": [
+      {
+        "title": "cron - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Cron",
+        "note": "what cron is, the five time fields, and shortcuts like @weekly",
+        "lang": "en"
+      },
+      {
+        "title": "crontab(5) manual",
+        "url": "https://manpages.debian.org/trixie/cron/crontab.5.en.html",
+        "note": "how to write the time fields, shortcuts like @weekly, and who gets the output mail depending on MAILTO"
+      },
+      {
+        "title": "crontab guru: */50",
+        "url": "https://crontab.guru/#*/50_*_*_*_*",
+        "note": "type an expression and see when it runs next; `*/50` lands on :00 and :50"
+      },
+      {
+        "title": "xbiff manual",
+        "url": "https://manpages.debian.org/bookworm/x11-apps/xbiff.1.en.html",
+        "note": "a mailbox whose flag is down with no mail and goes up when mail arrives"
+      },
+      {
+        "title": "biff (Unix) - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Biff_(Unix)",
+        "note": "the new-mail notifier biff, named after a Berkeley student's dog",
+        "lang": "en"
+      }
+    ],
+    "deep": [
+      "37 = twice an hour from 06:00 to 23:50 (18 hours × 2 = 36), plus Sunday 00:00. `*/50` does not skip midnight.",
+      "The log lines, `HH:MM:01 CRON[pid]: (you) CMD (stretch)`, have the shape cron's entries take in syslog on Debian and Ubuntu, down to the :01 seconds. Cron wakes up every minute and starts the jobs due in that minute (cron(8)).",
+      "At 00:00 stretch (minute 0 of `*/50`) and call --friend (`@weekly`) run in the same minute: the last two log lines both read 00:00:01 and two letters go out. Stretching again while on the midnight call.",
+      "The letters go to the crontab's owner (`you` in the log), cron's default when there is no MAILTO. Job 6 never runs, so there is no letter from it."
+    ]
+  }
+}

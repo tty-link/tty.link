@@ -1,0 +1,146 @@
+{
+  "id": "usb-superposition",
+  "title": {
+    "en": "USB Superposition",
+    "ko": "USB 중첩 상태"
+  },
+  "updated": "2026-10-14",
+  "ko": {
+    "line": "USB를 꽂을 때마다 뒤집고 또 뒤집는 일상을, 양자역학 교과서처럼 진지한 얼굴로 '자연 법칙'이라고 설명한다.",
+    "points": [
+      "툭, 뒤집기, 또 툭 → 누구나 겪은 USB 꽂기. 거꾸로라 툭, 뒤집었더니 맞는 방향인데도 툭, 다시 뒤집어 툭, 세 번째로 뒤집어서야 쏙 들어간다. 판정은 \"3번 뒤집음. 전통을 지켰습니다.\" 가끔 다섯 번이면 \"전통보다 정성껏\".",
+      "플러그 뒤의 흐린 유령 플러그와 위아래 물결, 수식 |ψ⟩ → 관측하기 전에는 여러 상태가 겹쳐 있다는 양자역학의 '중첩'을 빌려, USB도 꽂아 보기 전까지는 앞면과 뒷면이 겹쳐 있다고 우긴다. 유령은 뒤집힌 자기 자신이다. 꽂히는 순간 물결이 납작하게 사라진다(관측하면 하나로 정해진다).",
+      "알림 반전 → 겨우 꽂았더니 \"USB 장치가 연결되었습니다\"가 잠시 뒤 \"이 장치는 더 빨라질 수 있습니다. USB 3.0 포트에 연결해 보세요.\"로 바뀐다. 그런데 그림 속 포트는 이미 USB 3.0 표시인 파란색이다. 버튼은 \"뽑았다가 다시 꽂기\". 처음부터 다시 뒤집으라는 소리다.",
+      "그림 2 → 앞뒤가 없는 USB-C도 \"그래도 습관처럼 두 번 뒤집는다\"."
+    ],
+    "terms": [
+      {
+        "term": "양자 중첩",
+        "plain": "아주 작은 세계에서 하나의 대상이 여러 상태가 겹친 상태로 있다고 보는 양자역학의 원리. 측정하면 그중 하나로 정해진다."
+      },
+      {
+        "term": "슈뢰딩거의 고양이",
+        "plain": "상자를 열어 보기 전까지 고양이가 살아 있으면서 죽어 있다고 해야 하느냐는 사고 실험. 중첩을 일상의 물건에 그대로 적용하면 얼마나 이상한지 보이려고 만들었다."
+      },
+      {
+        "term": "|ψ⟩ = (|up⟩ + |down⟩)/√2",
+        "plain": "브라-켓 표기로 쓴 '반은 위, 반은 아래' 상태. √2로 나눠 두 경우의 확률을 반반으로 맞춘다."
+      },
+      {
+        "term": "USB-A와 USB-C",
+        "plain": "납작한 직사각형 USB-A는 한 방향으로만 들어가고(규격이 플러그와 포트에 방향을 알아볼 표시를 하라고 정해 두었다), USB-C는 뒤집어도 들어가게 만든 단자다."
+      },
+      {
+        "term": "파란 USB 3.0",
+        "plain": "빠른 USB 3.0(SuperSpeed) USB-A 단자는 안쪽 플라스틱을 파란색(팬톤 300 C)으로 하라고 규격이 권한다. 그래서 파란 포트는 대개 빠른 포트다."
+      }
+    ],
+    "links": [
+      {
+        "title": "양자 중첩 - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/양자_중첩",
+        "note": "여러 상태가 겹쳐 있다는 원리.",
+        "lang": "ko"
+      },
+      {
+        "title": "슈뢰딩거의 고양이 - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/슈뢰딩거의_고양이",
+        "note": "관측하기 전까지 살아 있으면서 죽어 있는 고양이 사고 실험.",
+        "lang": "ko"
+      },
+      {
+        "title": "브라-켓 표기법 - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/브라-켓_표기법",
+        "note": "|ψ⟩ 같은 기호의 뜻.",
+        "lang": "ko"
+      },
+      {
+        "title": "USB hardware - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/USB_hardware",
+        "note": "방향 표시 규정, 뒤집어 꽂는 USB-C, SuperSpeed 단자의 파란색.",
+        "lang": "en"
+      },
+      {
+        "title": "USB-C - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/USB-C",
+        "note": "앞뒤가 없는 24핀 단자.",
+        "lang": "ko"
+      }
+    ],
+    "deep": [
+      "세 번째로 뒤집은 방향은 첫 번째로 뒤집은 방향과 똑같다. 아까 툭 막혔던 바로 그 방향으로 이번엔 쏙 들어간다.",
+      "들어간 모습을 보면 플러그의 파란 플라스틱은 아래, 포트의 파란 플라스틱은 위에 있다. 진짜 USB-A도 플러그의 플라스틱은 금속 껍데기 안 아래쪽 절반, 포트의 플라스틱은 위쪽에 있어서 둘이 엇갈려야 들어간다. 첫 시도에는 둘 다 위에 있어서 막혔다.",
+      "플러그 몸통에 흰 USB 삼지창 로고가 있다. USB 규격 단체는 이 로고를 플러그 윗면에 찍게 해서 위아래를 알아보게 했다. 그래도 세 번 뒤집는다.",
+      "네 번에 한 번꼴로 다섯 번 뒤집는다(\"전통보다 정성껏\"). 어느 쪽이든 홀수 번 뒤집었으니 결국 같은 방향으로 꽂힌다."
+    ]
+  },
+  "en": {
+    "line": "This page explains the everyday ritual of flipping a USB plug until it fits, with a perfectly straight face, as a law of quantum physics.",
+    "points": [
+      "Bonk, flip, bonk again → everyone's USB experience: wrong way up, bonk; flip, now it's the right way and it still bonks; flip, bonk; flip a third time, and in it goes. The verdict: \"Flips: 3. As tradition requires.\" Sometimes it takes five: \"Above and beyond tradition.\"",
+      "The faint ghost plug, the waves above and below, and |ψ⟩ → in quantum mechanics a system can be in a superposition of states until it is measured. So the plug is \"both ways up\" until observed: the ghost is the plug itself, upside down. The moment it goes in, the waves flatten and vanish (measured, it settles on one).",
+      "The notification twist → finally in, \"USB device connected\" turns a moment later into \"This device can perform faster. Try a USB 3.0 port.\" The port in the drawing is already blue, the mark of USB 3.0. The button says \"Unplug and try again\": back to flipping.",
+      "Fig. 2 → USB-C has no wrong way up. \"Flipped twice anyway, out of habit.\""
+    ],
+    "terms": [
+      {
+        "term": "Quantum superposition",
+        "plain": "the principle that a quantum system can be in a combination of states at once; measuring it gives one result."
+      },
+      {
+        "term": "Schrödinger's cat",
+        "plain": "a thought experiment about a cat in a closed box that would be both alive and dead until someone looks, meant to show how strange superposition becomes when applied to everyday things."
+      },
+      {
+        "term": "|ψ⟩ = (|up⟩ + |down⟩)/√2",
+        "plain": "Dirac's bra–ket notation for \"half up, half down\"; dividing by √2 makes the two chances 50/50."
+      },
+      {
+        "term": "USB-A vs USB-C",
+        "plain": "the flat rectangular USB-A plug fits only one way (the standard says plugs and ports must be marked so you can tell which), while USB-C is reversible."
+      },
+      {
+        "term": "Blue USB 3.0",
+        "plain": "the USB standards recommend a blue insert (Pantone 300 C) for fast SuperSpeed USB-A ports and plugs, so a blue port is usually a fast one."
+      }
+    ],
+    "links": [
+      {
+        "title": "Quantum superposition - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Quantum_superposition",
+        "note": "the principle the page borrows.",
+        "lang": "en"
+      },
+      {
+        "title": "Schrödinger's cat - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Schr%C3%B6dinger%27s_cat",
+        "note": "the cat that is alive and dead until observed.",
+        "lang": "en"
+      },
+      {
+        "title": "Bra–ket notation - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Bra%E2%80%93ket_notation",
+        "note": "what |ψ⟩ means.",
+        "lang": "en"
+      },
+      {
+        "title": "USB hardware - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/USB_hardware",
+        "note": "orientation markings, the reversible USB-C, and SuperSpeed blue.",
+        "lang": "en"
+      },
+      {
+        "title": "USB-C - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/USB-C",
+        "note": "the 24-pin connector with no wrong way up.",
+        "lang": "en"
+      }
+    ],
+    "deep": [
+      "The way up after the third flip is exactly the way up after the first flip. The orientation that bonked a moment ago now slides straight in.",
+      "Look at it plugged in: the plug's blue plastic is at the bottom, the port's blue plastic at the top. Real USB-A works like that: the plug's insulator fills the lower half of its metal shell and the port's sits above, so the two have to pass each other. On the first try both were at the top, hence the bonk.",
+      "The plug carries the white USB trident logo. The USB standards body says it goes on the top of the plug, precisely so you can tell which way up it is. Three flips anyway.",
+      "About one run in four takes five flips (\"Above and beyond tradition\"). Either way it is an odd number of flips, so the plug goes in the same way up."
+    ]
+  }
+}

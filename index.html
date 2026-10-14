@@ -28,6 +28,8 @@
     --ink-soft: rgba(27, 43, 122, .22);
     --pad: clamp(16px, 3.4vw, 48px);
     --ui: 'Recursive', ui-monospace, Menlo, Consolas, monospace;
+    /* Hangul has no monospace face: Korean labels use the system sans so words keep normal gaps. */
+    --ko-ui: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
     --ease: cubic-bezier(.7, 0, .2, 1);
   }
   * { box-sizing: border-box; margin: 0; }
@@ -133,7 +135,9 @@
   .progress { height: 3px; margin-top: 10px; background: var(--ink-soft); border-radius: 2px; overflow: hidden; }
   .progress span { display: block; height: 100%; background: var(--ink); transform-origin: 0 50%; transform: scaleX(0); }
   .tools { margin-top: 16px; }
-  .tools-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  /* Three rows that never reshuffle: playing, explaining, going elsewhere. */
+  .tools-row { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .tools-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .btn {
     min-height: 36px;
     padding: 0 14px;
@@ -146,8 +150,12 @@
   }
   a.btn { display: inline-flex; align-items: center; color: inherit; text-decoration: none; }
   .btn:hover, .btn[aria-pressed="true"] { background: var(--ink); color: var(--sun); }
-  .paused .progress span { opacity: .45; }
+  .paused .progress span, .explaining .progress span { opacity: .45; }
   .pause { display: inline-flex; align-items: center; gap: 7px; }
+  .ask { display: inline-flex; align-items: center; justify-content: center; }
+  /* The same "?" as on the /all/ cards and a page's own corner button. */
+  .ask-q { display: none; font: 800 15px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .lang-ko .next, .lang-ko .all, .lang-ko .pause-label, .lang-ko .ask-label, .lang-ko .now-title, .langs button[lang="ko"] { font-family: var(--ko-ui); }
   .ico { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .ico-play { display: none; }
   .paused .ico-play { display: inline; }
@@ -157,7 +165,9 @@
   .langs button[aria-pressed="true"] { background: var(--ink); color: var(--sun); }
 
   .slot { position: absolute; inset: 0; visibility: hidden; }
-  .slot.on { visibility: visible; animation: wipe .75s var(--ease) both; }
+  /* A page is told it is on screen (TTY.onShow) as its wipe starts, so the wipe uncovers it fast
+     (a third in 50 ms, nine tenths in 250 ms): its first second plays in view, not behind the wipe. */
+  .slot.on { visibility: visible; animation: wipe .6s cubic-bezier(.2, .8, .2, 1) both; }
   .slot iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
   @keyframes wipe { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0); } }
 
@@ -172,13 +182,17 @@
     .lang-ko .staged .line-ko { display: none; }
     .staged .stage { border-radius: 14px; }
     .tools { margin-top: 0; align-self: start; }
-    .tools-row { justify-content: flex-end; max-width: 180px; gap: 6px; }
+    .tools-row { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; max-width: 180px; gap: 6px; }
+    .tools-group { display: contents; }
     .now { margin-top: 0; }
     .now-title { min-height: 0; font-size: 14px; }
     .btn, .langs button { min-height: 32px; font-size: 13px; }
-    /* On phones the pause button is just its icon; the label stays for screen readers. */
+    /* On phones the pause button is just its icon and "Why is this funny?" is just "?";
+       the labels stay for screen readers. */
     .pause { padding: 0 10px; }
-    .pause-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .ask { min-width: 32px; padding: 0 10px; }
+    .ask-q { display: inline; }
+    .pause-label, .ask-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   }
   @media (prefers-reduced-motion: reduce) {
     .staged .stage, .slot.on { animation: none; }
@@ -204,12 +218,19 @@
     </div>
     <div class="tools">
       <div class="tools-row">
-        <button class="btn pause" type="button" aria-pressed="false"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="ico-pause" d="M5 3.5v9M11 3.5v9"/><path class="ico-play" d="M5 3v10l8-5z"/></svg><span class="pause-label">Pause</span></button>
-        <button class="btn next" type="button">Next</button>
-        <a class="btn all" href="/all/">All pages</a>
-        <div class="langs" role="group" aria-label="Language">
-          <button type="button" data-lang="en" aria-pressed="true">EN</button>
-          <button type="button" data-lang="ko" aria-pressed="false" lang="ko">한국어</button>
+        <div class="tools-group">
+          <button class="btn pause" type="button" aria-pressed="false"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="ico-pause" d="M5 3.5v9M11 3.5v9"/><path class="ico-play" d="M5 3v10l8-5z"/></svg><span class="pause-label">Pause</span></button>
+          <button class="btn next" type="button">Next</button>
+        </div>
+        <div class="tools-group">
+          <button class="btn ask" type="button" aria-haspopup="dialog" aria-expanded="false"><span class="ask-q" aria-hidden="true">?</span><span class="ask-label">Why is this funny?</span></button>
+        </div>
+        <div class="tools-group">
+          <a class="btn all" href="/all/">All pages</a>
+          <div class="langs" role="group" aria-label="Language">
+            <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
+            <button type="button" data-lang="ko" aria-pressed="false" lang="ko">한국어</button>
+          </div>
         </div>
       </div>
     </div>
@@ -230,6 +251,8 @@
   const pauseButton = document.querySelector('.pause');
   const pauseLabel = document.querySelector('.pause-label');
   const allLink = document.querySelector('.all');
+  const askButton = document.querySelector('.ask');
+  const askLabel = document.querySelector('.ask-label');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const DEFAULT_SECONDS = 16;
   const KO_LINE = '재미로 세상을 한 뼘 더 행복하게';
@@ -279,11 +302,12 @@
   let lang = new URLSearchParams(location.search).get('lang') || read('localStorage', 'tty.lang');
   if (lang !== 'en' && lang !== 'ko') lang = (navigator.languages || [navigator.language || '']).some((l) => /^ko\b/i.test(l)) ? 'ko' : 'en';
   const UI = {
-    en: { next: 'Next', all: 'All pages', pause: 'Pause', play: 'Play', stage: 'tty.link pages', langs: 'Language' },
-    ko: { next: '다음', all: '전체 보기', pause: '일시정지', play: '재생', stage: 'tty.link 페이지', langs: '언어' },
+    en: { next: 'Next', all: 'All pages', pause: 'Pause', play: 'Play', ask: 'Why is this funny?', stage: 'tty.link pages', langs: 'Language' },
+    ko: { next: '다음', all: '전체 보기', pause: '일시정지', play: '재생', ask: '이게 왜 웃겨요?', stage: 'tty.link 페이지', langs: '언어' },
   };
   let koScatter = null;
   let userPaused = false;
+  let explaining = false;
   function showKo() {
     if (lang !== 'ko' || !body.classList.contains('settled') || lineKo.firstChild) return;
     const kku = document.createElement('font-kku');
@@ -295,12 +319,17 @@
     if (window.FontKkuFx && !reduce) setTimeout(() => { koScatter = FontKkuFx.scatter(kku, { distance: .6 }); }, 1600);
   }
   function applyLang() {
+    // The page's language follows the interface (the English sentence keeps its own lang="en").
+    root.lang = lang;
     root.classList.toggle('lang-ko', lang === 'ko');
     root.classList.toggle('lang-en', lang === 'en');
     nextButton.textContent = UI[lang].next;
     pauseLabel.textContent = userPaused ? UI[lang].play : UI[lang].pause;
     allLink.textContent = UI[lang].all;
     allLink.href = '/all/?lang=' + lang;
+    askLabel.textContent = UI[lang].ask;
+    askButton.title = UI[lang].ask;
+    if (explaining) showExplain();
     stage.setAttribute('aria-label', UI[lang].stage);
     document.querySelector('.langs').setAttribute('aria-label', UI[lang].langs);
     document.querySelectorAll('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
@@ -345,6 +374,33 @@
     if (!bag.length) bag = shuffle(pages.filter((p) => !current || p.id !== current.page.id));
     return bag.pop() || pages[0];
   }
+  // A page can ask to open the visit at certain times ("when" in pages/index.json), in the
+  // visitor's local time: days of the week (0 = Sunday), nth (the nth such weekday of the month,
+  // e.g. the second Tuesday), hours [from, to) and dates ["MM-DD", "MM-DD"] (inclusive). Ranges
+  // may wrap around midnight or the new year. Every condition given must fit.
+  const inRange = (x, from, to, inclusive) =>
+    from <= to ? x >= from && (inclusive ? x <= to : x < to) : x >= from || (inclusive ? x <= to : x < to);
+  function fits(when, now) {
+    if (!when) return false;
+    if (when.days && !when.days.includes(now.getDay())) return false;
+    if (when.nth && Math.ceil(now.getDate() / 7) !== when.nth) return false;
+    if (when.hours && !inRange(now.getHours(), when.hours[0], when.hours[1], false)) return false;
+    if (when.dates) {
+      const day = (s) => { const [m, d] = s.split('-').map(Number); return m * 100 + d; };
+      if (!inRange((now.getMonth() + 1) * 100 + now.getDate(), day(when.dates[0]), day(when.dates[1]), true)) return false;
+    }
+    return true;
+  }
+  // The first page of a visit is random, like every other pick. Now and then (about one visit in
+  // four) a page whose "when" fits the moment goes first instead (Friday afternoon, late at night …),
+  // and "opener" pages, whose joke lands in the first seconds, are twice as likely in the draw.
+  const TIMELY_CHANCE = 0.25;
+  const any = (list) => list[Math.floor(Math.random() * list.length)];
+  function first() {
+    const timely = pages.filter((p) => fits(p.when, new Date()));
+    if (timely.length && Math.random() < TIMELY_CHANCE) return any(timely);
+    return any(pages.flatMap((p) => (p.opener ? [p, p] : [p])));
+  }
   const titleOf = (page) => (page.title && (page.title[lang] || page.title.en)) || page.id;
   const secondsOf = (page) => (page.seconds || DEFAULT_SECONDS) * 1000;
 
@@ -380,6 +436,8 @@
 
     nowTitle.textContent = titleOf(entry.page);
     history.replaceState(null, '', '#' + entry.page.id);
+    // An explanation that is open follows the stage.
+    if (explaining) showExplain();
 
     if (clock) clock.cancel();
     clock = bar.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: secondsOf(entry.page), fill: 'forwards' });
@@ -412,15 +470,50 @@
       // Keep at least this much time left; the bar steps back to show it.
       clock.currentTime = Math.min(clock.currentTime, Math.max(0, secondsOf(entry.page) - (event.data.ms || 12000)));
     }
+    // "?" pressed inside the page on stage (pages/_kit.js passes it on). Focus goes back to the
+    // stage on close, so the visitor carries on where they were.
+    if (event.data.type === 'ask' && entry === current && body.classList.contains('staged')) openExplain(entry.frame);
   });
 
-  // The clock runs only when nobody has paused it, the pointer is not on the stage and
-  // the tab is visible. The visitor's pause wins over everything else.
+  // The clock runs only when nobody has paused it, the pointer is not on the stage, no
+  // explanation is open and the tab is visible. The visitor's pause wins over everything else.
   function syncClock() {
     if (!clock) return;
-    if (userPaused || hovering || document.hidden) clock.pause();
+    if (userPaused || hovering || explaining || document.hidden) clock.pause();
     else clock.play();
   }
+
+  /* ---- "Why is this funny?" ---- */
+  // Explains the page on stage with /assets/tty-explain.js, loaded the first time someone asks.
+  // While it is open the clock stops through its own flag, so closing it never undoes the
+  // visitor's own pause.
+  let explainScript = null;
+  const loadExplain = () => explainScript || (explainScript = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = '/assets/tty-explain.js';
+    script.onload = () => (window.TTYExplain ? resolve() : reject(new Error('tty-explain')));
+    script.onerror = () => { explainScript = null; reject(new Error('tty-explain')); };
+    document.head.append(script);
+  }));
+  function setExplaining(on) {
+    explaining = on;
+    body.classList.toggle('explaining', on);
+    askButton.setAttribute('aria-expanded', String(on));
+    syncClock();
+    // Closed after the page that opened it left the stage: focus lands on the button instead.
+    if (!on && (!document.activeElement || document.activeElement === body)) askButton.focus({ preventScroll: true });
+  }
+  // Opens it, or (already open) switches it to the page on stage and the current language.
+  function showExplain(returnFocus) {
+    if (!current || !window.TTYExplain) return;
+    window.TTYExplain.open({ id: current.page.id, lang, title: titleOf(current.page), returnFocus, onClose: () => setExplaining(false) });
+  }
+  function openExplain(returnFocus) {
+    if (!current || explaining) return;
+    setExplaining(true);
+    loadExplain().then(() => { if (explaining) showExplain(returnFocus); }, () => setExplaining(false));
+  }
+  askButton.addEventListener('click', () => openExplain(askButton));
   stage.addEventListener('mouseenter', () => { hovering = true; syncClock(); });
   stage.addEventListener('mouseleave', () => { hovering = false; syncClock(); });
   document.addEventListener('visibilitychange', syncClock);
@@ -432,8 +525,15 @@
     syncClock();
   });
   nextButton.addEventListener('click', () => { if (current) advance(); });
+  // Right arrow: next page. "?": explain the page on stage. Not while typing or explaining.
   addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowRight' && body.classList.contains('staged') && !event.target.closest('input, textarea, [contenteditable]')) advance();
+    if (explaining || !body.classList.contains('staged') || event.target.closest('input, textarea, select, [contenteditable]')) return;
+    if (event.key === 'ArrowRight') advance();
+    else if (event.key === '?' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
+      const at = document.activeElement;
+      openExplain(at && at !== body ? at : askButton);
+    }
   });
   document.querySelectorAll('.langs button').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.lang === lang) return;
@@ -451,8 +551,13 @@
     .then((r) => r.json())
     .then((data) => {
       pages = data.pages || [];
-      const wanted = pages.find((p) => '#' + p.id === location.hash);
-      if (pages.length) upcoming = load(wanted || pick());
+      // The address keeps #<id> of the page on stage so it can be shared. A link opened with it
+      // starts on that page; a reload or a Back/Forward visit draws a fresh random page instead
+      // (otherwise every reload would start where the last visit stopped).
+      const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+      const fresh = !nav || (nav.type !== 'reload' && nav.type !== 'back_forward');
+      const wanted = fresh && pages.find((p) => '#' + p.id === location.hash);
+      if (pages.length) upcoming = load(wanted || first());
     })
     .catch(() => {});
 
@@ -460,7 +565,9 @@
   const intro = reduce ? new Promise((r) => setTimeout(r, 1600)) : assemble();
   Promise.all([intro, manifest]).then(() => {
     toStage(!reduce);
-    if (upcoming) setTimeout(advance, reduce ? 0 : 700);
+    // The first page comes up once the stage has mostly opened (three quarters, 1 s in), so
+    // its opening is not played behind the stage's own reveal.
+    if (upcoming) setTimeout(advance, reduce ? 0 : 1000);
   });
 })();
 </script>

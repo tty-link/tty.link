@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-tty-nav="top">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -47,7 +47,17 @@
     height: 100vh;
     height: 100svh;
     overflow: hidden;
+    overflow: clip;
     container-type: size;
+    background: var(--wall);
+  }
+  /* Everything in the factory. The press's thud shakes this, inside the factory's clip, so the
+     page itself never grows past the screen (a phone would zoom out for a pixel). --rw is the
+     receipt's width, which the button row keeps clear of. */
+  .rig {
+    --rw: min(36cqw, 300px);
+    position: absolute;
+    inset: 0;
     background:
       linear-gradient(var(--wall-line) 1px, transparent 1px) 0 0 / 100% 8cqh,
       var(--wall);
@@ -55,7 +65,8 @@
 
   .head { position: absolute; left: 5cqw; top: 5cqh; max-width: 50cqw; }
   h1 { font-size: min(6.4cqw, 7.4cqh); font-weight: 900; font-stretch: 112%; line-height: .95; letter-spacing: -.01em; }
-  .sub { margin-top: 1.4cqh; font-size: min(2cqw, 2.5cqh); font-stretch: 90%; font-weight: 500; color: #4a5960; }
+  /* Kept left of the press (its left edge is at 38cqw or further right), however the title wraps. */
+  .sub { max-width: 31cqw; margin-top: 1.4cqh; font-size: min(2cqw, 2.5cqh); font-stretch: 90%; font-weight: 500; color: #4a5960; text-wrap: balance; }
   .lang-ko .sub { font-size: min(1.9cqw, 2.4cqh); }
 
   /* Meters */
@@ -163,6 +174,8 @@
   .chip .sp { opacity: .45; font-weight: 500; margin-right: .06em; }
   .bar > font-kku, .chip > font-kku { color: var(--ink); }
   .chip.jamo { padding: .22em .3em; }
+  /* A thumbs-up cut down to its UTF-8 bytes, printed like a hex dump. */
+  .chip.byte { padding: .26em .34em; font-family: 'Courier Prime', monospace; font-weight: 700; }
   .item:has(.kku-fx-open) { z-index: 3; }
 
   .spark { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #ffb347; box-shadow: 0 0 8px #ff8a3d; pointer-events: none; }
@@ -186,7 +199,7 @@
     position: absolute;
     right: 5cqw;
     bottom: 0;
-    width: min(36cqw, 300px);
+    width: var(--rw);
     padding: 16px 18px 26px;
     background: var(--paper);
     box-shadow: 0 -6px 30px rgba(0, 0, 0, .18);
@@ -204,17 +217,26 @@
   .receipt .total { margin-top: .4em; padding-top: .4em; border-top: 1.5px dashed #9aa3a7; font-weight: 700; }
   .receipt .foot { margin-top: .6em; font-size: .9em; opacity: .75; text-align: center; }
 
-  .again {
+  /* The end of a shift: the button and its one-line hint, left of the receipt. */
+  .end {
     position: absolute;
     left: 5cqw;
+    right: calc(5cqw + var(--rw) + 2cqw);
     bottom: 5cqh;
+    display: flex;
+    align-items: center;
+    gap: .9em;
+    font-size: min(1.7cqw, 2.2cqh, 15px);
+    pointer-events: none;
+  }
+  .again {
+    flex: none;
     padding: .6em 1.1em;
     border: 0;
     border-radius: 999px;
     background: var(--steel-dark);
     color: #fff;
     font: inherit;
-    font-size: min(1.7cqw, 2.2cqh, 15px);
     font-weight: 700;
     cursor: pointer;
     opacity: 0;
@@ -222,20 +244,35 @@
   }
   .again.on { opacity: 1; pointer-events: auto; transition: opacity .4s; }
   .again:focus-visible { outline: 3px solid var(--hazard); outline-offset: 3px; }
-  .fine { position: absolute; left: 5cqw; bottom: 1.6cqh; max-width: 52cqw; font-size: min(1.15cqw, 1.6cqh, 12px); color: #6c7a80; }
+  .shift-hint { font-size: .88em; font-weight: 500; line-height: 1.3; color: #4a5960; opacity: 0; }
+  .again.on + .shift-hint { opacity: 1; transition: opacity .4s .2s; }
+  .fine { position: absolute; left: 5cqw; bottom: 1.6cqh; max-width: 52cqw; font-size: min(1.15cqw, 1.6cqh, 12px); color: #6c7a80; transition: opacity .4s; }
+  /* With less motion the conclusion and the receipt are on screen together: the caption keeps left of it. */
+  .calm .caption { right: calc(5cqw + var(--rw) + 2cqw); }
+
+  /* Opened on its own, the page has the tty.link nav at the top right (pinned on <html>):
+     the meters step down below it. */
+  @container (orientation: landscape) {
+    html:not(.embedded) .meters { top: max(5cqh, 50px); }
+  }
 
   /* Portrait stages (phones) stack the meters under the title. */
   @container (orientation: portrait) {
     .head { left: 5cqw; top: 3cqh; max-width: 90cqw; }
     h1 { font-size: 8.4cqw; }
-    .sub { font-size: 3.4cqw; }
+    .sub { max-width: none; font-size: 3.4cqw; }
     .lang-ko .sub { font-size: 3.3cqw; }
-    .meters { left: 5cqw; right: auto; top: 22cqh; }
-    .meter { min-width: 24cqw; padding: 1.6cqw 2.4cqw; border-radius: 1.6cqw; }
-    .m-label { font-size: 2.6cqw; }
-    .m-val { font-size: 8cqw; }
-    .m-unit { font-size: 2.4cqw; }
-    .gauge { width: 22cqw; }
+    /* Opened on its own, the title keeps left of the tty.link nav in the top right corner. */
+    html:not(.embedded) .head { max-width: calc(90cqw - var(--nav-room)); }
+    html:not(.embedded) h1 { font-size: min(8.4cqw, calc((90cqw - var(--nav-room)) / 10.8)); }
+    /* The meters end above the press lamp (the housing top is 37cqh, the lamp pokes 2.2cqh above it)
+       on a near-square stage too, where sizes in cqw alone would run into it. */
+    .meters { left: 5cqw; right: auto; top: 19cqh; }
+    .meter { min-width: 24cqw; padding: min(1.6cqw, 1.2cqh) 2.4cqw; border-radius: 1.6cqw; }
+    .m-label { font-size: max(9px, min(2.6cqw, 2cqh)); line-height: 1.2; }
+    .m-val { font-size: min(8cqw, 5.4cqh); }
+    .m-unit { font-size: max(9px, min(2.4cqw, 1.9cqh)); line-height: 1.2; }
+    .gauge { width: min(22cqw, 20cqh); }
     .press { top: 37cqh; width: 40cqw; }
     .housing { height: 10cqh; }
     .plate { font-size: 2.6cqw; }
@@ -249,16 +286,35 @@
     .bin { top: 69.5cqh; width: 16cqw; font-size: 2.4cqw; }
     .caption { top: 80cqh; font-size: 4.2cqw; }
     .caption.big { font-size: 6.6cqw; }
-    .receipt { right: 4cqw; width: 64cqw; font-size: 3.1cqw; }
-    .again { bottom: 8cqh; font-size: 3.4cqw; }
+    /* With less motion the conclusion stays up with the button row under it: one line. */
+    .calm .caption { right: 6cqw; }
+    .calm .caption.big { font-size: min(5.6cqw, 4.6cqh); }
+    /* The receipt rises over the belt, not the press. */
+    .rig { --rw: min(60cqw, 56cqh, 308px); }
+    .receipt { right: 4cqw; padding: 12px 14px 22px; font-size: min(3.1cqw, 2.55cqh, 14px); }
+    .end { right: 5cqw; bottom: 6cqh; font-size: min(3.4cqw, 15px); }
+    /* Once the receipt is up, the button and its hint stack in the column left of it, and the
+       fine print (which would run under the receipt) steps aside. */
+    .printed .end { right: calc(4cqw + var(--rw) + 3cqw); flex-direction: column-reverse; align-items: flex-start; gap: .5em; }
+    .printed .fine { opacity: 0; }
     .fine { max-width: 90cqw; font-size: 2.6cqw; }
     .bar, .chip { --chip: 5.6cqw; }
   }
+  /* Short phone stages (about 360 x 400): a tighter receipt that clears the press, and a
+     conclusion on one line above the button. */
+  @container (orientation: portrait) and (max-height: 470px) {
+    .receipt { padding: 10px 12px 18px; line-height: 1.3; }
+    .receipt .no { display: none; }
+    .caption.big { font-size: min(6.6cqw, 4.6cqh); }
+  }
+  html:not(.embedded) { --nav-room: 84px; }
+  @media (min-width: 601px) { html:not(.embedded) { --nav-room: 280px; } }
   @media (prefers-reduced-motion: reduce) { .belt.run .ribs { animation: none; } .needle { transition: none; } }
 </style>
 </head>
 <body>
 <main class="factory">
+<div class="rig">
   <header class="head">
     <h1 data-lang="en">The Token Factory</h1>
     <h1 data-lang="ko"><font-kku font="sticker" size="min(6.8cqw, 7.8cqh)">토큰 공장</font-kku></h1>
@@ -290,8 +346,12 @@
 
   <p class="caption" aria-live="polite"></p>
   <div class="receipt" aria-live="polite"></div>
-  <button class="again" type="button"></button>
+  <div class="end">
+    <button class="again" type="button" aria-describedby="shift-hint"></button>
+    <p class="shift-hint" id="shift-hint" data-t="hint"></p>
+  </div>
   <p class="fine" data-t="fine"></p>
+</div>
 </main>
 
 <script>
@@ -300,7 +360,7 @@
     en: {
       tokens: 'Tokens', bill: 'Your bill', unit: 'cookies', plate: 'Cutter No. 7', bin: 'Billing',
       fine: 'A cartoon. Real tokenizers are more complicated, and pricier to explain.',
-      again: 'Next shift',
+      again: 'Next shift', hint: 'Each shift cuts new words.',
       c4: 'Why Korean costs more',
       receipt: {
         title: 'The Token Factory', no: 'Receipt No. 0042',
@@ -313,7 +373,7 @@
     ko: {
       tokens: '토큰', bill: '청구액', unit: '쿠키', plate: '7번 절단기', bin: '청구',
       fine: '만화입니다. 실제 토크나이저는 더 복잡하고, 설명하기는 더 비쌉니다.',
-      again: '다음 교대',
+      again: '다음 교대', hint: '교대마다 다른 말을 잘라요.',
       c4: '<font-kku font="sebul" size="1em">한국어 요금이 더 나오는 이유</font-kku>',
       receipt: {
         title: '토큰 공장', no: '영수증 0042번',
@@ -327,6 +387,7 @@
   const t = T[TTY.lang] || T.en;
   document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t[el.dataset.t]; });
   const factory = document.querySelector('.factory');
+  const rig = document.querySelector('.rig');
   const lane = document.querySelector('.lane');
   const belt = document.querySelector('.belt');
   const press = document.querySelector('.press');
@@ -363,21 +424,25 @@
     hello: { text: 'Hello world', pieces: ['Hello', ' world'], line: TTY.t({ en: 'Hello world: two tokens. A bargain.', ko: 'Hello world는 두 토큰. 거저네요.' }) },
     thanks: { text: 'Thank you', pieces: ['Thank', ' you'], line: TTY.t({ en: 'Thank you: two tokens. A bargain.', ko: 'Thank you는 두 토큰. 거저네요.' }) },
     work: { text: 'Good work', pieces: ['Good', ' work'], line: TTY.t({ en: 'Good work: two tokens. A bargain.', ko: 'Good work는 두 토큰. 거저네요.' }) },
-    unbelievable: { text: 'unbelievable', pieces: ['un', 'believ', 'able'], line: TTY.t({ en: 'un, believ, able. Three tokens, still believable.', ko: 'un, believ, able. 세 토큰, 아직은 믿을 만하죠.' }) },
+    // unbelievable and strawberry are cut exactly where tiktoken's cl100k_base (GPT-4) cuts them.
+    unbelievable: { text: 'unbelievable', pieces: ['un', 'belie', 'vable'], line: TTY.t({ en: 'un, belie, vable. Three tokens, still believable.', ko: 'un, belie, vable. 세 토큰, 아직은 믿을 만하죠.' }) },
     strawberry: { text: 'strawberry', pieces: ['str', 'aw', 'berry'], line: TTY.t({ en: 'str, aw, berry. Three tokens. Don’t ask about the r’s.', ko: 'str, aw, berry. 세 토큰. r이 몇 개인지는 묻지 마세요.' }) },
+    // One emoji, four bytes: U+1F44D is F0 9F 91 8D in UTF-8. Cut down to bytes, like a
+    // byte-level tokenizer does with a character it has no piece for (real ones often merge some).
+    thumb: { text: '👍', pieces: ['F0', '9F', '91', '8D'], bytes: true, label: TTY.t({ en: '👍, bytes', ko: '👍 (바이트)' }), line: TTY.t({ en: '👍 = F0 9F 91 8D. One thumb, four tokens.', ko: '👍 = F0 9F 91 8D. 엄지 하나에 토큰 네 개.' }) },
   };
-  // A shift: an English greeting, one longer word, then the same greeting in Korean.
+  // A shift: an English greeting, one longer word (or a thumbs-up), then the same greeting in Korean.
   // Each shift (Next shift, or the encore) moves to the next; the first is picked at random.
   const SHIFTS = [
     { english: [WORDS.hello, WORDS.unbelievable], korean: '안녕하세요', line: TTY.t({ en: '안녕하세요… same hello, five already?', ko: '안녕하세요… 같은 인사인데 벌써 다섯 개?' }) },
     { english: [WORDS.thanks, WORDS.strawberry], korean: '감사합니다', line: TTY.t({ en: '감사합니다… same thanks, five already?', ko: '감사합니다… 같은 말인데 벌써 다섯 개?' }) },
-    { english: [WORDS.work, WORDS.unbelievable], korean: '수고하셨습니다', line: TTY.t({ en: '수고하셨습니다… same thing, seven already?', ko: '수고하셨습니다… 같은 말인데 벌써 일곱 개?' }) },
+    { english: [WORDS.work, WORDS.thumb], korean: '수고하셨습니다', line: TTY.t({ en: '수고하셨습니다… same thing, seven already?', ko: '수고하셨습니다… 같은 말인데 벌써 일곱 개?' }) },
   ];
   let shiftNo = Math.floor(Math.random() * SHIFTS.length);
   let ENGLISH = SHIFTS[shiftNo].english;
   let KOREAN = SHIFTS[shiftNo].korean;
   const receiptRows = () => [
-    ...ENGLISH.map((r) => [r.text, r.pieces.length]),
+    ...ENGLISH.map((r) => [r.label || r.text, r.pieces.length]),
     [t.receipt.syllables(KOREAN), [...KOREAN].length],
     [t.receipt.jamo(KOREAN), [...KOREAN].reduce((n, ch) => n + jamoOf(ch).length, 0)],
   ];
@@ -447,14 +512,14 @@
     return beltTop - blade.bottom - 2;
   }
   function sparks() {
-    const f = factory.getBoundingClientRect();
+    const f = rig.getBoundingClientRect();
     const b = belt.getBoundingClientRect();
     const cx = b.left + b.width / 2 - f.left, cy = b.top - f.top;
     for (let i = 0; i < 8; i++) {
       const s = document.createElement('i');
       s.className = 'spark';
       s.style.left = cx + 'px'; s.style.top = cy + 'px';
-      factory.append(s);
+      rig.append(s);
       const ang = Math.PI * (1 + Math.random()), dist = 30 + Math.random() * 50;
       s.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist}px) scale(.3)`, opacity: 0 }], { duration: 420 + Math.random() * 200, easing: 'cubic-bezier(.2, .8, .4, 1)' }).finished.then(() => s.remove());
     }
@@ -465,7 +530,7 @@
     await down.finished;
     onImpact && onImpact();
     sparks();
-    factory.animate([{ transform: 'none' }, { transform: `translate(${hard ? 3 : 1.5}px, ${hard ? 3 : 2}px)` }, { transform: 'translate(-2px, 0)' }, { transform: 'none' }], { duration: hard ? 260 : 200 });
+    rig.animate([{ transform: 'none' }, { transform: `translate(${hard ? 3 : 1.5}px, ${hard ? 3 : 2}px)` }, { transform: 'translate(-2px, 0)' }, { transform: 'none' }], { duration: hard ? 260 : 200 });
     await sleep(70);
     const up = ram.animate([{ transform: `translateY(${d}px)` }, { transform: 'translateY(0)' }], { duration: 260, easing: 'cubic-bezier(.2, .8, .3, 1)', fill: 'forwards' });
     await up.finished;
@@ -473,7 +538,7 @@
   }
 
   /* ---- Rounds ---- */
-  async function englishRound(text, pieces, line) {
+  async function englishRound({ text, pieces, line, bytes }) {
     const bar = make(text, 'bar');
     setX(bar, -bar.w - 20);
     belt.classList.add('run');
@@ -481,7 +546,10 @@
     belt.classList.remove('run');
     let chips;
     await slam(() => {
-      chips = pieces.map((p, i) => make(p.startsWith(' ') ? `<span class="sp">␣</span>${p.slice(1)}` : p, 'chip', COLORS[(i + (text.length % 3)) % COLORS.length]));
+      // Bytes of one character share a colour, like the jamo of one syllable.
+      chips = bytes
+        ? pieces.map((p) => make(p, 'chip byte', COLORS[4]))
+        : pieces.map((p, i) => make(p.startsWith(' ') ? `<span class="sp">␣</span>${p.slice(1)}` : p, 'chip', COLORS[(i + (text.length % 3)) % COLORS.length]));
       laidTight(chips, bar.x);
       bar.remove();
     });
@@ -553,18 +621,23 @@
     return bits;
   }
   // Twelve to sixteen jamo chips must fit on a phone's belt: shrink them together if needed.
+  // (Padding and glyph boxes do not shrink in proportion, so it measures again, up to three times.)
   function fit(items, gap) {
-    const total = items.reduce((s, i) => s + i.w, 0) + gap * (items.length - 1);
     const room = lane.clientWidth * .96;
-    if (total <= room) return;
-    const k = room / total;
-    items.forEach((i) => { i.style.fontSize = `calc(var(--chip, 1em) * ${k})`; i.querySelector('.chip').style.fontSize = `calc(var(--chip, min(3.4cqw, 4.6cqh)) * ${k})`; i.w = i.offsetWidth; });
+    let k = 1;
+    for (let pass = 0; pass < 3; pass++) {
+      const total = items.reduce((s, i) => s + i.w, 0) + gap * (items.length - 1);
+      if (total <= room) return;
+      k *= room / total;
+      items.forEach((i) => { i.style.fontSize = `calc(var(--chip, 1em) * ${k})`; i.querySelector('.chip').style.fontSize = `calc(var(--chip, min(3.4cqw, 4.6cqh)) * ${k})`; i.w = i.offsetWidth; });
+    }
   }
 
   function printReceipt() {
     const r = t.receipt;
     const rows = receiptRows();
     const tokens = totalTokens();
+    factory.classList.add('printed');
     receipt.innerHTML = `<h2>${r.title}</h2><p class="no">${r.no}</p>${rows.map(([a, b]) => `<p class="row"><span>${a}</span><span>${b}</span></p>`).join('')}<p class="row total"><span>${r.tokens}</span><span>${tokens}</span></p><p class="row"><span>${r.total}</span><span>${r.cost(tokens * PRICE)}</span></p><p class="row"><span>${r.answer[0]}</span><span>${r.answer[1]}</span></p><p class="foot">${r.foot}</p>`;
     if (TTY.reduce) { receipt.style.transform = 'none'; return Promise.resolve(); }
     const a = receipt.animate([{ transform: 'translateY(105%)' }, { transform: 'translateY(0)' }], { duration: 1800, easing: 'steps(14, end)', fill: 'forwards' });
@@ -575,16 +648,18 @@
   let running = false;
   let encore = null;
   let shifts = 0;
+  function nextShift() {
+    shiftNo = (shiftNo + 1) % SHIFTS.length;
+    ENGLISH = SHIFTS[shiftNo].english;
+    KOREAN = SHIFTS[shiftNo].korean;
+  }
   async function run() {
     if (running) return;
     clearTimeout(encore);
     running = true;
-    if (shifts++) {
-      shiftNo = (shiftNo + 1) % SHIFTS.length;
-      ENGLISH = SHIFTS[shiftNo].english;
-      KOREAN = SHIFTS[shiftNo].korean;
-    }
+    if (shifts++) nextShift();
     again.classList.remove('on');
+    factory.classList.remove('printed');
     receipt.style.transform = '';
     receipt.innerHTML = '';
     lane.replaceChildren();
@@ -594,7 +669,7 @@
     lamp.classList.remove('on');
     caption.textContent = '';
     await sleep(500);
-    for (const r of ENGLISH) await englishRound(r.text, r.pieces, r.line);
+    for (const r of ENGLISH) await englishRound(r);
     const bits = await koreanRound();
     caption.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' }).finished.then((a) => { caption.textContent = ''; caption.getAnimations().forEach((x) => x.cancel()); });
     belt.classList.add('run');
@@ -607,23 +682,41 @@
     encore = setTimeout(run, 9000);
   }
 
-  // The end state, for visitors who asked for less motion.
+  // The end state, for visitors who asked for less motion: the jamo on the belt, the conclusion,
+  // the receipt where it fits beside the conclusion (not on a portrait stage), and the button.
   function still() {
     lane.replaceChildren();
     const word = KOREAN;
     let bits = [];
     [...word].forEach((ch, i) => jamoOf(ch).forEach((j) => bits.push(make(kku(j), 'chip jamo', COLORS[i % COLORS.length]))));
-    fit(bits, 5);
-    const total = bits.reduce((s, i) => s + i.w, 0) + 5 * (bits.length - 1);
-    let x = lane.clientWidth / 2 - total / 2;
-    bits.forEach((b) => { setX(b, x); x += b.w + 5; });
+    const lay = () => {
+      bits.forEach((b) => { b.style.fontSize = ''; b.querySelector('.chip').style.fontSize = ''; b.w = b.offsetWidth; });
+      fit(bits, 5);
+      const total = bits.reduce((s, i) => s + i.w, 0) + 5 * (bits.length - 1);
+      let x = lane.clientWidth / 2 - total / 2;
+      bits.forEach((b) => { setX(b, x); x += b.w + 5; });
+    };
+    lay();
+    // The chips' letters may still be loading: lay them out again once they are drawn.
+    document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(lay)));
     count.tokens = 0; add(totalTokens());
     lamp.classList.add('on');
+    factory.classList.add('calm');
     say(t.c4, true);
+    if (factory.clientWidth > factory.clientHeight) printReceipt();
+    else { factory.classList.remove('printed'); receipt.innerHTML = ''; receipt.style.transform = ''; }
+    again.classList.add('on');
   }
 
-  again.addEventListener('click', () => { TTY.hold(20000); run(); });
-  TTY.onShow(() => (TTY.reduce ? still() : run()));
+  again.addEventListener('click', () => {
+    TTY.hold(20000);
+    if (TTY.reduce) { nextShift(); still(); } else run();
+  });
+  let shown = false;
+  TTY.onShow(() => { shown = true; if (TTY.reduce) still(); else run(); });
+  // A phone turned with less motion: lay the still scene out for the new shape.
+  let turning = 0;
+  addEventListener('resize', () => { if (!TTY.reduce || !shown) return; clearTimeout(turning); turning = setTimeout(still, 200); });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
 })();

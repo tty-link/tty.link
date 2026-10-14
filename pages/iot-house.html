@@ -71,14 +71,16 @@
   .floorplan { fill: none; stroke: #2a9d8f; stroke-width: 4; stroke-dasharray: 9 7; opacity: 0; pointer-events: none; }
 
   /* ---- The app ---- */
+  /* The card's padding is in px (clamped), not in cqi: cqi here would be the whole stage's
+     width, and 60 px of padding a side left the text inside at 9–11 px on desktop. */
   .app {
     container-type: inline-size;
     display: flex;
     flex-direction: column;
     max-height: 100%;
     min-height: 0;
-    padding: 6cqi 6cqi 4cqi;
-    border-radius: 7cqi;
+    padding: clamp(18px, 3.6cqmin, 40px) clamp(18px, 3.6cqmin, 40px) clamp(14px, 2.6cqmin, 28px);
+    border-radius: clamp(20px, 4.6cqmin, 46px);
     background: var(--card);
     box-shadow: 0 0 0 .5cqi rgba(43,45,66,.06), 0 3cqi 8cqi rgba(160, 90, 30, .18);
   }
@@ -89,7 +91,7 @@
   .status i { width: 2.4cqi; height: 2.4cqi; border-radius: 50%; background: var(--alert); box-shadow: 0 0 0 1cqi rgba(255,93,93,.18); }
   .status > font-kku { color: var(--soft); }
   /* Older notifications fade out at the bottom instead of being cut mid-line. */
-  .feed { position: relative; flex: 1; min-height: 0; margin-top: 5cqi; padding: 0; list-style: none; overflow: hidden; -webkit-mask-image: linear-gradient(#000 78%, transparent); mask-image: linear-gradient(#000 78%, transparent); }
+  .feed { --fade: 22%; position: relative; flex: 1; min-height: 0; margin-top: 5cqi; padding: 0; list-style: none; overflow: hidden; -webkit-mask-image: linear-gradient(#000 calc(100% - var(--fade)), transparent); mask-image: linear-gradient(#000 calc(100% - var(--fade)), transparent); }
   .notif {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -106,14 +108,74 @@
   .who time { font-weight: 400; font-size: 3.2cqi; color: var(--soft); }
   .who > font-kku { color: var(--ink); }
   .what { margin-top: .8cqi; font-size: 3.8cqi; line-height: 1.38; }
-  .hint { margin-top: 2cqi; font-size: 3.2cqi; color: var(--soft); text-align: center; }
+  .hint { margin-top: 2cqi; font-size: max(11px, 3.2cqi); color: var(--soft); text-align: center; }
 
+  /* ---- Update all: one progress bar, one update, seven farewells ---- */
+  .update-all { margin-left: auto; padding: 1.2cqi 3.2cqi; border: 0; border-radius: 99px; background: var(--ink); color: #fff; font: inherit; font-size: max(11px, 3.2cqi); font-weight: 700; line-height: 1.2; white-space: nowrap; cursor: pointer; }
+  .update-all:disabled { background: #c9ccd6; cursor: default; }
+  .updater { display: none; flex: 1; flex-direction: column; min-height: 0; margin-top: 5cqi; }
+  .app.updating .feed { display: none; }
+  .app.updating .updater { display: flex; }
+  .up-head { display: flex; justify-content: space-between; align-items: baseline; gap: 2cqi; font-size: 4cqi; font-weight: 800; }
+  .up-head span { font-size: 3.4cqi; font-weight: 600; color: var(--soft); font-variant-numeric: tabular-nums; }
+  .bar { flex: none; height: 2.2cqi; margin-top: 2cqi; border-radius: 99px; background: #eceef2; overflow: hidden; }
+  .bar i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--ok), #6fdca6); }
+  .up-now { margin-top: 1.6cqi; font-size: 3.4cqi; color: var(--soft); }
+  .results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2cqi; margin-top: 3cqi; padding: 0; list-style: none; }
+  .results li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .5cqi 1.8cqi; padding: 1.8cqi 1.8cqi; border-radius: 3cqi; background: #f7f5f2; }
+  .results .ico { grid-row: span 2; width: 7.4cqi; height: 7.4cqi; border-radius: 2.2cqi; }
+  .results .ico svg { width: 5.2cqi; height: 5.2cqi; }
+  .results .nm { font-size: 3.4cqi; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .results .tag { justify-self: start; padding: .2cqi 1.4cqi; border-radius: 99px; background: #e6e8ee; color: #575c6b; font-size: max(11px, 2.9cqi); font-weight: 600; line-height: 1.35; white-space: nowrap; }
+  .results .tag.ok { background: #daf4e6; color: #17734a; }
+
+  /* Side by side on a small landscape stage the card is narrow: floors keep the alerts readable. */
+  @container (min-aspect-ratio: 1/1) {
+    .app-top { font-size: max(11px, 3.6cqi); }
+    .status, .who, .what { font-size: max(12px, 3.8cqi); }
+    .who time { font-size: max(10.5px, 3.2cqi); }
+  }
   @container (max-aspect-ratio: 1/1) {
     .layout { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 2.4cqmin; padding: 3cqmin; align-items: start; }
-    .house svg { max-height: 44cqh; margin: 0 auto; }
-    .app { padding: 4.6cqi 5cqi 3cqi; border-radius: 6cqi; height: 100%; }
+    /* The house gives way so the newest alert fits whole in the feed; only the last few
+       pixels of the feed fade, which is where the older alerts are. */
+    .house svg { max-height: 36cqh; margin: 0 auto; }
+    /* Everything in the card scales with its width, so on a near-square stage the card
+       narrows a little to keep the feed tall enough. */
+    .app { justify-self: center; width: min(100%, 80cqh); padding: 4.6cqi 5cqi 3cqi; border-radius: 6cqi; height: 100%; }
     .app h1 { font-size: 7cqi; margin-top: 2cqi; }
-    .feed { margin-top: 3cqi; }
+    .feed { --fade: 24px; margin-top: 3cqi; }
+    /* On a phone the update screen takes the place of the status line and the hint, and the
+       results drop the device names (the icons and the badges in the picture say which is which). */
+    /* Sizes are capped so a wide portrait stage (the home stage is about 650 × 730) fits too. */
+    .app.updating .status, .app.updating .hint { display: none; }
+    .updater { margin-top: min(3cqi, 14px); }
+    .up-head { font-size: min(4cqi, 17px); }
+    .up-head span { font-size: min(3.4cqi, 14px); }
+    .bar { height: min(2.2cqi, 10px); margin-top: min(1.4cqi, 7px); }
+    .up-now { margin-top: 1.2cqi; }
+    .updater.done .up-now { display: none; }
+    .results { gap: min(1.4cqi, 8px); margin-top: min(2.4cqi, 12px); }
+    .lang-ko .results { grid-template-columns: repeat(3, 1fr); }
+    .results li { grid-template-columns: auto auto; justify-content: start; padding: min(1cqi, 5px) min(1.6cqi, 8px); border-radius: min(2.4cqi, 12px); }
+    .results .ico { grid-row: auto; width: min(6.6cqi, 27px); height: min(6.6cqi, 27px); border-radius: min(1.8cqi, 8px); }
+    .results .ico svg { width: min(4.4cqi, 20px); height: min(4.4cqi, 20px); }
+    .results .tag { font-size: clamp(11px, 2.9cqi, 14px); }
+    .results .nm { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  }
+  /* Short phone stages (about 358 × 396): a little less house and a shorter fade, so the
+     toaster's three lines still fit. */
+  @container (max-aspect-ratio: 1/1) and (max-height: 460px) {
+    .house svg { max-height: 33cqh; }
+    .app { width: min(100%, 86cqh); }
+    .feed { --fade: 16px; margin-top: 2cqi; }
+    .updater { margin-top: 2cqi; }
+    .results { gap: 1cqi; margin-top: 1.8cqi; }
+  }
+  /* Wide portrait (the home stage): four columns in two rows; a long badge wraps instead. */
+  @container (max-aspect-ratio: 1/1) and (min-width: 520px) {
+    .results, .lang-ko .results { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .results .tag { white-space: normal; }
   }
   @media (prefers-reduced-motion: reduce) {
     .wifi path, .steam path, .bulb-glow, .leaf { animation: none; }
@@ -222,6 +284,7 @@
 
       <!-- alert rings and hit areas -->
       <g class="rings"></g>
+      <g class="badges"></g>
       <g class="hits"></g>
     </svg>
   </div>
@@ -231,18 +294,25 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 L12 3 L21 11 V21 H3 Z" fill="#e76f51"/><rect x="9" y="14" width="6" height="7" fill="#fff"/></svg>
       <span data-lang="en">HomeSweetHome</span>
       <span data-lang="ko">우리집 스마트홈</span>
+      <button class="update-all" type="button"></button>
     </p>
     <h1 data-lang="en">Home, sweet attack surface</h1>
     <h1 data-lang="ko"><font-kku font="sticker" size="8.2cqi">즐거운 나의 공격 표면</font-kku></h1>
     <p class="status">
       <i aria-hidden="true"></i>
       <span data-lang="en">8 devices online. 1 of them should be.</span>
-      <font-kku data-lang="ko" font="dunggeun" size="4cqi">기기 8대 연결됨. 연결돼야 할 기기는 1대.</font-kku>
+      <font-kku data-lang="ko" font="dunggeun" size="max(12px, 4cqi)">기기 8대 연결됨. 연결돼야 할 기기는 1대.</font-kku>
     </p>
     <ol class="feed"></ol>
+    <div class="updater">
+      <p class="up-head"><b></b><span></span></p>
+      <div class="bar"><i></i></div>
+      <p class="up-now"></p>
+      <ul class="results"></ul>
+    </div>
     <p class="hint">
-      <span data-lang="en">Tap a device in the house.</span>
-      <span data-lang="ko">집 안의 기기를 눌러 보세요.</span>
+      <span data-lang="en">Tap a device in the house. Or Update all.</span>
+      <span data-lang="ko">집 안의 기기나 ‘모두 업데이트’를 눌러 보세요.</span>
     </p>
   </section>
 </div>
@@ -303,7 +373,7 @@
     hit.setAttribute('role', 'button');
     hit.setAttribute('aria-label', d.name[TTY.lang]);
     // A click and a key press do the same thing: the device acts up and the cycle waits.
-    const press = () => { idleUntil = performance.now() + 9000; notify(d); };
+    const press = () => { idleUntil = performance.now() + 9000; closeUpdate(); notify(d); };
     hit.addEventListener('click', press);
     hit.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); press(); } });
     svg.querySelector('.hits').append(hit);
@@ -392,7 +462,7 @@
     if (ko) {
       const k = document.createElement('font-kku');
       k.setAttribute('font', 'dunggeun');
-      k.setAttribute('size', '4.2cqi');
+      k.setAttribute('size', 'max(12.5px, 4.2cqi)');
       k.textContent = d.name.ko;
       name.replaceWith(k);
     } else {
@@ -410,14 +480,110 @@
     ACT[d.id]();
   }
 
+  /* ---- Update all ---- */
+  const app = document.querySelector('.app');
+  const updateBtn = document.querySelector('.update-all');
+  const upTitle = document.querySelector('.up-head b');
+  const upPct = document.querySelector('.up-head span');
+  const upNow = document.querySelector('.up-now');
+  const barFill = document.querySelector('.bar i');
+  const results = document.querySelector('.results');
+  const updater = document.querySelector('.updater');
+  const badges = svg.querySelector('.badges');
+  const UP = TTY.t({
+    en: { btn: 'Update all', busy: 'Updating…', title: (n) => `Updating ${n} devices`, check: (name) => `Checking: ${name}`,
+      done: 'Update complete', sum: (ok, eos) => `${ok} updated · ${eos} end of support`, ok: 'Updated', eos: 'End of support' },
+    ko: { btn: '모두 업데이트', busy: '업데이트 중…', title: (n) => `기기 ${n}대 업데이트 중`, check: (name) => `확인 중: ${name}`,
+      done: '업데이트 완료', sum: (ok, eos) => `업데이트 ${ok}대 · 지원 종료 ${eos}대`, ok: '업데이트됨', eos: '지원 종료' },
+  });
+  updateBtn.textContent = UP.btn;
+  const UPDATED = ['fridge'];
+  const UP_MS = 2600;
+  let upTimers = [];
+  let upBar = null;
+  const later = (ms, fn) => upTimers.push(setTimeout(fn, ms));
+  // A badge on the device in the picture: a green tick, or a grey "no more updates".
+  function badge(d, ok) {
+    const [x, y, r] = d.at;
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('transform', `translate(${x + r * .62} ${y - r * .62})`);
+    g.innerHTML = '<g>' + (ok
+      ? '<circle r="12" fill="#2bb673" stroke="#fff" stroke-width="3"/><path d="M-5 0 l3.4 3.6 l6.4 -7" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+      : '<circle r="12" fill="#8d93a3" stroke="#fff" stroke-width="3"/><circle r="5.6" stroke="#fff" stroke-width="2.4" fill="none"/><path d="M-4 4 L4 -4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>') + '</g>';
+    badges.append(g);
+    if (!TTY.reduce) g.firstChild.animate([{ transform: 'scale(0)' }, { transform: 'scale(1.25)', offset: .6 }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out' });
+  }
+  function result(d, ok) {
+    const li = document.createElement('li');
+    li.innerHTML = `${icon(d)}<span class="nm"></span><span class="tag${ok ? ' ok' : ''}"></span>`;
+    li.querySelector('.nm').textContent = d.name[TTY.lang];
+    li.querySelector('.tag').textContent = ok ? UP.ok : UP.eos;
+    results.append(li);
+    if (!TTY.reduce) li.animate([{ opacity: 0, transform: 'translateY(20%)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'ease-out' });
+  }
+  function finishUpdate() {
+    const ok = DEVICES.filter((d) => UPDATED.includes(d.id));
+    upTitle.textContent = UP.done;
+    upPct.textContent = '100%';
+    upNow.textContent = UP.sum(ok.length, DEVICES.length - ok.length);
+    updater.classList.add('done');
+    updateBtn.disabled = false;
+    updateBtn.textContent = UP.btn;
+    // The fridge goes first, and gets the update it least needed: one more factor.
+    [...ok, ...DEVICES.filter((d) => !ok.includes(d))].forEach((d, i) => {
+      const go = () => { const yes = ok.includes(d); result(d, yes); badge(d, yes); if (d.id === 'fridge') fridgeText.textContent = '3FA'; };
+      if (TTY.reduce) go(); else later(i * 110, go);
+    });
+  }
+  function update() {
+    closeUpdate();
+    // The cycle waits while the results are up.
+    idleUntil = performance.now() + (TTY.reduce ? 0 : UP_MS) + 9000;
+    app.classList.add('updating');
+    updateBtn.disabled = true;
+    updateBtn.textContent = UP.busy;
+    upTitle.textContent = UP.title(DEVICES.length);
+    if (TTY.reduce) { barFill.style.width = '100%'; finishUpdate(); return; }
+    upPct.textContent = '0%';
+    upBar = barFill.animate([{ width: '0%' }, { width: '100%' }], { duration: UP_MS, easing: 'cubic-bezier(.45,.05,.55,.95)', fill: 'forwards' });
+    const pct = () => {
+      if (!upBar || upBar.playState !== 'running') return;
+      upPct.textContent = Math.round(parseFloat(getComputedStyle(barFill).width) / barFill.parentNode.clientWidth * 100) + '%';
+      requestAnimationFrame(pct);
+    };
+    requestAnimationFrame(pct);
+    DEVICES.forEach((d, i) => later(i * (UP_MS / DEVICES.length), () => { upNow.textContent = UP.check(d.name[TTY.lang]); }));
+    later(UP_MS, finishUpdate);
+  }
+  function closeUpdate() {
+    upTimers.splice(0).forEach(clearTimeout);
+    if (upBar) { upBar.cancel(); upBar = null; }
+    barFill.style.width = '';
+    app.classList.remove('updating');
+    updater.classList.remove('done');
+    results.replaceChildren();
+    badges.replaceChildren();
+    upPct.textContent = '';
+    upNow.textContent = '';
+    fridgeText.textContent = '2FA';
+    updateBtn.disabled = false;
+    updateBtn.textContent = UP.btn;
+  }
+  updateBtn.addEventListener('click', update);
+
+  // One alert every 2.4 s from 0.4 s, so the plant lands at about 12.4 s of a 16 s slot.
+  // The plant has the last word: it stays on top for a while before the tour starts over.
   let turn = 0;
   let idleUntil = 0;
   function tick() {
+    let next = 2400;
     if (performance.now() > idleUntil) {
+      if (app.classList.contains('updating')) closeUpdate();
       notify(TOUR[turn % TOUR.length]);
       turn += 1;
+      if (turn % TOUR.length === 0) next = 8000;
     }
-    setTimeout(tick, 2700);
+    setTimeout(tick, next);
   }
 
   // Reduced motion: the feed is fixed. The plant (the punchline) sits on top; the kettle's
@@ -428,7 +594,7 @@
   }
   TTY.onShow(() => {
     if (TTY.reduce) return;
-    setTimeout(tick, 700);
+    setTimeout(tick, 400);
     // An occasional SOS between alerts.
     setInterval(() => { if (Math.random() < .5) morseBurst(); }, 6000);
   });

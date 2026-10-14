@@ -38,6 +38,9 @@
 
   .bench {
     container-type: size;
+    /* The stamp lands from 2.4x; on a phone it would poke past the edges and widen the layout
+       viewport (the page zoomed out). The bench is the whole screen, so clipping changes nothing seen. */
+    overflow: clip;
     display: grid;
     grid-template-rows: auto 1fr auto auto;
     gap: 2.4cqh;
@@ -51,11 +54,13 @@
   .head p { margin-top: .5em; max-width: 34em; font-size: clamp(13px, 2cqmin, 17px); font-weight: 500; color: #cfe0ea; line-height: 1.4; }
   .head .kk > font-kku { color: var(--silk); }
 
-  .table { display: grid; place-items: center; min-height: 0; }
+  /* The board takes the largest 8:5 box its row has left (the row is whatever the title and the
+     controls don't use), so a taller control row shrinks the board instead of sliding over it. */
+  .table { display: grid; place-items: center; min-height: 0; container-type: size; }
   .board {
     position: relative;
     container-type: inline-size;
-    width: min(100%, calc((100cqh - 30cqh) * 1.6));
+    width: min(100cqw, 100cqh * 1.6);
     aspect-ratio: 8 / 5;
   }
   .board svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 1.4cqi 2.4cqi rgba(0, 0, 0, .35)); }
@@ -77,6 +82,8 @@
   .silk font-kku { color: var(--silk); }
   .silk .ref { display: block; opacity: .75; }
   .silk .joke { display: block; }
+  /* C7's line is the longest; nudged right it clears U1's pins. */
+  .silk.c7 .joke { translate: 1.6cqi 0; }
   .bom { display: none; }
 
   .smoke { position: absolute; inset: -30% 0 0 0; width: 100%; height: 130%; pointer-events: none; }
@@ -97,6 +104,8 @@
     rotate: -6deg;
     box-shadow: 0 .8cqi 2cqi rgba(0, 0, 0, .25);
     opacity: 0;
+    /* It lands over a corner of C7; a tap there is still for C7. */
+    pointer-events: none;
   }
   .stamp .big { display: block; font-size: 5.4cqi; font-weight: 800; font-stretch: 112%; line-height: 1; }
   .stamp .small { display: block; margin-top: .6cqi; font-size: max(12px, 2.3cqi); font-weight: 600; }
@@ -105,7 +114,12 @@
   .stamp font-kku { color: var(--stamp); }
   .stamp .kk { display: block; }
 
+  .wisp, .wisp-size { transform-box: view-box; transform-origin: 660px 142px; }
+  .c7can { transform-box: view-box; transform-origin: 660px 146px; }
+
   .c7-hit { position: absolute; left: 77%; top: 18%; width: 11%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; background: transparent; border: 0; }
+
+  .hint { text-align: center; font-size: clamp(12px, 1.8cqmin, 15px); font-weight: 500; line-height: 1.3; color: #b6cfdc; }
 
   .controls { display: flex; align-items: center; justify-content: center; gap: clamp(14px, 3cqw, 36px); flex-wrap: wrap; }
   .switch {
@@ -167,11 +181,44 @@
   .on .flow { opacity: 1; }
   .pulse { opacity: 0; }
 
+  /* A narrow stage (the phone home stage is 358×396, still landscape) keeps the controls on one
+     row: no visible switch label, a smaller rocker and meter, and a long smoke reading wraps
+     inside the meter ("C7 needed a moment") instead of pushing the meter onto a second row. */
+  @container (max-width: 520px) {
+    .controls { gap: 12px; flex-wrap: nowrap; }
+    .meter { min-width: 0; }
+    .meter dd[data-s] { white-space: normal; }
+    .rocker { width: 44px; }
+    .switch { gap: 8px; }
+    .switch-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .meter { padding: 6px 10px; gap: 1px 10px; }
+    .meter dd { font-size: 14px; }
+    .meter dt { font-size: 10px; }
+  }
+
+  /* A small board (the phone home stage, 358×396, is still landscape): 9–12px jokes on a 300px
+     board run into the parts and off the edge, so like a real board it keeps the reference
+     designators. English keeps C7's opinion of itself (the part the smoke comes from) on two
+     lines between U1 and the edge; the Korean one is too wide for that gap. The magic smoke
+     grows a little so its eyes still read. */
+  @container (max-width: 420px) {
+    .silk .joke, .silk.boardname { display: none; }
+    .silk .nl { display: block; }
+    .wisp-size { transform: scale(1.3); }
+  }
+  @media (min-aspect-ratio: 3/4) {
+    @container (max-width: 420px) {
+      .silk.c7 { translate: 2.5cqi 0; }
+      .silk.c7 .joke { translate: none; }
+      .lang-en .silk.c7 .joke { display: block; }
+    }
+  }
+
   /* Portrait: like a real board, the silkscreen keeps only the reference designators,
      and the opinions move to the bill of materials underneath. */
   @media (max-aspect-ratio: 3/4) {
     .bench { grid-template-rows: auto auto auto 1fr; gap: 12px; }
-    .table { place-items: start center; }
+    .table { place-items: start center; container-type: normal; }
     .board { width: 100%; }
     .silk .joke, .silk.boardname { display: none; }
     .silk { font-size: 10px; }
@@ -230,6 +277,7 @@
             <stop offset=".45" stop-color="#1d1020" stop-opacity=".75"/>
             <stop offset="1" stop-color="#1d1020" stop-opacity="0"/>
           </radialGradient>
+          <filter id="puffy" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter>
           <radialGradient id="chipshine" cx=".3" cy=".25" r=".9">
             <stop offset="0" stop-color="#3a3d45"/>
             <stop offset="1" stop-color="#17181c"/>
@@ -301,7 +349,7 @@
         </g>
         <rect x="436" y="186" width="128" height="128" rx="6" fill="url(#chipshine)"/>
         <circle cx="452" cy="202" r="5" fill="#2a2c33"/>
-        <text x="500" y="246" text-anchor="middle" font-family="Chivo Mono, monospace" font-size="16" font-weight="600" fill="#9aa1ad">TTY-404</text>
+        <text x="500" y="246" text-anchor="middle" font-family="Chivo Mono, monospace" font-size="16" font-weight="600" fill="#9aa1ad">TTY-0042</text>
         <text x="500" y="268" text-anchor="middle" font-family="Chivo Mono, monospace" font-size="11" fill="#6f7682">rev B 2026</text>
 
         <!-- C7. The silkscreen "+" and the can's minus stripe sit on the same side:
@@ -309,10 +357,24 @@
         <circle id="soot" cx="664" cy="138" r="70" fill="url(#soot-fill)" opacity="0"/>
         <circle cx="660" cy="146" r="44" fill="none" stroke="var(--silk)" stroke-width="1.6" opacity=".8"/>
         <path d="M703 99 V115 M695 107 H711" stroke="var(--silk)" stroke-width="2.4" stroke-linecap="round" opacity=".85"/>
-        <circle id="c7" cx="660" cy="146" r="38" fill="#2b4a9b" stroke="#1a2f6b" stroke-width="3"/>
-        <path d="M660 108 A38 38 0 0 1 698 146 L686 146 A26 26 0 0 0 660 120 Z" fill="#cfd8ef" opacity=".85"/>
-        <path d="M676 120 L683 127" stroke="#2b4a9b" stroke-width="3" stroke-linecap="round"/>
-        <path d="M646 132 L674 160 M674 132 L646 160 M660 126 V166 M640 146 H680" stroke="#9fb2df" stroke-width="2.4"/>
+        <g class="c7can">
+          <circle id="c7" cx="660" cy="146" r="38" fill="#2b4a9b" stroke="#1a2f6b" stroke-width="3"/>
+          <path d="M660 108 A38 38 0 0 1 698 146 L686 146 A26 26 0 0 0 660 120 Z" fill="#cfd8ef" opacity=".85"/>
+          <path d="M676 120 L683 127" stroke="#2b4a9b" stroke-width="3" stroke-linecap="round"/>
+          <path d="M646 132 L674 160 M674 132 L646 160 M660 126 V166 M640 146 H680" stroke="#9fb2df" stroke-width="2.4"/>
+        </g>
+        <!-- The magic smoke, peeking out early (the 3-second gag): it rises out of C7's vent, looks
+             left and right, and is sucked straight back in. Hidden unless animated. The outer group
+             only sizes it up on a small board. -->
+        <g class="wisp-size">
+          <g class="wisp" opacity="0">
+            <g fill="#eceef4" filter="url(#puffy)">
+              <circle cx="659" cy="138" r="6.5"/><circle cx="665" cy="123" r="9"/><circle cx="657" cy="105" r="12"/>
+              <circle cx="647" cy="80" r="16"/><circle cx="677" cy="80" r="15"/><circle cx="661" cy="64" r="18"/><circle cx="662" cy="86" r="16"/>
+            </g>
+            <g class="wisp-eyes" fill="#2a1f3d"><ellipse cx="653" cy="76" rx="3.6" ry="5"/><ellipse cx="670" cy="76" rx="3.6" ry="5"/></g>
+          </g>
+        </g>
 
         <!-- FC1: three tubes meeting in the middle -->
         <rect x="232" y="282" width="140" height="124" rx="10" fill="#2a2c33" stroke="#17181c" stroke-width="3"/>
@@ -338,8 +400,8 @@
         <span data-lang="en"><span class="ref">R2</span><span class="joke">resistor of patience, 0 Ω</span></span>
         <span data-lang="ko"><span class="ref">R2</span><span class="joke"><font-kku font="dunggeun" size="max(12px, 2.25cqi)">인내 저항 0Ω</font-kku></span></span>
       </p>
-      <p class="silk" style="left:82.5%; top:39.5%">
-        <span data-lang="en"><span class="ref">C7</span><span class="joke">capacitor (emotional)</span></span>
+      <p class="silk c7" style="left:82.5%; top:39.5%">
+        <span data-lang="en"><span class="ref">C7</span><span class="joke">capacitor <span class="nl">(emotional)</span></span></span>
         <span data-lang="ko"><span class="ref">C7</span><span class="joke"><font-kku font="dunggeun" size="max(12px, 2.25cqi)">감수성 풍부한</font-kku><br><font-kku font="dunggeun" size="max(12px, 2.25cqi)">콘덴서</font-kku></span></span>
       </p>
       <p class="silk" style="left:62.5%; top:67.6%">
@@ -364,7 +426,7 @@
       </p>
 
       <canvas class="smoke" aria-hidden="true"></canvas>
-      <button class="c7-hit" type="button" aria-label="C7"></button>
+      <button class="c7-hit" type="button" aria-label="C7" aria-describedby="hint"></button>
 
       <div class="stamp" aria-live="polite">
         <div data-lang="en"><span class="big">Test passed.</span><span class="small">The smoke was decorative.</span></div>
@@ -405,6 +467,10 @@
       <div><dt data-lang="en">Smoke</dt><dt data-lang="ko">연기</dt><dd data-s>–</dd></div>
     </dl>
   </footer>
+  <p class="hint" id="hint">
+    <span data-lang="en">Flip the switch, or poke C7.</span>
+    <span data-lang="ko">스위치를 끄고 켜거나 C7을 눌러 보세요.</span>
+  </p>
 </main>
 
 <script>
@@ -431,6 +497,9 @@
   const sOut = document.querySelector('[data-s]');
   const modeOut = document.querySelector('.mode');
   const soot = document.getElementById('soot');
+  const wisp = svg.querySelector('.wisp');
+  const wispEyes = svg.querySelector('.wisp-eyes');
+  const c7can = svg.querySelector('.c7can');
   let timers = [];
   let anims = [];
   const later = (ms, fn) => timers.push(setTimeout(fn, ms));
@@ -569,6 +638,33 @@
     later(1500, () => {
       flux.setAttribute('opacity', '1');
       anims.push(flux.animate([{ opacity: .25 }, { opacity: 1 }], { duration: 160, iterations: Infinity, direction: 'alternate' }));
+    });
+    // The 3-second gag: the magic smoke peeks out of C7, looks around, and is sucked back in
+    // (C7 gulps). The meter still says "none".
+    // It stays out about two seconds: up (0.34 s), a look ahead, a long look left, a long look
+    // right, back to the middle, gone (at 2.1 s of 2.6).
+    later(900, () => {
+      anims.push(wisp.animate([
+        { opacity: 0, transform: 'scale(.3, 0)' },
+        { opacity: 1, transform: 'scale(1.06, 1.08)', offset: .13, easing: 'ease-out' },
+        { opacity: 1, transform: 'scale(1)', offset: .19 },
+        { opacity: 1, transform: 'rotate(0deg)', offset: .26 },
+        { opacity: 1, transform: 'rotate(-7deg)', offset: .34 },
+        { opacity: 1, transform: 'rotate(-7deg)', offset: .45 },
+        { opacity: 1, transform: 'rotate(7deg)', offset: .56 },
+        { opacity: 1, transform: 'rotate(7deg)', offset: .67 },
+        { opacity: 1, transform: 'rotate(0deg)', offset: .73, easing: 'cubic-bezier(.7, 0, 1, .6)' },
+        { opacity: 1, transform: 'scale(.35, 0)', offset: .81 },
+        { opacity: 0, transform: 'scale(.35, 0)' },
+      ], { duration: 2600 }));
+      anims.push(wispEyes.animate([
+        { transform: 'none' }, { transform: 'none', offset: .26 }, { transform: 'translateX(-6px)', offset: .34 },
+        { transform: 'translateX(-6px)', offset: .45 }, { transform: 'translateX(6px)', offset: .56 },
+        { transform: 'translateX(6px)', offset: .67 }, { transform: 'none', offset: .72 }, { transform: 'none' },
+      ], { duration: 2600 }));
+      anims.push(c7can.animate([
+        { transform: 'none' }, { transform: 'scale(1.13)', offset: .35 }, { transform: 'scale(.95)', offset: .7 }, { transform: 'none' },
+      ], { duration: 300, delay: 2100 }));
     });
     later(3100, () => { sOut.textContent = TTY.t(T.watching); });
     // The bench supply notices first: the current slams into its 0.50 A limit (CC), the

@@ -71,6 +71,16 @@
   .warn rect { fill: #ffd60a; stroke: #1f2228; stroke-width: 2; }
   .warn text { font: 700 12px 'Red Hat Mono', monospace; fill: #1f2228; }
   .lang-ko .warn text { font-family: 'IBM Plex Sans KR', sans-serif; font-size: 13px; }
+  /* When the rack is drawn small (a phone), the sign is drawn bigger (see fitSmall) and, in
+     English, in the narrow face, so it stays readable without covering half the rack. */
+  .lang-en .warn.big text { font-family: 'Sofia Sans Condensed', sans-serif; font-size: 13px; }
+
+  /* The wiki photo: on day 1 a camera frames the rack, flashes, and the photo lands taped to the
+     rack's corner, where it stays all year. */
+  .finder path { fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: round; }
+  .photo .card { fill: #fbfaf6; stroke: rgba(0, 0, 0, .18); stroke-width: 1; }
+  .photo .strip { fill: rgba(239, 226, 187, .9); }
+  .flash { position: fixed; inset: 0; z-index: 3; background: #fff; opacity: 0; pointer-events: none; }
 
   .caption { grid-area: caption; min-height: 2.6em; font-size: clamp(15px, 2.5cqmin, 22px); font-weight: 700; line-height: 1.25; }
   .caption b { color: var(--accent); }
@@ -81,7 +91,10 @@
   .ticks { position: relative; height: 1.3em; font: 700 clamp(11px, 1.7cqmin, 14px) 'Red Hat Mono', monospace; color: var(--soft); }
   .ticks span { position: absolute; top: 0; translate: -50% 0; }
   .ticks span:first-child { translate: 0 0; }
-  .ticks span:last-child { translate: -100% 0; }
+  .ticks span:nth-child(5) { translate: -100% 0; }
+  /* the one-line hint, in the wide gap between the 180 and 365 ticks */
+  .ticks .hint { left: 74.5%; font: 600 clamp(11px, 1.7cqmin, 14px)/1.3 'Sofia Sans Condensed', sans-serif; white-space: nowrap; color: var(--soft); }
+  .lang-ko .ticks .hint { font-family: 'IBM Plex Sans KR', sans-serif; font-weight: 500; }
   .slider input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
   /* Opened on its own, _kit.js puts its links (on a phone, a small ":)" button) bottom-right;
      keep the slider and its 365 tick clear of them. */
@@ -113,6 +126,7 @@
 
   <section class="rack" aria-hidden="true">
     <svg viewBox="0 0 800 520" preserveAspectRatio="xMidYMid meet">
+      <g class="rig">
       <!-- rack frame -->
       <rect x="50" y="20" width="700" height="480" rx="10" fill="#2b2f37"/>
       <rect x="66" y="34" width="668" height="452" rx="4" fill="#20232a"/>
@@ -127,12 +141,22 @@
       <g class="cables"></g>
       <g class="ties"></g>
       <g class="labels"></g>
+      </g>
       <g class="mystery-label"></g>
       <g class="tape-label"></g>
       <g class="parcel" opacity="0">
         <rect x="608" y="476" width="96" height="46" rx="5" fill="#c79a5b" stroke="#7d5a2e" stroke-width="2.5"/>
         <path d="M608 492 H704 M656 476 V522" stroke="#7d5a2e" stroke-width="2.5"/>
         <text x="656" y="512" text-anchor="middle" style="font: 700 11px 'Red Hat Mono', monospace" fill="#3d2a12">×100</text>
+      </g>
+      <!-- the camera's viewfinder corners, then the photo it takes (its picture is a copy of the rack on day 1) -->
+      <g class="finder" opacity="0">
+        <path d="M30 60 V0 H90"/><path d="M710 0 H770 V60"/><path d="M770 460 V520 H710"/><path d="M90 520 H30 V460"/>
+      </g>
+      <g class="photo" opacity="0">
+        <rect class="card" x="0" y="0" width="152" height="122" rx="2"/>
+        <svg class="shot" x="6" y="6" width="140" height="96" viewBox="50 20 700 480"></svg>
+        <rect class="strip" x="52" y="-8" width="48" height="16" transform="rotate(4 76 0)"/>
       </g>
     </svg>
     <p class="note" data-lang="en">Who did this?</p>
@@ -143,8 +167,9 @@
 
   <div class="slider">
     <input type="range" min="1" max="366" value="1" step="1">
-    <div class="ticks"><span style="left: 0%">1</span><span style="left: 7.9%">30</span><span style="left: 24.4%">90</span><span style="left: 49%">180</span><span style="left: 100%">365</span></div>
+    <div class="ticks"><span style="left: 0%">1</span><span style="left: 7.9%">30</span><span style="left: 24.4%">90</span><span style="left: 49%">180</span><span style="left: 100%">365</span><span class="hint" data-lang="en">Drag to any day.</span><span class="hint" data-lang="ko">날짜를 끌어 보세요.</span></div>
   </div>
+  <div class="flash" aria-hidden="true"></div>
 </main>
 
 <script>
@@ -193,16 +218,20 @@
   // Where cable i plugs into the switch: on day 1 straight down, later some get re-patched.
   const REPATCH = [0, 1, 5, 3, 7, 2, 6, 4];
 
+  // The moment the wiki photo is taken, the bundle lets its breath out: it bows out between the
+  // two zip ties and the labels go a little crooked. 0 before the photo, 1 ever after.
+  let relax = 0;
   function points(i, t) {
     // the neat day-1 route: down from the panel, into the bundle, out to the switch
     const bx = 400 + (i - 3.5) * 9;
+    const out = (i - 3.5) * relax;
     const endX = portX(i) + (portX(REPATCH[i]) - portX(i)) * Math.min(1, Math.max(0, (t - .3) / .4));
     const base = [
       [portX(i), TOP],
-      [portX(i), TOP + 40],
-      [bx, 220],
-      [bx, 260],
-      [bx, 300],
+      [portX(i) + out * 3, TOP + 40],
+      [bx + out * 2, 220],
+      [bx + out * 19, 262 + Math.abs(out) * 3],
+      [bx + out * 2, 300],
       [endX, BOTTOM - 40],
       [endX, BOTTOM],
     ];
@@ -296,6 +325,7 @@
 
   let shownCaption = -1;
   let shownDayKo = '';
+  let warnScale = 1, tapeScale = 1;
   function render(day) {
     const t = Math.min(1, (day - 1) / 364);
     cables.forEach((c, i) => {
@@ -312,7 +342,8 @@
       const [x, y] = points(i, t)[1];
       const peel = Math.max(0, t * (i === 5 ? 3.2 : 1.6) - rnd(i * 5) * .9 + Math.pow(t, 6) * .8);
       const drop = peel > .75 ? (peel - .75) * 420 : 0;
-      g.setAttribute('transform', `translate(${x.toFixed(1)} ${(y + 4 + drop).toFixed(1)}) rotate(${(peel * 70 * (i % 2 ? 1 : -1)).toFixed(1)} -26 -9)`);
+      const crooked = relax * (4 + rnd(i * 11) * 8) * (i % 2 ? 1 : -1);
+      g.setAttribute('transform', `translate(${x.toFixed(1)} ${(y + 4 + drop).toFixed(1)}) rotate(${(peel * 70 * (i % 2 ? 1 : -1) + crooked).toFixed(1)} -26 -9)`);
       g.setAttribute('opacity', drop > 120 ? 0 : 1);
     });
 
@@ -336,7 +367,7 @@
     temp.style.strokeDashoffset = 1 - tp;
     tempShadow.setAttribute('opacity', tp > .98 ? 1 : 0);
     tapeG.setAttribute('opacity', tp > .98 ? 1 : 0);
-    tapeG.setAttribute('transform', `translate(${portAt(SPARE_TEMP) + 4} ${BOTTOM - 62}) rotate(${-6 + t * 4})`);
+    tapeG.setAttribute('transform', `translate(${portAt(SPARE_TEMP) + 4 - (tapeScale - 1) * 14} ${BOTTOM - 62 - (tapeScale - 1) * 6}) rotate(${-6 + t * 4}) scale(${tapeScale.toFixed(2)})`);
 
     // The mystery cable creeps in from outside the rack and takes the other spare port.
     const m = Math.max(0, Math.min(1, (t - .78) / .14));
@@ -347,7 +378,9 @@
     mystery.style.strokeDashoffset = 1 - m;
     mysteryShadow.setAttribute('opacity', m > .98 ? 1 : 0);
     warnG.setAttribute('opacity', m > .98 ? 1 : 0);
-    warnG.setAttribute('transform', 'translate(118 176) rotate(-4)');
+    // (drawn bigger on a small rack, it moves left so it stays on the rack, and a little down,
+    // clear of the wiki photo)
+    warnG.setAttribute('transform', warnScale > 1 ? `translate(${118 - (warnScale - 1) * 40} ${176 + (warnScale - 1) * 10}) rotate(-4) scale(${warnScale.toFixed(2)})` : 'translate(118 176) rotate(-4)');
 
     // Lights: a port lights up once something is plugged in and flickers with traffic. After
     // day 220 one kinked cable drops to 100 Mb/s and its light turns amber; nobody asks why.
@@ -375,7 +408,8 @@
   let playing = null;
   let touched = -Infinity; // (0 here held the autoplay back for the page's first 3.5 s)
   // Keyframes of the auto play: [day, time ms]; it lingers on the milestones.
-  const PLAY = [[1, 0], [1, 1200], [30, 2400], [30, 3600], [90, 4900], [90, 6100], [180, 7300], [180, 8400], [300, 9600], [300, 10700], [365, 12000], [365, 13800], [366, 14200]];
+  // (day 1 is held while the wiki photo is taken, 0.5–2.2 s)
+  const PLAY = [[1, 0], [1, 2300], [30, 3500], [30, 4600], [90, 5900], [90, 7000], [180, 8200], [180, 9200], [300, 10400], [300, 11400], [365, 12700], [365, 14300], [366, 14700]];
   function dayAt(ms) {
     for (let k = 1; k < PLAY.length; k++) {
       const [d0, t0] = PLAY[k - 1], [d1, t1] = PLAY[k];
@@ -387,26 +421,109 @@
     }
     return 366;
   }
+  const END = PLAY[PLAY.length - 1][1];
+  // The moment of the play at which it shows `day`, so a resumed play carries on from the day the
+  // visitor left (the inverse of dayAt; on a milestone, the start of its pause).
+  function msAt(day) {
+    if (day <= 1) return 0;
+    for (let k = 1; k < PLAY.length; k++) {
+      const [d0, t0] = PLAY[k - 1], [d1, t1] = PLAY[k];
+      if (d1 > d0 && day <= d1) {
+        const e = (day - d0) / (d1 - d0);
+        const p = e < .5 ? Math.sqrt(e / 2) : 1 - Math.sqrt(2 * (1 - e)) / 2;
+        return t0 + p * (t1 - t0);
+      }
+    }
+    return END;
+  }
   function play() {
     cancelAnimationFrame(playing);
     let start = 0, offset = 0;
     const tick = (now) => {
       playing = requestAnimationFrame(tick);
       if (performance.now() - touched < 3500) { start = 0; return; }
-      if (!start) { start = now; offset = PLAY.find(([d]) => d >= Number(range.value))?.[1] ?? 0; }
+      if (!start) { start = now; offset = msAt(Number(range.value)); }
       const ms = now - start + offset;
       render(dayAt(ms));
-      if (ms > PLAY[PLAY.length - 1][1]) cancelAnimationFrame(playing);
+      // Done: forget the frame id too, so a later touch can start a new play.
+      if (ms >= END) { cancelAnimationFrame(playing); playing = null; }
     };
     playing = requestAnimationFrame(tick);
   }
 
-  range.addEventListener('input', () => { touched = performance.now(); render(Number(range.value)); if (!playing) play(); });
+  // A touch shows that day at once. The play (not with reduced motion: nothing moves on its own
+  // there) waits 3.5 s after the last touch and carries on from that day.
+  range.addEventListener('input', () => {
+    touched = performance.now();
+    render(Number(range.value));
+    if (!playing && !TTY.reduce) play();
+  });
 
+  // ---- the wiki photo ----
+  // Its picture is a copy of the rack as drawn on day 1, before the bundle breathes out.
+  const finder = svg.querySelector('.finder');
+  const photo = svg.querySelector('.photo');
+  const flash = document.querySelector('.flash');
+  function develop() {
+    render(1);
+    const copy = svg.querySelector('.rig').cloneNode(true);
+    copy.querySelectorAll('.led').forEach((l) => l.classList.remove('live'));
+    svg.querySelector('.shot').replaceChildren(copy);
+  }
+  // Taped to the rack's top-left corner, over the spare panel port, where it stays all year
+  // (inside the drawing's top edge, so on a phone it never reaches up to the subtitle).
+  const PINNED = 'translate(16px, 10px) rotate(-4deg)';
+  // As the shutter clicks it is the rack itself: its picture lies exactly on the rack (×5).
+  const FROZEN = 'translate(20px, -10px) scale(5)';
+  photo.style.transformOrigin = '0 0';
+  function pinPhoto() { photo.style.transform = PINNED; photo.setAttribute('opacity', 1); }
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function takePhoto() {
+    develop();
+    await wait(450);
+    finder.setAttribute('opacity', 1);
+    finder.animate([{ opacity: 0, transform: 'translate(400px, 260px) scale(1.08) translate(-400px, -260px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'ease-out' });
+    await wait(420);
+    flash.animate([{ opacity: 0 }, { opacity: .85, offset: .15 }, { opacity: 0 }], { duration: 420, easing: 'ease-out' });
+    finder.setAttribute('opacity', 0);
+    photo.setAttribute('opacity', 1);
+    await photo.animate([{ transform: FROZEN }, { transform: FROZEN, offset: .2 }, { transform: PINNED }], { duration: 760, easing: 'cubic-bezier(.5, 0, .2, 1)' }).finished;
+    pinPhoto();
+    // …and the bundle lets its breath out.
+    const t0 = performance.now();
+    await new Promise((done) => {
+      const step = (now) => {
+        const p = Math.min(1, (now - t0) / 650);
+        relax = p < .35 ? 1.25 * (p / .35) : p < .65 ? 1.25 - .35 * ((p - .35) / .3) : .9 + .1 * ((p - .65) / .35);
+        render(Number(range.value));
+        if (p < 1) requestAnimationFrame(step); else done();
+      };
+      requestAnimationFrame(step);
+    });
+  }
+
+  // On a small rack (a phone) the sign, and the tape on the temporary cable, are drawn up to
+  // 2.4× bigger so their words stay about 10–11px; the English sign takes the narrow face.
+  function fitSmall() {
+    const ctm = svg.getScreenCTM();
+    const unit = ctm ? Math.hypot(ctm.a, ctm.b) : 1; // screen px per SVG unit
+    const big = Math.min(2.4, Math.max(1, 10.5 / (12 * unit)));
+    warnG.classList.toggle('big', big > 1.05);
+    const texts = [...warnG.querySelectorAll('text')];
+    const wide = Math.max(...texts.map((t) => t.getComputedTextLength()));
+    warnG.querySelector('rect').setAttribute('width', Math.ceil(wide + 24));
+    warnScale = big;
+    tapeScale = big;
+    render(Number(range.value));
+  }
+
+  if (TTY.reduce) { develop(); pinPhoto(); relax = 1; }
   render(TTY.reduce ? 366 : 1);
-  TTY.onShow(() => { if (!TTY.reduce) play(); });
+  // (the time-lapse holds day 1 for the photo, 0–2.3 s, so the two start together)
+  TTY.onShow(() => { if (!TTY.reduce) { takePhoto(); play(); } });
+  addEventListener('resize', fitSmall);
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
-  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+  Promise.all([loaded, document.fonts.ready]).then(() => { fitSmall(); TTY.ready(); });
 })();
 </script>
 </body>

@@ -5,10 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Switch Sommelier | tty.link</title>
 <script src="/pages/_kit.js"></script>
+<!-- Phones (the kit's folded nav, up to 600px): the "?" and ":)" go to the top right, beside the
+     short title. At the bottom right they would sit on the last bottle of the list, the punchline.
+     Wider screens keep the kit's own choice of corner. Set before DOMContentLoaded, when the kit looks. -->
+<script>
+  (() => {
+    const phone = matchMedia('(max-width: 600px)');
+    const pin = () => phone.matches ? document.documentElement.setAttribute('data-tty-nav', 'top') : document.documentElement.removeAttribute('data-tty-nav');
+    pin();
+    phone.addEventListener('change', pin);
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Italiana&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Homemade+Apple&family=Gowun+Batang:wght@400;700&display=swap">
-<script src="https://font.tty.link/lib/font-kku.js" data-fonts="geumbak sebul pilgi"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Italiana&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Gowun+Batang:wght@400;700&display=swap">
+<script src="https://font.tty.link/lib/font-kku.js" data-fonts="geumbak sebul"></script>
 <style>
   /* A wine list for keyboard switches. Each one is swirled, tasted (pressed, three times)
      and described with the seriousness it deserves. */
@@ -47,20 +58,27 @@
     gap: 1.8cqh;
     padding: 3.6cqh 5cqw 3.4cqh;
   }
+  .head { --title-kku: clamp(28px, 6.6cqmin, 60px); }
   .head h1 { font-family: 'Italiana', serif; font-weight: 400; font-size: clamp(28px, 7cqmin, 64px); line-height: 1; color: #f3e6c9; letter-spacing: .01em; }
   .head h1 > font-kku { color: #f3e6c9; }
   .head p { margin-top: .8cqh; font-size: clamp(13px, 2.2cqmin, 18px); font-style: italic; color: #cdb9cc; }
   .lang-ko .head p { font-style: normal; margin-top: 1.4cqh; }
+  /* The one-line hint under the subtitle. */
+  .head .hint { margin-top: .5cqh; font-size: clamp(11px, 1.7cqmin, 14px); font-style: normal; color: #b49fb3; }
+  .lang-ko .head .hint { margin-top: .7cqh; }
 
   /* ---- Tasting stage: glass, key, sound ---- */
   .stage { display: grid; grid-template-columns: 1fr 1.25fr; grid-template-rows: 1fr auto; align-items: end; justify-items: center; min-height: 0; gap: 0 3cqw; }
   .glass { width: 100%; max-width: 250px; height: 100%; max-height: 360px; }
-  .key { width: 100%; max-width: 360px; height: 100%; max-height: 360px; cursor: pointer; }
+  .key { width: 100%; max-width: 360px; height: 100%; max-height: 360px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .key:focus { outline: none; }
+  .key:focus-visible .cap { stroke: var(--gold); stroke-width: 3; }
   .wave { grid-column: 1 / -1; width: 100%; max-width: 560px; height: clamp(34px, 8cqmin, 76px); }
   .wave path { fill: none; stroke: var(--wave, var(--sw)); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: stroke .4s; }
   .wave .base { stroke: rgba(255,255,255,.15); stroke-width: 1; }
   .liquid { fill: var(--sw); transition: fill .5s; }
   .stem { fill: var(--sw); transition: fill .5s; }
+  .press { transform-box: fill-box; transform-origin: 50% 100%; }
 
   /* ---- The list ---- */
   .card {
@@ -80,15 +98,18 @@
   .now { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 0 4cqi; }
   .now-name { font-family: 'Italiana', serif; font-size: 10cqi; line-height: 1; }
   .now-name > font-kku { color: var(--ink); }
-  .now-type { margin-top: 1cqi; font-size: 3.6cqi; color: var(--soft); font-style: italic; }
+  .now-type { margin-top: 1cqi; font-size: max(11px, 3.6cqi); color: var(--soft); font-style: italic; }
   .lang-ko .now-type { font-style: normal; }
   .now-score { font-family: 'Italiana', serif; font-size: 8cqi; color: var(--sw); text-align: right; line-height: 1; transition: color .4s; }
-  .now-score small { display: block; font-family: 'Newsreader', 'Gowun Batang', serif; font-size: 2.8cqi; color: var(--soft); }
+  .now-score small { display: block; font-family: 'Newsreader', 'Gowun Batang', serif; font-size: max(11px, 2.8cqi); color: var(--soft); }
+  .now-score small.faulty { margin-top: .6cqi; font-size: max(11px, 3.1cqi); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #a3242c; }
   .lang-ko .now-score { font-family: 'Newsreader', serif; font-weight: 600; font-size: 6.6cqi; }
-  .label { margin-top: 3.2cqi; font-size: 2.9cqi; letter-spacing: .08em; color: var(--soft); }
-  .notes { margin-top: .8cqi; font-size: 4.4cqi; line-height: 1.4; font-style: italic; min-height: 2.8em; }
-  .lang-ko .notes { font-style: normal; font-size: 4.1cqi; line-height: 1.55; }
-  .pairs { margin-top: .6cqi; font-size: 3.9cqi; }
+  .label { margin-top: 3.2cqi; font-size: max(11px, 2.9cqi); letter-spacing: .08em; color: var(--soft); }
+  .notes { margin-top: .8cqi; font-size: max(12px, 4.4cqi); line-height: 1.4; font-style: italic; min-height: 2.8em; }
+  .lang-ko .notes { font-style: normal; font-size: max(12px, 4.1cqi); line-height: 1.55; }
+  .pairs { margin-top: .6cqi; font-size: max(11.5px, 3.9cqi); }
+  .pairs .pl { display: none; color: var(--soft); font-style: italic; }
+  .lang-ko .pairs .pl { font-style: normal; }
 
   .list { margin-top: 3.4cqi; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
   .list li { border-bottom: 1px solid #e3d8e2; }
@@ -102,7 +123,7 @@
     border: 0;
     background: none;
     text-align: left;
-    font-size: 3.7cqi;
+    font-size: max(11px, 3.7cqi);
     cursor: pointer;
   }
   .list .dot { width: 2.6cqi; height: 2.6cqi; border-radius: 50%; background: var(--c); }
@@ -112,44 +133,52 @@
   .list li.on button { background: linear-gradient(90deg, rgba(216, 180, 106, .22), transparent); }
   .list li.on .nm { color: var(--ink); }
 
-  /* The sommelier's note. In one column it sits under the list; in the two-column layout it
-     hangs from the card's bottom edge, over the empty padding only. Either way no score is
-     covered. Its text is written from the start, so nothing jumps when it appears. */
-  .sig {
-    position: relative;
-    width: auto;
-    max-width: 84%;
-    margin: 3cqi 0 0 auto;
-    padding: 2.2cqi 3.4cqi;
-    background: #fff9e8;
-    color: #4a2c4e;
-    font-family: 'Homemade Apple', cursive;
-    font-size: 3.6cqi;
-    line-height: 1.6;
-    rotate: -2deg;
-    box-shadow: 0 1.6cqi 3cqi rgba(0,0,0,.3);
-    opacity: 0;
-  }
-  .sig > font-kku { color: #4a2c4e; }
-  @container page (min-width: 760px) and (min-aspect-ratio: 1/1) {
-    .sig { position: absolute; right: -2cqi; top: calc(100% - 3cqi); width: 54cqi; max-width: none; margin: 0; padding: 3.4cqi 4cqi; rotate: -4deg; }
-  }
-
-  @container (min-width: 760px) and (min-aspect-ratio: 1/1) {
+  /* Two columns from 600px wide unless the stage is tall and narrow. The home page's desktop
+     stage (about 650 x 730) is one of these: in one column its card, sized to its own width,
+     left the glass and the key no height at all. */
+  @container (min-width: 600px) and (min-aspect-ratio: 7/10) {
     .page { grid-template-columns: 1fr 1.05fr; grid-template-rows: auto 1fr; column-gap: 5cqw; }
     .head { grid-column: 1 / -1; }
     .stage { align-self: center; align-items: center; height: 100%; max-height: 72cqh; grid-template-rows: minmax(0, 1fr) auto; }
     .card { align-self: center; }
   }
-  /* Narrow screens: the list goes into two columns so the glass and key keep their room. */
-  @container page (max-width: 520px) {
+  /* A little taller than wide: the card takes the larger share so its type stays readable. */
+  @container (min-width: 600px) and (min-aspect-ratio: 7/10) and (max-aspect-ratio: 1/1) {
+    .page { grid-template-columns: .85fr 1.15fr; column-gap: 4cqw; }
+  }
+  /* One column: the list goes into two columns so the glass and key keep their room. */
+  @container page not ((min-width: 600px) and (min-aspect-ratio: 7/10)) {
     .list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 5cqi; }
   }
   /* Short phones: the list collapses to one line so the card fits. */
   @container (max-height: 640px) and (max-width: 520px) {
-    .list button { padding: 1cqi 0; font-size: 3.4cqi; }
+    .list button { padding: 1cqi 0; font-size: max(11px, 3.4cqi); }
     .notes { min-height: 0; }
     .label { margin-top: 2.2cqi; }
+  }
+  /* Small phone stages (the home page's 358 × 396 and 328 × 408, a 360 × 520 phone): the card was
+     so tall in Korean that the glass and the key got 0 px. Here the two labels leave their own
+     lines ("Pairs with" moves in front of its line), the name and the paddings shrink, and the
+     tasting stage keeps a floor. */
+  @container page (max-height: 540px) and (max-width: 599.98px) {
+    .page { gap: 1.2cqh; padding-top: 2.6cqh; padding-bottom: 2.4cqh; grid-template-rows: auto minmax(88px, .9fr) auto; }
+    .head { --title-kku: clamp(24px, 6.6cqmin, 60px); }
+    .head h1 { font-size: clamp(26px, 7cqmin, 64px); }
+    .head p { margin-top: .5cqh; line-height: 1.3; }
+    .lang-ko .head p { margin-top: .9cqh; }
+    .head .hint { margin-top: .3cqh; }
+    .card { padding: 3.6cqi 5cqi 3cqi; outline-offset: -1.6cqi; }
+    .now-name { font-size: 8.4cqi; }
+    .card { --name-kku: 7.8cqi; }
+    .now-type { margin-top: .6cqi; }
+    .notes-label, .pairs-label { display: none; }
+    .notes { margin-top: 2cqi; line-height: 1.32; }
+    .lang-ko .notes { line-height: 1.42; }
+    .pairs { margin-top: .8cqi; }
+    .pairs .pl { display: inline; }
+    .list { margin-top: 2.4cqi; }
+    .list button { padding: .5cqi 0; line-height: 1.22; }
+    .wave { height: clamp(26px, 7cqmin, 76px); }
   }
 </style>
 </head>
@@ -158,16 +187,20 @@
   <header class="head">
     <h1>
       <span data-lang="en">Switch Sommelier</span>
-      <span data-lang="ko"><font-kku font="geumbak" size="clamp(28px, 6.6cqmin, 60px)">키보드 축 소믈리에</font-kku></span>
+      <span data-lang="ko"><font-kku font="geumbak" size="var(--title-kku)">키보드 축 소믈리에</font-kku></span>
     </h1>
     <p>
       <span data-lang="en">Tasting notes for the keys under your fingers.</span>
       <span data-lang="ko">손끝 아래 축들의 시음 노트.</span>
     </p>
+    <p class="hint" id="ss-hint">
+      <span data-lang="en">Tap a bottle to taste it. Tap the key to press it.</span>
+      <span data-lang="ko">병을 누르면 시음해요. 키캡도 눌러 보세요.</span>
+    </p>
   </header>
 
-  <div class="stage" aria-hidden="true">
-    <svg class="glass" viewBox="0 0 120 200">
+  <div class="stage">
+    <svg class="glass" viewBox="0 0 120 200" aria-hidden="true">
       <defs>
         <clipPath id="bowl"><path d="M22 18 C 20 70, 34 96, 60 98 C 86 96, 100 70, 98 18 Z"/></clipPath>
         <linearGradient id="shine" x1="0" x2="1"><stop offset="0" stop-color="rgba(255,255,255,.28)"/><stop offset=".4" stop-color="rgba(255,255,255,0)"/></linearGradient>
@@ -180,20 +213,20 @@
         <path d="M60 98 V 170 M36 176 Q 60 168 84 176" stroke="rgba(255,255,255,.55)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
       </g>
     </svg>
-    <svg class="key" viewBox="0 0 200 200">
+    <svg class="key" viewBox="0 0 200 200" role="button" tabindex="0" aria-describedby="ss-hint">
       <rect x="54" y="132" width="92" height="44" rx="6" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/>
       <rect x="64" y="172" width="8" height="14" rx="2" fill="#c9a24e"/><rect x="128" y="172" width="8" height="14" rx="2" fill="#c9a24e"/>
       <g class="press">
         <path class="stem" d="M92 112 H108 V124 H118 V132 H108 V146 H92 V132 H82 V124 H92 Z"/>
         <path d="M30 70 L170 70 L162 116 Q160 122 154 122 L46 122 Q40 122 38 116 Z" fill="#cfc6b8"/>
-        <rect x="44" y="34" width="112" height="56" rx="12" fill="#ece5d8"/>
+        <rect class="cap" x="44" y="34" width="112" height="56" rx="12" fill="#ece5d8"/>
         <path d="M52 40 H148" stroke="rgba(255,255,255,.7)" stroke-width="3" stroke-linecap="round"/>
         <g transform="translate(100 62)" stroke="#8a7b6a" stroke-width="2.4" fill="none" stroke-linecap="round">
           <path d="M-9 -12 C -10 -2, -6 4, 0 4 C 6 4, 10 -2, 9 -12 Z"/><path d="M0 4 V 13 M-6 14 H6"/>
         </g>
       </g>
     </svg>
-    <svg class="wave" viewBox="0 0 300 40" preserveAspectRatio="none">
+    <svg class="wave" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true">
       <path class="base" d="M0 20 H300"/>
       <path class="line" d="M0 20"/>
     </svg>
@@ -212,7 +245,6 @@
     <p class="label pairs-label"></p>
     <p class="pairs"></p>
     <ul class="list"></ul>
-    <p class="sig"></p>
   </article>
 </div>
 
@@ -227,7 +259,6 @@
   const notes = $('.notes');
   const pairs = $('.pairs');
   const list = $('.list');
-  const sig = $('.sig');
   const press = $('.press');
   const liquid = $('.liquid');
   const tilt = $('.tilt');
@@ -235,7 +266,8 @@
 
   // Type lines follow a switch spec sheet: force at actuation, then actuation point / total
   // travel. The last bottle is not a switch at all: the shallow laptop keyboard of a
-  // certain vintage, known for keys that typed twice or not at all.
+  // certain vintage, known for keys that typed twice, or not at all, or stuck. Its maker
+  // fixed them for free under a service program (not a recall), so the bottle was "sent back".
   const SWITCHES = TTY.t({
     en: [
       { id: 'red', c: '#c0392b', name: 'Red', type: 'linear · 45 g · 2.0 / 4.0 mm', score: '92', notes: 'Light-bodied and linear, with notes of 3 a.m. deadlines. Smooth all the way down.', pairs: 'Gaming, and refactors after midnight.' },
@@ -243,7 +275,7 @@
       { id: 'blue', c: '#2e6fd8', name: 'Blue', type: 'clicky · 60 g · 2.2 / 4.0 mm', score: '97', scoreNote: 'yours. 41 for your coworkers', notes: 'Bold and clicky. Your coworkers will remember this vintage.', pairs: 'Working alone. Far away.' },
       { id: 'silent', c: '#8c8f99', name: 'Silent', type: 'dampened · 45 g · 1.9 / 3.7 mm', score: '89', notes: 'So quiet your manager assumes you are idle. Hints of library.', pairs: 'Shared flats, sleeping babies, secret side projects.' },
       { id: 'black', c: '#2b2b30', name: 'Black', type: 'linear · 60 g · 2.0 / 4.0 mm', score: '93', notes: 'Full-bodied and heavy. Builds character, and forearms.', pairs: 'Typing with conviction.' },
-      { id: 'butterfly', c: '#9aa3ad', name: 'Butterfly', type: 'vintage 2016 · 0.5 mm, all of it', score: '—', scoreNote: 'recalled', listScore: 'recalled', notes: 'Crisp and shallow, notes of toast crumb. The finish sometimes arrives twwice.', pairs: 'A repair program.' },
+      { id: 'butterfly', c: '#9aa3ad', name: 'Butterfly', type: 'vintage 2016 · 0.5 mm, all of it', score: '—', scoreNote: 'sent back', listScore: 'sent back', faulty: true, notes: 'Crisp and shallow, notes of toast crumb. The finish sometimes arrives twwice.', pairs: 'A repair program.' },
     ],
     ko: [
       { id: 'red', c: '#c0392b', name: '적축', type: '리니어 · 45g · 입력 2.0 / 바닥 4.0mm', score: '92점', notes: '가볍고 매끄러운 바디. 새벽 3시 마감의 향이 나요. 끝까지 부드럽게 넘어갑니다.', pairs: '게임, 그리고 자정 넘은 리팩터링' },
@@ -251,12 +283,12 @@
       { id: 'blue', c: '#2e6fd8', name: '청축', type: '클리키 · 60g · 입력 2.2 / 바닥 4.0mm', score: '97점', scoreNote: '나에게. 옆자리는 41점', notes: '묵직하고 경쾌한 클릭감. 동료들이 이 빈티지를 오래 기억할 거예요.', pairs: '혼자 일하는 날. 아주 멀리서.' },
       { id: 'silent', c: '#8c8f99', name: '저소음', type: '저소음 · 45g · 입력 1.9 / 바닥 3.7mm', score: '89점', notes: '너무 조용해서 팀장님이 노는 줄 압니다. 도서관 향이 은은해요.', pairs: '룸메이트, 잠든 아기, 몰래 하는 사이드 프로젝트' },
       { id: 'black', c: '#2b2b30', name: '흑축', type: '리니어 · 60g · 입력 2.0 / 바닥 4.0mm', score: '93점', notes: '풀바디에 묵직한 압. 인내심과 팔뚝을 함께 길러 줍니다.', pairs: '확신에 찬 타이핑' },
-      { id: 'butterfly', c: '#9aa3ad', name: '버터플라이', type: '2016년산 · 이동 거리 0.5mm가 전부', score: '—', scoreNote: '리콜됨', listScore: '리콜', notes: '얕고 바삭한 맛, 빵 부스러기 향. 여운이 가끔 두 번 찍찍힙니다.', pairs: '무상 수리 프로그램' },
+      { id: 'butterfly', c: '#9aa3ad', name: '버터플라이', type: '2016년산 · 이동 거리 0.5mm가 전부', score: '—', scoreNote: '돌려보냄', listScore: '돌려보냄', faulty: true, notes: '얕고 바삭한 맛, 빵 부스러기 향. 여운이 가끔 두 번 찍찍힙니다.', pairs: '무상 수리 프로그램' },
     ],
   });
   const L = TTY.t({
-    en: { notes: 'Tasting notes', pairs: 'Pairs with', score: 'points', sig: "Sommelier's pick: whichever one makes you want to write." },
-    ko: { notes: '시음 노트', pairs: '추천 페어링', score: '', sig: '소믈리에 추천: 당신을 쓰고 싶게 만드는 축.' },
+    en: { notes: 'Tasting notes', pairs: 'Pairs with', score: 'points', key: 'Press the key' },
+    ko: { notes: '시음 노트', pairs: '추천 페어링', score: '', key: '키캡 누르기' },
   });
   $('.notes-label').textContent = L.notes;
   $('.pairs-label').textContent = L.pairs;
@@ -324,7 +356,7 @@
       if (shownName !== sw.name) {
         const el = document.createElement('font-kku');
         el.setAttribute('font', 'sebul');
-        el.setAttribute('size', '9.4cqi');
+        el.setAttribute('size', 'var(--name-kku, 9.4cqi)');
         el.textContent = sw.name;
         nowName.replaceChildren(el);
       }
@@ -337,9 +369,14 @@
     nowScore.append(sw.score);
     const small = document.createElement('small');
     small.textContent = sw.scoreNote || L.score;
+    small.classList.toggle('faulty', !!sw.faulty);
     if (small.textContent) nowScore.append(small);
     notes.textContent = sw.notes;
-    pairs.textContent = sw.pairs;
+    // "Pairs with:" in front of the line shows only on small stages, where its own line is gone.
+    const pl = document.createElement('span');
+    pl.className = 'pl';
+    pl.textContent = L.pairs + ': ';
+    pairs.replaceChildren(pl, sw.pairs);
     if (!TTY.reduce) [nowName, notes, pairs].forEach((el, k) => el.animate([{ opacity: 0, filter: 'blur(3px)' }, { opacity: 1, filter: 'blur(0)' }], { duration: 420, delay: k * 90, easing: 'ease-out', fill: 'backwards' }));
   }
   function swirl() {
@@ -347,24 +384,34 @@
     liquid.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-40px)' }], { duration: 900, iterations: 2, easing: 'ease-in-out' });
     tilt.animate([{ rotate: '0deg' }, { rotate: '-7deg' }, { rotate: '6deg' }, { rotate: '-3deg' }, { rotate: '0deg' }], { duration: 1500, easing: 'ease-in-out' });
   }
+  // The butterfly's third key goes down and stays there, a little crooked, until the next
+  // press (or the next bottle) frees it. It is the last thing the tasting leaves on screen.
+  const STUCK = 'translateY(2px) rotate(-6deg)';
+  let stuckKey = null;
+  function unstick() {
+    if (stuckKey) { stuckKey.cancel(); stuckKey = null; }
+    press.style.transform = '';
+  }
   async function strike(id, k) {
+    unstick();
     // Key travel in px is roughly to scale: 15 for 4 mm, 13 for 3.7 mm, 2 for half a millimetre.
     const travel = id === 'butterfly' ? 2 : id === 'silent' ? 13 : 15;
     const down = id === 'black' ? 170 : id === 'blue' ? 90 : id === 'butterfly' ? 70 : 120;
-    // The butterfly's third key sticks for a moment before it comes back up.
-    const stuck = id === 'butterfly' && k === 2 ? 700 : 0;
-    if (!TTY.reduce) {
+    const sticks = id === 'butterfly' && k === 2;
+    if (sticks) {
+      if (TTY.reduce) press.style.transform = STUCK;
+      else stuckKey = press.animate([{ transform: 'none' }, { transform: `translateY(${travel}px)`, offset: .4 }, { transform: STUCK }], { duration: 420, easing: 'cubic-bezier(.3, 1.6, .5, 1)', fill: 'forwards' });
+    } else if (!TTY.reduce) {
       const frames = id === 'brown' || id === 'blue'
         ? [{ transform: 'none' }, { transform: `translateY(${travel * .35}px)`, offset: .3 }, { transform: `translateY(${travel * .4}px)`, offset: .42 }, { transform: `translateY(${travel}px)`, offset: .6 }, { transform: 'none' }]
-        : stuck
-          ? [{ transform: 'none' }, { transform: `translateY(${travel}px)`, offset: .12 }, { transform: `translateY(${travel}px)`, offset: .88 }, { transform: 'none' }]
-          : [{ transform: 'none' }, { transform: `translateY(${travel}px)`, offset: .5 }, { transform: 'none' }];
-      press.animate(frames, { duration: down * 2.6 + stuck, easing: 'ease-in-out' });
+        : [{ transform: 'none' }, { transform: `translateY(${travel}px)`, offset: .5 }, { transform: 'none' }];
+      press.animate(frames, { duration: down * 2.6, easing: 'ease-in-out' });
     }
     drawPulse(id, k);
-    await wait(TTY.reduce ? 0 : down * 2.6 + stuck + 180);
+    await wait(TTY.reduce ? 0 : down * 2.6 + (sticks ? 700 : 0) + 180);
   }
   async function taste(i, live = () => true) {
+    unstick();
     show(i);
     waveD = 'M0 20';
     line.setAttribute('d', waveD);
@@ -373,54 +420,43 @@
     for (let k = 0; k < 3; k++) { await strike(SWITCHES[i].id, k); if (!live()) return; }
   }
 
-  function writeNote() {
-    if (ko) {
-      const el = document.createElement('font-kku');
-      el.setAttribute('font', 'pilgi');
-      el.setAttribute('size', '4.4cqi');
-      el.setAttribute('wrap-unit', 'word');
-      el.textContent = L.sig;
-      sig.replaceChildren(el);
-    } else {
-      sig.textContent = L.sig;
-    }
-  }
-  function signNote() {
-    sig.style.opacity = 1;
-    if (!TTY.reduce) sig.animate([{ opacity: 0, transform: 'translateY(20%) rotate(6deg)' }, { opacity: 1, transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.2,.9,.3,1.1)' });
-  }
-
   /* ---- Autoplay and taking over ---- */
   let run = 0;
   async function play() {
     const mine = ++run;
     const live = () => run === mine;
+    // Six bottles; the last one (the butterfly, its key stuck) stays up until the round ends.
     while (live()) {
-      sig.style.opacity = 0;
       for (let i = 0; i < SWITCHES.length; i++) {
         await taste(i, live); if (!live()) return;
-        await wait(1200); if (!live()) return;
+        await wait(i < SWITCHES.length - 1 ? 1200 : 6200); if (!live()) return;
       }
-      signNote();
-      await wait(5000);
     }
   }
   function takeOver() { run++; }
-  $('.key').addEventListener('click', (e) => {
-    if (!e.isTrusted) return;
+  // The keycap: a click, a tap, or Enter / Space when it has focus. One press of the bottle on
+  // the card (and it frees the butterfly's stuck key).
+  const key = $('.key');
+  key.setAttribute('aria-label', L.key);
+  function pressKey() {
     takeOver();
     const sw = SWITCHES[Math.max(current, 0)];
     if (current < 0) show(0);
     waveD = 'M0 20';
     strike(sw.id, 0);
+  }
+  key.addEventListener('click', (e) => { if (e.isTrusted) pressKey(); });
+  key.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    if (!e.repeat) pressKey();
   });
 
   /* ---- Start ---- */
-  writeNote();
   if (TTY.reduce) {
-    show(2);
-    for (let k = 0; k < 3; k++) drawPulse('blue', k);
-    signNote();
+    // The last scene: the butterfly, two ticks a press, the third key stuck.
+    show(SWITCHES.length - 1);
+    for (let k = 0; k < 3; k++) strike('butterfly', k);
   } else {
     show(0);
   }

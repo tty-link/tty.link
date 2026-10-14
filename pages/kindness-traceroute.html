@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;800&family=Spline+Sans+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
-<script src="https://font.tty.link/lib/font-kku.js" data-fonts="sebul dunggeun"></script>
+<script src="https://font.tty.link/lib/font-kku.js" data-fonts="sebul"></script>
 <style>
   /* One "thank you", traced hop by hop across a city at dusk, laid out like traceroute output
      (to 127.0.0.1, which takes six hops here). Each hop passes it on to the next person; unlike
@@ -65,9 +65,17 @@
   .stats b { display: block; font-size: max(20px, 3.6cqmin); font-weight: 600; color: var(--text); line-height: 1.1; }
   .stats .ttl b { color: var(--mint); }
 
-  .map { grid-area: map; min-height: 0; display: grid; }
-  .map svg { width: 100%; height: 100%; display: block; cursor: pointer; }
+  /* The map and its hint line, centred together so the hint sits right under the drawn city. */
+  .map { grid-area: map; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 1cqmin; }
+  .map svg { flex: 0 1 auto; width: 100%; height: auto; min-height: 0; aspect-ratio: 3 / 2; display: block; cursor: pointer; border-radius: 18px; }
+  .map svg:focus { outline: none; }
+  .map svg:focus-visible { outline: 2px solid var(--arc); outline-offset: 3px; }
   .pin-face { transition: transform .3s; transform-box: fill-box; transform-origin: center; }
+  /* Every hop adds one to the TTL, and it pops up over the person like a point scored. */
+  .plus { font: 600 32px 'Spline Sans Mono', ui-monospace, monospace; fill: var(--mint); stroke: var(--night); stroke-width: 6px; stroke-linejoin: round; paint-order: stroke; text-anchor: middle; }
+  .hint { text-align: center; font-size: max(11px, 1.7cqmin); line-height: 1.3; color: var(--dim); opacity: 0; transition: opacity .6s; }
+  .hint.on { opacity: 1; }
+  .lang-ko .hint { word-break: keep-all; }
 
   .trace { grid-area: hops; align-self: center; min-width: 0; font-size: max(12px, 1.9cqmin); }
   /* The line traceroute prints first. */
@@ -103,14 +111,32 @@
     .hop .ttl { grid-area: 1 / 4; }
   }
 
+  /* Short portrait stages (the home stage on a 390 × 600 phone is about 358 × 396, a phone opening
+     the page on its own about 360 × 520): the stats sit beside the title and the table keeps only
+     the newest hop, so the map keeps its room. */
+  @container (orientation: portrait) and (max-height: 560px) {
+    .head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .6cqmin 3cqmin; }
+    .head > div:first-child { display: contents; }
+    .head h1 { grid-area: 1 / 1; }
+    .head .sub { grid-area: 2 / 1 / 3 / 3; margin-top: 0; }
+    .stats { grid-area: 1 / 2; gap: 2cqmin; font-size: 11px; }
+    .stats b { font-size: 18px; }
+    .hops { min-height: 3.4em; }
+    .hop:not(.cur) { display: none; }
+    .hop.cur { border-bottom: 1px solid rgba(174, 179, 217, .18); }
+  }
+
+  /* The summary's text is in place (hidden) from the start, so its row never grows at the
+     punchline and the map above it never jumps. */
   .sum { grid-area: sum; min-height: 2.6em; font-size: max(14px, 2.4cqmin); }
   .sum .line { visibility: hidden; }
+  .lang-ko .sum .big { font-weight: 600; word-break: keep-all; }
   .sum .line.on { visibility: visible; }
-  .sum .big > font-kku { color: var(--text); }
   .sum .note { margin-top: .5cqmin; font-size: .82em; color: var(--dim); }
   .lang-ko .sum .note { word-break: keep-all; }
-  /* Opened on its own on a phone, _kit.js puts a small ":)" button bottom-right; keep clear of it. */
-  @media (max-width: 600px) { html:not(.embedded) .sum { padding-right: 44px; } }
+  /* Opened on its own on a phone, _kit.js puts its "?" and ":)" buttons (about 84 × 50 px) bottom-right;
+     keep the summary clear of them. */
+  @media (max-width: 600px) { html:not(.embedded) .sum { padding-right: 88px; } }
 </style>
 </head>
 <body>
@@ -130,15 +156,20 @@
   </header>
 
   <div class="map">
-    <svg viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet" role="img">
+    <svg viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet" role="button" tabindex="0" aria-describedby="map-hint">
       <title data-lang="en">A city at dusk with six people passing a thank-you along</title>
       <title data-lang="ko">고마움을 차례로 전하는 여섯 사람이 있는 저녁 도시</title>
       <g class="city"></g>
+      <g class="lit"></g>
       <g class="web"></g>
       <g class="route"></g>
       <g class="pins"></g>
       <g class="fly"></g>
     </svg>
+    <p class="hint" id="map-hint">
+      <span data-lang="en">Tap the map to send one more thank-you.</span>
+      <span data-lang="ko">지도를 누르면 고마움을 하나 더 보내요.</span>
+    </p>
   </div>
 
   <div class="trace">
@@ -158,10 +189,11 @@
   const SVG = 'http://www.w3.org/2000/svg';
   const $ = (s) => document.querySelector(s);
   const svg = $('.map svg');
-  const city = $('.city'), web = $('.web'), route = $('.route'), pinsG = $('.pins'), fly = $('.fly');
+  const city = $('.city'), lit = $('.lit'), web = $('.web'), route = $('.route'), pinsG = $('.pins'), fly = $('.fly');
   const hopsEl = $('.hops');
   const ttlN = $('.ttl-n'), pkN = $('.pk-n');
   const sumBig = $('.sum .big'), sumNote = $('.sum .note');
+  const hint = $('.hint');
   const el = (tag, attrs, parent) => {
     const n = document.createElementNS(SVG, tag);
     for (const k in attrs) n.setAttribute(k, attrs[k]);
@@ -284,30 +316,44 @@
     halo.animate([{ opacity: .5, transform: 'scale(.6)' }, { opacity: 0, transform: 'scale(1.5)' }], { duration: 700, easing: 'ease-out' });
     pins[i].querySelector('.pin-face').animate([{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(.3, 1.6, .5, 1)' });
   }
-  // Each kindness passed on also reaches a few bystanders: the packet multiplies.
+  // Each kindness passed on also reaches a few bystanders: the packet multiplies, and every
+  // window it reaches turns pink.
+  function light(at) {
+    const w = el('rect', { x: at.x - 3.5, y: at.y - 4, width: 7, height: 8, rx: 1.5, fill: 'var(--arc)' }, lit);
+    if (TTY.reduce) return;
+    const glow = el('circle', { cx: at.x, cy: at.y, r: 12, fill: 'var(--heart)', style: 'transform-box: fill-box; transform-origin: center' }, lit);
+    glow.animate([{ opacity: .7, transform: 'scale(.3)' }, { opacity: 0, transform: 'scale(1.4)' }], { duration: 600, easing: 'ease-out' }).finished.then(() => glow.remove());
+    w.animate([{ fill: '#fff' }, { fill: 'var(--arc)' }], { duration: 500 });
+  }
   function spread(from, n) {
     const near = windows.slice().sort((p, q) => Math.hypot(p.x - from.x, p.y - from.y) - Math.hypot(q.x - from.x, q.y - from.y));
     for (let k = 0; k < n; k++) {
       const to = near[3 + Math.floor(Math.random() * Math.min(26, near.length - 3))];
-      send(from, to, { layer: web, lift: 30 + Math.random() * 40, width: 1.6, ms: 700 + Math.random() * 500, size: .9, faint: true });
+      const mine = run;
+      send(from, to, { layer: web, lift: 30 + Math.random() * 40, width: 1.6, ms: 700 + Math.random() * 500, size: 1.1, faint: true })
+        .then(() => { if (mine === run) light(to); });
     }
+  }
+  // "+1" over a person, for the TTL that went up instead of down.
+  function plusOne(at) {
+    if (TTY.reduce) return;
+    const t = el('text', { class: 'plus', x: at.x + 16, y: at.y - 24, style: 'transform-box: fill-box; transform-origin: center' }, fly);
+    t.textContent = '+1';
+    t.animate([
+      { transform: 'translateY(10px) scale(.6)', opacity: 0 },
+      { transform: 'translateY(-4px) scale(1.15)', opacity: 1, offset: .25 },
+      { transform: 'translateY(-10px) scale(1)', opacity: 1, offset: .7 },
+      { transform: 'translateY(-22px) scale(1)', opacity: 0 },
+    ], { duration: 1100, easing: 'ease-out' }).finished.then(() => t.remove());
   }
   function flip(node, value) {
     node.textContent = value;
     if (!TTY.reduce) node.animate([{ transform: 'translateY(-40%)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 260, easing: 'ease-out' });
   }
-  function writeSummary() {
-    const line = SUMMARY[0](pkN.textContent);
-    if (TTY.lang === 'ko') {
-      const kku = document.createElement('font-kku');
-      kku.setAttribute('font', 'dunggeun');
-      kku.setAttribute('size', '1.15em');
-      kku.setAttribute('wrap-unit', 'word');
-      kku.textContent = line;
-      sumBig.replaceChildren(kku);
-    } else {
-      sumBig.textContent = line;
-    }
+  // Plain text in both languages: font-kku's dunggeun draws a final ㅁ almost like ㅇ at this
+  // size ("보냄" read as "보냉").
+  function writeSummary(n = pkN.textContent) {
+    sumBig.textContent = SUMMARY[0](n);
   }
   function setSummary(on) {
     sumBig.classList.toggle('on', on);
@@ -319,7 +365,7 @@
   let run = 0;
   async function trace() {
     const mine = ++run;
-    web.replaceChildren(); route.replaceChildren();
+    web.replaceChildren(); route.replaceChildren(); lit.replaceChildren();
     rows.forEach((r) => r.classList.remove('on', 'cur'));
     setSummary(false);
     ttlN.textContent = '64'; pkN.textContent = '1';
@@ -328,10 +374,13 @@
       const at = i % PLACES.length;
       if (i > 0) {
         const lift = i === HOPS.length - 1 ? 150 : 80;
-        await send(PLACES[i - 1], PLACES[at], { lift });
+        // The heart gets a little bigger at every hop.
+        await send(PLACES[i - 1], PLACES[at], { lift, size: 1.5 + i * .44 });
         if (mine !== run) return;
+        plusOne(PLACES[at]);
       }
       pulse(at);
+      if (i === 2) hint.classList.add('on');
       rows.forEach((r) => r.classList.remove('cur'));
       rows[i].classList.add('on', 'cur');
       if (!TTY.reduce) rows[i].animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 380, easing: 'cubic-bezier(.4, 0, .2, 1)' });
@@ -342,28 +391,38 @@
     }
     if (mine !== run) return;
     writeSummary();
-    sumNote.textContent = SUMMARY[1];
     setSummary(true);
     if (!TTY.reduce) sumBig.animate([{ transform: 'scale(.96)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
     if (!TTY.reduce) setTimeout(() => { if (mine === run) trace(); }, 9000);
   }
 
-  // Tap the city to pass one more on from the nearest person.
-  svg.addEventListener('click', (event) => {
-    if (TTY.reduce) return;
-    const pt = svg.createSVGPoint();
-    pt.x = event.clientX; pt.y = event.clientY;
-    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
-    const from = PLACES.reduce((best, q) => (Math.hypot(q.x - p.x, q.y - p.y) < Math.hypot(best.x - p.x, best.y - p.y) ? q : best));
+  // Tap the city to pass one more on from the nearest person (Enter or Space: the next person).
+  function more(from) {
     const to = PLACES.filter((q) => q !== from)[Math.floor(Math.random() * (PLACES.length - 1))];
     pulse(PLACES.indexOf(from));
-    send(from, to, { lift: 60 }).then(() => pulse(PLACES.indexOf(to)));
+    send(from, to, { lift: 60 }).then(() => { pulse(PLACES.indexOf(to)); plusOne(to); });
     spread(from, 3);
     flip(pkN, String(Number(pkN.textContent) + 4));
     flip(ttlN, String(Number(ttlN.textContent) + 1));
     if (sumBig.classList.contains('on')) writeSummary();
+  }
+  svg.addEventListener('click', (event) => {
+    const pt = svg.createSVGPoint();
+    pt.x = event.clientX; pt.y = event.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    more(PLACES.reduce((best, q) => (Math.hypot(q.x - p.x, q.y - p.y) < Math.hypot(best.x - p.x, best.y - p.y) ? q : best)));
+  });
+  let turn = 0;
+  svg.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    more(PLACES[turn++ % PLACES.length]);
   });
 
+  // Reserve the summary's final size from the start (hidden until the last hop lands).
+  writeSummary(PACKETS[PACKETS.length - 1]);
+  sumNote.textContent = SUMMARY[1];
+  if (TTY.reduce) hint.classList.add('on');
   TTY.onShow(() => setTimeout(trace, TTY.reduce ? 0 : 500));
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);

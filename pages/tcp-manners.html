@@ -130,6 +130,36 @@
   .sub { font-size: clamp(12.5px, 1.75cqi, 18px); font-style: italic; color: var(--ink); }
   .lang-ko .sub { font-style: normal; font-weight: 700; color: var(--blue-t); }
 
+  /* The cover picture, the page's joke from the first second: two gentlemen who cannot finish
+     saying goodbye. Korean: on the phone, bowing in turns to someone who cannot see it.
+     English: at the door and by the car, waving back in turns. It never stops. */
+  .cover { --cvh: clamp(54px, 9.5cqh, 92px); --cva: .83; padding-right: calc(var(--cvh) * var(--cva) + 10px); min-height: calc(var(--cvh) + clamp(6px, 1.2cqh, 12px)); align-content: center; }
+  .lang-en .cover { --cva: 1.4; }   /* with Mr. Client's car */
+  .cvart { position: absolute; z-index: 3; right: 0; bottom: clamp(5px, 1cqh, 10px); height: var(--cvh); aspect-ratio: var(--cva); pointer-events: none; transform-origin: 0 0; }
+  .cvart .who { position: static; width: 100%; height: 100%; aspect-ratio: auto; translate: none; }
+  .cvart .pc { color: var(--pink); }
+  .cvart .ps { color: var(--blue); }
+  .cvart .pc, .cvart .ps { mix-blend-mode: multiply; }
+  .cvart .up { transform: none; transition: none; }
+  .cvart .say { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; opacity: 0; }
+  .cvart .who .pz, .cvart .who .pz[data-k] { display: inline; }   /* both arms are drawn; opacity picks one */
+  .cvart .pz[data-k], .cvart .pc .pz[data-koff] { opacity: 0; }
+  /* the still picture (before the page shows, and with less motion): Mr. Client mid-goodbye */
+  .cvart .pc .up { transform: rotate(var(--bow)); }
+  .cvart .pc .say, .cvart .pc .pz[data-k] { opacity: 1; }
+  /* in turns, every half second */
+  .cover.go .cvart .up { animation: cv-bow 1s ease-in-out infinite; }
+  .cover.go .cvart .say { animation: cv-say 1s ease-out infinite; }
+  .cover.go .cvart .pz[data-k] { animation: cv-up 1s steps(1, end) infinite; }
+  .cover.go .cvart .pz[data-k]:last-child { animation: cv-up 1s steps(1, end) infinite, cv-wave 1s ease-in-out infinite; transform-origin: 6.5px -32px; }
+  .cover.go .cvart .pz[data-koff] { animation: cv-down 1s steps(1, end) infinite; }
+  .cover.go .cvart .ps .up, .cover.go .cvart .ps .say, .cover.go .cvart .ps .pz, .cover.go .cvart .ps .pz[data-k]:last-child { animation-delay: .5s; animation-fill-mode: backwards; }
+  @keyframes cv-bow { 0%, 58%, 100% { transform: none; } 16%, 40% { transform: rotate(var(--bow)); } }
+  @keyframes cv-say { 0%, 10% { opacity: 0; translate: 0 2px; } 20%, 44% { opacity: 1; translate: 0 0; } 56%, 100% { opacity: 0; translate: 0 -3px; } }
+  @keyframes cv-up { 0% { opacity: 0; } 4% { opacity: 1; } 50% { opacity: 0; } }
+  @keyframes cv-down { 0% { opacity: 1; } 4% { opacity: 0; } 50% { opacity: 1; } }
+  @keyframes cv-wave { 0%, 4%, 50%, 100% { rotate: 0deg; } 14% { rotate: -12deg; } 26% { rotate: 10deg; } 38% { rotate: -10deg; } }
+
   /* ---------- Index tabs: on the page's right edge (a row on top when narrow) ---------- */
   .tabs {
     position: absolute;
@@ -234,6 +264,12 @@
   .hang:hover { background: #fff6fb; }
   .hang:active { translate: 2px 2px; box-shadow: 0 0 0 var(--blue); }
   .hang[hidden] { display: none; }
+  /* Lesson 3's hint, in the textbook's pencil: what the button does, pointing at it. */
+  .hang-hint { margin-left: auto; min-width: 0; font: italic 500 clamp(12px, 1.6cqi, 15px)/1.2 'Alegreya', serif; color: var(--pink-t); text-align: right; text-wrap: balance; }
+  .lang-ko .hang-hint { font-family: 'Gowun Batang', serif; font-style: normal; font-weight: 700; }
+  .hang-hint[hidden] { display: none; }
+  .hang-hint:not([hidden]) + .hang { margin-left: 0; }
+  .hang-hint .s { display: none; }
 
   .moral {
     grid-area: mor;
@@ -291,6 +327,7 @@
     gap: clamp(7px, 1.6cqh, 14px) clamp(8px, 1.6cqi, 16px);
   }
   .fgrid.l3 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "a b" "c d" "e e"; }
+  .fgrid.l4 { grid-template-rows: repeat(2, minmax(0, 1fr)); }   /* lesson 4 has two pictures */
   .fgrid.l3 .fig:nth-child(1) { grid-area: a; }
   .fgrid.l3 .fig:nth-child(2) { grid-area: b; }
   .fgrid.l3 .fig:nth-child(3) { grid-area: c; }
@@ -303,7 +340,7 @@
       grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
       grid-template-areas: "a b e" "c d e";
     }
-    .fgrid.l4 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr); }
+    .fgrid.l4 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
   }
 
   .fig {
@@ -342,7 +379,6 @@
   }
   .lang-ko .fig figcaption b { font-family: 'Gowun Batang', serif; letter-spacing: 0; }
   .fig figcaption .xo { font-weight: 700; color: var(--pink-t); margin-right: .3em; }
-  .fig figcaption .xo.o { color: var(--blue-t); }
 
   .art { position: relative; container: art / size; min-height: 0; }
   /* the floor the two gentlemen stand on */
@@ -357,7 +393,6 @@
     opacity: .45;
     mix-blend-mode: multiply;
   }
-  .f-o .art::after { display: none; }
 
   /* --h: how tall a gentleman stands in this figure. Everything in the art that has to sit
      beside him (speech, the hourglass, the "Click.") is placed from it. */
@@ -402,7 +437,7 @@
     }
   }
   /* Wide strips with room (desktop): face to face in the middle, words on the outside.
-     Figures marked .apart (on the phone, in two places) keep to the edges. */
+     Figures marked .apart (the Korean phone calls, the hang-up in 4-1) keep to the edges. */
   @container art (min-aspect-ratio: 6 / 5) and (min-width: 430px) {
     .fig:not(.apart) .art > * { --h: min(90cqh, 30cqi); }
     .fig:not(.apart) .who.c { left: auto; right: calc(50% + 2.5cqi); }
@@ -551,16 +586,10 @@
   /* props */
   .noise { position: absolute; left: 50%; bottom: 6cqh; width: 14cqi; height: 46cqh; translate: -50% 0; overflow: visible; z-index: 1; mix-blend-mode: multiply; }
   .noise path { fill: none; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
-  /* the teacher's marks: a stamped corner ✕ for "don't", the big ○ for "do" */
+  /* the teacher's mark: a stamped corner ✕ for "don't" */
   .xmark { position: absolute; left: -9px; top: -9px; width: clamp(30px, 6cqmin, 44px); aspect-ratio: 1; rotate: -8deg; z-index: 4; mix-blend-mode: multiply; overflow: visible; pointer-events: none; }
   .xmark path { fill: none; stroke: var(--pink); stroke-width: 7; stroke-linecap: round; opacity: .92; }
   .xmark path + path { stroke: var(--blue); opacity: .45; translate: 1.6px -1.2px; }
-  .ring { position: absolute; left: 50%; top: 47%; width: min(92cqi, 90cqh); aspect-ratio: 1; translate: -50% -50%; overflow: visible; }
-  .ring circle { fill: none; stroke-width: 8.5; mix-blend-mode: multiply; }
-  .f-o .art > * { --h: min(50cqh, 48cqi); }
-  .f-o .who { bottom: calc(53cqh - var(--h) * .47); }
-  .f-o .who.c { left: auto; right: 50%; margin-right: calc(var(--h) * .05); }
-  .f-o .who.s { right: auto; left: 50%; margin-left: calc(var(--h) * .05); }
   /* "Click." lands just above the desk phone Mr. Server is putting down */
   .sfx {
     position: absolute;
@@ -727,6 +756,9 @@
     .ltitle { font-size: clamp(20px, 5.6cqi, 30px); }
     .lno { font-size: clamp(12px, 3.4cqi, 15px); }
     .hang { font-size: clamp(12.5px, 3.6cqi, 15px); padding: .42em .8em .45em .65em; }
+    .hang-hint { font-size: clamp(11px, 3.2cqi, 12.5px); }
+    .hang-hint .l { display: none; }
+    .hang-hint .s { display: inline; }
     .fgrid, .fgrid.l3, .fgrid.l4 { grid-template: minmax(0, 1fr) / minmax(0, 1fr) !important; }
     .fgrid .fig { grid-area: 1 / 1 !important; }
     .fgrid .fig:not(.cur) { visibility: hidden; }
@@ -742,11 +774,14 @@
     .seq-h { display: none; }
     .lanes { margin-top: .3em; }
     .moral { font-size: clamp(12px, 3.5cqi, 16px); padding: .45em .7em .5em .55em; gap: .6em; }
+    /* Opened on its own, the kit's "? :)" sits over the band's right end: keep the words clear of it. */
+    html:not(.embedded) .moral { padding-right: 78px; }
     .bubs .bub.old { display: none; }
   }
   /* Short phones: the subtitle folds away under the title row. */
   @container page (max-height: 560px) and (max-width: 759px) {
     .sub { display: none; }
+    .cover { --cvh: clamp(36px, 9cqh, 48px); }
     .seq { height: clamp(74px, 17cqh, 120px); }
   }
 
@@ -781,6 +816,7 @@
     <h1 class="title" data-lang="ko"><span class="tcp">TCP</span><font-kku font="riso" size="clamp(27px, 4.6cqi, 52px)">예절 교실</font-kku></h1>
     <p class="sub" data-lang="en">Good manners for opening and closing a connection</p>
     <p class="sub" data-lang="ko">연결을 맺고 끊는 바른 몸가짐</p>
+    <div class="cvart" aria-hidden="true"></div>
   </div>
 
   <div class="tabs" role="tablist"></div>
@@ -789,6 +825,7 @@
     <div class="lhead">
       <span class="lno"></span>
       <h2 class="ltitle"></h2>
+      <p class="hang-hint" hidden><span class="l"></span><span class="s"></span></p>
       <button class="hang" type="button" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 14.2c-.9-.9-.8-2.3.2-3.1C6 9.3 8.9 8.3 12 8.3s6 1 8.2 2.8c1 .8 1.1 2.2.2 3.1l-1.4 1.4c-.6.6-1.6.7-2.3.2l-1.6-1.2c-.5-.4-.7-1-.6-1.6l.2-1.2c-1.7-.5-3.7-.5-5.4 0l.2 1.2c.1.6-.1 1.2-.6 1.6l-1.6 1.2c-.7.5-1.7.4-2.3-.2z"/></svg>
         <span class="hang-t"></span>
@@ -830,7 +867,7 @@
       moral: 'Remember',
       seq: 'Sequence diagram',
       lanes: ['Client', 'Server'],
-      wrong: "Don't", right: 'Do',
+      wrong: "Don't",
       l1: ["Hello, would you like to hear a TCP joke? (I'm number 100.)", "Yes, I'd like to hear a TCP joke. (I'll listen from 101. I'm number 300.)", "OK, I'll tell you a TCP joke. (Listening from 301.)"],
       m1: 'Offer your number with both hands. Return theirs, plus one.',
       ok: ['Mm-hm.', 'Mm-hm.'],
@@ -843,6 +880,7 @@
       tw: 'Waving from the driveway until the car is out of sight. TIME_WAIT: 60 s (Linux).',
       m3: 'Whoever says goodbye first waits the longest.',
       hang: 'Drive off',
+      hangHint: ["Press it: they'll wave again →", "They'll wave again →"],
       // Mr. Server's goodbye, sent again each time: the first four times the same, then it wanders.
       byes: ['Bye now!'],
       byesLater: ['Okay, bye-bye!', 'Take care now!', 'Bye!'],
@@ -851,7 +889,7 @@
       click: 'Click.',
       note: ["This site can't be reached", 'ERR_CONNECTION_RESET'],
       udp: "I'd tell you a UDP joke, but you might not get it.",
-      m4: 'A good connection starts with checking on each other.',
+      m4: 'Never hang up without a goodbye. Never talk without checking.',
       seqLabel: (l) => `Sequence diagram for lesson ${l}: Mr. Client on the left, Mr. Server on the right.`,
     },
     ko: {
@@ -862,7 +900,7 @@
       moral: '교훈',
       seq: '순서도',
       lanes: ['클라이언트 씨', '서버 씨'],
-      wrong: '틀린 예', right: '바른 예',
+      wrong: '틀린 예',
       l1: ['처음 뵙겠습니다. 제 번호는 100번입니다.', '네, 101번부터 듣겠습니다. 제 번호는 300번입니다.', '301번부터 듣겠습니다. 잘 부탁드립니다.'],
       m1: '명함은 두 손으로. 내 번호를 주고, 상대 번호에 하나를 더해 돌려준다.',
       ok: ['네,', '네.'],
@@ -875,6 +913,7 @@
       tw: '상대가 끊는 걸 확인할 때까지 수화기를 들고 기다립니다. TIME_WAIT 60초(리눅스).',
       m3: '먼저 작별을 꺼낸 쪽이 마지막까지 기다립니다.',
       hang: '전화 끊기',
+      hangHint: ['누르면 상대가 또 "네~" 해요 →', '누르면 상대가 또 "네~" 해요 →'],
       byes: ['네~'],
       byesLater: ['네 들어가세요~', '아 네네 조심히요~', '네~ 감사합니다~', '네네네~'],
       byeAck: '네네~',
@@ -882,7 +921,7 @@
       click: '뚝.',
       note: ['연결이 재설정되었습니다', 'ERR_CONNECTION_RESET'],
       udp: 'UDP 농담 하나 할게요. 못 알아들어도 상관없어요.',
-      m4: '바른 연결은 서로를 확인하는 데서 시작됩니다.',
+      m4: '인사 없이 끊지 않고, 확인 없이 말하지 않습니다.',
       seqLabel: (l) => `제${l}과 순서도: 왼쪽은 클라이언트 씨, 오른쪽은 서버 씨.`,
     },
   });
@@ -1007,8 +1046,25 @@
       <p class="lbl"><span class="tw-l">TIME_WAIT</span><span class="num"></span></p>
     </div>`;
   const xmark = () => '<svg class="xmark" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8 L32 32 M32 8 L8 32"/><path d="M8 8 L32 32 M32 8 L8 32"/></svg>';
-  const ring = () => '<svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" style="stroke:var(--pink)"/><circle cx="51.6" cy="48.8" r="44" style="stroke:var(--blue);opacity:.8"/></svg>';
   const noise = (k) => `<svg class="noise rv" data-k="${k}" viewBox="0 0 40 100" preserveAspectRatio="none" aria-hidden="true"><path style="stroke:var(--blue)" d="M22 0 L10 16 L28 30 L8 46 L30 60 L12 76 L26 90 L18 100"/><path style="stroke:var(--pink);opacity:.7" d="M24 2 L12 18 L30 32 L10 48 L32 62 L14 78 L28 92 L20 102"/></svg>`;
+
+  /* ---------- The cover picture: the goodbye that never ends, from the first second ----------
+     One drawing, two gentlemen 58 units apart facing each other; the CSS keeps them at it.
+     Korean: both on the phone, bowing. English: Mr. Server at his front door, Mr. Client by his
+     car, both waving. */
+  const cvart = $('.cvart');
+  {
+    const c = ko ? { pose: 'phone', bow: 26 } : { pose: 'stand', pose2: 'wave', k2: 'w' };
+    const s = ko ? { pose: 'phone', bow: 26 } : { pose: 'stand', pose2: 'wave', k2: 'w', back: DOOR };
+    // "~", above and in front of the head (inside the bowing upper body, so it goes down with him)
+    const say = ko ? '<path class="say" d="M9 -61.5 q2.2 -3.2 4.4 0 t4.4 0"/>' : '';
+    // English: Mr. Client's car waits behind him in the driveway (the same car as figure 3-5)
+    const carG = ko ? '' : `<g transform="translate(-75 -31.5) scale(.583)">${car().replace(/^\s*<svg[^>]*>|<\/svg>\s*$/g, '')}</g>`;
+    cvart.innerHTML = `<svg class="who" viewBox="${ko ? '-15 -104 88 106' : '-76 -104 149 106'}" preserveAspectRatio="xMidYMax meet">
+        <g class="pc ink-p">${carG}${body(c, 1).replace(/(<g class="up"[^>]*>)/, `$1${say}`)}</g>
+        <g class="ps ink-b" transform="translate(58 0) scale(-1 1)">${body(s, -1).replace(/(<g class="up"[^>]*>)/, `$1${say}`)}</g>
+      </svg>`;
+  }
 
   /* ---------- Speech ---------- */
   const bub = (who, k, html, cls = '') => `<p class="bub ${who} rv${cls ? ' ' + cls : ''}" data-k="${k}">${html}</p>`;
@@ -1018,11 +1074,19 @@
   /* ---------- The four lessons ----------
      figs: the figures, drawn once per visit to the lesson.
      rows: the sequence diagram, top to bottom.
+     ms: how long the autoplay stays on the lesson (6 s unless given; 7 + 6 + 6 + 5 = 24 s).
      steps: the lesson's timeline (ms from the start of the lesson). fig = print figure i,
        on = cue keys (space separated) to switch on, row = draw diagram row i, nod = Mr. Server
        nods, moral = print the lesson's moral, fn = something special. */
   const LESSON_MS = 6000;
   const en = !ko;
+  // The cover picture's opening (the autoplay arriving at lesson 1): on the home stage it waits
+  // for the stage's wipe (about 0.6 s, from the bottom up), fills the lesson for 2 s, and flies to
+  // its corner; lesson 1's first figure prints as it leaves.
+  const COVER_IN = TTY.embedded ? 450 : 100;
+  const COVER_HOLD = 2000;
+  const COVER_FLY = 450;
+  const L1 = COVER_IN + COVER_HOLD + 150;
   const LESSONS = [
     {
       moral: T.m1,
@@ -1042,6 +1106,17 @@
         { t: 1950, fig: 1 }, { t: 2200, on: '2a', row: 1 },
         { t: 3650, fig: 2 }, { t: 3900, on: '3a', row: 2 },
         { t: 4300, row: 3, moral: 1 },
+      ],
+      // When the autoplay comes round to lesson 1, the cover picture first fills the lesson
+      // (the gag, big, 2 s), then flies up into its corner; the lesson follows a little faster
+      // than from its tab, and takes 1.3-1.7 s longer than the others for it (lesson 4, with two
+      // pictures, a second less): 7.65 + 6 + 6 + 5 = 24.65 s on the home stage.
+      ms: L1 + 5050,
+      intro: [
+        { t: L1, fig: 0 }, { t: L1 + 200, on: '1a', row: 0 },
+        { t: L1 + 1600, fig: 1 }, { t: L1 + 1800, on: '2a', row: 1 },
+        { t: L1 + 3200, fig: 2 }, { t: L1 + 3400, on: '3a', row: 2 },
+        { t: L1 + 3750, row: 3, moral: 1 },
       ],
     },
     {
@@ -1105,6 +1180,8 @@
       ],
     },
     {
+      // The rule comes first, with the first picture; the two ✕ follow, and Mr. UDP has the
+      // last word (no moral after the joke).
       moral: T.m4,
       figs: [
         {
@@ -1113,17 +1190,15 @@
           bubs: `<div class="bub note c rv" data-k="a2"><span class="bar"><i></i><i></i><i></i></span>${NOTE_ICON}<strong>${esc(T.note[0])}</strong><code>${esc(T.note[1])}</code></div>`,
         },
         { mark: 'x', c: { pose: 'mega', op: 1, hat: 1 }, slot: chairs(), bubs: bub('c', 'b', say(T.udp)) },
-        { mark: 'o', id: 'o', c: { pose: 'fold', bow: 24, bowK: 'o', cls: 'mini' }, s: { pose: 'fold', bow: 24, bowK: 'o', cls: 'mini' }, props: ring(), bubs: '' },
       ],
       rows: [
         { f: 's', label: 'RST', note: 'reset' },
         { f: 'c', label: 'UDP', dash: true }, { f: 'c', label: 'UDP', dash: true, lost: true }, { f: 'c', label: 'UDP', dash: true },
-        { f: 'c', label: 'SYN' }, { f: 's', label: 'SYN, ACK' }, { f: 'c', label: 'ACK' },
       ],
+      ms: 5000,
       steps: [
-        { t: 200, fig: 0 }, { t: 450, on: 'a', row: 0 }, { t: 1000, on: 'a2' },
-        { t: 2000, fig: 1 }, { t: 2250, on: 'b', row: 1 }, { t: 2600, row: 2 }, { t: 2950, row: 3 },
-        { t: 3700, fig: 2, row: 4 }, { t: 3950, row: 5, on: 'o' }, { t: 4200, row: 6, moral: 1 },
+        { t: 200, fig: 0, moral: 1 }, { t: 450, on: 'a', row: 0 }, { t: 1000, on: 'a2' },
+        { t: 2200, fig: 1 }, { t: 2450, on: 'b', row: 1 }, { t: 2800, row: 2 }, { t: 3150, row: 3 },
       ],
     },
   ];
@@ -1143,6 +1218,9 @@
   $('.lanes .c').textContent = T.lanes[0];
   $('.lanes .s').textContent = T.lanes[1];
   $('.hang-t').textContent = T.hang;
+  const hangHint = $('.hang-hint');
+  $('.l', hangHint).textContent = T.hangHint[0];
+  $('.s', hangHint).textContent = T.hangHint[1];
   tabsEl.setAttribute('aria-label', T.tabs);
 
   const tabs = T.lessons.map((name, i) => {
@@ -1181,9 +1259,9 @@
   let shownTitle = '';
   function figHTML(f, li, i) {
     const id = `${li + 1}-${i + 1}`;
-    const xo = f.mark === 'x' ? `<span class="xo">✕ ${esc(T.wrong)}</span>` : f.mark === 'o' ? `<span class="xo o">○ ${esc(T.right)}</span>` : '';
+    const xo = f.mark === 'x' ? `<span class="xo">✕ ${esc(T.wrong)}</span>` : '';
     const who = (f.c ? person(Object.assign({ side: 'c' }, f.c)) : '') + (f.s ? person(Object.assign({ side: 's' }, f.s)) : '') + (f.slot || '');
-    return `<figure class="fig blank${f.id === 'o' ? ' f-o apart' : ''}${f.apart ? ' apart' : ''}" data-id="${f.id || ''}">
+    return `<figure class="fig blank${f.apart ? ' apart' : ''}" data-id="${f.id || ''}">
       <div class="art">${f.props || ''}${who}${f.mark === 'x' ? xmark() : ''}<div class="bubs">${f.bubs || ''}</div></div>
       <figcaption><b>${esc(T.fig)} ${id}</b>${xo}${f.cap ? esc(f.cap) : ''}</figcaption>
     </figure>`;
@@ -1191,6 +1269,9 @@
   function render(li) {
     const L = LESSONS[li];
     cur = li;
+    cvart.getAnimations().forEach((a) => a.cancel());
+    coverFades.forEach((a) => a.cancel());
+    coverFades = [];
     figsEl.className = 'fgrid l' + (li + 1);
     figsEl.innerHTML = L.figs.map((f, i) => figHTML(f, li, i)).join('');
     figs = $$('.fig', figsEl);
@@ -1220,6 +1301,7 @@
     $('.mtext').textContent = L.moral;
     moral.classList.add('wait');
     hangBtn.hidden = true;
+    hangHint.hidden = true;
     hangs = 0;
     twStop();
     seqRows = [];
@@ -1237,8 +1319,8 @@
     if (!anim) return;
     // pink plate first, then the blue plate drops in slightly off and settles
     f.animate([{ opacity: 0, transform: 'scale(1.025)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: EASE });
-    $$('.who.c, .xmark, .ring circle:first-child, .car', f).forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'linear', fill: 'backwards' }));
-    $$('.who.s, .tw, .ring circle:last-child', f).forEach((el) => el.animate(
+    $$('.who.c, .xmark, .car', f).forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'linear', fill: 'backwards' }));
+    $$('.who.s, .tw', f).forEach((el) => el.animate(
       [{ opacity: 0, transform: 'translate(7px, -5px)' }, { opacity: 1, transform: 'none' }],
       { duration: 380, delay: 140, easing: EASE, fill: 'backwards' }));
   }
@@ -1277,7 +1359,11 @@
     if (step.row !== undefined) seqPush(LESSONS[cur].rows[step.row], anim);
     if (step.nod) nod(anim);
     if (step.moral) printIn(moral, anim);
-    if (step.fn === 'timewait') { twMount(); hangBtn.hidden = false; if (anim) { hangBtn.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); twRun(); } else twSet(1); }
+    if (step.fn === 'timewait') {
+      twMount();
+      hangBtn.hidden = hangHint.hidden = false;
+      if (anim) { [hangBtn, hangHint].forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 })); twRun(); } else twSet(1);
+    }
   }
 
   /* ---------- Sequence diagram ---------- */
@@ -1444,11 +1530,14 @@
   function go(li, anim = !TTY.reduce) {
     clearLater();
     render(li);
-    const steps = LESSONS[li].steps;
+    // Autoplay arriving at lesson 1 opens with the cover picture; a visitor's tab goes straight in.
+    const opening = anim && auto && li === 0 && LESSONS[0].intro;
+    const steps = opening ? LESSONS[0].intro : LESSONS[li].steps;
     if (!anim) { steps.forEach((s) => apply(s, false)); return; }
+    if (opening) coverIntro();
     steps.forEach((s) => later(s.t, () => apply(s, true)));
     // The page turns only if nobody has touched it since; otherwise interacted() turns it later.
-    if (auto) later(LESSON_MS, () => { if (auto) go((li + 1) % LESSONS.length); });
+    if (auto) later(LESSONS[li].ms || LESSON_MS, () => { if (auto) go((li + 1) % LESSONS.length); });
   }
   // Someone touched the page: let them read. Autoplay picks up 12 s after the last touch.
   function interacted() {
@@ -1459,11 +1548,41 @@
   }
   addEventListener('pointerdown', (e) => { if (!e.target.closest('.tab, .hang')) interacted(); }, { passive: true });
 
+  // The cover picture, blown up over the (still blank) figure area, then back to its corner. On
+  // a short stage (the 358×396 phone stage's figure area is a strip about 80 px tall) it takes
+  // the whole lesson instead (its head, the figure and the diagram), which waits unseen behind it.
+  let coverFades = [];
+  function coverIntro() {
+    const figsBox = $('.figs');
+    const short = figsBox.getBoundingClientRect().height < 220;
+    const under = short ? [$('.lhead'), $('.seq')] : [];
+    const rs = [figsBox, ...under].map((el) => el.getBoundingClientRect());
+    const big = { left: Math.min(...rs.map((r) => r.left)), top: Math.min(...rs.map((r) => r.top)), right: Math.max(...rs.map((r) => r.right)), bottom: Math.max(...rs.map((r) => r.bottom)) };
+    big.width = big.right - big.left;
+    big.height = big.bottom - big.top;
+    const small = cvart.getBoundingClientRect();
+    if (!big.width || !big.height || !small.width) return;
+    const k = Math.min(big.height * .82 / small.height, big.width * .7 / small.width);
+    const dx = big.left + (big.width - small.width * k) / 2 - small.left;
+    const dy = big.top + (big.height - small.height * k) / 2 - small.top;
+    const at = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${k.toFixed(3)})`;
+    const total = COVER_IN + COVER_HOLD + COVER_FLY;
+    const off = (ms) => ms / total;
+    cvart.animate([
+      { transform: at, opacity: 0 },
+      { transform: at, opacity: 0, offset: off(COVER_IN) },
+      { transform: at, opacity: 1, offset: off(COVER_IN + 120) },
+      { transform: at, opacity: 1, offset: off(COVER_IN + COVER_HOLD), easing: 'cubic-bezier(.55, 0, .25, 1)' },
+      { transform: 'none', opacity: 1 },
+    ], { duration: total });
+    coverFades = under.map((el) => el.animate([{ opacity: 0 }, { opacity: 0, offset: off(COVER_IN + COVER_HOLD) }, { opacity: 1 }], { duration: total }));
+  }
   function printCover() {
     const t = $('.cover .title');
     const s = $('.cover .sub');
     t.animate([{ opacity: 0, transform: 'translate(6px, -4px)' }, { opacity: 1, transform: 'none' }], { duration: 500, easing: EASE });
     if (s) s.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 200, fill: 'backwards' });
+    $('.cover').classList.add('go');
   }
 
   if (TTY.reduce) go(2, false);

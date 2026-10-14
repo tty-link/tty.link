@@ -188,6 +188,7 @@
     transition: opacity .4s;
   }
   .tag.on { opacity: 1; }
+  .tag.on.under-lens { opacity: 0; }
   .tag::before { content: ""; position: absolute; left: 50%; top: -3px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--red); box-shadow: 0 1px 1px rgba(0,0,0,.3); }
   .tag.installer { translate: -100% -50%; rotate: -3deg; }
   .tag.micro { translate: 0 -50%; rotate: 2deg; color: #8a4b0f; }
@@ -244,6 +245,46 @@
   .seal .en-seal { font: 900 clamp(20px, 8cqi, 64px)/1 'Noto Serif KR', serif; letter-spacing: .04em; }
   .seal .en-small { display: block; margin-top: .6cqi; font: 600 clamp(8px, 2cqi, 15px)/1 'EB Garamond', serif; letter-spacing: .18em; text-align: center; }
   .lang-en .seal { background: rgba(179, 38, 30, .06); }
+
+  /* The opening close-up: a detail bubble pulled out of the shoe cabinet by the front door,
+     doors swinging open on the router among the shoes, and a red 凶 / 흉 seal slammed on it. */
+  .closeup { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
+  .closeup.on { visibility: visible; }
+  .cl-line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .cl-line .lead { fill: none; stroke: var(--red); stroke-width: .04; stroke-dasharray: .12 .07; }
+  .cl-line .mark { fill: rgba(179, 38, 30, .06); stroke: var(--red); stroke-width: .045; }
+  .cl-lens {
+    position: absolute;
+    width: clamp(144px, 40%, 300px);
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: var(--paper-hi);
+    box-shadow: 0 0 0 2px #1f1d1b, 0 0 0 5px var(--paper-hi), 0 0 0 6.5px #1f1d1b, 0 8px 22px rgba(60, 40, 10, .38);
+    overflow: hidden;
+  }
+  .cl-lens svg { display: block; width: 100%; height: 100%; }
+  .cl-lens .led { animation: cl-blink .5s steps(2, start) infinite; }
+  .cl-lens .led:nth-of-type(2) { animation-delay: .17s; }
+  .cl-lens .led:nth-of-type(3) { animation-delay: .33s; }
+  @keyframes cl-blink { to { fill: #cfe8de; } }
+  .cl-seal {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    padding: .9cqi 1.5cqi 1.1cqi;
+    border-radius: 1cqi .7cqi 1.3cqi .8cqi;
+    background: var(--red);
+    box-shadow: inset 0 0 0 .5cqi rgba(247, 240, 222, .9), inset 0 0 0 .9cqi var(--red), 0 2px 6px rgba(80, 20, 10, .3);
+    color: #f7f0de;
+    translate: -50% -50%;
+    rotate: -11deg;
+    line-height: 1;
+    opacity: 0;
+  }
+  .cl-seal.on { opacity: .95; }
+  .cl-seal .big { font: 900 clamp(28px, 11cqi, 84px)/1 'Noto Serif KR', serif; }
+  .cl-seal .small { display: block; margin-top: .5cqi; font: 700 clamp(9px, 2.1cqi, 16px)/1 'EB Garamond', serif; letter-spacing: .16em; text-align: center; }
 
   /* ---- Ledger ---- */
   .sec-h {
@@ -346,8 +387,14 @@
   .lang-ko .strays .ssid { font-style: normal; }
   .strays .meta { margin-left: .3em; color: var(--soft); font-variant-numeric: lining-nums; white-space: nowrap; }
   .strays .list > .stray:nth-child(n+4) { display: none; }
-  @media (max-width: 600px) { html:not(.embedded) .strays { padding-right: 44px; } }
-  .strays .needle, .hint { display: none; }
+  /* Opened on its own, a phone gets the kit's "? :)" (74 px) over the end of this last line. */
+  @media (max-width: 600px) { html:not(.embedded) .strays { padding-right: 84px; } }
+  .strays .needle { display: none; }
+  /* Narrow: the hint is a short line beside the remedy button, in the heading row of the rooms. */
+  .actions { display: flex; align-items: center; gap: 8px; }
+  .hint { max-width: 9.5em; font-size: 11.5px; line-height: 1.2; color: var(--ink-2); font-style: italic; text-align: right; }
+  .lang-ko .hint { font-style: normal; }
+  .hint .l { display: none; }
   .mesh-btn {
     position: relative;
     padding: .36em .75em .4em;
@@ -417,7 +464,9 @@
     .strays .needle { display: block; margin-top: .45em; font-size: clamp(11px, 1.4cqmin, 13.5px); color: var(--red); }
     .actions { display: flex; flex-direction: column; align-items: flex-start; gap: .5em; justify-self: auto; align-self: auto; }
     .mesh-btn { padding: .5em .95em .55em; }
-    .hint { display: block; font-size: clamp(11px, 1.4cqmin, 13.5px); line-height: 1.3; color: var(--soft); font-style: italic; }
+    .hint { max-width: none; font-size: clamp(11px, 1.4cqmin, 13.5px); line-height: 1.3; text-align: left; }
+    .hint .l { display: inline; }
+    .hint .s { display: none; }
     /* Standalone: lift the remedy button clear of the nav pill in the corner. */
     html:not(.embedded) .col-side { padding-bottom: 36px; }
     .lang-ko .hint { font-style: normal; }
@@ -489,6 +538,58 @@
         <p class="tag call"><span class="dot"></span><span class="txt"></span></p>
         <div class="bibo" aria-hidden="true"></div>
         <svg class="layer-top" viewBox="-0.75 -0.85 13.05 9.2" role="group"></svg>
+        <div class="closeup" aria-hidden="true">
+          <svg class="cl-line" viewBox="-0.75 -0.85 13.05 9.2"><rect class="mark" x="11.3" y="0.2" width="0.68" height="2.4" rx=".12"/><path class="lead"/></svg>
+          <div class="cl-lens">
+            <svg viewBox="-82 -82 164 164">
+              <defs>
+                <clipPath id="cl-clip"><circle r="100"/></clipPath>
+                <linearGradient id="cl-glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6eef0"/><stop offset=".5" stop-color="#b7c8ce"/><stop offset="1" stop-color="#eaf1f2"/></linearGradient>
+                <pattern id="cl-stripe" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="3" fill="#b3261e"/><rect y="3" width="6" height="3" fill="#f7f0de"/></pattern>
+              </defs>
+              <g clip-path="url(#cl-clip)" stroke-linejoin="round" stroke-linecap="round">
+                <rect x="-100" y="-100" width="200" height="200" fill="#efe5cf"/>
+                <rect x="-100" y="80" width="200" height="20" fill="#e0d2b4"/>
+                <path d="M-100 80 H100 M-70 80 L-80 100 M-30 80 L-34 100 M10 80 V100 M50 80 L54 100" stroke="#5a5145" stroke-width="1"/>
+                <rect x="-62" y="-76" width="124" height="156" fill="#d9c49c" stroke="#1f1d1b" stroke-width="2.6"/>
+                <rect x="-55" y="-69" width="110" height="143" fill="#f3e9d1"/>
+                <!-- the line from the telecom box, up through the shelves to the router -->
+                <path d="M32 47 C34 28 26 18 12 -6" fill="none" stroke="#1f1d1b" stroke-width="1.8"/>
+                <g fill="#c4a571" stroke="#1f1d1b" stroke-width="1.1"><rect x="-55" y="-35" width="110" height="4"/><rect x="-55" y="2" width="110" height="4"/><rect x="-55" y="39" width="110" height="4"/></g>
+                <g stroke="#1f1d1b" stroke-width="1.4">
+                  <!-- top: heels and sneakers -->
+                  <path transform="translate(-40 -35)" d="M-13 -14 Q-11 -6 -2 -5 Q8 -4 12 -1 L12 0 L1 0 Q-5 -2 -9 -4 L-10 0 L-12 0 Z" fill="#b3261e"/>
+                  <path transform="translate(-26 -35)" d="M-13 -14 Q-11 -6 -2 -5 Q8 -4 12 -1 L12 0 L1 0 Q-5 -2 -9 -4 L-10 0 L-12 0 Z" fill="#c8352b"/>
+                  <g transform="translate(18 -35)"><path d="M-14 0 V-7 Q-14 -12 -9 -12 L-2 -12 Q2 -7 8 -6 Q14 -5 14 -1 V0 Z" fill="#fbf7ec"/><path d="M-14 0 H14" stroke-width="3"/><path d="M-6 -10 L2 -5" stroke="#4f8a7a" stroke-width="2"/></g>
+                  <g transform="translate(37 -35)"><path d="M-14 0 V-7 Q-14 -12 -9 -12 L-2 -12 Q2 -7 8 -6 Q14 -5 14 -1 V0 Z" fill="#fbf7ec"/><path d="M-14 0 H14" stroke-width="3"/><path d="M-6 -10 L2 -5" stroke="#4f8a7a" stroke-width="2"/></g>
+                  <!-- middle: a boot leaning on the router, the router, a sneaker squeezed in -->
+                  <path transform="translate(-43 2) rotate(8)" d="M-9 0 V-30 H5 V-12 Q15 -10 16 -3 V0 Z" fill="#8a5a3b"/>
+                  <path d="M-21 -11 V-24 Q-21 -28 -25 -28 H-33" fill="none" stroke-width="2.6"/>
+                  <path d="M13 -11 V-29" fill="none" stroke-width="2.6"/>
+                  <path d="M9 -31 H17 V-22 Q17 -18 21 -17 L26 -16 Q29 -13 25 -11 L16 -12 Q9 -13 9 -20 Z" fill="url(#cl-stripe)" stroke-width="1.2"/>
+                  <rect x="-27" y="-11" width="45" height="13" rx="3" fill="#fbf7ec" stroke-width="1.9"/>
+                  <path d="M-3 -6.5 H13 M-3 -3 H13" stroke="#6a6052" stroke-width="1"/>
+                  <circle class="led" cx="-20" cy="-4.5" r="2" fill="#4f8a7a" stroke="none"/><circle class="led" cx="-14" cy="-4.5" r="2" fill="#4f8a7a" stroke="none"/><circle class="led" cx="-8" cy="-4.5" r="2" fill="#4f8a7a" stroke="none"/>
+                  <g transform="translate(36 2) rotate(-6)"><path d="M-14 0 V-7 Q-14 -12 -9 -12 L-2 -12 Q2 -7 8 -6 Q14 -5 14 -1 V0 Z" fill="#2b2825"/><path d="M-14 0 H14" stroke="#fbf7ec" stroke-width="2"/></g>
+                  <!-- lower: slippers and loafers -->
+                  <g transform="translate(-34 39)"><path d="M-13 0 Q-14 -5 -6 -6 Q8 -8 13 -3 Q14 0 10 0 Z" fill="#e9a6a0"/><path d="M-2 -6 Q4 -12 9 -4" fill="none" stroke-width="2.2"/></g>
+                  <g transform="translate(-20 39)"><path d="M-13 0 Q-14 -5 -6 -6 Q8 -8 13 -3 Q14 0 10 0 Z" fill="#f0b8b2"/><path d="M-2 -6 Q4 -12 9 -4" fill="none" stroke-width="2.2"/></g>
+                  <path transform="translate(22 39)" d="M-13 0 V-5 Q-12 -9 -4 -8 Q6 -9 12 -4 Q14 -1 12 0 Z" fill="#5a3a26"/>
+                  <path transform="translate(39 39)" d="M-13 0 V-5 Q-12 -9 -4 -8 Q6 -9 12 -4 Q14 -1 12 0 Z" fill="#6b4630"/>
+                  <!-- bottom: rain boots and the telecom box the router was plugged into -->
+                  <path transform="translate(-42 74)" d="M-9 0 V-26 H5 V-10 Q14 -8 15 -3 V0 Z" fill="#e8b64a"/>
+                  <path transform="translate(-27 74)" d="M-9 0 V-26 H5 V-10 Q14 -8 15 -3 V0 Z" fill="#f0c45c"/>
+                  <rect x="6" y="47" width="44" height="26" rx="2" fill="#c9c6bc" stroke-width="1.6"/>
+                  <path d="M12 54 H44 M12 59 H44 M12 64 H44" stroke="#6a6052" stroke-width="1"/>
+                </g>
+                <!-- the cabinet doors: closed at first (a mirror on the right one), then swung open -->
+                <g class="cl-door l"><rect x="-62" y="-76" width="62" height="156" fill="#d9c49c" stroke="#1f1d1b" stroke-width="2.6"/><rect x="-10" y="-6" width="4" height="18" rx="2" fill="#1f1d1b"/></g>
+                <g class="cl-door r"><rect x="0" y="-76" width="62" height="156" fill="#d9c49c" stroke="#1f1d1b" stroke-width="2.6"/><rect x="9" y="-67" width="45" height="138" rx="2" fill="url(#cl-glass)" stroke="#7e98a3" stroke-width="1.4"/><path d="M17 -48 l11 -11 M17 -32 l20 -20 M30 44 l14 -14" stroke="#fff" stroke-width="1.8" opacity=".85"/><rect x="5" y="-6" width="4" height="18" rx="2" fill="#1f1d1b"/></g>
+              </g>
+            </svg>
+          </div>
+          <div class="cl-seal"></div>
+        </div>
         <div class="seal" aria-hidden="true"></div>
       </div>
     </div>
@@ -501,7 +602,7 @@
 
   <div class="col-side">
     <section class="verdicts" aria-live="polite">
-      <h2 class="sec-h"><span data-lang="en">Room by room</span><span data-lang="ko">방별 길흉</span> <span class="hz l" aria-hidden="true">吉凶</span></h2>
+      <h2 class="sec-h"><span data-lang="en"><span class="l">Room by room</span><span class="s">Rooms</span></span><span data-lang="ko">방별 길흉</span> <span class="hz l" aria-hidden="true">吉凶</span></h2>
       <ol class="rooms"></ol>
     </section>
 
@@ -520,7 +621,7 @@
         <p class="needle"></p>
       </section>
       <div class="actions">
-        <p class="hint"></p>
+        <p class="hint"><span class="l"></span><span class="s"></span></p>
         <button class="mesh-btn" type="button" aria-pressed="false"></button>
       </div>
     </div>
@@ -575,16 +676,16 @@
         'Keep away from water and metal: fish tanks, fridges, the back of mirrors.',
         'One concrete wall cuts the energy to a tenth (about −10 dB or more).',
         '2.4 GHz travels far but is crowded; 5 GHz is fast but weak through walls.',
-        'On 2.4 GHz, only channels 1, 6 and 11 never collide.',
+        'On 2.4 GHz, channels 1, 6 and 11 never collide.',
         'Stand one antenna up and lay one down.',
         'Where it falls short, build it up: mesh or a repeater.',
       ],
-      strays: [['Pretty Fly for a WiFi', 1, -62], ['FBI Surveillance Van 3', 6, -66], ['Not the Neighbors', 6, -71], ['Ask Mom for the Password', 1, -78], ['Free WiFi (it isn’t)', 36, -80]],
+      strays: [['Pretty Fly for a WiFi', 1, -62], ['FBI Surveillance Van 3', 6, -66], ['Not the Neighbors', 6, -71], ['Password Is on the Router', 1, -78], ['Free WiFi (it isn’t)', 36, -80]],
       ch: 'ch',
       needle: 'Compass needle: channel 11, the quiet road.',
       raise: 'Raise a remedy (mesh)',
       take: 'Take it down',
-      hint: 'Drag the router to try another spot.',
+      hint: ['Drag the router to try another spot.', 'Drag the router'],
       nextRule: 'Next rule',
       router: 'Router',
       mesh: 'Mesh',
@@ -626,12 +727,12 @@
         '안테나는 하나는 세우고 하나는 눕힌다.',
         '모자란 곳은 비보한다(메시·중계기).',
       ],
-      strays: [['옆집아님_2G', 1, -62], ['비번은엄마한테', 6, -66], ['5층_공유기_만지지마', 6, -71], ['FREE_WIFI_진짜무료아님', 1, -78], ['우리집아님_5G', 36, -80]],
+      strays: [['옆집아님_2G', 1, -62], ['비번은공유기뒷면', 6, -66], ['5층_공유기_만지지마', 6, -71], ['FREE_WIFI_진짜무료아님', 1, -78], ['우리집아님_5G', 36, -80]],
       ch: '',
       needle: '패철 바늘: 11번 길(옆집이 안 쓰는 길).',
       raise: '비보 세우기',
       take: '비보 거두기',
-      hint: '공유기를 끌어 자리를 옮겨 보세요.',
+      hint: ['공유기를 끌어 자리를 옮겨 보세요.', '공유기를 끌어 옮겨 보세요'],
       nextRule: '다음 비결',
       router: '공유기',
       mesh: '비보(메시)',
@@ -975,6 +1076,81 @@
     seal.innerHTML = '<span class="en-seal">明堂</span><span class="en-small">THE SPOT</span>';
   }
 
+  /* ---- The opening close-up of the shoe cabinet ---- */
+  const closeup = $('.closeup');
+  const lens = $('.cl-lens');
+  const clSeal = $('.cl-seal');
+  const clLine = $('.cl-line');
+  const clLead = $('.cl-line .lead');
+  const clDoors = [...closeup.querySelectorAll('.cl-door')];
+  const LENS_AT = { x: 8.15, y: 4.75 };
+  const CABINET = { x: 11.64, y: 1.4 };
+  at(lens, LENS_AT.x, LENS_AT.y);
+  clSeal.innerHTML = ko ? '<span class="big">흉</span>' : '<span class="big">凶</span><span class="small">BAD LUCK</span>';
+  // The leader line runs from the cabinet to the rim of the lens; the seal sits on its lower right.
+  function placeCloseup() {
+    const pxm = plan.getBoundingClientRect().width / VB.w;
+    if (!pxm || !lens.offsetWidth) return;
+    const r = lens.offsetWidth / 2 / pxm;
+    const dx = CABINET.x - LENS_AT.x, dy = CABINET.y - LENS_AT.y, d = Math.hypot(dx, dy);
+    const ex = LENS_AT.x + dx / d * (r + .12), ey = LENS_AT.y + dy / d * (r + .12);
+    clLead.setAttribute('d', `M${(CABINET.x - .3).toFixed(2)} ${(CABINET.y + .3).toFixed(2)} L${ex.toFixed(2)} ${ey.toFixed(2)}`);
+    const small = plan.dataset.dense === 'lo';
+    at(clSeal, LENS_AT.x + r * (small ? .5 : .42), LENS_AT.y + r * (small ? .48 : .34));
+  }
+  const doorOpen = [{ transform: 'scaleX(1)', filter: 'brightness(1)' }, { transform: 'scaleX(-.2)', filter: 'brightness(.8)' }];
+  clDoors[0].style.transformOrigin = '-62px 0px';
+  clDoors[1].style.transformOrigin = '62px 0px';
+  function hideCloseup() {
+    closeup.classList.remove('on');
+    clSeal.classList.remove('on');
+    [lens, clSeal, clLine, ...clDoors].forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
+    clDoors.forEach((d) => { d.style.transform = ''; d.style.filter = ''; });
+  }
+  // The lens grows out of the cabinet (doors shut, mirror and all), the doors swing open on the
+  // router among the shoes, and the geomancer's seal comes down on it.
+  function openCloseup(mine) {
+    if (TTY.reduce) return;
+    hideCloseup();
+    placeCloseup();
+    closeup.classList.add('on');
+    // On a phone the lens would sit on the installer's slip; the lens says it better there.
+    tagInstaller.classList.toggle('under-lens', plan.dataset.dense === 'lo');
+    const pxm = plan.getBoundingClientRect().width / VB.w;
+    const fx = (CABINET.x - LENS_AT.x) * pxm, fy = (CABINET.y - LENS_AT.y) * pxm;
+    lens.animate([{ transform: `translate(${fx}px, ${fy}px) scale(.06)`, opacity: .4 }, { transform: 'scale(1.04)', opacity: 1, offset: .75 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2, .9, .3, 1.15)' });
+    clLine.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
+    setTimeout(() => {
+      if (!live(mine)) return;
+      clDoors.forEach((d) => {
+        d.animate(doorOpen, { duration: 300, easing: 'cubic-bezier(.5, 0, .3, 1)' });
+        d.style.transform = 'scaleX(-.2)';
+        d.style.filter = 'brightness(.8)';
+      });
+    }, 360);
+    setTimeout(() => {
+      if (!live(mine)) return;
+      clSeal.classList.add('on');
+      clSeal.animate([
+        { transform: 'scale(2.8)', opacity: 0, filter: 'blur(2px)' },
+        { transform: 'scale(.92)', opacity: .95, filter: 'blur(0)', offset: .7 },
+        { transform: 'scale(1)', opacity: .93 },
+      ], { duration: 380, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+      lens.animate([{ transform: 'none' }, { transform: 'translate(1.5%, 1%) rotate(1.2deg)' }, { transform: 'translate(-1%, -.5%)' }, { transform: 'none' }], { duration: 300, delay: 260 });
+      plan.animate([{ transform: 'none' }, { transform: 'translateY(.5%) rotate(.3deg)' }, { transform: 'none' }], { duration: 260, delay: 270 });
+    }, 860);
+  }
+  // Back into the cabinet before the brush comes for the router.
+  function closeCloseup() {
+    if (!closeup.classList.contains('on')) return;
+    const pxm = plan.getBoundingClientRect().width / VB.w;
+    const fx = (CABINET.x - LENS_AT.x) * pxm, fy = (CABINET.y - LENS_AT.y) * pxm;
+    const a = lens.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${fx}px, ${fy}px) scale(.06)`, opacity: 0 }], { duration: 380, easing: 'cubic-bezier(.5, 0, .7, .4)', fill: 'forwards' });
+    clSeal.animate([{ opacity: .93 }, { opacity: 0 }], { duration: 200, fill: 'forwards' });
+    clLine.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 380, fill: 'forwards' });
+    a.onfinish = hideCloseup;
+  }
+
   /* ---- The compass ---- */
   const compass = $('.compass');
   let dial, needle;
@@ -1091,7 +1267,8 @@
     straysList.append(li);
   });
   $('.strays .needle').textContent = L.needle;
-  $('.hint').textContent = L.hint;
+  $('.hint .l').textContent = L.hint[0];
+  $('.hint .s').textContent = L.hint[1];
   const meshBtn = $('.mesh-btn');
   const verdictsSec = $('.verdicts');
   const commentEl = $('.comment');
@@ -1518,6 +1695,8 @@
   function resetScene() {
     cancelCarry();
     microOff();
+    hideCloseup();
+    tagInstaller.classList.remove('under-lens');
     state.final = false;
     state.mesh.on = false;
     showDevice(state.mesh, false);
@@ -1549,6 +1728,11 @@
     loopStart = performance.now();
     drawIn();
 
+    // 1.6 s: before anything else, a close-up of the shoe cabinet: the router among the shoes,
+    // and at 2.5 s a big red 凶 / 흉 seal on it.
+    if (!await until(1600, mine)) return;
+    openCloseup(mine);
+
     // 1.8 s: the router turns up in the telecom box by the front door, where it was left.
     if (!await until(1800, mine)) return;
     showDevice(state.router, true);
@@ -1559,7 +1743,9 @@
     readout(140);
     setComment('entry');
 
-    // 6.5 s: behind the fish tank.
+    // 6.0 s: the close-up goes back into the cabinet. 6.5 s: behind the fish tank.
+    if (!await until(6000, mine)) return;
+    closeCloseup();
     if (!await until(6500, mine)) return;
     tagInstaller.classList.remove('on');
     await carryTo(SPOT.tank);
@@ -1610,6 +1796,7 @@
       run++;
       cancelCarry();
       microOff();
+      closeCloseup();
       tagInstaller.classList.remove('on');
       [plan, commentEl, roomsList].forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
       if (!lastValues) {
@@ -1737,6 +1924,7 @@
     drawDevice(state.router);
     drawDevice(state.mesh);
     paint();
+    placeCloseup();
   }
   new ResizeObserver(fit).observe(plan);
 

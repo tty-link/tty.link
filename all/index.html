@@ -55,7 +55,28 @@
     padding: 0;
     list-style: none;
   }
+  .grid > li { position: relative; }
   .card { display: block; color: inherit; text-decoration: none; }
+  /* "Why is this funny?" sits on the preview's corner, outside the card link. Same "?" as the
+     corner button of a page opened on its own (pages/_kit.js): sun fill, thin ink ring. */
+  .ask {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: var(--sun);
+    font: 800 15px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(27, 43, 122, .25), 0 2px 8px rgba(0, 0, 0, .15);
+  }
+  .ask:hover { background: var(--ink); color: var(--sun); }
   .preview {
     --s: .3;
     position: relative;
@@ -90,7 +111,7 @@
 <header class="top">
   <a class="mark" href="/" aria-label="tty.link">tty.link :)</a>
   <div class="langs" role="group" aria-label="Language">
-    <button type="button" data-lang="en" aria-pressed="true">EN</button>
+    <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
     <button type="button" data-lang="ko" aria-pressed="false" lang="ko">한국어</button>
   </div>
 </header>
@@ -117,15 +138,27 @@
   const TEXT = {
     en: {
       title: 'All pages',
-      lede: (n) => `${n} pages so far. On the home page they play one at a time, and more keep coming.`,
+      lede: (n) => `${n} pages so far. On the home page they play one at a time, in random order, and more keep coming.`,
       langs: 'Language',
+      ask: 'Why is this funny?',
     },
     ko: {
       title: '전체 페이지',
-      lede: (n) => `지금까지 ${n}개예요. 홈에서는 하나씩 번갈아 나오고, 계속 늘어납니다.`,
+      lede: (n) => `지금까지 ${n}개예요. 홈에서는 무작위로 하나씩 나오고, 계속 늘어납니다.`,
       langs: '언어',
+      ask: '이게 왜 웃겨요?',
     },
   };
+
+  // The explanation dialog (/assets/tty-explain.js) is loaded the first time a "?" is pressed.
+  let explainScript = null;
+  const loadExplain = () => explainScript || (explainScript = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = '/assets/tty-explain.js';
+    script.onload = resolve;
+    script.onerror = () => { explainScript = null; reject(); };
+    document.head.append(script);
+  }));
 
   let pages = [];
 
@@ -159,6 +192,7 @@
 
   function render() {
     const t = TEXT[lang];
+    root.lang = lang;
     root.classList.toggle('lang-ko', lang === 'ko');
     document.title = `${t.title} | tty.link`;
     document.querySelector('.langs').setAttribute('aria-label', t.langs);
@@ -187,7 +221,17 @@
       summary.className = 'card-sum';
       summary.textContent = pick(page.summary);
       a.append(preview, title, summary);
-      li.append(a);
+      const ask = document.createElement('button');
+      ask.type = 'button';
+      ask.className = 'ask';
+      ask.textContent = '?';
+      ask.title = t.ask;
+      ask.setAttribute('aria-label', `${t.ask} ${title.textContent}`);
+      ask.setAttribute('aria-haspopup', 'dialog');
+      ask.addEventListener('click', () => loadExplain().then(() => window.TTYExplain && window.TTYExplain.open({
+        id: page.id, lang, title: title.textContent, returnFocus: ask,
+      }), () => {}));
+      li.append(a, ask);
       loader.observe(preview);
       scaler.observe(preview);
       return li;

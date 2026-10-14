@@ -176,7 +176,10 @@
   .uptime .pct b { display: block; font-weight: 500; color: var(--ink-hi); font-size: 1.1em; }
 
   /* ---------- Actions ---------- */
-  .actions { grid-area: act; position: relative; display: flex; align-items: center; justify-content: flex-end; gap: .5em; min-width: 0; }
+  .actions { grid-area: act; position: relative; display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: flex-end; gap: .3em .5em; min-width: 0; }
+  /* One line on what the buttons do: under them on wide grids, above them on narrow ones. */
+  .hint { flex: 0 0 100%; order: 2; min-width: 0; color: var(--ink-2); font-size: max(11px, .8em); line-height: 1.3; text-align: right; }
+  .fq-cut { display: none; }
   .btn {
     display: inline-flex;
     align-items: center;
@@ -492,10 +495,20 @@
     .alert.idle, .alert.gone { opacity: 0; pointer-events: none; transition: opacity .6s ease; }
     .crumb { display: none; }
     .status { padding-left: 0; border-left: 0; }
-    .actions { justify-content: stretch; }
+    .actions { justify-content: stretch; position: static; }
     .actions .btn { flex: 1; min-height: 42px; }
-    .toast { top: auto; bottom: calc(100% + 8px); left: 50%; right: auto; translate: -50% 6px; }
-    .toast.on { translate: -50% 0; }
+    .hint { order: -1; text-align: center; }
+    /* The "budget spent" note slides over the header like the alert strip, so it never covers
+       the postmortem card above the buttons. */
+    .toast {
+      top: var(--gap);
+      left: calc(var(--gap) + 2px);
+      right: calc(var(--gap) + 2px);
+      z-index: 8;
+      justify-content: center;
+      min-height: clamp(40px, 6.4cqh, 56px);
+      white-space: normal;
+    }
     .gauge { height: clamp(84px, 15cqh, 140px); }
     .list { flex: none; }
     .inc:nth-child(n + 4) { display: none; }
@@ -520,9 +533,14 @@
   @container page (min-width: 721px) and (max-height: 600px) {
     html:not(.embedded) .pm-k { display: none; }
   }
-  /* The kit's ":)" button sits in the bottom-right corner when a page is opened on its own. */
+  /* Opened on its own, a phone gets the kit's "?" and ":)" buttons (about 84×50 px) in the
+     bottom-right corner, right where the buttons row ends: the row stops short of them. */
   @media (max-width: 600px) {
-    html:not(.embedded) .actions { padding-right: 42px; }
+    html:not(.embedded) .actions { padding-right: 82px; }
+    html:not(.embedded) .actions .btn { padding: 0 .55em; gap: .35em; }
+  }
+  @media (max-width: 349px) {
+    html:not(.embedded) .actions .btn svg { display: none; }
   }
 
   /* ---------- One column (phones) ---------- */
@@ -536,7 +554,11 @@
       padding: 6px 7px 7px;
     }
     .head { min-height: 40px; padding: .3em .7em; }
-    .alert { top: 6px; left: 7px; right: 7px; min-height: 40px; }
+    .alert, .toast { top: 6px; left: 7px; right: 7px; min-height: 40px; }
+    /* nothing on a phone below 11 px */
+    .ptitle { font-size: max(11px, .92em); }
+    .stat .k, .gaugep .foot, .pm-k, .incp .count, .inc .at, .inc .dur, .alert .tag { font-size: max(11px, .84em); }
+    .inc .sev { font-size: max(11px, .8em); }
     .obj, .slip, .ops { display: none; }
     .stat.obj-mini, .stat.leftv { display: block; }
     .stat.budget, .stat.burnr, .stat.spent { display: none; }
@@ -547,23 +569,51 @@
     .gauge { height: clamp(66px, 13.5cqh, 100px); }
     .gaugep .ptitle .meta { display: none; }
     .stats { gap: .3em; }
-    .gaugep .foot { display: block; margin-top: .15em; padding-top: .3em; font-size: .84em; line-height: 1.3; }
+    .gaugep .foot { display: block; margin-top: .15em; padding-top: .3em; font-size: max(11px, .84em); line-height: 1.3; }
     .panel { padding: .4em .65em .5em; }
     .ptitle { min-height: 1.45em; }
     .legend .k.today { display: none; }
     .inc { grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "at sev ttl dur"; padding: .24em 0; }
     .inc .sev { padding: .2em .4em; }
     .inc .det { display: none; }
-    .inc .dur { display: block; grid-area: dur; color: var(--ink-2); font: 400 .86em var(--mono); }
+    .inc .dur { display: block; grid-area: dur; color: var(--ink-2); font: 400 max(11px, .86em) var(--mono); }
     .pm { padding: .35em .85em .4em; gap: .1em; }
     .pm-l { font-size: 1.04em; }
-    .note { width: min(54%, 13em); top: 1.7em; right: .5em; font-size: .86em; line-height: 1.2; padding: .4em .6em .45em; }
+    .note { width: min(54%, 13em); top: 1.7em; right: .5em; font-size: max(11px, .86em); line-height: 1.2; padding: .4em .6em .45em; }
     /* Late in the month a phone chart has no empty corner below the line: cover the past instead. */
     .note.left { left: 46px; top: 1.7em; bottom: auto; }
     .lang-ko .note { padding: .35em .55em .4em; }
   }
+  /* Short phones (360×520, and a 390×600 phone's home stage, 358×396): no room for a chart
+     that says anything, so the burn-down panel steps out on purpose. The toast lands on the
+     empty incident list instead, the footnote keeps to one line, and the sticky note gets a home
+     of its own: beside the gauge, where the numbers were (placeNote). */
+  @container page (max-width: 460px) and (max-height: 540px) {
+    .dash { --short: 1; grid-template-rows: auto auto minmax(0, 1fr) auto auto; grid-template-areas: "head" "gauge" "inc" "pm" "act"; }
+    .burnp { position: absolute; inset: 0; grid-area: auto; z-index: 3; padding: 0; border: 0; background: none; visibility: hidden; pointer-events: none; }
+    .burnp .pbody { position: static; }
+    .note { visibility: visible; width: auto; rotate: 1.5deg; }
+    .note.left { left: auto; top: auto; bottom: auto; }
+    .gauge { height: 54px; }
+    .gaugep .foot { white-space: nowrap; }
+    .fq-full { display: none; }
+    .fq-cut { display: inline; }
+    .gaugep .stats { transition: opacity .3s ease; }
+    .dash.noted .gaugep .stats { opacity: 0; }
+    /* the list takes the spare height: as many of the day's incidents as fit (fitList) */
+    .list { flex: 1; }
+    .inc:nth-child(n + 4) { display: grid; }
+  }
+  /* ...and the shortest (358×396) also folds the numbers into two lines, drops the card's
+     header and the hint. */
+  @container page (max-width: 460px) and (max-height: 470px) {
+    .stat.leftv, .stat.obj-mini { display: flex; align-items: baseline; gap: .4em; }
+    .stat .k { flex: none; }
+    .pm-k { display: none; }
+    .hint { display: none; }
+  }
   /* Taller phones get the two SLIs back (sleep and walk), then the on-call line. */
-  @container page (max-width: 460px) and (min-height: 580px) {
+  @container page (max-width: 460px) and (min-height: 630px) {
     .dash { grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto; grid-template-areas: "head" "gauge" "burn" "inc" "pm" "sli" "act"; }
     .slip { display: flex; }
     .slis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -597,6 +647,48 @@
     .inc { padding: .36em 0; }
     .foot { padding-top: .4em; }
   }
+
+  /* ---------- The first incident, in person (autoplay only) ----------
+     A slice of toast drops onto the dashboard, turns half over on the way down and lands
+     butter side down (the classic: from table height it only has time for about half a
+     turn). The dashboard answers with everything it has: a spinning red beacon, red edges,
+     every panel blinking. Then the toast is filed as the first row of the incident list. */
+  .fx { position: absolute; inset: 0; z-index: 9; overflow: clip; pointer-events: none; }
+  .fx::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 0 3px var(--red), inset 0 0 min(14cqmin, 110px) min(3cqmin, 26px) rgba(242, 73, 92, .5);
+    opacity: 0;
+  }
+  .fx.alarm::after { animation: redpulse .5s ease-in-out 3; }
+  @keyframes redpulse { 50% { opacity: 1; } }
+  .dash.alarm .panel, .dash.alarm .head { animation: redline .5s steps(1, end) 3; }
+  .dash.alarm .sdot { background: var(--red); box-shadow: 0 0 0 3px rgba(242, 73, 92, .25), 0 0 10px rgba(242, 73, 92, .9); }
+  @keyframes redline { 0% { border-color: var(--red); } 50% { border-color: var(--line); } }
+  .slice { position: absolute; left: 0; top: 0; width: 60px; height: 60px; perspective: 520px; visibility: hidden; }
+  .slice.on { visibility: visible; }
+  .sl-turn { position: absolute; inset: 0; transform-style: preserve-3d; }
+  .sl-face { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .55)); }
+  .sl-down { transform: rotateX(180deg); }
+  .splat { position: absolute; left: 0; top: 0; width: 100px; height: 100px; overflow: visible; visibility: hidden; }
+  .splat.on { visibility: visible; }
+  .splat .blob { fill: #fff0a0; stroke: #eec850; stroke-width: 1; transform-box: fill-box; transform-origin: center; }
+  .splat .zip { stroke: #eef0f6; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+  .beacon { position: absolute; left: 0; top: 0; width: 30px; height: 30px; visibility: hidden; }
+  .beacon.on { visibility: visible; }
+  .beacon::before {
+    content: "";
+    position: absolute;
+    inset: -170%;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(255, 70, 80, .5) 0deg 28deg, transparent 28deg 180deg, rgba(255, 70, 80, .5) 180deg 208deg, transparent 208deg);
+    -webkit-mask: radial-gradient(circle, #000 18%, transparent 70%);
+    mask: radial-gradient(circle, #000 18%, transparent 70%);
+    animation: sweep .55s linear infinite;
+  }
+  @keyframes sweep { to { rotate: 1turn; } }
+  .beacon svg { position: relative; display: block; width: 100%; height: 100%; overflow: visible; }
 
   @media (prefers-reduced-motion: reduce) {
     .panel.loading::after, .panel.loading::before { animation: none; }
@@ -641,6 +733,10 @@
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6h8v4.2A3.3 3.3 0 0 1 7.7 13.5h-1.4A3.3 3.3 0 0 1 3 10.2z" fill="none" stroke="#bdf5c4" stroke-width="1.5"/><path d="M11 7h1a1.6 1.6 0 0 1 0 3.2h-1" fill="none" stroke="#bdf5c4" stroke-width="1.5"/><path d="M5.4 1.5c-.6.9.6 1.4 0 2.6M8.2 1.5c-.6.9.6 1.4 0 2.6" fill="none" stroke="#bdf5c4" stroke-width="1.2" stroke-linecap="round"/></svg>
       <span data-lang="en">Take 30 minutes</span><span data-lang="ko">30분 쉬기</span>
     </button>
+    <p class="hint">
+      <span data-lang="en">Log a slip, or take a break. Watch the budget.</span>
+      <span data-lang="ko">실수를 기록하거나 쉬어 보세요. 버짓이 움직여요.</span>
+    </p>
     <p class="toast" id="toast" role="status" aria-live="polite"></p>
   </div>
 
@@ -686,7 +782,7 @@
         <p class="stat burnr"><span class="k" data-lang="en">Burn rate (1 h)</span><span class="k" data-lang="ko">번 레이트 (1시간)</span><span class="v" id="sBurn"></span></p>
       </div>
       <p class="foot" id="footMini">
-        <span data-lang="en">* “100% is the wrong reliability target for basically everything.” <span class="who">— Google SRE book</span></span>
+        <span data-lang="en"><span class="fq-full">* “100% is the wrong reliability target for basically everything.”</span><span class="fq-cut">* “100% is the wrong reliability target…”</span> <span class="who">— Google SRE book</span></span>
         <span data-lang="ko">* “100%는 거의 모든 것에 틀린 목표다” <span class="who">— 구글 SRE 책</span></span>
       </p>
     </div>
@@ -786,6 +882,46 @@
     </article>
   </section>
 </main>
+<div class="fx" id="fx" aria-hidden="true">
+  <svg class="splat" id="splat" viewBox="0 0 100 100">
+    <path class="blob" d="M30 49c-4-2-8-1-9 2-4 0-7 3-5 6-3 3-1 7 3 7 1 3 6 4 11 1z"/>
+    <circle class="blob" cx="14.5" cy="67" r="2"/>
+    <path class="blob" d="M70 56c4-2 9-1 10 2 4 1 6 5 3 7 1 4-2 6-6 5-2 2-6 2-8-1z"/>
+    <circle class="blob" cx="86" cy="52" r="1.7"/>
+    <path class="blob" d="M36 74c1 4 5 7 10 6 3 3 8 2 10-1 3 0 4-3 1-5z"/>
+    <circle class="blob" cx="62" cy="85" r="1.8"/>
+    <path class="zip" d="M3 30 9 35M0 46h7M97 28l-6 5M100 47h-7M8 92l5-4M92 93l-5-4"/>
+  </svg>
+  <div class="slice" id="slice">
+    <div class="sl-turn" id="slTurn">
+      <!-- butter side (on top as it falls) -->
+      <svg class="sl-face sl-up" viewBox="0 0 100 100">
+        <path d="M12 92V43C3 38 2 16 20 9c16-6 44-6 60 0 18 7 17 29 8 34v49c0 3-2 5-5 5H17c-3 0-5-2-5-5Z" fill="#9c5a24"/>
+        <path d="M19 88V41c-7-4-6-20 7-24 14-5 34-5 48 0 13 4 14 20 7 24v47Z" fill="#e8b062"/>
+        <path d="M27 30c6-3 13-4 20-4M60 70c4 2 9 2 13 0M30 76c3 1 6 1 9 0" stroke="#c98a3e" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+        <g transform="rotate(-9 50 55)">
+          <path d="M29 49c-1-5 3-9 8-9h26c5 0 8 4 7 9l1 14c0 5-4 9-9 9H37c-6 0-10-4-9-9Z" fill="#f5cf45"/>
+          <rect x="31" y="39" width="38" height="27" rx="5" fill="#fff4b0" stroke="#e8b93a" stroke-width="1.6"/>
+          <path d="M36 45h19M36 50h8" stroke="#fffdf0" stroke-width="3.2" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <!-- the other side: plain toast (on top once it has landed) -->
+      <svg class="sl-face sl-down" viewBox="0 0 100 100">
+        <path d="M12 92V43C3 38 2 16 20 9c16-6 44-6 60 0 18 7 17 29 8 34v49c0 3-2 5-5 5H17c-3 0-5-2-5-5Z" fill="#9c5a24"/>
+        <path d="M19 88V41c-7-4-6-20 7-24 14-5 34-5 48 0 13 4 14 20 7 24v47Z" fill="#dda258"/>
+        <path d="M30 34c5-2 11-3 17-3M56 52c5 1 10 0 14-2M28 64c4 2 8 2 12 1M50 78c5 1 10 1 15-1" stroke="#b9772f" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+  </div>
+  <div class="beacon" id="beacon">
+    <svg viewBox="0 0 40 40">
+      <rect x="6" y="31" width="28" height="7" rx="2" fill="#2b2f36" stroke="#4a5059"/>
+      <path d="M9 31V22a11 11 0 0 1 22 0v9Z" fill="#f2495c"/>
+      <path d="M13.5 30v-8a6.5 6.5 0 0 1 4-6" stroke="#ffb3bb" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+      <path d="M20 4v4M6 10l3 3M34 10l-3 3" stroke="#ff7383" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>
+  </div>
+</div>
 <p class="sr" id="say" aria-live="polite"></p>
 
 <script>
@@ -864,7 +1000,7 @@
 
   // Today's four incidents (autoplay). t = minutes after midnight.
   const DAY = [
-    { sev: 4, t: 9 * 60 + 12, min: 4, en: ['Spilled coffee', 'recovered in 4 min'], ko: ['커피 쏟음', '복구 4분'] },
+    { sev: 4, t: 7 * 60 + 48, min: 4, en: ['Toast: butter side down', 'recovered: a fresh slice · 4 min'], ko: ['토스트, 버터 바른 면으로 착지', '복구: 새로 구움 · 4분'] },
     { sev: 3, t: 11 * 60 + 30, min: 26, en: ['Replied all', "rollback: 'Correction' email · 26 min"], ko: ["'전체 회신'으로 보냄", "롤백: '정정합니다' 메일 · 26분"] },
     { sev: 3, t: 14 * 60 + 5, min: 18, en: ['Talked to self, unmuted', '18 min'], ko: ['음소거 안 된 채 혼잣말', '18분'] },
     { sev: 2, t: 16 * 60 + 40, min: 45, en: ['Closed without saving', 'recovered: autosave · 45 min'], ko: ['저장 안 하고 닫음', '복구: 자동 저장 · 45분'] },
@@ -1087,9 +1223,22 @@
 
   // The note covers the month's future, so it moves to the empty lower left late in the month.
   const note = $('note');
+  const shortPhone = () => getComputedStyle($('dash')).getPropertyValue('--short').trim() === '1';
   function placeNote() {
     note.classList.toggle('left', D / N > .55);
+    // Short phones: the chart is gone, so the note sits beside the gauge in place of the
+    // numbers (they fade under it), and may reach up into the empty end of the panel title.
+    if (shortPhone()) {
+      const d = $('dash').getBoundingClientRect();
+      const s = document.querySelector('.gaugep .stats').getBoundingClientRect();
+      const g = document.querySelector('.gaugep').getBoundingClientRect();
+      Object.assign(note.style, { left: s.left - d.left - 2 + 'px', right: 'auto', top: 'auto', bottom: d.bottom - s.bottom + 'px', width: Math.min(s.width + 4, g.right - s.left - 4) + 'px', maxHeight: s.bottom - g.top - 4 + 'px' });
+    } else {
+      ['left', 'right', 'top', 'bottom', 'width', 'maxHeight'].forEach((k) => { note.style[k] = ''; });
+    }
+    $('dash').classList.toggle('noted', note.classList.contains('on') && shortPhone());
   }
+  new ResizeObserver(() => placeNote()).observe(document.body);
 
   /* ---------- Incidents ---------- */
   const list = $('list');
@@ -1225,6 +1374,7 @@
   function showNote(animate) {
     if (note.classList.contains('on')) return;
     note.classList.add('on');
+    placeNote();
     $('foot').classList.add('lit');
     $('footMini').classList.add('lit');
     if (animate && !TTY.reduce) {
@@ -1369,9 +1519,95 @@
     renderAll(900);
   }
 
+  /* ---------- The toast (first incident, autoplay only) ----------
+     0.35 s it drops from above the screen onto the burn-down chart, turning exactly half over
+     (butter up → butter down) · 1.2 s lands: thud, butter squeezes out, beacon, red edges and
+     blinking panels for 1.5 s · 2.75 s beacon off · 3 s filed: it shrinks into the new SEV-4 row. */
+  const fx = $('fx');
+  const slice = $('slice');
+  const slTurn = $('slTurn');
+  const splat = $('splat');
+  const beacon = $('beacon');
+  const dash = $('dash');
+  let toastAt = null;
+  function clearFx() {
+    // script animations only: a cancelled CSS animation (the beacon's sweep) would not restart
+    fx.getAnimations({ subtree: true }).forEach((a) => { if (!(a instanceof CSSAnimation)) a.cancel(); });
+    dash.getAnimations().forEach((a) => a.cancel());
+    [slice, splat, beacon].forEach((el) => el.classList.remove('on'));
+    fx.classList.remove('alarm');
+    dash.classList.remove('alarm');
+    toastAt = null;
+  }
+  function dropToast() {
+    // (on short phones the chart has stepped out: the still-empty incident list takes it)
+    const p = document.querySelector(shortPhone() ? '.incp' : '.burnp').getBoundingClientRect();
+    const vw = innerWidth;
+    const vh = innerHeight;
+    const size = Math.round(Math.max(44, Math.min(96, Math.min(vw, vh) * .1, p.width * .24)));
+    // On the chart's empty future, clear of the panel title; always fully on screen.
+    const cx = Math.min(vw - size * .9, Math.max(size, p.left + p.width * .72));
+    const cy = Math.min(vh - size * .7, Math.max(size * .7, p.top + Math.max(size * .62 + 22, p.height * .5)));
+    toastAt = { cx, cy, size };
+    Object.assign(slice.style, { width: size + 'px', height: size + 'px', left: cx - size / 2 + 'px', top: cy - size / 2 + 'px' });
+    slice.classList.add('on');
+    // It falls like a dropped thing (speeding up) and turns at an even pace: butter up for the
+    // first half of the drop, the plain side for the second, exactly half a turn in all.
+    slice.animate([
+      { transform: `translate(${-size * .6}px, ${-(cy + size * .15)}px) rotate(-18deg) scale(1.15)` },
+      { transform: 'translate(0, 0) rotate(5deg) scale(1)' },
+    ], { duration: 850, easing: 'cubic-bezier(.45, 0, .85, .6)', fill: 'both' });
+    slTurn.animate([{ transform: 'rotateX(0deg)' }, { transform: 'rotateX(180deg)' }], { duration: 850, easing: 'cubic-bezier(.3, 0, .7, 1)', fill: 'both' });
+  }
+  function landToast() {
+    if (!toastAt) return;
+    const { cx, cy, size } = toastAt;
+    // thud
+    slice.animate([{ scale: '1.12 .9' }, { scale: '.97 1.03' }, { scale: '1' }], { duration: 220, easing: 'ease-out' });
+    // (only up and left, so the shake never pushes anything past the right or bottom edge)
+    dash.animate([{ translate: '0 0' }, { translate: '0 -3px' }, { translate: '-2px 0' }, { translate: '0 -1px' }, { translate: '0 0' }], { duration: 260 });
+    // the butter, now underneath, squeezes out at the edges
+    const w = size * 1.75;
+    Object.assign(splat.style, { width: w + 'px', height: w + 'px', left: cx - w / 2 + 'px', top: cy - w / 2 + 'px' });
+    splat.classList.add('on');
+    splat.querySelectorAll('.blob').forEach((b, i) => b.animate([{ scale: 0 }, { scale: 1.15, offset: .6 }, { scale: 1 }], { duration: 260, delay: i * 25, easing: 'ease-out', fill: 'backwards' }));
+    splat.querySelector('.zip').animate([{ opacity: 1 }, { opacity: 1, offset: .5 }, { opacity: 0 }], { duration: 420, fill: 'forwards' });
+    // and the dashboard declares an incident
+    const b = Math.round(size * .56);
+    Object.assign(beacon.style, { width: b + 'px', height: b + 'px', left: cx + size * .5 - b * .55 + 'px', top: cy - size * .5 - b * .8 + 'px' });
+    beacon.classList.add('on');
+    beacon.animate([{ scale: 0, translate: '0 40%' }, { scale: 1.15, translate: '0 0', offset: .7 }, { scale: 1 }], { duration: 260, easing: 'ease-out' });
+    fx.classList.add('alarm');
+    dash.classList.add('alarm');
+  }
+  function stopAlarm() {
+    if (!toastAt) return;
+    fx.classList.remove('alarm');
+    dash.classList.remove('alarm');
+    beacon.animate([{ opacity: 1 }, { opacity: 0, scale: .6 }], { duration: 220, fill: 'forwards' });
+  }
+  // Filed: the slice shrinks into the SEV-4 badge of the row that has just arrived.
+  function fileToast() {
+    if (!toastAt) return;
+    const row = list.querySelector('.inc .sev');
+    const r = row && row.getBoundingClientRect();
+    const { cx, cy, size } = toastAt;
+    if (!r || !r.width) { clearFx(); return; }
+    const dx = r.left + r.width / 2 - cx;
+    const dy = r.top + r.height / 2 - cy;
+    const k = Math.max(.18, r.height / size);
+    slice.animate([
+      { transform: 'translate(0, 0) rotate(5deg) scale(1)', opacity: 1 },
+      { transform: `translate(${dx}px, ${dy}px) rotate(-8deg) scale(${k})`, opacity: 1, offset: .82 },
+      { transform: `translate(${dx}px, ${dy}px) rotate(-8deg) scale(${k * .6})`, opacity: 0 },
+    ], { duration: 520, easing: 'cubic-bezier(.5, 0, .3, 1)', fill: 'forwards' });
+    splat.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 380, fill: 'forwards' });
+  }
+
   /* ---------- Autoplay (24 s) ----------
-     0 s skeleton → panels fill and count up · 3/4.5/6/7.5 s incidents · 9 s burn-rate alert ·
-     11.5 s resolved · 12.5 s postmortem card · 16 s note + footnote · 18 s neon · 24 s again. */
+     0 s skeleton → panels fill and count up · 0.35–3 s the toast (above) · 3/4.5/6/7.5 s
+     incidents · 9 s burn-rate alert · 11.5 s resolved · 12.5 s postmortem card · 16 s note +
+     footnote · 18 s neon · 24 s again. */
   const PANELS = ['.obj', '.gaugep', '.ops', '.burnp', '.incp', '.slip', '.pmp'].map((s) => document.querySelector(s));
   const timers = [];
   const at = (s, fn) => timers.push(setTimeout(fn, s * 1000));
@@ -1415,6 +1651,7 @@
 
   function reset() {
     timers.splice(0).forEach(clearTimeout);
+    clearFx();
     clearTimeout(policyT);
     exhausted = false;
     S = fresh();
@@ -1423,6 +1660,7 @@
     writePM(null);
     hidePM();
     note.classList.remove('on');
+    dash.classList.remove('noted');
     $('foot').classList.remove('lit');
     $('footMini').classList.remove('lit');
     unNeon();
@@ -1444,7 +1682,11 @@
     reset();
     playing = true;
     PANELS.forEach((p, i) => at(.25 + i * .17, () => loadPanel(p, true)));
+    at(.35, dropToast);
+    at(1.2, landToast);
+    at(2.75, stopAlarm);
     DAY.forEach((inc, i) => at([3, 4.5, 6, 7.5][i], () => addIncident(inc, true)));
+    at(3, fileToast);
     at(9, () => setAlert('fire'));
     at(11.5, () => setAlert('ok'));
     at(12.5, () => showPM(true));
@@ -1456,6 +1698,7 @@
   // The final scene, all at once: used for reduced motion and when a visitor takes over.
   function settle() {
     timers.splice(0).forEach(clearTimeout);
+    clearFx();
     playing = false;
     PANELS.forEach((p) => p.classList.remove('loading'));
     $('objNum').textContent = '95%';
@@ -1473,6 +1716,12 @@
     if (playing) settle();
     if (exhausted) refill();
     else fn();
+    // On a short phone the note covers the numbers: a visitor working the buttons wants to see
+    // them move, so the note comes off.
+    if (shortPhone() && note.classList.contains('on')) {
+      note.classList.remove('on');
+      dash.classList.remove('noted');
+    }
     if (!TTY.reduce) {
       clearTimeout(resumeT);
       resumeT = setTimeout(play, 12000);

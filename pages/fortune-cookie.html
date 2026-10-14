@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-tty-nav="top">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -87,6 +87,11 @@
   .half.left { transform-origin: 100% 85%; }
   .half.right { transform-origin: 0% 85%; }
   .crease { transform-box: fill-box; transform-origin: 50% 100%; }
+  .sweat { opacity: 0; }
+  /* The crumbs that land as a check mark; hidden until a cookie cracks. */
+  .check { opacity: 0; }
+  .check-glow { opacity: .72; stroke-dasharray: 1; }
+  .check-crumbs .cc { transform-box: fill-box; transform-origin: center; }
 
   .slip {
     position: relative;
@@ -121,6 +126,16 @@
   .learn { margin-top: .6cqmin; color: #6b6253; }
   .lang-ko .lucky, .lang-ko .learn { word-break: keep-all; }
   .lang-ko .lucky { font-weight: 400; }
+  /* Short portrait stages (the home stage on a 390 × 600 phone is about 358 × 396): a smaller plate
+     and fortune, stacked from the top, so the plate stays clear of the title and a double's
+     second slip still ends above the footer. */
+  @container (orientation: portrait) and (max-height: 470px) {
+    .scene { gap: 2cqh; padding-bottom: 0; align-content: start; }
+    .plate { width: min(34cqmin, 100%); }
+    .slip { padding: 3.4cqmin 4.2cqmin 3cqmin; }
+    .fortune { min-height: 0; font-size: 15px; }
+    .lucky { margin-top: 1.8cqmin; }
+  }
 
   /* The second slip of a double: it hangs out from under the first. JS places it. */
   .twin {
@@ -140,9 +155,10 @@
   .lang-ko .twin b { font-family: 'Gowun Dodum', sans-serif; font-weight: 400; letter-spacing: 0; }
   .twin span > font-kku { color: #2b2a6b; }
 
+  /* Opened on its own, _kit.js's "?" and ":)" buttons are pinned top right (data-tty-nav="top"),
+     where the title leaves room, so the footer can use the full width. */
   .foot { display: flex; justify-content: space-between; gap: 2cqmin; font-size: max(12px, 2cqmin); opacity: .78; }
-  /* Opened on its own on a phone, _kit.js puts a small ":)" button bottom-right; keep the footer clear of it. */
-  @media (max-width: 600px) { html:not(.embedded) .foot { padding-right: 44px; } }
+  .lang-ko .foot { word-break: keep-all; }
   .hint { text-align: right; }
 
   .crumbs { position: fixed; inset: 0; pointer-events: none; }
@@ -182,6 +198,16 @@
         </g>
         <rect class="tail" x="94" y="84" width="38" height="9" rx="1.5" fill="#fffdf6" stroke="#d9cfbb" stroke-width="1" transform="rotate(24 94 88)"/>
         <path class="crease" d="M100 34 L93 44 L101 55 L93 66 L100 77 L95 88" stroke="#a8661a" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- A nervous cookie sweats before the review. -->
+        <g transform="translate(170 20)"><g class="sweat">
+          <path d="M0 -11 C 4 -5, 8 0, 8 4 A 8 8 0 0 1 -8 4 C -8 0, -4 -5, 0 -11 Z" fill="#bfe6ff" stroke="#4f9bc9" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M-3.5 1.5 C -3.5 -1, -2 -3, -.6 -4.6" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </g></g>
+        <!-- Where the crumbs land: a check mark, and it lights up green. -->
+        <g class="check" aria-hidden="true">
+          <path class="check-glow" pathLength="1" d="M74 94 L94 117 L131 72" fill="none" stroke="#3fd57f" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+          <g class="check-crumbs"></g>
+        </g>
       </svg>
     </button>
 
@@ -340,8 +366,9 @@
     el.textContent = text;
     return el;
   };
+  const short = matchMedia('(orientation: portrait) and (max-height: 470px)');
   function write(i) {
-    if (TTY.lang === 'ko') fortune.replaceChildren(pilgi(FORTUNES[i], 'max(19px, 4.4cqmin)'));
+    if (TTY.lang === 'ko') fortune.replaceChildren(pilgi(FORTUNES[i], short.matches ? '17px' : 'max(19px, 4.4cqmin)'));
     else fortune.textContent = FORTUNES[i];
     const nums = CODES.slice().sort(() => Math.random() - .5).slice(0, 3).sort((a, b) => a - b);
     lucky.textContent = luckyLabel + nums.join(', ');
@@ -373,12 +400,84 @@
   addEventListener('resize', () => { if (twin.style.visibility === 'visible') placeTwin(); });
 
   const rand = (a, b) => a + Math.random() * (b - a);
+
+  // Before the snap the cookie breaks into a sweat, like anyone about to open a pull request.
+  const sweatDrop = $('.sweat');
+  function sweat(ms, delay = 0) {
+    if (TTY.reduce) return;
+    sweatDrop.animate([
+      { transform: 'translate(0, 0) scale(.2)', opacity: 0 },
+      { transform: 'translate(0, 0) scale(1.1)', opacity: 1, offset: .2 },
+      { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: .32 },
+      { transform: 'translate(3px, 3px) scale(1)', opacity: 1, offset: .62 },
+      { transform: 'translate(8px, 22px) scale(.85)', opacity: 0 },
+    ], { duration: ms, delay, easing: 'ease-in', fill: 'backwards' });
+  }
+
+  // Some of the crumbs land in a check mark, and it lights up green: even the crumbs approve.
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const check = $('.check');
+  const checkGlow = $('.check-glow');
+  const checkCrumbs = (() => {
+    const pts = [[74, 94], [94, 117], [131, 72]];
+    const segs = [[pts[0], pts[1]], [pts[1], pts[2]]];
+    const total = segs.reduce((n, [a, b]) => n + Math.hypot(b[0] - a[0], b[1] - a[1]), 0);
+    const count = 14;
+    const out = [];
+    for (let k = 0; k < count; k++) {
+      let d = (total * k) / (count - 1);
+      let at = null;
+      for (const [a, b] of segs) {
+        const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (d <= len + .001) { at = [a[0] + ((b[0] - a[0]) * d) / len, a[1] + ((b[1] - a[1]) * d) / len]; break; }
+        d -= len;
+      }
+      const spot = document.createElementNS(SVGNS, 'g');
+      spot.setAttribute('transform', `translate(${at[0].toFixed(1)} ${at[1].toFixed(1)})`);
+      const cc = document.createElementNS(SVGNS, 'g');
+      cc.setAttribute('class', 'cc');
+      const e = document.createElementNS(SVGNS, 'ellipse');
+      e.setAttribute('rx', rand(5.2, 6.2).toFixed(1));
+      e.setAttribute('ry', rand(4, 4.8).toFixed(1));
+      e.setAttribute('transform', `rotate(${Math.round(rand(-40, 40))})`);
+      e.setAttribute('fill', '#eab04f');
+      e.setAttribute('stroke', '#b9761d');
+      e.setAttribute('stroke-width', '1.4');
+      cc.append(e);
+      spot.append(cc);
+      $('.check-crumbs').append(spot);
+      out.push({ cc, x: at[0], y: at[1] });
+    }
+    return out;
+  })();
+  function hideCheck() {
+    check.style.opacity = '0';
+    [checkGlow, ...checkCrumbs.map((c) => c.cc)].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
+  }
+  function landCheck() {
+    check.style.opacity = '1';
+    if (TTY.reduce) return;
+    // They hop out of the crack one after another and line up along the check, short arm first.
+    const from = { x: 100, y: 60 };
+    checkCrumbs.forEach(({ cc, x, y }, k) => {
+      const dx = from.x - x, dy = from.y - y;
+      cc.animate([
+        { transform: `translate(${dx}px, ${dy}px) scale(.5)`, opacity: 0 },
+        { transform: `translate(${dx * .5}px, ${dy * .5 - 34}px) scale(1)`, opacity: 1, offset: .45 },
+        { transform: 'translate(0, 0) scale(1.15, .8)', opacity: 1, offset: .85 },
+        { transform: 'none', opacity: 1 },
+      ], { duration: 560, delay: 120 + k * 45, easing: 'cubic-bezier(.3, .6, .4, 1)', fill: 'backwards' });
+    });
+    checkGlow.animate([{ strokeDashoffset: 1, opacity: 0 }, { strokeDashoffset: 1, opacity: .95, offset: .01 }, { strokeDashoffset: 0, opacity: .95, offset: .55 }, { strokeDashoffset: 0, opacity: .72 }],
+      { duration: 620, delay: 120 + checkCrumbs.length * 45 + 380, easing: 'ease-out', fill: 'backwards' });
+  }
+
   function burst() {
     const box = cookie.getBoundingClientRect();
     const x = box.left + box.width * .5;
     const y = box.top + box.height * .45;
     const floor = box.top + box.height * .95;
-    for (let n = 0; n < 18; n++) {
+    for (let n = 0; n < 12; n++) {
       const c = document.createElement('i');
       c.className = 'crumb';
       c.style.setProperty('--s', `${rand(4, 10)}px`);
@@ -419,6 +518,7 @@
     if (TTY.reduce) {
       write(i);
       settleCracked();
+      landCheck();
       slip.style.visibility = 'visible';
       twin.style.visibility = 'hidden';
       if (isDouble()) showTwin();
@@ -440,6 +540,8 @@
         { duration: 260, easing: 'ease-in', fill: 'forwards' }).finished;
       // Forward-filled animations would win over anything newer once that ends; clear them.
       [cookie, left, right, crease, tail].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
+      hideCheck();
+      sweat(640, 400); // as it lands, gone before the snap
       await cookie.animate([
         { transform: 'translateY(-140%) rotate(-8deg)', opacity: 1, easing: 'cubic-bezier(.55, 0, 1, .45)' },
         { transform: 'translateY(0) rotate(0)', opacity: 1, offset: .55, easing: 'cubic-bezier(0, .55, .45, 1)' },
@@ -459,6 +561,7 @@
     left.animate([{ transform: 'none' }, { transform: 'translate(-17%, 4%) rotate(-17deg)' }], { duration: 520, easing: ease, fill: 'forwards' });
     right.animate([{ transform: 'none' }, { transform: 'translate(17%, 4%) rotate(17deg)' }], { duration: 520, easing: ease, fill: 'forwards' });
     burst();
+    landCheck();
 
     // The slip is pulled out of the crease and lands on the table.
     slip.style.visibility = 'visible';
@@ -472,23 +575,28 @@
       { transform: 'none', clipPath: 'inset(0 0 0 0)' },
     ], { duration: 820, easing: 'cubic-bezier(.25, .8, .3, 1.08)' }).finished;
     // A double: the second slip follows the first out of the cookie.
-    if (isDouble()) await showTwin();
+    const double = isDouble();
+    if (double) await showTwin();
 
     cracked = true;
     busy = false;
-    scheduleAuto();
+    scheduleAuto(double);
   }
 
-  function scheduleAuto() {
+  // The next cookie comes by itself: 5.2 s after a single, 9 s after a double (two slips to
+  // read; on the home stage the visit then ends on the double) or after a tap.
+  function scheduleAuto(double = false) {
     clearTimeout(auto);
     const quiet = Date.now() - lastTouch;
-    auto = setTimeout(crack, quiet < 8000 ? 9000 : 5200);
+    auto = setTimeout(crack, quiet < 8000 || double ? 9000 : 5200);
   }
   plate.addEventListener('click', () => { lastTouch = Date.now(); crack(); });
 
   count.textContent = countText(0);
   TTY.onShow(() => {
     if (TTY.reduce) { crack(); return; }
+    // The first cookie sweats a little longer: it has been waiting for this review.
+    setTimeout(() => sweat(900), 100);
     setTimeout(crack, 700);
   });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));

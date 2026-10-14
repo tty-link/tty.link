@@ -64,6 +64,10 @@
     --rows: 2;
     position: absolute;
     inset: 0;
+    /* The robot waits off the right edge (and the cart off the left). Without the clip that
+       made the body scrollable sideways: a tap on a product on a phone could shift the whole
+       aisle 70 px to the left. */
+    overflow: clip;
   }
   @container page (max-aspect-ratio: 9/10) or (max-width: 560px) {
     .scene {
@@ -178,6 +182,12 @@
     .poster-src { display: none; }
     .p-pin { font-size: max(11px, 6cqh); translate: 0 -50%; margin: 0 0 0 .7em; padding: .2em .45em; }
     .p-pin::after { left: auto; right: 100%; top: 50%; translate: 0 -50%; border: .3em solid transparent; border-right-color: var(--warn); }
+  }
+  /* A short poster (the 358×396 phone stage: about 112px) cannot stack four labels over four bars
+     and the milk line: the label and its bar share a row again, as on wide screens. */
+  @container (max-height: 140px) {
+    .p-rows { grid-template-columns: auto 1fr; row-gap: max(3px, 2.4cqh); column-gap: 3cqw; align-content: center; }
+    .p-track { margin-bottom: 0; }
   }
 
   /* ---- The aisle goes on: neighbouring cases, out of focus ---- */
@@ -459,6 +469,35 @@
   .mini .stk { display: none; }
   .mini.expired .face-front::after { content: ""; position: absolute; left: 4%; right: 8%; top: 44%; height: 16%; border-radius: 2px; background: var(--warn); rotate: -14deg; box-shadow: 0 0 0 1px #fff; }
 
+  /* Spoiled: yesterday's milk goes off at the start. Green tinge, a sick face, stink lines, a fly. */
+  .spoil { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .spoil > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .spoil .tinge { mix-blend-mode: multiply; }
+  .spoil .stink path { fill: none; stroke: #7d9a33; stroke-width: 5.5; stroke-linecap: round; }
+  .spoil .stink { animation: stink 1.5s ease-in-out infinite; opacity: 0; }
+  .spoil .stink:nth-of-type(2) { animation-delay: -.5s; }
+  .spoil .stink:nth-of-type(3) { animation-delay: -1s; }
+  @keyframes stink { 0% { transform: translateY(8px); opacity: 0; } 35% { opacity: .9; } 100% { transform: translateY(-16px); opacity: 0; } }
+  .fly { position: absolute; left: 0; top: 0; width: max(16px, 32cqw); aspect-ratio: 1.3; margin: -10% 0 0 -16%; animation: fly-loop 1.8s linear infinite; }
+  .fly svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .fly .wings { transform-origin: 50% 70%; animation: flap .08s steps(2) infinite; }
+  @keyframes flap { 50% { transform: scaleY(.45); } }
+  @keyframes fly-loop {
+    0% { translate: 66cqw -4cqh; } 14% { translate: 96cqw 4cqh; } 30% { translate: 84cqw 22cqh; } 46% { translate: 40cqw 14cqh; }
+    62% { translate: 2cqw 2cqh; } 78% { translate: 10cqw -14cqh; } 90% { translate: 40cqw -10cqh; } 100% { translate: 66cqw -4cqh; }
+  }
+  .spoiled .face-front > .art-svg { transform-origin: 50% 100%; animation: bloat 2.2s ease-in-out infinite; }
+  @keyframes bloat { 50% { transform: scale(1.045, .99); } }
+  .mini .spoil .face, .mini .spoil .stink { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .spoil .stink, .fly, .fly .wings, .spoiled .face-front > .art-svg { animation: none; }
+    .spoil .stink { opacity: .8; }
+    .fly { translate: 80cqw -6cqh; }
+  }
+
+  /* For the opening gag the aisle dims around yesterday's milk. */
+  .spot { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; background: radial-gradient(circle at var(--sx, 50%) var(--sy, 50%), transparent 0 var(--sr, 80px), rgba(8, 18, 28, .6) calc(var(--sr, 80px) + 4cqmin)); }
+
   /* The red slip the browser sticks on the homemade milk. */
   .note {
     position: absolute;
@@ -506,6 +545,33 @@
     html:not(.embedded) .scene { --floor: calc(12.5cqh + 34px); --lift: 34px; }
   }
   .floor::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: rgba(0,0,0,.25); }
+  /* The hint: a sticker on the shop floor, pointing up at the shelves (the cart rolls over it).
+     Narrow, the floor is full (the cart parks on the left, the robot works on the right), so the
+     hint hangs under the banner instead, in a gap made for it. */
+  .floor-hint, .top-hint {
+    position: absolute;
+    left: 50%;
+    bottom: calc(10% + var(--lift, 0px) * .5);
+    translate: -50% 0;
+    max-width: min(46%, 26em);
+    margin: 0;
+    padding: .28em .85em .3em;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, .8);
+    box-shadow: inset 0 0 0 1.5px rgba(31, 87, 170, .4), 0 1px 2px rgba(0, 0, 0, .12);
+    color: var(--navy);
+    font: 600 clamp(11px, 1.6cqh, 14px)/1.2 'Archivo Narrow', 'IBM Plex Sans KR', sans-serif;
+    text-align: center;
+    text-wrap: balance;
+    pointer-events: none;
+  }
+  .lang-ko .floor-hint, .lang-ko .top-hint { font-family: 'IBM Plex Sans KR', sans-serif; font-weight: 500; letter-spacing: -.01em; }
+  .top-hint { display: none; }
+  @container page (max-aspect-ratio: 9/10) or (max-width: 560px) {
+    .scene { --hint: clamp(11px, 1.7cqh, 13px); --gap: calc(1.3cqh + var(--hint) * 1.55); }
+    .floor-hint { display: none; }
+    .top-hint { display: block; top: calc(var(--pt) + var(--banner) + .65cqh + 1px); bottom: auto; z-index: 1; max-width: 94%; padding: .1em .7em .14em; font-size: var(--hint); white-space: nowrap; }
+  }
   .cart { position: absolute; left: 0; bottom: calc(6% + var(--lift, 0px) * .94); height: calc(92% - var(--lift, 0px) * .92); aspect-ratio: 1.5; container-type: size; }
   .cart-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .cart-load { position: absolute; left: 26%; width: 62%; bottom: 40%; height: 70%; display: flex; align-items: flex-end; justify-content: center; gap: 4cqw; }
@@ -665,6 +731,7 @@
     </button>
   </div>
 
+  <p class="top-hint"><span data-lang="en">↓ Pick a product to read its back label</span><span data-lang="ko">↓ 상품을 누르면 뒷면 라벨이 보여요</span></p>
   <div class="aisle l" aria-hidden="true"><i class="a-canopy"></i><i class="a-shelves"><i class="a-row"></i><i class="a-row"></i><i class="a-row"></i></i><i class="a-base"></i></div>
   <div class="aisle r" aria-hidden="true"><i class="a-canopy"></i><i class="a-shelves"><i class="a-row"></i><i class="a-row"></i><i class="a-row"></i></i><i class="a-base"></i></div>
 
@@ -697,6 +764,7 @@
   </div>
 
   <div class="floor">
+    <p class="floor-hint"><span data-lang="en">↑ Pick a product to read its back label</span><span data-lang="ko">↑ 상품을 누르면 뒷면 라벨이 보여요</span></p>
     <div class="cart" aria-hidden="true">
       <svg class="cart-svg cart-back" viewBox="0 0 150 100" preserveAspectRatio="none">
         <path d="M30 12 H146 L136 58 H38 Z" fill="rgba(90,105,118,.12)"/>
@@ -758,6 +826,7 @@
   </div>
   <p id="poster-hint" hidden><span data-lang="en">Turn the banner over to see the poster on its back.</span><span data-lang="ko">현수막을 뒤집으면 뒷면 포스터가 보여요.</span></p>
 
+  <div class="spot" aria-hidden="true"></div>
   <div class="scrim"></div>
   <section class="insp" aria-label="Back label">
     <button class="insp-x" type="button">×</button>
@@ -792,6 +861,7 @@
   const cartLock = $('.cart-lock');
   const cartSay = $('.cart-say');
   const robot = $('.robot');
+  const robotCrate = $('.robot-crate');
   const robotArm = $('.robot-arm');
   const crateLoad = $('.crate-load');
   const robotSay = $('.robot-say');
@@ -823,7 +893,7 @@
       root: 'Not sold in store · kept only in your OS and browser trust stores',
       close: 'Put it back', card: 'Back label', via: 'via Root YR', free: '$0', notSold: 'not for sale',
       stickers: { expired: 'EXPIRED', fresh: 'FRESH', soon: 'SELL BY' },
-      milk: 'Milk: about 10 days', honey: 'Honey: never spoils', posterLabel: 'Poster: certificate shelf life, then and now. Press to roll it up.',
+      milk: 'Milk: about 2 weeks', honey: 'Honey: never spoils', posterLabel: 'Poster: certificate shelf life, then and now. Press to roll it up.',
       bannerLabel: 'Banner: 47 days max from 2029. Certificates now need refrigeration. Press to turn it over.',
       pick: 'Pick up and read the back label',
       phase: (d, now, from) => (now ? `<b>${d} days</b> · now${from ? ` (from ${fmtLong(from)})` : ''}` : from ? `<b>${d} days</b> · from ${fmtLong(from)}` : `<b>${d} days</b>`),
@@ -839,7 +909,7 @@
       root: '매장 진열 안 함 · 운영체제와 브라우저의 신뢰 저장소에만 있어요',
       close: '제자리에 두기', card: '뒷면 라벨', via: 'Root YR 경유', free: '₩0', notSold: '비매품',
       stickers: { expired: '폐기', fresh: '신선', soon: '임박' },
-      milk: '우유: 약 10일', honey: '꿀: 상하지 않음', posterLabel: '포스터: 인증서 유통기한 변천. 누르면 걷혀요.',
+      milk: '우유: 약 2주', honey: '꿀: 상하지 않음', posterLabel: '포스터: 인증서 유통기한 변천. 누르면 걷혀요.',
       bannerLabel: '현수막: 2029년부터 최대 47일. 이제 인증서도 냉장 보관. 누르면 뒤집혀요.',
       pick: '집어서 뒷면 라벨 보기',
       phase: (d, now, from) => (now ? `<b>${d}일</b> · 지금${from ? `(${fmtLong(from)}부터)` : ''}` : from ? `<b>${d}일</b> · ${fmtLong(from)}부터` : `<b>${d}일</b>`),
@@ -863,7 +933,7 @@
     homemade: {
       kind: 'home', facings: 1, made: -30, days: 3650, cn: 'tty.link', verdict: 'authority',
       chain: [{ role: 'farm', name: T('Our yard', '우리 집 마당'), st: 'bad_', icon: 'house' }, { role: 'pack', name: T('Our yard', '우리 집 마당'), st: 'ok_' }],
-      title: T('Homemade Milk', '자체 서명 우유'), tag: T('from our own cow · Mom vouches for it', '우리 집 소 · 엄마가 보증함'), short: T('Homemade Milk', '자체 서명 우유'), price: L.free,
+      title: T('Homemade Milk', '자체 서명 우유'), tag: T('vouched for by our own cow', '우리 집 소가 직접 보증함'), short: T('Homemade Milk', '자체 서명 우유'), price: L.free,
     },
     cheese: {
       kind: 'cheese', facings: 1, back: true, made: -40, days: 90, cn: '*.example.com', verdict: 'wild', chain: le('*.example.com'),
@@ -987,7 +1057,7 @@
       <g font-family="Permanent Marker" fill="#3a2614" text-anchor="middle">
         <text x="45" y="112" font-size="10.5" transform="rotate(-6 45 112)">Homemade</text>
         <text x="44" y="136" font-size="19" transform="rotate(-5 44 136)">MILK</text>
-        <text x="40" y="153" font-size="8" transform="rotate(-4 40 153)">Mom says OK</text>
+        <text x="40" y="153" font-size="8" transform="rotate(-4 40 153)">Cow says OK</text>
       </g>
       <path d="M60 147c0-2.6 3.6-2.6 3.6 0 0-2.6 3.6-2.6 3.6 0 0 2.6-3.6 4.6-3.6 4.6s-3.6-2-3.6-4.6Z" fill="#d8443a"/>
       <rect x="17" y="170" width="3" height="20" rx="1.5" fill="#fff" opacity=".8"/></svg>`;
@@ -1076,6 +1146,30 @@
     return el;
   }
 
+  // Gone off (cartons only, drawn on the 100 × 200 carton): a green tinge and mould, a face with
+  // crossed-out eyes and its tongue out, stink lines rising, and a fly going round.
+  const SPOIL = `<svg viewBox="0 0 100 200" aria-hidden="true">
+      <path class="tinge" d="M13 21.5H87V31H13Z M80 60 94 54 87 31Z M80 60 94 54V190L80 196Z M6 60H80L87 31H13Z M6 60H80V196H6Z" fill="#b9d36c" opacity=".6"/>
+      <g fill="#86a33f" opacity=".8"><circle cx="19" cy="150" r="5"/><circle cx="26" cy="158" r="3"/><circle cx="71" cy="128" r="4.5"/><circle cx="64" cy="180" r="6"/><circle cx="88" cy="104" r="3"/><circle cx="12" cy="112" r="2.6"/></g>
+      <g class="face" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 57 l12 12 M29 57 l-12 12 M53 55 l12 12 M65 55 l-12 12 M20 83 q5 -6 10 0 t10 0 t10 0 t10 0" stroke="#fff" stroke-width="8"/>
+        <path d="M17 57 l12 12 M29 57 l-12 12 M53 55 l12 12 M65 55 l-12 12 M20 83 q5 -6 10 0 t10 0 t10 0 t10 0" stroke="#1d2733" stroke-width="4.2"/>
+        <path d="M40 83 q1 11 8 10 q5 -1 4 -10" fill="#e36a7a" stroke="#1d2733" stroke-width="2.6"/>
+      </g>
+      <g class="stink"><path d="M26 14 q-8 -10 0 -20 q8 -10 0 -20 q-8 -10 0 -20"/></g>
+      <g class="stink"><path d="M50 6 q-8 -10 0 -20 q8 -10 0 -20 q-8 -10 0 -20 q8 -10 0 -20"/></g>
+      <g class="stink"><path d="M74 14 q-8 -10 0 -20 q8 -10 0 -20 q-8 -10 0 -20"/></g>
+    </svg>
+    <span class="fly"><svg viewBox="0 0 26 20" aria-hidden="true"><g class="wings"><ellipse cx="9" cy="6" rx="6.5" ry="4" transform="rotate(-24 9 6)" fill="rgba(225,240,250,.85)" stroke="#1d2733" stroke-width=".9"/><ellipse cx="16" cy="6" rx="6.5" ry="4" transform="rotate(24 16 6)" fill="rgba(225,240,250,.85)" stroke="#1d2733" stroke-width=".9"/></g><ellipse cx="12" cy="13" rx="6" ry="4.4" fill="#1d2733"/><circle cx="19" cy="12.5" r="3.4" fill="#1d2733"/><circle cx="20.5" cy="11.4" r="1.3" fill="#d93025"/></svg></span>`;
+  function spoilArt(art) {
+    if (art.classList.contains('spoiled')) return;
+    art.classList.add('spoiled');
+    const s = document.createElement('span');
+    s.className = 'spoil';
+    s.innerHTML = SPOIL;
+    $('.face-front', art).append(s);
+  }
+
   // A drawing of a product: front and back faces for flipping, stickers on the front.
   function makeArt(id, { bare = false, mini = false } = {}) {
     const p = PRODUCTS[id];
@@ -1086,6 +1180,7 @@
     art.innerHTML = `<span class="art-inner"><span class="face face-front">${svgFor(p, false)}</span><span class="face face-back">${svgFor(p, true)}</span></span>`;
     if (!bare && !mini) p.stickers.forEach((s) => art.querySelector('.face-front').append(stickerEl(s)));
     if (mini && p.stickers.includes('expired')) art.classList.add('expired');
+    if (p.spoiled && !bare) spoilArt(art);
     return art;
   }
 
@@ -1373,6 +1468,38 @@
     });
   }
 
+  // The opening: yesterday's milk ticks over from D-1 to D+1 on its shelf label and goes off on
+  // the spot (green, swollen, a face, a fly), and the EXPIRED / 폐기 sticker comes down on it.
+  function setD(slot, text, over) {
+    const d = $('.eink-d', slot.tags);
+    d.textContent = text;
+    d.classList.toggle('over', over);
+  }
+  function spoil(id) {
+    const p = PRODUCTS[id];
+    if (p.spoiled) return;
+    p.spoiled = true;
+    const art = $('.art', HOME[id].main);
+    if (art) {
+      spoilArt(art);
+      if (!reduce) art.animate([{ transform: 'none' }, { transform: 'scale(1.16, 1.06)', offset: .35 }, { transform: 'scale(.96, 1.02)', offset: .7 }, { transform: 'none' }], { duration: 520, easing: 'ease-out', composite: 'add' });
+    }
+    if (held?.id === id) spoilArt(held.art);
+  }
+  const spot = $('.spot');
+  function spotOn(slot, ms) {
+    if (reduce) return;
+    const c = rect(slot.cell), sc = rect(scene);
+    spot.style.setProperty('--sx', Math.round(c.left + c.width / 2 - sc.left) + 'px');
+    spot.style.setProperty('--sy', Math.round(c.top + c.height * .4 - sc.top) + 'px');
+    spot.style.setProperty('--sr', Math.round(Math.max(c.width, c.height) * .62) + 'px');
+    spot.animate([{ opacity: 0 }, { opacity: 1, offset: .2 }, { opacity: 1, offset: .8 }, { opacity: 0 }], { duration: ms, easing: 'ease-in-out' });
+  }
+  function slapExpired(id) {
+    addSticker(id, 'expired');
+    if (!reduce) HOME[id].cell.animate([{ transform: 'none' }, { transform: 'translate(1.5%, 1%) rotate(.8deg)' }, { transform: 'translate(-1%, -.5%)' }, { transform: 'none' }], { duration: 280, delay: 240 });
+  }
+
   async function doPutBack({ ms = 460, into = null } = {}) {
     if (!held) return;
     const g = gen;
@@ -1404,15 +1531,33 @@
   function cartTo(where, ms = 0) {
     cartAt = where;
     const w = cart.offsetWidth;
-    const x = where === 'off' ? -w * 1.4 : where === 'park' ? (narrow() ? 6 : floorX(slots[0]) - w * .57) : floorX(HOME[where] || slots[0]) - w * .57;
+    let x = where === 'off' ? -w * 1.4 : where === 'park' ? (narrow() ? 6 : floorX(slots[0]) - w * .57) : floorX(HOME[where] || slots[0]) - w * .57;
+    if (where !== 'off') x = clearOfNav(x, cart, [rect(cart)]);   // its BROWSER plate, too
     cartSay.classList.toggle('right', x + w / 2 > floor.offsetWidth / 2);
     moveX(cart, x, ms);
   }
   function robotTo(where, ms = 0) {
     robotAt = where;
     const w = robot.offsetWidth;
-    const x = where === 'off' ? floor.offsetWidth + w * .3 : floorX(slots[5]) - w * .5;
+    let x = where === 'off' ? floor.offsetWidth + w * .3 : floorX(slots[5]) - w * .5;
+    if (where === 'aside') x = clearOfNav(x);
     moveX(robot, x, ms);
+  }
+  // Opened on its own, the page gets the kit's "? :)" in a corner; on phones that is the bottom
+  // right, right where the robot stops under yesterday's slot. After the swap he rolls left
+  // ('aside') until his crate, with yesterday's milk in it (a button), is out from under it.
+  // (The cart, stopping under the right-hand column on a phone, keeps clear of it the same way.)
+  function clearOfNav(x, el = robot, boxes = null) {
+    const nav = document.querySelector('.tty-nav');
+    if (!nav || getComputedStyle(nav).display === 'none') return x;
+    const n = rect(nav), r = rect(el), f = rect(floor);
+    const box = (boxes || [rect(robotCrate), ...$$('.crate-unit', crateLoad).map(rect)]).filter((q) => q.width);
+    const top = Math.min(...box.map((q) => q.top)), bottom = Math.max(...box.map((q) => q.bottom));
+    const left = Math.min(...box.map((q) => q.left)) - r.left, right = Math.max(...box.map((q) => q.right)) - r.left;
+    const gap = 8;
+    if (bottom <= n.top - gap || top >= n.bottom + gap) return x;          // above or below it
+    if (f.left + x + left >= n.right + gap || f.left + x + right <= n.left - gap) return x;
+    return Math.min(x, n.left - gap - f.left - right);
   }
   function addToCart(id) {
     const mini = makeArt(id, { mini: true });
@@ -1493,6 +1638,7 @@
         fly(makeArt('fresh'), freshFrom, target, { ms: 440, lift: false }).then(() => { if (g === gen) slot.main.classList.remove('gone'); });
       });
       later(1080, () => { armTo(0, 380); swing(slot, false); einkOn(slot, true); slot.btn.disabled = false; });
+      later(1100, () => robotTo('aside', 600));   // arm coming down, he rolls clear of the kit's nav
     });
   }
 
@@ -1527,7 +1673,7 @@
   $('.p-rows').innerHTML = PHASES.map((ph, i) => `
       <span class="p-label">${L.phase(ph.d, i === nowIdx, ph.from)}</span>
       <span class="p-track p-row-${ph.d}${i === nowIdx ? ' p-row-now' : i > nowIdx ? ' p-row-future' : ''}" style="--d:${ph.d}"><i class="p-bar"></i>${i === nowIdx ? `<b class="p-pin">${L.pin}</b>` : ''}</span>`).join('')
-    + `<span class="p-label p-row-milk">${L.milk}</span><span class="p-track p-row-milk" style="--d:10"><i class="p-bar"></i></span>`
+    + `<span class="p-label p-row-milk">${L.milk}</span><span class="p-track p-row-milk" style="--d:14"><i class="p-bar"></i></span>`
     + `<span class="p-label p-row-honey">${L.honey}</span><span class="p-track p-row-honey" style="--d:398"><i class="p-bar"></i></span>`;
   $$('.p-label').forEach((l, k) => { const tr = l.nextElementSibling; if (tr && tr.classList.contains('p-row-now')) l.classList.add('p-row-now'); });
   $('.p-foot').textContent = `${L.milk} · ${L.honey}`;
@@ -1563,8 +1709,9 @@
     clearCardTimers();
     held = null;
     closeCard(true);
+    spot.getAnimations().forEach((a) => a.cancel());
     $$('.flyer').forEach((f) => f.remove());
-    Object.values(PRODUCTS).forEach((p) => { p.stickers = (p.stickers0 || []).slice(); p.noted = false; });
+    Object.values(PRODUCTS).forEach((p) => { p.stickers = (p.stickers0 || []).slice(); p.noted = false; p.spoiled = false; });
     slots[5].id = 'yesterday';
     slots[5].btn.disabled = false;
     slots.forEach(fillSlot);
@@ -1593,11 +1740,12 @@
     PRODUCTS.homemade.noted = true;
     shelfNote.hidden = false;
     PRODUCTS.yesterday.stickers.push('expired');
+    PRODUCTS.yesterday.spoiled = true;
     crateLoad.replaceChildren(crateUnit('yesterday'));
     slots[5].id = 'fresh';
     fillSlot(slots[5]);
     HOME.yesterday = crateSlot;
-    robotTo('fresh');
+    robotTo('aside');
     say(robotSay);
     posterDown();
   }
@@ -1615,22 +1763,29 @@
       if (!reduce) {
         $$('.unit, .vault .prod', fridge).forEach((u, k) => u.animate([{ transform: 'translateY(-14%)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 360, delay: 260 + k * 45, easing: 'cubic-bezier(.3, 1.3, .5, 1)', fill: 'backwards' }));
         [...slots, vaultSlot].forEach((s, k) => { einkOff(s); setTimeout(() => einkOn(s, true), 650 + k * 110); });
+        setD(slots[5], 'D-1', false);   // yesterday's label wakes up one day early...
       }
     }],
-    [1500, () => cartTo('ttylink', 700)],
-    [2150, () => pick('ttylink', { pace: 540, auto: true })],
-    [6150, () => {
+    // The 3-second gag: the label ticks over, the milk goes off, the sticker comes down.
+    [1300, () => spotOn(slots[5], 1600)],
+    [1450, () => { setD(slots[5], 'D-0', false); einkOn(slots[5], true); }],
+    [1700, () => { updateTags(slots[5]); einkOn(slots[5], true); spoil('yesterday'); }],
+    [2250, () => slapExpired('yesterday')],
+    // Then the browser goes shopping (everything up to the homemade milk is 1.5 s later than
+    // before the gag; the yesterday stop is shorter, so the robot keeps its old times).
+    [3000, () => cartTo('ttylink', 700)],
+    [3650, () => pick('ttylink', { pace: 540, auto: true })],
+    [7650, () => {
       const mini = addToCart('ttylink');
       mini.style.visibility = 'hidden';
       putBack({ ms: 520, into: { box: rect(mini), done: () => { mini.style.visibility = ''; showLock(); } } });
     }],
-    [7000, () => cartTo('homemade', 650)],
-    [7650, () => pick('homemade', { pace: 470, auto: true })],
-    [10950, () => putBack({ ms: 520 })],
-    [12000, () => cartTo('yesterday', 650)],
-    [12700, () => einkBlink(slots[5])],
-    [13250, () => addSticker('yesterday', 'expired')],
-    [13550, () => say(cartSay, CODE.date)],
+    [8500, () => cartTo('homemade', 650)],
+    [9150, () => pick('homemade', { pace: 470, auto: true })],
+    [12450, () => putBack({ ms: 520 })],
+    [13250, () => cartTo('yesterday', 650)],
+    [13900, () => einkBlink(slots[5])],
+    [14200, () => say(cartSay, CODE.date)],
     [15350, () => { say(cartSay, null); cartTo('park', 800); }],
     [15900, () => robotTo('fresh', 850)],
     [16800, () => say(robotSay)],

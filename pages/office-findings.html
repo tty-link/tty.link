@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- The standalone nav sits bottom left: empty floor or background at every size, while the
+     report column on the right can reach the bottom (and the top) of a short landscape screen. -->
+<html lang="en" data-tty-nav="left">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -36,7 +38,7 @@
 
   .layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     align-items: center;
     gap: 3cqmin;
     height: 100%;
@@ -80,13 +82,15 @@
   @keyframes blink { 50% { opacity: .25; } }
 
   /* ---- The write-up ---- */
+  /* The padding is in px (clamped), not cqi: cqi here would be the whole stage's width, and
+     54 px a side squeezed the column's text (the stamp, the hint) down to 7 px on desktop. */
   .report {
     container-type: inline-size;
     display: flex;
     flex-direction: column;
     min-height: 0;
     max-height: 100%;
-    padding: 5cqi 5.4cqi;
+    padding: clamp(14px, 3cqmin, 32px) clamp(16px, 3.4cqmin, 36px);
     border-radius: 2cqmin;
     background: var(--paper);
     box-shadow: 0 2cqmin 5cqmin rgba(60, 50, 30, .14);
@@ -116,16 +120,26 @@
   .verdict.on { display: block; }
   .verdict small { display: block; font-size: 3.4cqi; color: var(--soft); }
   .verdict strong { display: block; margin-top: 1cqi; font-size: 7.4cqi; font-weight: 800; line-height: 1.1; }
-  .verdict .stamp { position: absolute; right: 3cqi; top: -3cqi; rotate: 10deg; padding: 1cqi 2.2cqi; border: .6cqi double var(--marker); border-radius: 2cqi; background: var(--paper); color: var(--marker); font-weight: 800; font-size: 3.4cqi; }
+  .verdict .stamp { position: absolute; right: 3cqi; top: -3cqi; rotate: 10deg; padding: 1cqi 2.2cqi; border: .6cqi double var(--marker); border-radius: 2cqi; background: var(--paper); color: var(--marker); font-family: inherit; font-weight: 800; font-size: 3.4cqi; line-height: 1.2; cursor: pointer; }
+  /* The stamp is also the button for the retest; it nudges now and then to say so. */
+  .verdict .stamp.ready { animation: nudge 2.6s ease-in-out 1.4s infinite; }
+  @keyframes nudge { 0%, 72%, 100% { scale: 1; } 80% { scale: 1.12; } 88% { scale: .97; } }
+  .item.fixed h2 > span:first-child { color: var(--soft); text-decoration: line-through; text-decoration-color: rgba(35, 117, 58, .55); }
+  .door-shut { transform-box: fill-box; transform-origin: right center; }
+  .tick { fill: none; stroke: #23753a; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
   .verdict .stamp > font-kku, .verdict strong > font-kku { color: var(--ink); }
   .hint { margin-top: 3cqi; font-size: 3.2cqi; color: var(--soft); }
 
   /* Narrow stage: picture on top, the latest finding underneath. */
   @container (max-aspect-ratio: 1/1) {
     .layout { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; gap: 2.4cqmin; padding: 3cqmin; }
-    .scene { align-self: start; }
+    /* Near-square stages (the home stage is about 650 × 730): the picture gives way so the
+       report still fits underneath. */
+    .scene { align-self: start; justify-self: center; width: min(100%, calc((100cqh - 62cqw) * 1.6)); }
     .report { padding: 4cqi 5cqi; }
-    .report h1 { font-size: 7cqi; }
+    /* Capped so a wide portrait stage (the home stage is about 650 × 730) keeps the report below the picture. */
+    .report h1 { font-size: min(7cqi, 40px); }
+    .verdict strong { font-size: min(7.4cqi, 34px); }
     .report .sub { font-size: 3.4cqi; margin-top: 1.2cqi; }
     .list { margin-top: 2cqi; }
     .item:not(.latest) { display: none; }
@@ -133,9 +147,31 @@
     .verdict { margin-top: 1.4cqi; }
   }
   .layout.done .list .item { display: none; }
-  @container (min-aspect-ratio: 1/1) { .layout.done .list .item { display: grid; } .layout.done .list .item .note { display: none; } }
+  @container (min-aspect-ratio: 1/1) {
+    .layout.done .list .item { display: grid; } .layout.done .list .item .note { display: none; }
+    /* After a retest, the one finding still open keeps its line. */
+    .layout.retest .list .item.latest .note { display: block; }
+  }
 
-  @media (prefers-reduced-motion: reduce) { .blink { animation: none; } }
+  /* Side by side, the report is the narrow column: floors keep the small print readable,
+     the Retest stamp (the button for the second punchline) above all. */
+  @container (min-aspect-ratio: 1/1) {
+    .hint { font-size: max(12px, 3.2cqi); }
+    .verdict small { font-size: max(12px, 3.4cqi); }
+    /* At this size the stamp floats instead, so the tally wraps beside it, not under it. */
+    .verdict .stamp { position: relative; right: auto; top: auto; float: right; margin: -7cqi -1cqi 0 1.6cqi; font-size: max(13px, 3.4cqi); }
+  }
+  /* A short landscape stage (a phone on its side): tighter rows so the whole list still fits. */
+  @container (min-aspect-ratio: 1/1) and (max-height: 600px) {
+    .report h1 { font-size: 7.6cqi; }
+    .report .sub { margin-top: 1.2cqi; font-size: 3.6cqi; }
+    .list { margin-top: 2.4cqi; }
+    .item { padding: 1.5cqi 0; }
+    .verdict { margin-top: 2cqi; padding: 3cqi 3.4cqi 3.2cqi; }
+    .hint { margin-top: 2cqi; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { .blink, .verdict .stamp.ready { animation: none; } }
 </style>
 </head>
 <body>
@@ -167,7 +203,9 @@
       <rect x="240" y="174" width="180" height="6" rx="2" fill="#a9b2b8"/>
       <text class="hand" x="240" y="66" font-size="22" fill="#2c6fb6" data-text-en="Q4 plan" data-text-ko="4분기 계획">Q4 plan</text>
       <path d="M244 82 h40 v22 h-40 z M302 82 h40 v22 h-40 z M284 93 h18 M360 82 h56 v22 h-56 z M342 93 h18" stroke="#2c6fb6" stroke-width="2" fill="none"/>
-      <text class="hand" x="244" y="146" font-size="23" fill="#1f4e86" data-text-en="Wi-Fi: hunter2" data-text-ko="와이파이: hunter2">Wi-Fi: hunter2</text>
+      <text class="hand" x="244" y="146" font-size="23" fill="#1f4e86"><tspan data-text-en="Wi-Fi: hunter" data-text-ko="와이파이: hunter">Wi-Fi: hunter</tspan><tspan class="pw-digit">2</tspan></text>
+      <!-- where the eraser goes when the password is "rotated" -->
+      <rect class="smear" x="0" y="0" width="0" height="0" rx="4" fill="#fdfdfd" opacity="0"/>
       <text class="hand" x="252" y="126" font-size="17" fill="#d1495b" data-text-en="(do not share)" data-text-ko="(공유 금지)">(do not share)</text>
       <!-- bookshelf -->
       <rect x="462" y="58" width="134" height="118" fill="#a47148"/>
@@ -179,11 +217,15 @@
       <rect x="636" y="84" width="120" height="256" fill="#26323a"/>
       <g><rect x="652" y="110" width="40" height="200" rx="3" fill="#3d4b55"/><circle class="blink" cx="662" cy="124" r="3" fill="#7bd389"/><circle cx="672" cy="124" r="3" fill="#7bd389"/><circle class="blink" cx="662" cy="150" r="3" fill="#ffb703" style="animation-delay:-.7s"/><circle cx="662" cy="176" r="3" fill="#7bd389"/><circle class="blink" cx="672" cy="202" r="3" fill="#7bd389" style="animation-delay:-.3s"/>
       <path d="M658 140 h28 M658 166 h28 M658 192 h28 M658 218 h28 M658 244 h28" stroke="#53636e" stroke-width="2"/></g>
-      <path d="M756 84 L712 98 L712 330 L756 340 Z" fill="#c9a27e" stroke="#5c4033" stroke-width="3"/>
-      <circle cx="720" cy="220" r="4" fill="#5c4033"/>
+      <g class="door-open"><path d="M756 84 L712 98 L712 330 L756 340 Z" fill="#c9a27e" stroke="#5c4033" stroke-width="3"/>
+      <circle cx="720" cy="220" r="4" fill="#5c4033"/></g>
+      <!-- after the retest: shut, with a card reader -->
+      <g class="door-shut" opacity="0"><rect x="637.5" y="85.5" width="117" height="253" fill="#c9a27e" stroke="#5c4033" stroke-width="3"/>
+      <rect x="650" y="100" width="91" height="96" rx="3" fill="none" stroke="#b08a66" stroke-width="2"/><rect x="650" y="214" width="91" height="108" rx="3" fill="none" stroke="#b08a66" stroke-width="2"/>
+      <circle cx="744" cy="206" r="4" fill="#5c4033"/><rect x="738" y="168" width="11" height="18" rx="2" fill="#2b2d33"/><circle cx="743.5" cy="173" r="1.8" fill="#e63946"/></g>
       <rect x="650" y="52" width="92" height="18" rx="3" fill="#264653"/>
       <text x="696" y="65" font-size="11" fill="#fff" text-anchor="middle" font-family="Schibsted Grotesk, IBM Plex Sans KR, sans-serif" data-text-en="Server room" data-text-ko="서버실">Server room</text>
-      <g transform="translate(694 284)"><rect x="0" y="10" width="18" height="46" rx="8" fill="#d62828"/><rect x="5" y="2" width="8" height="10" fill="#3a3f44"/><path d="M13 6 C 26 6, 26 26, 20 34" stroke="#3a3f44" stroke-width="3" fill="none"/><rect x="2" y="24" width="14" height="9" fill="#fff" opacity=".8"/></g>
+      <g class="ext" transform="translate(694 284)"><rect x="0" y="10" width="18" height="46" rx="8" fill="#d62828"/><rect x="5" y="2" width="8" height="10" fill="#3a3f44"/><path d="M13 6 C 26 6, 26 26, 20 34" stroke="#3a3f44" stroke-width="3" fill="none"/><rect x="2" y="24" width="14" height="9" fill="#fff" opacity=".8"/></g>
       <!-- tall plant -->
       <path d="M190 336 h44 l-6 -40 h-32 z" fill="#457b9d"/>
       <path d="M212 296 C 190 260, 180 230, 196 200 M212 296 C 226 262, 244 240, 236 206 M212 296 C 208 258, 214 236, 212 214" stroke="#2d6a4f" stroke-width="7" fill="none" stroke-linecap="round"/>
@@ -196,6 +238,7 @@
       <rect x="285" y="220" width="26" height="40" rx="3" fill="#fff"/>
       <rect x="289" y="226" width="18" height="24" rx="2" fill="#9ad1d4"/><circle cx="298" cy="234" r="4" fill="#fff"/><rect x="292" y="241" width="12" height="2" fill="#fff"/><rect x="292" y="245" width="12" height="2" fill="#22262b"/>
       <path d="M292 255 l2 -2 a1.6 1.6 0 0 1 2 2 l-2 2 -2 -2 z" fill="#e63946"/>
+      <rect class="phone-off" x="285" y="220" width="26" height="40" rx="3" fill="#2b2f3a" opacity="0"/>
       <!-- monitor, unlocked, with a sticky note -->
       <rect x="410" y="244" width="22" height="24" fill="#3a3f44"/><rect x="392" y="264" width="58" height="6" rx="2" fill="#3a3f44"/>
       <rect x="344" y="150" width="154" height="100" rx="7" fill="#2b2d42"/>
@@ -203,36 +246,38 @@
       <rect x="352" y="157" width="138" height="12" fill="#5390d9"/>
       <rect x="358" y="176" width="36" height="60" rx="2" fill="#d7e7fb"/>
       <rect x="400" y="177" width="82" height="7" rx="2" fill="#2b2d42" opacity=".6"/><rect x="400" y="190" width="70" height="5" rx="2" fill="#2b2d42" opacity=".35"/><rect x="400" y="200" width="76" height="5" rx="2" fill="#2b2d42" opacity=".35"/><rect x="400" y="210" width="60" height="5" rx="2" fill="#2b2d42" opacity=".35"/><rect x="400" y="224" width="40" height="10" rx="3" fill="#5390d9"/>
-      <g transform="rotate(9 486 176)"><rect x="468" y="158" width="38" height="36" fill="#ffd166"/><text class="hand" x="472" y="173" font-size="12" fill="#3a3f44">pw:</text><text class="hand" x="471" y="187" font-size="10.5" fill="#3a3f44">Summer26!</text></g>
+      <g class="locked" opacity="0"><rect x="352" y="157" width="138" height="85" rx="2" fill="#1d2b4f"/><path d="M413 196 v-6 a8 8 0 0 1 16 0 v6" stroke="#cfe0ff" stroke-width="3.4" fill="none"/><rect x="408" y="195" width="26" height="20" rx="3" fill="#cfe0ff"/><circle cx="421" cy="204" r="2.6" fill="#1d2b4f"/><path d="M402 228 h38" stroke="#cfe0ff" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 9" opacity=".7"/></g>
+      <g class="postit"><g transform="rotate(9 486 176)"><rect x="468" y="158" width="38" height="36" fill="#ffd166"/><text class="hand" x="472" y="173" font-size="12" fill="#3a3f44">pw:</text><text class="hand" x="471" y="187" font-size="10.5" fill="#3a3f44">Summer26!</text></g></g>
       <rect x="378" y="262" width="82" height="6" rx="2" fill="#adb5bd"/>
       <!-- coffee left behind? no: the owner took the coffee; the cup ring stays -->
       <ellipse cx="326" cy="266" rx="10" ry="3" fill="none" stroke="#8a5a3b" stroke-width="2" opacity=".5"/>
       <!-- laptop with a USB stick from the parking lot -->
       <path d="M512 226 h70 l-6 40 h-58 z" fill="#ced4da" stroke="#868e96" stroke-width="2"/>
       <rect x="500" y="264" width="94" height="6" rx="2" fill="#adb5bd"/>
-      <rect x="594" y="258" width="20" height="9" rx="2" fill="#343a40"/><rect x="588" y="260" width="7" height="5" fill="#ced4da"/>
+      <g class="usb"><rect x="594" y="258" width="20" height="9" rx="2" fill="#343a40"/><rect x="588" y="260" width="7" height="5" fill="#ced4da"/>
       <path d="M612 266 l10 18" stroke="#868e96" stroke-width="1.4"/>
-      <g transform="rotate(14 620 284)"><rect x="604" y="282" width="40" height="16" rx="2" fill="#fff8e1" stroke="#c9a227" stroke-width="1.4"/><text x="624" y="293.5" font-size="6.4" text-anchor="middle" fill="#3a3f44" font-family="Schibsted Grotesk, IBM Plex Sans KR, sans-serif" data-text-en="Salaries 2026" data-text-ko="2026 연봉">Salaries 2026</text></g>
+      <g transform="rotate(14 620 284)"><rect x="604" y="282" width="40" height="16" rx="2" fill="#fff8e1" stroke="#c9a227" stroke-width="1.4"/><text x="624" y="293.5" font-size="6.4" text-anchor="middle" fill="#3a3f44" font-family="Schibsted Grotesk, IBM Plex Sans KR, sans-serif" data-text-en="Salaries 2026" data-text-ko="2026 연봉">Salaries 2026</text></g></g>
       <!-- empty chair, pushed back -->
       <path d="M404 296 h64 l-4 40 h-56 z" fill="#577590"/>
       <rect x="400" y="334" width="72" height="12" rx="5" fill="#43597a"/>
       <path d="M436 346 V392 M412 400 L436 392 L460 400" stroke="#343a40" stroke-width="5" stroke-linecap="round" fill="none"/>
       <g transform="rotate(-4 438 314)"><rect x="410" y="300" width="56" height="30" rx="2" fill="#fff"/><text class="hand" x="438" y="313" font-size="10.5" fill="#3a3f44" text-anchor="middle" data-text-en="back in 5" data-text-ko="5분만">back in 5</text><text class="hand" x="438" y="325" font-size="8.5" fill="#d1495b" text-anchor="middle" data-text-en="(14 min ago)" data-text-ko="(14분 전)">(14 min ago)</text></g>
+      <g class="ticks"></g>
       <g class="rings"></g>
     </svg>
   </div>
 
   <section class="report" aria-live="polite">
     <h1 data-lang="en">Find the vulnerabilities</h1>
-    <h1 data-lang="ko"><font-kku font="sebul" size="10cqi">취약점 찾기</font-kku></h1>
+    <h1 data-lang="ko"><font-kku font="sebul" size="min(10cqi, 44px)">취약점 찾기</font-kku></h1>
     <p class="sub" data-lang="en">Scope: one cozy office · Tool: a red marker</p>
     <p class="sub" data-lang="ko">점검 범위: 아늑한 사무실 · 점검 도구: 빨간 펜</p>
     <ol class="list"></ol>
     <div class="verdict">
-      <span class="stamp"></span>
+      <button class="stamp" type="button"></button>
       <small class="tally"></small>
       <strong data-lang="en">Cozy. Also critical.</strong>
-      <strong data-lang="ko"><font-kku font="sebul" size="8cqi">아늑함. 그리고 치명적.</font-kku></strong>
+      <strong data-lang="ko"><font-kku font="sebul" size="min(8cqi, 36px)">아늑함. 그리고 치명적.</font-kku></strong>
     </div>
     <p class="hint">
       <span data-lang="en">Click anything suspicious. Or anywhere, for the next one.</span>
@@ -331,12 +376,14 @@
     }
   }
 
-  function writeUp(f, n) {
+  // A line of the report. On a retest the chip says fixed or not, and only the open one keeps a note.
+  function writeUp(f, n, status) {
     list.querySelectorAll('.latest').forEach((el) => el.classList.remove('latest'));
-    const sev = SEV[f.sev];
-    const [title, note] = f[TTY.lang];
+    const sev = status || SEV[f.sev];
+    const [title, finding] = f[TTY.lang];
+    const note = status ? status.note : finding;
     const li = document.createElement('li');
-    li.className = 'item latest';
+    li.className = 'item latest' + (status && status.fixed ? ' fixed' : '');
     li.style.setProperty('--sev', sev.color);
     const num = document.createElement('span');
     num.className = 'num';
@@ -348,25 +395,53 @@
     chip.className = 'chip';
     chip.textContent = ko ? sev.ko : sev.en;
     h.append(name, chip);
-    const p = document.createElement('p');
-    p.className = 'note';
-    if (ko) p.append(kku('pilgi', '3.9cqi', note)); else p.textContent = note;
-    li.append(num, h, p);
+    li.append(num, h);
+    if (note) {
+      const p = document.createElement('p');
+      p.className = 'note';
+      if (ko) p.append(kku('pilgi', 'max(12px, 3.9cqi)', note)); else p.textContent = note;
+      li.append(p);
+    }
     list.append(li);
     if (!TTY.reduce) li.animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 420, easing: 'cubic-bezier(.6,0,.3,1)' });
-    // Keep the newest finding in view when the list is longer than the column.
+    fitList();
+  }
+  // Keep the newest finding in view when the list is longer than the column (also once the
+  // verdict box opens underneath and the list gets shorter).
+  function fitList() {
     while (list.scrollHeight > list.clientHeight + 2 && list.children.length > 1) list.firstElementChild.remove();
   }
 
+  const stamp = verdict.querySelector('.stamp');
+  const tally = verdict.querySelector('.tally');
+  const verdictLine = verdict.querySelector('strong');
+  const firstTally = tally.textContent;
+  const VERDICT_SIZE = 'min(8cqi, 36px)';
+  const COZY = TTY.t({ en: 'Cozy. Also critical.', ko: '아늑함. 그리고 치명적.' });
+  const hint = document.querySelector('.hint');
+  const HINTS = TTY.t({
+    en: ['Click anything suspicious. Or anywhere, for the next one.', 'Press the Retest stamp to check the fixes.', 'Press the stamp again. Or the picture, to start over.'],
+    ko: ['수상한 곳을 눌러 보세요. 아무 데나 누르면 다음 취약점.', '재점검 도장을 눌러 조치 결과를 보세요.', '도장을 또 누르거나, 그림을 눌러 처음부터.'],
+  });
+  const say = (i) => { hint.textContent = HINTS[i]; };
+  // Retest, Re-retest, Re-re-retest… (Korean adds a 재 each time.)
+  const stampText = (k) => (ko ? '재'.repeat(Math.min(k, 3) + 1) + '점검' : (k ? 'Re-'.repeat(Math.min(k, 3)) + 'retest' : 'Retest'));
+  function slam(k) {
+    stamp.classList.remove('ready');
+    stamp.replaceChildren(ko ? kku('dojang', 'max(14px, 4cqi)', stampText(k)) : document.createTextNode(stampText(k)));
+    stamp.setAttribute('aria-label', TTY.t({ en: stampText(k) + ': check the fixes', ko: stampText(k) + ': 조치 결과 보기' }));
+    if (!TTY.reduce) {
+      verdict.animate([{ transform: 'scale(.92)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+      stamp.animate([{ transform: 'scale(2.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 300, delay: 420, easing: 'cubic-bezier(.5,0,.9,.4)', fill: 'backwards' })
+        .finished.then(() => stamp.classList.add('ready'), () => {});
+    }
+  }
   function rate() {
     layout.classList.add('done');
     verdict.classList.add('on');
-    const stamp = verdict.querySelector('.stamp');
-    stamp.replaceChildren(ko ? kku('dojang', '4cqi', '재점검') : document.createTextNode('Retest'));
-    if (!TTY.reduce) {
-      verdict.animate([{ transform: 'scale(.92)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
-      stamp.animate([{ transform: 'scale(2.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 300, delay: 420, easing: 'cubic-bezier(.5,0,.9,.4)', fill: 'backwards' });
-    }
+    slam(0);
+    say(1);
+    fitList();
   }
 
   // Findings keep their own numbers; the tour circles them in order, a visitor in any order.
@@ -381,6 +456,7 @@
     list.replaceChildren();
     verdict.classList.remove('on');
     layout.classList.remove('done');
+    unfix();
   }
   function circle(i) {
     found.add(i);
@@ -397,6 +473,126 @@
     else circle(FINDINGS.findIndex((_, i) => !found.has(i)));
     schedule();
   }
+
+  /* ---- The retest: everything fixed, and the Wi-Fi password rotated, as advised ---- */
+  const $ = (sel) => scene.querySelector(sel);
+  const ticks = $('.ticks');
+  const digit = $('.pw-digit');
+  const smear = $('.smear');
+  const ext = $('.ext');
+  // What each fix does to the picture, and where its green tick goes.
+  const FIXES = [
+    { i: 0, tick: [487, 180], run: (go) => go($('.postit'), [{ opacity: 1 }, { opacity: 0, transform: 'translate(40px, -60px) rotate(30deg)' }]) },
+    { i: 1, tick: [372, 230], run: (go) => go($('.locked'), [{ opacity: 0 }, { opacity: 1 }]) },
+    { i: 3, tick: [604, 252], run: (go) => go($('.usb'), [{ opacity: 1 }, { opacity: 0, transform: 'translate(30px, 6px)' }]) },
+    { i: 4, tick: [696, 150], run: (go) => {
+      go($('.door-open'), [{ opacity: 1 }, { opacity: 0 }]);
+      go($('.door-shut'), [{ opacity: 0, transform: 'scaleX(.35)' }, { opacity: 1, transform: 'none' }]);
+      // The extinguisher goes back on the wall where it belongs.
+      ext.animate([{ transform: 'translate(694px, 284px)' }, { transform: 'translate(772px, 278px)' }], { duration: TTY.reduce ? 0 : 450, easing: 'ease-in-out', fill: 'forwards' });
+    } },
+    { i: 5, tick: [298, 236], run: (go) => go($('.phone-off'), [{ opacity: 0 }, { opacity: 1 }]) },
+  ];
+  const FIXED = TTY.t({ en: 'Fixed', ko: '조치 완료' });
+  const OPEN = TTY.t({ en: 'Not fixed', ko: '미조치' });
+  const AGAIN = TTY.t({ en: 'Changed, as advised. Then written on the whiteboard again.', ko: '권고대로 바꿈. 그리고 화이트보드에 또 적음.' });
+  const fadeTo = (el, frames) => {
+    const a = el.animate(frames, { duration: TTY.reduce ? 0 : 420, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'forwards' });
+    changed.push(a);
+  };
+  const changed = [];
+  const pending = [];
+  const at = (ms, fn) => { if (TTY.reduce) fn(); else pending.push(setTimeout(fn, ms)); };
+  let retests = 0;
+  let retesting = false;
+  function tick([x, y]) {
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('class', 'tick');
+    p.setAttribute('d', `M${x - 11} ${y - 1} l8 9 l15 -20`);
+    p.setAttribute('pathLength', '1');
+    ticks.append(p);
+    if (!TTY.reduce) p.animate([{ strokeDasharray: '1', strokeDashoffset: 1 }, { strokeDasharray: '1', strokeDashoffset: 0 }], { duration: 320, easing: 'ease-out', fill: 'both' });
+  }
+  // Wipe the last digit off the whiteboard and write the next one.
+  function rotate(n) {
+    smear.getAnimations().forEach((a) => a.cancel());
+    const text = digit.parentNode;
+    const from = text.getNumberOfChars() - digit.textContent.length;
+    const a = text.getExtentOfChar(from), b = text.getExtentOfChar(text.getNumberOfChars() - 1);
+    const box = { x: a.x, y: a.y, width: b.x + b.width - a.x, height: a.height };
+    const pad = 3;
+    smear.setAttribute('x', box.x - pad); smear.setAttribute('y', box.y + 2);
+    smear.setAttribute('width', box.width + pad * 2 + 8); smear.setAttribute('height', box.height - 2);
+    if (TTY.reduce) { digit.textContent = n; return; }
+    smear.animate([{ opacity: 0 }, { opacity: 1, offset: .5 }, { opacity: 1 }], { duration: 360, fill: 'forwards' });
+    at(420, () => {
+      digit.textContent = n;
+      // The new digit is written left to right as the smear moves off.
+      smear.animate([{ opacity: 1, transform: 'none' }, { opacity: 1, transform: `translateX(${box.width + pad * 2 + 8}px)` }], { duration: 360, easing: 'ease-in', fill: 'forwards' })
+        .finished.then(() => smear.animate([{ opacity: 0 }], { duration: 0, fill: 'forwards' }), () => {});
+    });
+  }
+  function retestVerdict() {
+    const k = retests;
+    tally.textContent = TTY.t({ en: `Retest: ${FIXES.length} fixed · 1 not fixed`, ko: `재점검: 조치 ${FIXES.length}건 · 미조치 1건` });
+    const line = TTY.t({ en: `Tidy. Also hunter${2 + k}.`, ko: `깔끔함. 그리고 hunter${2 + k}.` });
+    verdictLine.replaceChildren(ko ? kku('sebul', VERDICT_SIZE, line) : document.createTextNode(line));
+    layout.classList.add('done', 'retest');
+    verdict.classList.add('on');
+    slam(k);
+    say(2);
+    fitList();
+    retesting = false;
+    // Left alone, the office goes back to how it was found, and the tour starts again.
+    clearTimeout(timer);
+    if (!TTY.reduce) timer = setTimeout(next, 9000);
+  }
+  function retest() {
+    if (retesting || !allFound()) return;
+    retesting = true;
+    clearTimeout(timer);
+    retests += 1;
+    const first = retests === 1;
+    verdict.classList.remove('on');
+    layout.classList.remove('done');
+    let t = 0;
+    if (first) {
+      rings.replaceChildren();
+      list.replaceChildren();
+      FIXES.forEach((fix, n) => at(250 + n * 260, () => {
+        fix.run(fadeTo);
+        tick(fix.tick);
+        writeUp(FINDINGS[fix.i], fix.i + 1, { en: FIXED, ko: FIXED, color: '#23753a', fixed: true, note: '' });
+      }));
+      t = 250 + FIXES.length * 260 + 200;
+    } else {
+      rings.replaceChildren();
+    }
+    at(t, () => rotate(2 + retests));
+    at(t + 900, () => {
+      ring(FINDINGS[2].at, 3);
+      if (first) writeUp(FINDINGS[2], 3, { en: OPEN, ko: OPEN, color: 'var(--marker)', note: AGAIN });
+      fitList();
+    });
+    at(t + 1800, retestVerdict);
+  }
+  // Back to the office as it was found.
+  function unfix() {
+    pending.splice(0).forEach(clearTimeout);
+    changed.splice(0).forEach((a) => a.cancel());
+    ext.getAnimations().forEach((a) => a.cancel());
+    smear.getAnimations().forEach((a) => a.cancel());
+    ticks.replaceChildren();
+    digit.textContent = '2';
+    retests = 0;
+    retesting = false;
+    tally.textContent = firstTally;
+    if (layout.classList.contains('retest')) verdictLine.replaceChildren(ko ? kku('sebul', VERDICT_SIZE, COZY) : document.createTextNode(COZY));
+    layout.classList.remove('retest');
+    stamp.classList.remove('ready');
+    say(0);
+  }
+  stamp.addEventListener('click', retest);
 
   /* ---- A visitor hunting for themselves ---- */
   const svg = scene.querySelector('svg');

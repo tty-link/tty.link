@@ -90,10 +90,12 @@
   .uv .job time { color: inherit; }
   .job span { grid-column: 1 / -1; }
 
-  /* The white-on-white lines. In daylight they are the colour of the paper. */
+  /* The white-on-white lines. In daylight they are the colour of the paper. They are the joke,
+     so on a phone they stay readable even where the rest of the résumé is small print. */
   .hid { color: #efeee9; }
+  .sec .hid { font-size: max(10px, 2.9cqi); }
   /* Kept left of the red pen's note. */
-  .hid.tiny { max-width: 46cqi; margin-top: 2.6cqi; font-size: 2.2cqi; }
+  .sec .hid.tiny { max-width: 46cqi; margin-top: 2.6cqi; font-size: max(8.5px, 2.2cqi); }
   .paper .hid.found { color: var(--found); transition: color .6s; }
   .paper .hid.found > span {
     background: linear-gradient(transparent 58%, rgba(139, 77, 255, .22) 58%);
@@ -150,7 +152,7 @@
     mix-blend-mode: multiply;
     opacity: 0;
   }
-  .stamp em { display: block; font-style: normal; font-size: 2.7cqi; opacity: .85; }
+  .stamp em { display: block; font-style: normal; font-size: max(8.5px, 2.7cqi); opacity: .85; }
   .lang-ko .stamp { padding: 1.6cqi 2.6cqi; }
   .stamp > .ko-line { display: block; }
 
@@ -167,6 +169,8 @@
     opacity: 0;
   }
   .note > font-kku { color: var(--pen); }
+  /* The clean résumé's note is short; written a size up. */
+  .note.plain { font-size: 6cqi; }
   .note svg { display: block; width: 26cqi; height: 6cqi; margin: .5cqi 0 0 6cqi; }
   .note path { fill: none; stroke: var(--pen); stroke-width: 2.4; stroke-linecap: round; }
 
@@ -183,7 +187,8 @@
   .counter { top: clamp(10px, 2.2vh, 22px); font-weight: 500; }
   .counter b { display: inline-block; min-width: 2.6em; margin-left: .4em; padding: .15em .5em; border-radius: 999px; background: rgba(139, 77, 255, .28); color: #fff; text-align: center; }
   .counter.done b { background: var(--violet); }
-  .hint { bottom: clamp(10px, 2.2vh, 22px); color: #9d93c7; }
+  /* The tip that replaces the hint after the first applicant takes two lines on a phone. */
+  .hint { bottom: clamp(10px, 2.2vh, 22px); width: max-content; max-width: min(92vw, 100vw - 120px); color: #9d93c7; line-height: 1.3; text-align: center; text-wrap: balance; white-space: normal; }
   /* After the stamp: a quiet way to search the résumé again. */
   .again {
     position: absolute;
@@ -205,7 +210,25 @@
   .again:hover { background: rgba(139, 77, 255, .4); }
   .again:focus-visible { outline: 2px solid var(--glow); outline-offset: 3px; }
   .scene.finished .again { opacity: 1; pointer-events: auto; }
+  /* Opened on its own, a phone also gets the corner buttons ("?" and ":)"); keep the hint left of them. */
+  @media (max-width: 600px) {
+    body:has(.tty-nav) .hint { left: 12px; translate: 0 0; max-width: calc(100vw - 104px); text-align: left; }
+  }
   .scene.finished .hint { opacity: 0; }
+  /* A phone-sized sheet, where the hidden lines' pixel floor makes them take more room: a little less air. */
+  @media (max-width: 400px), (max-height: 565px) {
+    .layer { padding: 7cqi 8cqi; }
+    .sec { margin-top: 3.2cqi; }
+  }
+  /* A short stage (a phone's home stage is about 360 x 400): the sheet would be height-bound and
+     tiny, so it gets squatter and wider, and the Experience section (no hidden line in it) is
+     left off to make the room. */
+  @media (max-height: 480px) {
+    .sheet { width: min(86vw, 76.5vh); height: min(84vh, min(86vw, 76.5vh) * 1.38); aspect-ratio: auto; }
+    .sec.exp { display: none; }
+    /* The two-line tip reaches up over the sheet's bottom edge here: it gets a backing to stay legible. */
+    .hint { padding: .1em .6em; border-radius: .5em; background: rgba(23, 20, 42, .85); }
+  }
 </style>
 </head>
 <body>
@@ -233,6 +256,8 @@
         ['Sam Placeholder', 'Senior Prompt Whisperer', 'sam@example.com, Seoul or remote'],
         ['Alex Lorem', '10x Engineer (self-assessed)', 'alex@example.com, Busan or remote'],
         ['Robin Sample', 'AI-Native Full-Stack Engineer', 'robin@example.org, remote only'],
+        // The fourth résumé hides nothing at all.
+        ['Casey Plaintext', 'Software Engineer', 'casey@example.net, Daejeon'],
       ],
       summaryHead: 'Summary',
       summary: 'Ships things, some of them on purpose. Reads the docs before asking, most of the time.',
@@ -255,8 +280,11 @@
       stamp: '<span>AI screening: passed</span><em>Human screening: pending</em>',
       // The reviewer's red pen, one per applicant; it gets shorter.
       notes: ['Why is everyone a 10/10 this year?', 'Another 10/10.', 'Hire the UV light instead.'],
+      clean: '…Real human?',
       counter: 'Hidden instructions found',
       hint: matchMedia('(pointer: fine)').matches ? 'Move the UV light over the résumé.' : 'Drag the UV light over the résumé.',
+      // From the second applicant on, the hint line gives the trick that needs no UV light.
+      tip: 'Tip: paste a résumé into a plain text editor to see white text.',
       again: 'Next applicant',
     },
     ko: {
@@ -264,6 +292,7 @@
         ['<font-kku font="sebul" size="10cqi">김지원</font-kku>', '프롬프트 장인', 'jiwon@example.com, 서울 또는 원격 근무'],
         ['<font-kku font="sebul" size="10cqi">나합격</font-kku>', '자칭 10배 개발자', 'hapgyeok@example.com, 판교 또는 원격 근무'],
         ['<font-kku font="sebul" size="10cqi">이채용</font-kku>', 'AI 네이티브 풀스택 개발자', 'chaeyong@example.org, 원격 근무만'],
+        ['<font-kku font="sebul" size="10cqi">정직한</font-kku>', '소프트웨어 개발자', 'jikhan@example.net, 대전'],
       ],
       summaryHead: '자기소개',
       summary: '만든 건 출시합니다. 그중 일부는 계획대로였습니다. 질문하기 전에 문서는 대체로 읽습니다.',
@@ -283,8 +312,10 @@
       edu: '한국대학교 컴퓨터공학과 졸업, 2017',
       stamp: '<font-kku class="ko-line" font="dojang" size="4.6cqi">기계 심사 통과</font-kku><font-kku class="ko-line" font="dojang" size="3.4cqi">사람 심사 대기 중</font-kku>',
       notes: ['올해는 왜 다들 만점이지…?', '또 만점.', '이 손전등을 채용하자.'].map((n) => `<font-kku font="pilgi" size="4.6cqi" wrap-unit="word">${n}</font-kku>`),
+      clean: '<font-kku font="pilgi" size="5.8cqi" wrap-unit="word">…진짜 사람?</font-kku>',
       counter: '찾아낸 숨은 지시문',
       hint: matchMedia('(pointer: fine)').matches ? '자외선 손전등을 이력서 위로 움직여 보세요.' : '자외선 손전등을 이력서 위로 끌어 보세요.',
+      tip: '팁: 이력서를 메모장에 붙여 넣으면 흰 글씨가 보입니다.',
       again: '다음 지원자',
     },
   };
@@ -292,21 +323,25 @@
 
   // Which applicant, and which line sits in each hidden spot. The first spot starts on the
   // classic, the other two anywhere; every next applicant moves each spot one along its pool.
+  // The fourth applicant (CLEAN) has no hidden lines at all.
   let round = 0;
+  const CLEAN = 3;
+  const isClean = () => round % t.people.length === CLEAN;
   const offset = [0, Math.floor(Math.random() * 3), Math.floor(Math.random() * 3)];
   const pick = (pool, i) => pool[(offset[i] + round) % pool.length];
 
   const resume = () => {
     const [name, role, contact] = t.people[round % t.people.length];
-    const hid = t.hidden.map(pick);
+    const hid = isClean() ? ['', '', ''] : t.hidden.map(pick);
+    const line = (i, cls = '') => (hid[i] ? `<p class="hid${cls}" data-i="${i}"><span>${hid[i]}</span></p>` : '');
     return `
     <h1 class="name">${name}</h1>
     <p class="role">${role}</p>
     <p class="contact">${contact}</p>
-    <section class="sec"><h2>${t.summaryHead}</h2><p>${t.summary}</p><p class="hid" data-i="0"><span>${hid[0]}</span></p></section>
-    <section class="sec"><h2>${t.expHead}</h2>${t.jobs.map(([what, when, did]) => `<div class="job"><b>${what}</b><time>${when}</time><span>${did}</span></div>`).join('')}</section>
-    <section class="sec"><h2>${t.skillsHead}</h2><p>${t.skills}</p><p class="hid" data-i="1"><span>${hid[1]}</span></p></section>
-    <section class="sec"><h2>${t.eduHead}</h2><p>${t.edu}</p><p class="hid tiny" data-i="2"><span>${hid[2]}</span></p></section>`;
+    <section class="sec"><h2>${t.summaryHead}</h2><p>${t.summary}</p>${line(0)}</section>
+    <section class="sec exp"><h2>${t.expHead}</h2>${t.jobs.map(([what, when, did]) => `<div class="job"><b>${what}</b><time>${when}</time><span>${did}</span></div>`).join('')}</section>
+    <section class="sec"><h2>${t.skillsHead}</h2><p>${t.skills}</p>${line(1)}</section>
+    <section class="sec"><h2>${t.eduHead}</h2><p>${t.edu}</p>${line(2, ' tiny')}</section>`;
   };
 
   // Security fibres in the paper, as in banknotes: invisible in daylight, bright under UV.
@@ -329,20 +364,26 @@
   const stamp = document.querySelector('.stamp');
   const note = document.querySelector('.note');
   const counter = document.querySelector('.counter');
+  const hint = document.querySelector('.hint');
   stamp.innerHTML = t.stamp;
   counter.querySelector('.label').textContent = t.counter;
-  document.querySelector('.hint').textContent = t.hint;
+  hint.textContent = t.hint;
   const again = document.querySelector('.again');
   again.textContent = t.again;
 
   let hidden = [];
+  // On the clean résumé the torch checks the usual hiding places (under each section's text) instead.
+  let spots = [];
   const found = new Set();
+  const checked = new Set();
   // Lay the current applicant's résumé on the desk (both layers) with the red pen's line for this round.
   function build() {
     paper.innerHTML = resume();
     uv.innerHTML = fibres + resume();
     hidden = [...paper.querySelectorAll('.hid')];
-    note.innerHTML = t.notes[Math.min(round, t.notes.length - 1)] + '<svg viewBox="0 0 120 26" aria-hidden="true"><path pathLength="1" d="M4 18 C 30 4, 60 26, 92 12 S 112 8, 116 14"/></svg>';
+    spots = isClean() ? [...paper.querySelectorAll('.sec > p')] : [];
+    note.classList.toggle('plain', isClean());
+    note.innerHTML = (isClean() ? t.clean : t.notes[Math.min(round, t.notes.length - 1)]) + '<svg viewBox="0 0 120 26" aria-hidden="true"><path pathLength="1" d="M4 18 C 30 4, 60 26, 92 12 S 112 8, 116 14"/></svg>';
   }
   build();
 
@@ -378,6 +419,24 @@
       const c = centerOf(el);
       if (Math.hypot(c.x - light.x, c.y - light.y) < radius * .45) discover(el);
     });
+    spots.forEach((el) => {
+      if (checked.has(el)) return;
+      const c = centerOf(el);
+      if (Math.hypot(c.x - light.x, c.y - light.y) < radius * .45) check(el);
+    });
+  }
+
+  // A hiding place on the clean résumé, looked at and found empty. When all are checked,
+  // the count settles at 0/0 and, instead of a stamp, the red pen.
+  function check(el) {
+    if (checked.has(el)) return;
+    checked.add(el);
+    focus = el;
+    leaveAt = performance.now() + LINGER;
+    if (checked.size < spots.length) return;
+    counter.querySelector('.n').textContent = '0/0';
+    counter.classList.add('done');
+    setTimeout(() => penNote(), TTY.reduce ? 0 : 900);
   }
 
   function discover(el) {
@@ -386,7 +445,7 @@
     focus = el;
     leaveAt = performance.now() + LINGER;
     el.classList.add('found');
-    counter.querySelector('.n').textContent = `${found.size}/3`;
+    counter.querySelector('.n').textContent = `${found.size}/${hidden.length}`;
     if (found.size === hidden.length) {
       counter.classList.add('done');
       setTimeout(stampIt, TTY.reduce ? 0 : 700);
@@ -405,13 +464,19 @@
       ], { duration: 420, easing: 'cubic-bezier(.5, 0, .9, .4)' });
       sheet.animate([{ transform: 'none' }, { transform: 'translateY(.5%) rotate(.3deg)' }, { transform: 'none' }], { duration: 260, delay: 300 });
     }
-    setTimeout(() => {
-      note.style.opacity = '1';
-      if (TTY.reduce) return;
+    setTimeout(penNote, TTY.reduce ? 0 : 1300);
+  }
+  // The reviewer's red pen writes its line, then the next applicant can come in.
+  function penNote() {
+    if (note.dataset.done) return;
+    note.dataset.done = '1';
+    const mine = round;
+    note.style.opacity = '1';
+    if (!TTY.reduce) {
       note.animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 900, easing: 'ease-out' });
       note.querySelector('path').animate([{ strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDasharray: 1, strokeDashoffset: 0 }], { duration: 600, delay: 700, fill: 'both' });
-    }, TTY.reduce ? 0 : 1300);
-    setTimeout(() => scene.classList.add('finished'), TTY.reduce ? 0 : 2600);
+    }
+    setTimeout(() => { if (mine === round) scene.classList.add('finished'); }, TTY.reduce ? 0 : 1300);
   }
 
   // The next applicant: a fresh résumé slides onto the desk, the counter, stamp and note
@@ -419,13 +484,16 @@
   function reset() {
     round++;
     found.clear();
+    checked.clear();
     focus = null;
     leg = null;
     [stamp, note].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
     build();
-    counter.querySelector('.n').textContent = '0/3';
+    counter.querySelector('.n').textContent = isClean() ? '0/?' : `0/${hidden.length}`;
     counter.classList.remove('done');
+    hint.textContent = t.tip;
     delete stamp.dataset.done;
+    delete note.dataset.done;
     stamp.style.opacity = '';
     note.style.opacity = '';
     scene.classList.remove('finished');
@@ -440,7 +508,7 @@
   again.addEventListener('click', (e) => {
     e.stopPropagation();
     reset();
-    if (TTY.reduce) { hidden.forEach(discover); place(); }
+    if (TTY.reduce) { hidden.forEach(discover); spots.forEach(check); place(); }
   });
 
   /* ---- Who moves the light: a hand, or the idle sweep ---- */
@@ -470,12 +538,12 @@
   function autoTarget(now) {
     const s = rect();
     if (focus && now < leaveAt) return centerOf(focus);
-    const left = hidden.filter((el) => !found.has(el));
+    const left = spots.length ? spots.filter((el) => !checked.has(el)) : hidden.filter((el) => !found.has(el));
     if (left.length) {
       if (!leg || leg.el !== left[0]) leg = { el: left[0], start: now, from: { x: light.x, y: light.y } };
       const k = Math.min(1, (now - leg.start) / LEG);
       const to = centerOf(leg.el);
-      if (k >= 1) discover(leg.el);
+      if (k >= 1) (spots.length ? check : discover)(leg.el);
       const e = smooth(k);
       return { x: leg.from.x + (to.x - leg.from.x) * e, y: leg.from.y + (to.y - leg.from.y) * e };
     }

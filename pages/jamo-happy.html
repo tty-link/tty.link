@@ -76,10 +76,18 @@
   .part { transition: opacity .3s ease; }
   .part.used { opacity: .38; }
   .aside { margin-top: .6cqmin; padding-top: 1.4cqmin; border-top: 1px dashed var(--line); color: #5b5a56; font-size: .92em; line-height: 1.45; }
+  /* The one-line hint: under the notes here, beside "Parts" on a phone (away from the corner
+     links of a page opened on its own). It shows once the first assembly is done. */
+  .hint { color: var(--blue); font-size: .88em; line-height: 1.3; opacity: 0; transition: opacity .6s ease; }
+  .hint.on { opacity: 1; }
 
   /* The diagram. */
-  .diagram { grid-area: diagram; position: relative; display: grid; grid-template-rows: 1fr auto; min-height: 0; cursor: pointer; }
-  .word { position: relative; display: grid; place-items: center; min-height: 0; }
+  .diagram { grid-area: diagram; position: relative; display: grid; grid-template-rows: 1fr auto; min-height: 0; cursor: pointer; border-radius: 10px; }
+  /* Tap (or Enter / Space) to assemble it again from step 1. */
+  .diagram:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+  /* One definite cell, so the drawing can be held to the height of a short stage (the SVG then
+     letterboxes; collect() measures the drawn scale, not the box). */
+  .word { position: relative; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; min-height: 0; }
   .word svg.letters { width: min(100%, 120cqmin); height: auto; max-height: 100%; overflow: visible; }
   .letters .dot { fill: var(--ink); stroke: none; }
   .letters .p:not(.dot) { fill: none; stroke: var(--ink); stroke-width: 24; stroke-linecap: round; stroke-linejoin: round; transform-box: fill-box; transform-origin: center; }
@@ -152,6 +160,8 @@
     .part .count { white-space: nowrap; }
     .parts-title, .aside { grid-column: 1 / -1; }
     .aside { display: none; }
+    .parts-title { grid-row: 1; }
+    .hint { grid-row: 1; grid-column: 1 / -1; justify-self: end; align-self: center; font-size: 11.5px; text-align: right; }
     .part { grid-template-columns: auto auto 1fr; justify-items: start; gap: .35em; }
     .icon { height: 1.8em; }
     .icon svg { width: 1.9em; height: 1.7em; }
@@ -162,10 +172,18 @@
     .spare { top: auto; bottom: 0; flex-direction: row-reverse; align-items: flex-end; font-size: 11px; }
     .bag { width: 58px; }
   }
+  /* A short phone stage (358×396 in the home page): the word comes first. The step-3 captions
+     give way, and the bag lands in a strip of its own under the word instead of on it. */
+  @container (max-width: 620px) and (max-height: 480px) {
+    .captions { display: none; }
+    .word { padding-bottom: 56px; }
+    /* and the English word smaller and low in its box: most of its parts fly up, and need room */
+    .word svg.letters { max-height: 70%; align-self: end; }
+  }
   /* Opened on its own, the tty.link links sit at the bottom right; keep the steps above them. */
   html:not(.embedded) .sheet { padding-bottom: max(clamp(14px, 4cqmin, 40px), 54px); }
   @media (max-width: 600px) { html:not(.embedded) .sheet { padding-bottom: 46px; } }
-  @media (prefers-reduced-motion: reduce) { .cap { opacity: 1; } .spare { visibility: visible; } }
+  @media (prefers-reduced-motion: reduce) { .cap, .hint { opacity: 1; } .hint { transition: none; } .spare { visibility: visible; } }
 </style>
 </head>
 <body>
@@ -196,6 +214,7 @@
       <div class="part" data-lang="ko" data-type="f"><span class="tag">f</span><span class="icon"><font-kku font="malang" size="1.5em">ㄱ</font-kku></span><span class="count">종성 <b>×1</b></span></div>
       <p class="aside" data-lang="en">Screws: 0. We checked twice.<br>Tools: none. A friend helps.</p>
       <p class="aside" data-lang="ko">나사: 0개. 두 번 확인했어요.<br>공구: 필요 없음. 친구가 있으면 좋아요.</p>
+      <p class="hint" id="assemble-hint"><span data-lang="en">Tap the drawing to build it again.</span><span data-lang="ko">그림을 누르면 처음부터 다시 조립해요.</span></p>
     </section>
 
     <section class="diagram" aria-label="Exploded view">
@@ -286,12 +305,12 @@
   /* ---- Parts: where each one sits when assembled, and how far it flies out ----
      English parts are SVG strokes (offsets in viewBox units). Korean parts are the jamo nodes
      font-kku draws for 행복, each with an offset in em; where its ink actually sits is
-     measured from the rendered node (see inkCentre), so the guides follow any word, font or size. */
+     measured from the rendered node (see inkBox), so the guides follow any word, font or size. */
   const KO_PARTS = [
     { glyph: 0, role: 'choseong', move: [-.3, -.34], turn: -8, tag: 'a' },
     { glyph: 0, role: 'jungseong', move: [.34, -.16], turn: 7, tag: 'b' },
     { glyph: 0, role: 'jongseong', move: [-.06, .42], turn: -5, tag: 'c' },
-    { glyph: 1, role: 'choseong', move: [.04, -.42], turn: 6, tag: 'd' },
+    { glyph: 1, role: 'choseong', move: [.16, -.42], turn: 6, tag: 'd' }, // clear of ㅐ even when held under the rule
     { glyph: 1, role: 'jungseong', move: [.42, .06], turn: -6, tag: 'e' },
     { glyph: 1, role: 'jongseong', move: [.12, .44], turn: 5, tag: 'f' },
   ];
@@ -299,9 +318,11 @@
   /* A font-kku jamo node is a whole em box of one conjoining jamo, placed with a CSS
      transform and sometimes clipped. Its ink is found from the font's own text metrics:
      the glyph's ink box inside the untransformed node, cut by the clip-path, then carried
-     through the node's transform. Returns the assembled ink centre in viewport pixels. */
+     through the node's transform (see inkBox). */
   const meter = document.createElement('canvas').getContext('2d');
-  function inkCentre(node) {
+  const centre = (r) => [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2];
+  // The assembled ink box [left, top, right, bottom] in viewport pixels.
+  function inkBox(node) {
     const saved = [node.style.transform, node.style.translate, node.style.rotate];
     node.style.transform = 'none'; node.style.translate = 'none'; node.style.rotate = 'none';
     const box = node.getBoundingClientRect();
@@ -325,21 +346,44 @@
     }
     const [ox, oy] = cs.transformOrigin.split(' ').map(parseFloat);
     const matrix = cs.transform === 'none' ? new DOMMatrix() : new DOMMatrix(cs.transform);
-    const p = matrix.transformPoint(new DOMPoint((x0 + x1) / 2 - ox, (y0 + y1) / 2 - oy));
-    return [box.left + ox + p.x, box.top + oy + p.y];
+    const pts = [[x0, y0], [x1, y0], [x0, y1], [x1, y1]].map(([x, y]) => matrix.transformPoint(new DOMPoint(x - ox, y - oy)));
+    const xs = pts.map((p) => box.left + ox + p.x), ys = pts.map((p) => box.top + oy + p.y);
+    return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
   }
 
   let parts = [];
+  let unit = 1; // English: pixels per viewBox unit of the drawn word
+  let origin = [0, 0]; // English: where the viewBox's 0,0 lands, in viewport pixels
   function collect() {
     if (!ko) {
       const svg = document.querySelector('.letters');
-      const width = svg.getBoundingClientRect().width;
-      const unit = width / svg.viewBox.baseVal.width;
-      const spread = width < 560 ? .8 : 1.4; // narrow screens have no room to fling parts far
+      const box = svg.getBoundingClientRect();
+      const vb = svg.viewBox.baseVal;
+      // On a short stage the drawing is held to the height and letterboxed in a wider box.
+      unit = Math.min(box.width / vb.width, box.height / vb.height);
+      const width = unit * vb.width;
+      // How far the parts fly, in pixels per viewBox unit. A narrow screen has no room to fling
+      // them far sideways, but a phone stage is tall: there they fly further up and down, into
+      // the empty space above and below the word (up to twice as far). On a short phone stage
+      // the word is drawn smaller and low (see the CSS) to leave room around it, and the parts
+      // fly as far as on a desktop. fit() keeps them all inside.
+      const cs = getComputedStyle(word), strip = parseFloat(cs.paddingBottom);
+      const kx = unit * (width < 560 && !strip ? 1 : 1.4);
+      let ky = kx;
+      if (width < 560 && !strip) {
+        const free = (word.getBoundingClientRect().height - parseFloat(cs.paddingTop) - unit * vb.height) / 2;
+        ky = Math.max(kx, Math.min(unit * 2, (free + 30 * unit - 28) / 40));
+      }
+      // Where the viewBox lands on screen (the SVG keeps its aspect ratio and centres the word).
+      const ox = box.left + (box.width - width) / 2 - vb.x * unit, oy = box.top + (box.height - unit * vb.height) / 2 - vb.y * unit;
+      origin = [ox, oy];
       parts = [...svg.querySelectorAll('.p')].map((el) => ({
         el, type: el.dataset.type, tag: el.dataset.type,
-        dx: +el.dataset.x * unit * spread, dy: +el.dataset.y * unit * spread, turn: +el.dataset.r,
+        dx: +el.dataset.x * kx, dy: +el.dataset.y * ky, turn: +el.dataset.r,
+        // a straight stroke's two ends, in viewport pixels, for keeping callouts off it
+        ends: el.tagName === 'line' ? [['x1', 'y1'], ['x2', 'y2']].map(([a, b]) => [ox + el[a].baseVal.value * unit, oy + el[b].baseVal.value * unit]) : null,
       }));
+      fit();
       return parts.length > 0;
     }
     const glyphs = [...host.querySelectorAll('[part="glyph"]')];
@@ -350,31 +394,135 @@
       el: glyphs[p.glyph].querySelector(`[part~="${p.role}"]`),
       dx: p.move[0] * em, dy: p.move[1] * em,
     })).filter((p) => p.el);
-    return parts.length === KO_PARTS.length;
+    if (parts.length !== KO_PARTS.length) return false;
+    fit();
+    return true;
   }
 
+  // Assembled box of a part [left, top, right, bottom] in viewport pixels: the ink of a jamo,
+  // or an English stroke with its round ends (the SVG box leaves out the 24-unit stroke).
+  function homeBox(p) {
+    if (ko) return inkBox(p.el);
+    const prev = p.el.style.transform;
+    p.el.style.transform = 'none';
+    const q = p.el.getBoundingClientRect();
+    p.el.style.transform = prev;
+    const pad = p.el.classList.contains('dot') ? 0 : 12 * unit;
+    return [q.left - pad, q.top - pad, q.right + pad, q.bottom + pad];
+  }
   // Assembled centre of a part, in overlay pixels.
   function home(p) {
     const base = overlay.getBoundingClientRect();
-    if (!ko) {
-      const prev = p.el.style.transform;
-      p.el.style.transform = 'none';
-      const r = p.el.getBoundingClientRect();
-      p.el.style.transform = prev;
-      return [r.left + r.width / 2 - base.left, r.top + r.height / 2 - base.top];
-    }
-    const [x, y] = inkCentre(p.el);
+    const [x, y] = centre(homeBox(p));
     return [x - base.left, y - base.top];
   }
 
+  /* Every exploded part stays inside the drawing's box. On a short stage there is little room
+     above the word, and a part flung up would cross the header rule into the subtitle. Each
+     part's move is cut back just enough, and where it ends up is kept (in overlay pixels) for
+     the guides and callouts. */
+  function fit() {
+    const ov = overlay.getBoundingClientRect(), m = 4;
+    const clamp = (v, lo, hi) => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v)));
+    const put = (p, dx, dy) => {
+      const [cx, cy] = centre(p.r);
+      // the box turned by the part's tilt
+      const a = Math.abs(p.turn) * Math.PI / 180, w = (p.r[2] - p.r[0]) / 2, h = (p.r[3] - p.r[1]) / 2;
+      const hw = w * Math.cos(a) + h * Math.sin(a), hh = w * Math.sin(a) + h * Math.cos(a);
+      const ex = clamp(cx + dx, ov.left + m + hw, ov.right - m - hw);
+      const ey = clamp(cy + dy, ov.top + m + hh, ov.bottom - m - hh);
+      p.dx = ex - cx; p.dy = ey - cy;
+      p.home = [cx - ov.left, cy - ov.top];
+      p.box = [ex - hw - ov.left, ey - hh - ov.top, ex + hw - ov.left, ey + hh - ov.top];
+      if (p.ends) {
+        // the stroke's centre line once tilted and moved, plus half the stroke
+        const t = p.turn * Math.PI / 180, mx = (p.ends[0][0] + p.ends[1][0]) / 2, my = (p.ends[0][1] + p.ends[1][1]) / 2;
+        p.seg = p.ends.map(([x, y]) => [mx + (x - mx) * Math.cos(t) - (y - my) * Math.sin(t) + p.dx - ov.left,
+          my + (x - mx) * Math.sin(t) + (y - my) * Math.cos(t) + p.dy - ov.top]);
+        p.half = 12 * unit;
+      }
+    };
+    parts.forEach((p) => { p.r = homeBox(p); put(p, p.dx, p.dy); });
+    // The two loose dots must not land on a stroke (black on black, they would vanish): if one
+    // does, it goes a little shorter or further, or a little to the side, until it is clear.
+    parts.filter((p) => p.el.classList.contains('dot')).forEach((p) => {
+      const [dx, dy] = [p.dx, p.dy], r = (p.box[2] - p.box[0]) / 2 + 3;
+      const clear = () => parts.every((q) => q === p || depth(q, (p.box[0] + p.box[2]) / 2, (p.box[1] + p.box[3]) / 2, r) === 0);
+      if (clear()) return;
+      for (const [f, side] of [[.8, 0], [1.2, 0], [1, 1], [1, -1], [.6, 0], [1.4, 0], [.8, 1], [.8, -1], [1.2, 1], [1.2, -1]]) {
+        put(p, dx * f + side * r * 1.6, dy * f);
+        if (clear()) return;
+      }
+      put(p, dx, dy);
+    });
+  }
+  // How far a circle (x, y, r) reaches into a part (0 if it does not touch it).
+  function depth(p, x, y, r) {
+    if (p.seg) {
+      const [[ax, ay], [bx, by]] = p.seg, vx = bx - ax, vy = by - ay;
+      const s = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy || 1)));
+      return Math.max(0, r + p.half - Math.hypot(x - ax - vx * s, y - ay - vy * s));
+    }
+    const [x0, y0, x1, y1] = p.box;
+    return Math.max(0, r - Math.hypot(x - Math.max(x0, Math.min(x, x1)), y - Math.max(y0, Math.min(y, y1))));
+  }
+  const touches = (p, x, y, r) => depth(p, x, y, r) > 0;
+  // Is there ink of the exploded part at (x, y), in overlay pixels? English asks the SVG itself
+  // (the point carried back through the part's move and tilt); a jamo has its ink box.
+  function inkAt(p, x, y) {
+    if (ko) { const [x0, y0, x1, y1] = p.box; return x >= x0 && x <= x1 && y >= y0 && y <= y1; }
+    const ov = overlay.getBoundingClientRect();
+    const hx = p.home[0] + ov.left, hy = p.home[1] + ov.top;
+    const qx = x + ov.left - p.dx - hx, qy = y + ov.top - p.dy - hy, t = -p.turn * Math.PI / 180;
+    const pt = new DOMPoint((hx + qx * Math.cos(t) - qy * Math.sin(t) - origin[0]) / unit, (hy + qx * Math.sin(t) + qy * Math.cos(t) - origin[1]) / unit);
+    return p.el.classList.contains('dot') ? p.el.isPointInFill(pt) : p.el.isPointInStroke(pt);
+  }
+  /* A callout goes just clear of its part, on the side the part flew to if there is room
+     there, otherwise turned a little at a time (or a little further out); never on another
+     callout, and on another part only if there is no clear spot at all (then on the least of one). */
+  function calloutSpot(p, W, H, taken) {
+    const R = 11;
+    const [x0, y0, x1, y1] = p.box, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    const base = Math.atan2(p.dy, p.dx);
+    let best = null, bestCost = Infinity;
+    for (const turn of [0, 30, -30, 60, -60, 90, -90, 120, -120, 150, -150, 180]) {
+      const a = base + turn * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a);
+      // out along (ux, uy) until the circle is clear of the part's box on one axis; strokes are
+      // thinner than their box, so step back in while the circle stays clear of the stroke
+      const tx = Math.abs(ux) > 1e-3 ? ((ux > 0 ? x1 - cx : cx - x0) + R + 3) / Math.abs(ux) : Infinity;
+      const ty = Math.abs(uy) > 1e-3 ? ((uy > 0 ? y1 - cy : cy - y0) + R + 3) / Math.abs(uy) : Infinity;
+      let t0 = Math.min(tx, ty);
+      while (t0 > R + 6 && !touches(p, cx + ux * (t0 - 4), cy + uy * (t0 - 4), R + 3)) t0 -= 4;
+      for (const more of [8, 18, 30]) { // a short leader shows, as in a real exploded view
+        const t = t0 + more, x = cx + ux * t, y = cy + uy * t;
+        if (x < R + 2 || x > W - R - 2 || y < R + 2 || y > H - R - 2) continue;
+        if (taken.some(([u, v]) => Math.hypot(x - u, y - v) < 2 * R + 4)) continue;
+        // how deep it would sit on other parts (0 when clear), and its leader too (a leader
+        // across another part makes the letter seem to name that one); a little extra for far
+        const ex = (p.box[0] + p.box[2]) / 2, ey = (p.box[1] + p.box[3]) / 2;
+        const cost = parts.reduce((sum, q) => sum + (q === p ? 0 : depth(q, x, y, R + 2)
+          + [.3, .55, .8].reduce((d, k) => d + depth(q, ex + (x - ex) * k, ey + (y - ey) * k, 1) * .5, 0)), 0)
+          + (more - 8) * .02 + Math.abs(turn) * .002;
+        if (cost < bestCost) { best = [x, y]; bestCost = cost; }
+      }
+      if (bestCost < .5) break;
+    }
+    return best || [Math.min(W - R - 2, Math.max(R + 2, cx)), Math.min(H - R - 2, Math.max(R + 2, y0 - R - 3))];
+  }
+
+  /* A CSS transform on an SVG shape works in the drawing's own units (1px there is one viewBox
+     unit), so an English part's move, kept in screen pixels like everything else here, is
+     divided by the drawn scale. (Without that a phone, drawing at about half scale, moved its
+     parts only about half as far as it meant to, and the guides overshot them.) */
+  const move = (p) => (ko ? `${p.dx}px ${p.dy}px` : `translate(${p.dx / unit}px, ${p.dy / unit}px) rotate(${p.turn}deg)`);
   function place(p, t) {
     // t = 1 exploded, 0 assembled
-    if (!ko) p.el.style.transform = t ? `translate(${p.dx}px, ${p.dy}px) rotate(${p.turn}deg)` : 'none';
-    else { p.el.style.translate = t ? `${p.dx}px ${p.dy}px` : ''; p.el.style.rotate = t ? `${p.turn}deg` : ''; }
+    if (!ko) p.el.style.transform = t ? move(p) : 'none';
+    else { p.el.style.translate = t ? move(p) : ''; p.el.style.rotate = t ? `${p.turn}deg` : ''; }
   }
   const frames = (p) => (ko
-    ? [{ translate: `${p.dx}px ${p.dy}px`, rotate: `${p.turn}deg` }, { translate: '0px 0px', rotate: '0deg' }]
-    : [{ transform: `translate(${p.dx}px, ${p.dy}px) rotate(${p.turn}deg)` }, { transform: 'translate(0px, 0px) rotate(0deg)' }]);
+    ? [{ translate: move(p), rotate: `${p.turn}deg` }, { translate: '0px 0px', rotate: '0deg' }]
+    : [{ transform: move(p) }, { transform: 'translate(0px, 0px) rotate(0deg)' }]);
 
   /* ---- Overlay: dashed alignment guides and lettered callouts ---- */
   const el = (name, attrs, parent) => {
@@ -387,21 +535,24 @@
     overlay.replaceChildren();
     const seen = new Set();
     const groups = [];
+    const box = overlay.getBoundingClientRect();
+    const taken = [];
     parts.forEach((p) => {
-      const [hx, hy] = home(p);
+      const [hx, hy] = p.home;
       const ex = hx + p.dx, ey = hy + p.dy;
       const g = el('g', { class: 'guides' });
       el('line', { class: 'guide', x1: hx, y1: hy, x2: ex, y2: ey }, g);
       // One callout per kind of part (every part in Korean).
       if (!seen.has(p.tag)) {
         seen.add(p.tag);
-        const len = Math.hypot(p.dx, p.dy) || 1;
-        const ux = p.dx / len, uy = p.dy / len;
-        const reach = Math.max(26, Math.min(48, len * .45));
-        const box = overlay.getBoundingClientRect();
-        const cx = Math.min(box.width - 13, Math.max(13, ex + ux * reach));
-        const cy = Math.min(box.height - 13, Math.max(13, ey + uy * reach));
-        el('line', { class: 'lead', x1: ex + ux * 8, y1: ey + uy * 8, x2: cx - ux * 11, y2: cy - uy * 11 }, g);
+        const [cx, cy] = calloutSpot(p, box.width, box.height, taken);
+        taken.push([cx, cy]);
+        // The leader runs from the callout until it meets the part's ink.
+        const len = Math.hypot(cx - ex, cy - ey) || 1, ux = (cx - ex) / len, uy = (cy - ey) / len;
+        let t = len - 11;
+        while (t > 0 && !inkAt(p, ex + ux * t, ey + uy * t)) t -= 1.5;
+        t = Math.max(0, t - 2);
+        el('line', { class: 'lead', x1: ex + ux * t, y1: ey + uy * t, x2: cx - ux * 11, y2: cy - uy * 11 }, g);
         const c = el('g', { class: 'callout' }, g);
         el('circle', { cx, cy, r: 11 }, c);
         el('text', { x: cx, y: cy }, c).textContent = p.tag;
@@ -426,7 +577,12 @@
   function sizeWord() {
     if (!ko) return;
     const r = word.getBoundingClientRect();
-    host.style.fontSize = Math.max(60, Math.min(r.height * .62, r.width * .34)) + 'px';
+    const cs = getComputedStyle(word);
+    const strip = parseFloat(cs.paddingBottom); // the bag's own strip, on a short stage only
+    const h = r.height - parseFloat(cs.paddingTop) - strip;
+    // A short stage keeps the word a little smaller, so the jamo flung up by about .4 em still
+    // have room under the header rule (fit() stops them there anyway).
+    host.style.fontSize = (strip ? Math.max(48, Math.min(h * .53, r.width * .34)) : Math.max(60, Math.min(h * .62, r.width * .34))) + 'px';
   }
 
   /* ---- The sequence ---- */
@@ -498,9 +654,23 @@
       ], { duration: 700, easing: 'cubic-bezier(.5, 0, .5, 1)', fill: 'backwards' });
       spare.querySelector('.spare-note').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 650, fill: 'backwards' });
     }, doneAt + 1700);
+    // Once it is all built, the hint says it can be built again (and stays).
+    later(() => hint.classList.add('on'), doneAt + 1700 + 1050);
   }
 
-  document.querySelector('.diagram').addEventListener('click', play);
+  // The drawing restarts the assembly: tap it, or focus it and press Enter or Space.
+  const hint = document.querySelector('.hint');
+  const diagram = document.querySelector('.diagram');
+  diagram.tabIndex = 0;
+  diagram.setAttribute('aria-label', TTY.t({ en: 'Exploded view', ko: '분해도' }));
+  diagram.setAttribute('aria-describedby', 'assemble-hint');
+  if (TTY.reduce) hint.classList.add('on');
+  diagram.addEventListener('click', play);
+  diagram.addEventListener('keydown', (e) => {
+    if (e.target !== diagram || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    if (!e.repeat) play();
+  });
   let resized;
   new ResizeObserver(() => {
     clearTimeout(resized);

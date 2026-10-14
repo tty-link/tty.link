@@ -13,8 +13,9 @@
   /* A station departure board, except every line is an HTTP status code read kindly.
      The code and its reason phrase arrive on real split flaps: each flap is four halves,
      the old top folds down, the new bottom falls into place. Each visit runs seven codes:
-     200, 418, 429 and 503 always, plus three of the others. Where the real response carries
-     a header (Retry-After, Location), the board prints it under the kind words. */
+     200, 418, 429 and 503 always, plus three of the others (on the home page's stage, just
+     those four). Where the real response carries a header (Retry-After, Location), the board
+     prints it above the kind words. */
   :root {
     --hall: #d8d2c4;
     --board: #121418;
@@ -27,9 +28,16 @@
     --dim: rgba(244, 239, 225, .5);
   }
   html, body { height: 100%; margin: 0; }
+  /* --below: what the board leaves under itself. On the home stage that is the hint line; opened
+     on its own, a strip at the bottom for the hint on the left and the tty.link links on the right. */
+  :root { --below: 30px; }
+  html:not(.embedded) { --below: 48px; }
   body {
+    box-sizing: border-box;
     display: grid;
     place-items: center;
+    align-content: center;
+    gap: 10px;
     overflow: hidden;
     background:
       linear-gradient(rgba(0, 0, 0, .05) 1px, transparent 1px) 0 0 / 100% 48px,
@@ -41,14 +49,31 @@
 
   .board {
     container-type: inline-size;
-    width: min(94vw, 1040px, calc(94vh * 1.3));
-    max-height: 94vh;
+    width: min(94vw, 1040px, calc((94vh - var(--below)) * 1.3));
+    max-height: calc(94vh - var(--below));
     overflow: hidden;
     background: var(--board);
     border-radius: 14px;
     box-shadow: 0 0 0 6px #2b2f36, 0 0 0 7px #0b0c0f, 0 30px 60px rgba(0, 0, 0, .35);
     cursor: pointer;
   }
+  .board:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 11px; }
+  html:not(.embedded) body { padding-bottom: var(--below); }
+
+  .hint {
+    margin: 0;
+    color: rgba(18, 20, 24, .72);
+    font-size: clamp(13px, 1.9vmin, 16px);
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: .01em;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .lang-ko .hint { font-family: 'Gowun Dodum', sans-serif; font-size: clamp(12.5px, 1.8vmin, 15px); }
+  /* Opened on its own: in the bottom strip, level with the links in the right corner. */
+  html:not(.embedded) .hint { position: fixed; left: 14px; bottom: 19px; }
+  @media (max-width: 600px) { html:not(.embedded) .hint { left: 10px; bottom: 17px; } }
 
   .head {
     display: flex;
@@ -149,12 +174,27 @@
     .now { padding: 5cqi 4cqi 4cqi; gap: 4cqi; }
     .rows li { grid-template-columns: 11cqi 1fr auto; padding: 2.2cqi 4cqi; font-size: max(13px, 3.8cqi); }
     .rows li.far { display: none; }
+    /* A short board shows only its top rows, so the list runs from the current code on, the
+       way a departure board lists the next trains (otherwise 429 and 503 lit up out of sight). */
+    .rows { display: flex; flex-direction: column; }
+    .rows li { order: var(--ahead, 0); }
+  }
+  /* A narrow board on a squat screen (the phone home stage is 358×396) is short of height, not
+     width: smaller code flaps and less air, so that under the longest message (429 in Korean, two
+     lines and a header) the current row still shows. */
+  @media (min-aspect-ratio: 3/4) {
+    @container (max-width: 620px) {
+      .code { --w: 14.6cqi; }
+      .reason { --w: 7.2cqi; row-gap: 1.3cqi; }
+      .now { padding: 3.2cqi 4cqi 2.6cqi; gap: 2.8cqi; }
+      .msg .hdr { margin-bottom: 1cqi; }
+    }
   }
   @media (prefers-reduced-motion: reduce) { .clock i { animation: none; } }
 </style>
 </head>
 <body>
-<section class="board" aria-labelledby="board-title">
+<section class="board" aria-labelledby="board-title" aria-describedby="board-hint" tabindex="0">
   <header class="head">
     <h1 id="board-title" style="margin:0;font:inherit">
       <span data-lang="en">Today's status board</span>
@@ -171,6 +211,10 @@
   </div>
   <ol class="rows"></ol>
 </section>
+<p class="hint" id="board-hint">
+  <span data-lang="en">Tap the board for the next code.</span>
+  <span data-lang="ko">안내판을 누르면 다음 코드로 넘어가요.</span>
+</p>
 
 <script>
 (() => {
@@ -190,15 +234,19 @@
     { code: '429', reason: 'TOO MANY REQUESTS', en: 'Rest. The world will retry.', ko: '잠깐 쉬어요. 세상은 알아서 재시도해요.', note: { en: 'Delayed: resting', ko: '지연: 휴식 중' }, tone: 'late', hdr: 'Retry-After: 600', always: true },
     { code: '503', reason: 'SERVICE UNAVAILABLE', en: 'You’re allowed to be offline.', ko: '오프라인이어도 괜찮아요.', note: { en: 'Off today', ko: '오늘 운휴' }, tone: 'off', hdr: 'Retry-After: 86400', always: true },
   ];
-  // Today's timetable: the four regulars and three others, in code order.
+  // Today's timetable: the four regulars and three others, in code order. The home page's
+  // stage shows a page for about twenty seconds, so there the board runs a short program of
+  // just the four regulars (200, 418, 429, 503) and lingers on the last one.
+  const SHORT = TTY.embedded;
   const others = POOL.filter((c) => !c.always);
   for (let k = others.length - 1; k > 0; k--) {
     const j = Math.floor(Math.random() * (k + 1));
     [others[k], others[j]] = [others[j], others[k]];
   }
-  const extras = others.slice(0, 3);
+  const extras = SHORT ? [] : others.slice(0, 3);
   const CODES = POOL.filter((c) => c.always || extras.includes(c));
   const HOLD = 3900;
+  const LAST_HOLD = SHORT ? HOLD + 2500 : HOLD;
   const DIGITS = '0123456789';
   const LETTERS = " ABCDEFGHIJKLMNOPQRSTUVWXYZ’";
   const board = document.querySelector('.board');
@@ -226,6 +274,15 @@
     rowsBox.append(li);
   });
   const rows = [...rowsBox.children];
+  // A short board cuts the list at its bottom edge; a row that would only half show is left blank.
+  function trimRows() {
+    const bottom = board.getBoundingClientRect().bottom;
+    rows.forEach((r) => { r.style.visibility = ''; });
+    rows.forEach((r) => { if (r.getBoundingClientRect().bottom > bottom + 0.5) r.style.visibility = 'hidden'; });
+  }
+  const fit = new ResizeObserver(() => trimRows());
+  fit.observe(document.querySelector('.now'));
+  fit.observe(board);
 
   /* ---- Flaps ---- */
   function makeFlap(ch) {
@@ -274,6 +331,20 @@
       await flip(f, next, s === steps ? 150 : 74);
     }
   }
+
+  // The opening gag: on the first 200 the last code flap goes one too far (201), gives a little
+  // start, and since a drum only turns forward, has to go all the way round to get back to 0.
+  // The kind words arrive while it does.
+  async function fumble(f, delay) {
+    await sleep(delay);
+    await flip(f, '0', 74);
+    await flip(f, '1', 150);
+    await f.animate([{ transform: 'none' }, { transform: 'translateY(-4%) rotate(-3deg)' }, { transform: 'translateY(-2%) rotate(3deg)' }, { transform: 'none' }],
+      { duration: 380, easing: 'ease-in-out' }).finished;
+    await sleep(160);
+    for (const d of '234567890') await flip(f, d, d === '0' ? 150 : 74);
+  }
+  let opening = true;
 
   let wide = true;
   function layoutReason(text) {
@@ -344,7 +415,9 @@
       r.classList.toggle('on', j === i);
       const ahead = (j - i + CODES.length) % CODES.length;
       r.classList.toggle('far', ahead > 3);
+      r.style.setProperty('--ahead', ahead);
     });
+    trimRows();
     if (TTY.reduce) {
       [...codeBox.children].forEach((f, k) => setFace(f, c.code[k]));
       const lines = layoutReason(c.reason);
@@ -354,7 +427,9 @@
     }
     busy = true;
     msg.style.opacity = '.0';
-    const jobs = [...codeBox.children].map((f, k) => spin(f, c.code[k], DIGITS, k * 90));
+    const fumbling = opening && c.code === '200' && codeBox.lastChild.dataset.ch === ' ';
+    opening = false;
+    const jobs = [...codeBox.children].map((f, k) => (fumbling && k === 2 ? fumble(f, k * 90) : spin(f, c.code[k], DIGITS, k * 90)));
     const lines = layoutReason(c.reason);
     [...reasonBox.children].forEach((row, r) => [...row.children].forEach((f, k) => jobs.push(spin(f, lines[r][k], LETTERS, 160 + k * 38 + r * 120))));
     await sleep(500);
@@ -362,9 +437,16 @@
     setMessage(c, true);
     await Promise.all(jobs);
     busy = false;
-    timer = setTimeout(() => show((index + 1) % CODES.length), HOLD);
+    timer = setTimeout(() => show((index + 1) % CODES.length), index === CODES.length - 1 ? LAST_HOLD : HOLD);
   }
-  board.addEventListener('click', () => { if (!busy) show((index + 1) % CODES.length); });
+  const next = () => { if (!busy) show((index + 1) % CODES.length); };
+  board.addEventListener('click', next);
+  // The board is focusable: Enter or Space does what a tap does.
+  board.addEventListener('keydown', (e) => {
+    if (e.target !== board || (e.key !== 'Enter' && e.key !== ' ') || e.repeat) return;
+    e.preventDefault();
+    next();
+  });
 
   let lastWide = null;
   addEventListener('resize', () => {
@@ -379,8 +461,9 @@
   });
   lastWide = wide;
 
-  // The board opens on 200 OK; any 1xx codes today come round at the end.
-  const first = CODES.findIndex((c) => c.code === '200');
+  // The board opens on 200 OK; any 1xx codes today come round at the end. With reduced motion
+  // nothing turns over on its own, so the board shows its last word at once: 503, a day off.
+  const first = CODES.findIndex((c) => c.code === (TTY.reduce ? '503' : '200'));
   if (TTY.reduce) show(first);
   else TTY.onShow(() => show(first));
 

@@ -42,16 +42,19 @@
   }
   .lang-ko body { font-family: 'Gowun Dodum', 'Atkinson Hyperlegible', sans-serif; word-break: keep-all; }
 
-  /* Sized so the tank, stand and plaque always fit the height as well as the width. */
+  /* Sized so the cat, tank, stand and plaque always fit the height as well as the width:
+     the room is .68 of its width plus about 36.5cqmin tall (measured), and a few px more on
+     small stages where the text floors kick in. */
   .room {
     display: grid;
     justify-items: center;
-    width: min(94cqw, calc((94cqh - 30cqmin) / .66));
+    width: min(94cqw, calc((99cqh - 36.5cqmin - max(12px, 60px - 9cqmin)) / .68));
   }
 
   /* ---- The tank ---- */
   .tank-wrap { position: relative; width: 100%; }
-  .topper { position: relative; aspect-ratio: 100 / 9; }
+  /* Tall enough for the whole cat, ear tips included. */
+  .topper { position: relative; aspect-ratio: 100 / 11.5; }
   .tank {
     position: relative;
     container-type: size;
@@ -94,7 +97,7 @@
     100% { transform: translate(-.8cqw, -112cqh); opacity: .4; }
   }
 
-  .hook { position: absolute; left: 63%; top: 0; width: 6cqw; height: 46%; transform-origin: 50% 0; animation: sway 4.5s ease-in-out infinite alternate; pointer-events: none; }
+  .hook { position: absolute; left: 63%; top: 0; width: 6cqw; height: 54%; transform-origin: 50% 0; animation: sway 4.5s ease-in-out infinite alternate; pointer-events: none; }
   @keyframes sway { from { rotate: -3deg; } to { rotate: 3deg; } }
   .hook svg { width: 100%; height: 100%; overflow: visible; }
 
@@ -124,7 +127,7 @@
     box-shadow: inset -.6cqw -.5cqw 0 rgba(0,0,0,.08);
   }
   .fish.left .body { border-radius: 4.2cqw 3.2cqw 3.2cqw 4.2cqw; padding: 1.3cqw 2.4cqw 1.3cqw 4.2cqw; }
-  .fish .body small { display: block; margin-bottom: .3cqw; font-size: 1.45cqw; font-weight: 400; opacity: .7; }
+  .fish .body small { display: block; margin-bottom: .3cqw; font-size: max(10px, 1.45cqw); font-weight: 400; opacity: .7; }
   .fish .eye { position: absolute; top: 34%; right: 1.6cqw; width: 1.4cqw; aspect-ratio: 1; border-radius: 50%; background: #1a2228; box-shadow: inset .35cqw .35cqw 0 #fff; }
   .fish.left .eye { right: auto; left: 1.6cqw; }
   .fish .cheek { position: absolute; top: 56%; right: 1.2cqw; width: 2.2cqw; height: 1cqw; border-radius: 50%; background: #ff7d9b; opacity: 0; transition: opacity .3s; }
@@ -146,7 +149,7 @@
     background: #fff;
     color: var(--report);
     font-family: 'DotGothic16', monospace;
-    font-size: 1.7cqw;
+    font-size: max(10px, 1.7cqw);
     rotate: -8deg;
     translate: -50% 0;
     white-space: nowrap;
@@ -164,8 +167,10 @@
   .cat .open { display: none; }
   .cat.peek .open { display: inline; }
   .cat.peek .shut { display: none; }
-  .zz { position: absolute; left: 76%; top: -10%; font-family: 'Young Serif', serif; font-size: 2.2cqmin; color: rgba(30,42,51,.55); animation: zz 3s ease-in-out infinite; }
-  .zz:nth-child(2) { left: 84%; top: -22%; font-size: 1.6cqmin; animation-delay: -1.5s; }
+  /* The z's float in the empty space above the cat's back, inside the cat's own box, so
+     they stay on screen whatever the stage. */
+  .zz { position: absolute; left: 66%; top: 4%; font-family: 'Young Serif', serif; font-size: max(9px, 2.2cqmin); line-height: 1; color: rgba(30,42,51,.55); animation: zz 3s ease-in-out infinite; }
+  .zz:nth-child(2) { left: 76%; top: -4%; font-size: max(8px, 1.6cqmin); animation-delay: -1.5s; }
   @keyframes zz { 0%, 100% { opacity: 0; translate: 0 1cqmin; } 50% { opacity: 1; translate: .6cqmin -.6cqmin; } }
 
   /* ---- Stand, counter, plaque ---- */
@@ -206,16 +211,19 @@
     text-align: center;
   }
   .plaque h1 { font-family: 'Young Serif', serif; font-weight: 400; font-size: 5.6cqi; line-height: 1.1; }
-  .plaque .sci { margin-top: .8cqi; font-family: 'Young Serif', serif; font-style: italic; font-size: 3.2cqi; }
+  .plaque .sci { margin-top: .8cqi; font-family: 'Young Serif', serif; font-style: italic; font-size: max(10px, 3.2cqi); }
   .plaque .facts { margin-top: 1.2cqi; font-size: max(11px, 2.9cqi); line-height: 1.4; text-wrap: balance; }
   .plaque h1 > font-kku { color: var(--brass-ink); }
   .hint { margin-top: 1.6cqmin; font-size: max(12px, 2.2cqmin); color: rgba(30,42,51,.6); }
 
+  /* A phone's tank is about 336 px wide: px floors keep the messages readable, and wider,
+     flatter fish keep a subject to two lines so three lanes still fit. */
   @container (max-width: 520px) {
-    .fish { width: 44cqw; }
-    .fish .body { font-size: 3cqw; }
-    .fish .body small { font-size: 2.4cqw; }
-    .tag { font-size: 2.4cqw; }
+    .fish { width: 52cqw; }
+    .fish .body { font-size: max(11px, 3cqw); line-height: 1.15; }
+    .fish .body, .fish.left .body { padding-top: .9cqw; padding-bottom: .9cqw; }
+    .fish .body small { margin-bottom: 0; font-size: max(10px, 2.4cqw); }
+    .tag { font-size: max(10px, 2.4cqw); }
   }
   @media (prefers-reduced-motion: reduce) {
     .rays, .bubbles i, .hook, .fish .tail, .cat .tail, .zz { animation: none; }
@@ -273,7 +281,7 @@
     </div>
     <div data-lang="ko">
       <h1><font-kku font="sticker" size="6.4cqi">피싱에게 먹이를 주지 마세요</font-kku></h1>
-      <p class="sci">학명: 낚시꾼속 개인정보과</p>
+      <p class="sci">분류: 개인정보과 낚시꾼속</p>
       <p class="facts">서식지: 문자함, 메일함. 먹이: 비밀번호, 인증번호, 상품권. 천적: 신고 버튼과 고양이.</p>
     </div>
   </div>
@@ -371,7 +379,9 @@
 
   // Each fish keeps to its own lane so messages never pile up on each other.
   const laneCount = () => 3;
-  const laneY = (i) => 0.04 + i * 0.27;
+  // Lane 0 starts low enough that a tag above its fish (they sit above the body, tilted)
+  // stays inside the glass.
+  const laneY = (i) => 0.12 + i * 0.27;
   const freeLane = () => {
     const taken = new Set(fish.filter((f) => f.state === 'swim').map((f) => f.lane));
     for (let i = 0; i < laneCount(); i++) if (!taken.has(i)) return i;
@@ -488,7 +498,7 @@
   }
 
   // Now and then the fish in the hook's lane gets curious about the key.
-  const HOOK = { x: 0.63, y: 0.4 };
+  const HOOK = { x: 0.63, y: 0.47 };
   const hookLane = () => 1;
   setInterval(() => {
     const f = fish.find((g) => g.state === 'swim' && !g.curious && !g.real && g.lane === hookLane());

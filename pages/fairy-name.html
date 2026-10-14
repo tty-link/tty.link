@@ -40,8 +40,13 @@
   }
   * { box-sizing: border-box; margin: 0; }
   html, body { height: 100%; }
+  /* The root takes the viewport's overflow, so body's own `hidden` really clips (and body holds
+     the stage): the advice sheet sliding up and the stage settling in at the start of a round
+     never make the document taller than the screen. */
+  html { overflow: hidden; }
   body {
     container: page / size;
+    position: relative;
     overflow: hidden;
     background: #fbf8ff;
     color: var(--ink);
@@ -149,7 +154,7 @@
   .lang-ko .bait { font-weight: 400; }
 
   /* ---- The card: two faces in one box ---- */
-  .cardwrap { grid-area: card; justify-self: center; position: relative; width: var(--s); height: var(--s); container-type: size; perspective: 1600px; }
+  .cardwrap { grid-area: card; justify-self: center; position: relative; width: var(--s); height: var(--s); container: card / size; perspective: 1600px; }
   .flipper { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.55, .05, .25, 1); }
   .is-back .flipper { transform: rotateY(180deg); }
   .face { position: absolute; inset: 0; overflow: hidden; border-radius: 4cqi; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
@@ -313,6 +318,15 @@
   .match { display: flex; align-items: center; gap: 2cqi; padding: 2.2cqi 3cqi; border-radius: 1.2cqi; background: #e3f5ea; color: #15603a; font-size: max(12px, 4.3cqi); font-weight: 700; visibility: hidden; }
   .match .tick { margin: 0; scale: 1; }
   .match.on { visibility: visible; }
+  .q-short { display: none; }
+  /* A small card (the 358×396 and 328×408 home stages on phones): the English questions get
+     their short forms and the progress row steps aside, so the result line stays on the card. */
+  @container card (max-height: 230px) {
+    .lang-en .q-long, .lang-en .bank-sub { display: none; }
+    .lang-en .q-short { display: inline; }
+    .lang-en .field { gap: .4cqi; }
+    .lang-en .match { padding-block: 1.6cqi; line-height: 1.2; }
+  }
 
   /* ---- Below the card: CTA bar, actions, comments ---- */
   .cta {
@@ -411,8 +425,8 @@
   .quote { padding: 0 .3em; border-radius: .3em; background: #f3eefc; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
   .nist { font-family: 'Inter', sans-serif; font-weight: 600; white-space: nowrap; }
   .foot { padding-top: 8px; border-top: 1px dashed #ddd3ee; font-size: 12px; line-height: 1.45; color: var(--soft); }
-  /* Standalone on a phone: keep the last lines clear of the corner :) button. */
-  @media (max-width: 600px) { html:not(.embedded) .foot, html:not(.embedded) .cmts { padding-right: 40px; } }
+  /* (Opened on its own on a phone, the kit's "?" and ":)" are pinned to the top right instead:
+     see the start of the script.) */
 
   /* ---- Connector lines and the word that travels along them ---- */
   .wires { position: fixed; inset: 0; z-index: 20; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
@@ -539,6 +553,26 @@
     .cmt:nth-child(4) { display: none; }
   }
 
+  /* ---- The sponsor's fairy (autoplay, first eight seconds): she pops out of the account's
+     sparkle and loops over the card shedding glitter: wings, wand, tutu, and a burglar's mask,
+     striped top and sack. Each comment that answers sends a gold key into the sack; she slips
+     away as the card turns over. Drawn above everything, clipped to the screen. ---- */
+  .imp { position: fixed; inset: 0; z-index: 22; overflow: clip; pointer-events: none; }
+  .fairy { position: absolute; left: 0; top: 0; width: 56px; aspect-ratio: 64 / 72; visibility: hidden; }
+  .fairy.on { visibility: visible; }
+  .fairy-art { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 3px 4px rgba(70, 40, 130, .28)); }
+  .fairy .wing { transform-box: fill-box; animation: flap .13s ease-in-out infinite alternate; }
+  .fairy .wing.l { transform-origin: 100% 60%; }
+  .fairy .wing.r { transform-origin: 0% 60%; }
+  .fairy.perched .wing { animation-duration: .42s; }
+  @keyframes flap { to { scale: .45 1; } }
+  .fairy.perched .pupils { animation: shifty 1.3s steps(1, end) infinite; }
+  @keyframes shifty { 0% { translate: -1.3px 0; } 50% { translate: 1.3px 0; } }
+  .fairy .sack { transform-box: fill-box; transform-origin: 50% 8%; transition: scale .25s cubic-bezier(.3, 1.8, .5, 1); }
+  .dust { position: absolute; left: 0; top: 0; width: 12px; height: 12px; color: var(--gold); }
+  .dust-art, .key-art { display: block; width: 100%; height: 100%; fill: currentColor; overflow: visible; }
+  .key { position: absolute; left: 0; top: 0; width: 20px; height: 20px; filter: drop-shadow(0 2px 3px rgba(120, 80, 0, .35)); }
+
   .snap *, .snap::before { transition: none !important; }
   .still .flipper, .still .stage::before, .still .hl, .still .tick, .still .post, .still .step { transition: none !important; }
 </style>
@@ -625,11 +659,11 @@
               <div class="input"><span class="val"></span><span class="caret"></span><span class="tick" aria-hidden="true">✓</span></div>
             </div>
             <div class="field">
-              <p class="lbl"><span data-lang="en">What was the name of your first pet?</span><span data-lang="ko">처음 키운 반려동물 이름은?</span></p>
+              <p class="lbl"><span data-lang="en"><span class="q-long">What was the name of your first pet?</span><span class="q-short">First pet's name?</span></span><span data-lang="ko">처음 키운 반려동물 이름은?</span></p>
               <div class="input"><span class="val"></span><span class="caret"></span><span class="tick" aria-hidden="true">✓</span></div>
             </div>
             <div class="field">
-              <p class="lbl"><span data-lang="en">What street did you grow up on?</span><span data-lang="ko">출신 초등학교는?</span></p>
+              <p class="lbl"><span data-lang="en"><span class="q-long">What street did you grow up on?</span><span class="q-short">Street you grew up on?</span></span><span data-lang="ko">출신 초등학교는?</span></p>
               <div class="input"><span class="val"></span><span class="caret"></span><span class="tick" aria-hidden="true">✓</span></div>
             </div>
             <p class="match"><span class="tick" aria-hidden="true">✓</span>
@@ -696,12 +730,59 @@
 
   <svg class="wires" aria-hidden="true"></svg>
   <div class="fly" aria-hidden="true"></div>
+  <div class="imp" aria-hidden="true">
+    <div class="fairy">
+      <svg class="fairy-art" viewBox="0 0 64 72">
+        <g class="wing l">
+          <path d="M27 36C18 22 4 22 4 31s12 11 23 7Z" fill="#d9f6ee" stroke="#8fd9c2" stroke-width="1.2"/>
+          <path d="M27 40C17 41 8 48 12 53s11-3 15-11Z" fill="#efe6ff" stroke="#b79cff" stroke-width="1.2"/>
+        </g>
+        <g class="wing r">
+          <path d="M37 36c9-14 23-14 23-5s-12 11-23 7Z" fill="#d9f6ee" stroke="#8fd9c2" stroke-width="1.2"/>
+          <path d="M37 40c10 1 19 8 15 13s-11-3-15-11Z" fill="#efe6ff" stroke="#b79cff" stroke-width="1.2"/>
+        </g>
+        <path d="M29 57v8M35 57v8" stroke="#2b2140" stroke-width="2.2" stroke-linecap="round"/>
+        <ellipse cx="28" cy="66" rx="2.6" ry="1.7" fill="#ff6fae"/>
+        <ellipse cx="36" cy="66" rx="2.6" ry="1.7" fill="#ff6fae"/>
+        <path d="M24 47h16l7 9c-2 2-4 2-5.5.5-1.5 1.5-4 1.5-5.5 0-1.5 1.5-4 1.5-5.5 0-1.5 1.5-4 1.5-5.5 0-1.5 1.5-4 1.5-5.5 0-1.5 1.5-3.5 1.5-5.5-.5Z" fill="#ffb3d6" stroke="#ff7fb8" stroke-width="1"/>
+        <clipPath id="fz-top"><rect x="25" y="33" width="14" height="15" rx="4"/></clipPath>
+        <g clip-path="url(#fz-top)">
+          <rect x="25" y="33" width="14" height="15" fill="#fff"/>
+          <path d="M25 36.5h14M25 41h14M25 45.5h14" stroke="#2b2140" stroke-width="2.3"/>
+        </g>
+        <path d="M26.5 36.5 17 31M37.5 36.5 45 41" stroke="#ffd2b3" stroke-width="3" stroke-linecap="round"/>
+        <path d="M17 31 10.5 19.5" stroke="#8a5cd6" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M10 10.5l1.6 4 4.3.3-3.3 2.8 1 4.2-3.6-2.3-3.6 2.3 1-4.2-3.3-2.8 4.3-.3Z" fill="#f7c948" stroke="#fff" stroke-width=".9" stroke-linejoin="round"/>
+        <g class="sack">
+          <path d="M44 42c-5 3-7 9-5 14 2 5 10 6 14 2 4-4 3-11-2-15Z" fill="#c69563" stroke="#7a5530" stroke-width="1.3"/>
+          <path d="M43.5 41.5c2.5 1.5 5.5 1.5 8 0" stroke="#7a5530" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+          <path d="M43.5 50.5c1.5 2.5 4 3.5 7 2.5" stroke="#9c7046" stroke-width="1" fill="none"/>
+        </g>
+        <circle cx="32" cy="22" r="10.5" fill="#ffe2cc"/>
+        <path d="M21.4 22C21 13 25 10.5 32 10.5S43 13 42.6 22c-2.2-4.6-5.7-6.6-10.6-6.6S23.6 17.4 21.4 22Z" fill="#ff8fc8"/>
+        <circle cx="32" cy="9" r="4.3" fill="#ff8fc8"/>
+        <path d="M20.8 19.6c7.4-2.8 15-2.8 22.4 0l-.5 5.4c-3.8-1.6-7.4-1.4-10.7.5-3.3-1.9-6.9-2.1-10.7-.5Z" fill="#1b1430"/>
+        <path d="M21 21.2l-4.2-2.6M21 22.6l-4 2" stroke="#1b1430" stroke-width="1.4" stroke-linecap="round"/>
+        <ellipse cx="27.4" cy="21.6" rx="2.5" ry="1.8" fill="#fff"/>
+        <ellipse cx="36.6" cy="21.6" rx="2.5" ry="1.8" fill="#fff"/>
+        <g class="pupils"><circle cx="27.4" cy="21.7" r="1.1" fill="#1b1430"/><circle cx="36.6" cy="21.7" r="1.1" fill="#1b1430"/></g>
+        <path d="M29.5 27.6c2.2 1.4 4.6 1.2 6.6-.9" stroke="#b04a6a" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <circle cx="24.6" cy="26.4" r="1.6" fill="#ff9fc0" opacity=".7"/>
+        <circle cx="39.4" cy="26.4" r="1.6" fill="#ff9fc0" opacity=".7"/>
+      </svg>
+    </div>
+  </div>
 </main>
 
 <script>
 (() => {
   const ko = TTY.lang === 'ko';
   const still = TTY.reduce;
+  // Opened on its own on a phone, the kit's "?" and ":)" (about 84×50 px) go to the top right:
+  // the bottom right is where the comments and the advice sheet end, while up there they only
+  // cover the "···" menu and the empty end of the bait band. (The kit reads this when it builds
+  // the nav, at DOMContentLoaded, so it has to be set here.)
+  if (!TTY.embedded && matchMedia('(max-width: 600px)').matches) document.documentElement.dataset.ttyNav = 'top';
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1093,6 +1174,128 @@
     if (focusBack) cta.focus();
   }
 
+  /* ---- The sponsor's fairy (autoplay, 0.25–8.4 s) ----
+     0.25 s she pops out of the account's sparkle and loops over the card (1.1 s, glitter from
+     the wand), then stands on the right end of the "Show my fairy name" bar. Each comment's
+     highlights (2.95, 4.35, 5.75, 7.15 s) send a gold key into her sack, which grows. 7.8 s she
+     flies off the top right as the card turns over. */
+  const imp = $('.imp');
+  const fairy = $('.fairy');
+  const sack = $('.fairy .sack');
+  const KEY_ART = '<svg class="key-art" viewBox="0 0 24 24"><circle cx="7" cy="12" r="5.2" fill="#f7c948" stroke="#a87808" stroke-width="1.4"/><circle cx="7" cy="12" r="1.9" fill="#fff8dc"/><path d="M12 10.6h10.4v2.8h-1.8v3.4H18v-3.4h-1.6v2.4h-2.6v-2.4H12Z" fill="#f7c948" stroke="#a87808" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+  const DUST = ['#f7c948', '#ff9ccc', '#fff', '#b69cff', '#8fe3c9'];
+  let fairyRun = 0;
+  let sackKeys = 0;
+  const rect = (el) => el.getBoundingClientRect();
+  const fairyWidth = () => Math.round(Math.max(54, Math.min(110, rect($('.cardwrap')).width * .22)));
+  // Standing on the right end of the bar under the card. In layout 3 that bar is under the
+  // comments with the Flip button just above it, so she stands in the card's own bottom-right
+  // corner instead (beside the "Tell us in the comments!" sticker).
+  function perchAt(w) {
+    const h = w * 72 / 64;
+    if (layout() === 3) {
+      const c = rect($('.cardwrap'));
+      return { x: c.right - w * .82, y: c.bottom - h * .98 };
+    }
+    const r = rect(cta);
+    return { x: r.right - w - 2, y: r.top - h * .9 };
+  }
+  function putFairy(x, y, w) { Object.assign(fairy.style, { width: w + 'px', left: x + 'px', top: y + 'px' }); }
+  function dust(x, y, size) {
+    const d = document.createElement('span');
+    d.className = 'dust';
+    d.innerHTML = '<svg class="dust-art" viewBox="0 0 24 24"><use href="#i-spark"/></svg>';
+    Object.assign(d.style, { left: x - size / 2 + 'px', top: y - size / 2 + 'px', width: size + 'px', height: size + 'px', color: pickOne(DUST) });
+    imp.append(d);
+    const gone = () => d.remove();
+    d.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: `translateY(${size * .8}px) scale(.2) rotate(90deg)` }], { duration: 650, easing: 'ease-out' }).finished.then(gone, gone);
+  }
+  // Moves the fairy along a cubic curve, shedding glitter from the wand tip.
+  function flight(p0, p1, p2, p3, w, ms, grow, done) {
+    const run = ++fairyRun;
+    const h = w * 72 / 64;
+    const t0 = performance.now();
+    let last = 0;
+    const step = (now) => {
+      if (run !== fairyRun) return;
+      const k = Math.min(1, (now - t0) / ms);
+      const e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      const u = 1 - e;
+      const x = u * u * u * p0.x + 3 * u * u * e * p1.x + 3 * u * e * e * p2.x + e * e * e * p3.x;
+      const y = u * u * u * p0.y + 3 * u * u * e * p1.y + 3 * u * e * e * p2.y + e * e * e * p3.y;
+      putFairy(x, y, w);
+      fairy.style.scale = grow ? String(.2 + .8 * Math.min(1, k * 3.2)) : '';
+      if (now - last > 50 && k < .96) {
+        last = now;
+        dust(x + w * 10 / 64 + (Math.random() - .5) * w * .2, y + h * 16 / 72 + (Math.random() - .5) * w * .2, Math.max(8, w * (.16 + Math.random() * .12)));
+      }
+      if (k < 1) requestAnimationFrame(step); else done();
+    };
+    requestAnimationFrame(step);
+  }
+  function fairyIn() {
+    const w = fairyWidth();
+    const h = w * 72 / 64;
+    const a = rect($('.ava-brand'));
+    const c = rect($('.cardwrap'));
+    const end = perchAt(w);
+    sackKeys = 0;
+    sack.style.scale = '';
+    fairy.classList.remove('perched');
+    fairy.classList.add('on');
+    const p0 = { x: a.left + a.width / 2 - w / 2, y: a.top + a.height / 2 - h / 2 };
+    flight(p0, { x: c.left + c.width * .7 - w / 2, y: c.top - h * .6 }, { x: c.right - w * .1, y: c.top + c.height * .55 }, end, w, 1150, true, () => {
+      fairy.classList.add('perched');
+      fairy.animate([{ transform: 'translateY(-10%)' }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.3, 1.6, .5, 1)' });
+    });
+  }
+  // A comment has answered: a key pops out of its highlights and drops into the sack.
+  function keyFrom(i) {
+    const li = comments[i];
+    if (!fairy.classList.contains('perched') || !li.getClientRects().length) return;
+    const s = rect(li.querySelector('.hl') || li);
+    const f = rect(fairy);
+    const kw = Math.round(Math.max(22, f.width * .42));
+    const sx = s.left + s.width / 2;
+    const sy = s.top + s.height / 2;
+    const dx = f.left + f.width * 47.5 / 64 - sx;
+    const dy = f.top + f.height * 44 / 72 - sy;
+    const key = document.createElement('span');
+    key.className = 'key';
+    key.innerHTML = KEY_ART;
+    Object.assign(key.style, { width: kw + 'px', height: kw + 'px', left: sx - kw / 2 + 'px', top: sy - kw / 2 + 'px' });
+    imp.append(key);
+    const lift = Math.min(0, dy) - kw * 1.6;
+    const gone = () => key.remove();
+    key.animate([
+      { transform: 'translate(0, 0) scale(.3) rotate(-40deg)', opacity: 0 },
+      { transform: `translate(0, ${-kw * .9}px) scale(1.15) rotate(-10deg)`, opacity: 1, offset: .22 },
+      { transform: `translate(${dx * .55}px, ${lift}px) scale(1) rotate(160deg)`, opacity: 1, offset: .62 },
+      { transform: `translate(${dx}px, ${dy}px) scale(.45) rotate(320deg)`, opacity: 1 },
+    ], { duration: 950, easing: 'ease-in-out' }).finished.then(() => {
+      gone();
+      if (!fairy.classList.contains('perched')) return;
+      sackKeys++;
+      sack.style.scale = String(1 + sackKeys * .1);
+      for (let n = 0; n < 4; n++) dust(sx + dx + (Math.random() - .5) * kw * 1.4, sy + dy - Math.random() * kw, kw * .5);
+      fairy.animate([{ transform: 'none' }, { transform: 'translateY(-7%) rotate(-4deg)' }, { transform: 'none' }], { duration: 300, easing: 'ease-out' });
+    }, gone);
+  }
+  function fairyOut() {
+    if (!fairy.classList.contains('on')) return;
+    fairy.classList.remove('perched');
+    const f = rect(fairy);
+    const p0 = { x: f.left, y: f.top };
+    flight(p0, { x: p0.x - f.width * .5, y: p0.y - f.height * .8 }, { x: innerWidth * .8, y: -f.height * .2 }, { x: innerWidth + f.width * .4, y: -f.height * 1.4 }, f.width, 650, false, () => fairy.classList.remove('on'));
+  }
+  function fairyAway() {
+    fairyRun++;
+    fairy.classList.remove('on', 'perched');
+    // script animations only (the wings' CSS flapping must keep running for the next round)
+    imp.getAnimations({ subtree: true }).forEach((a) => { if (!(a instanceof CSSAnimation)) a.cancel(); });
+    imp.querySelectorAll('.key, .dust').forEach((n) => n.remove());
+  }
+
   /* ---- Scenes ---- */
   let seq = 0;          // bumps whenever a running sequence (autoplay or a manual reveal) must stop
   let timers = [];
@@ -1101,6 +1304,7 @@
 
   function reset() {
     counting++;
+    fairyAway();
     stage.classList.add('snap');
     clearWires(false);
     closePicker(false);
@@ -1131,7 +1335,7 @@
   }
 
   // The 22-second loop. Times in ms after the page is shown.
-  const T = { likes: 1500, comments: [2500, 3900, 5300, 6700], flip: 8000, fields: [8950, 10000, 11000], match: 13000, unwire: 14600, advice: 15000, outro: 21400, loop: 22000 };
+  const T = { fairy: 250, likes: 1500, comments: [2500, 3900, 5300, 6700], keys: 450, fairyOut: 7800, flip: 8000, fields: [8950, 10000, 11000], match: 13000, unwire: 14600, advice: 15000, outro: 21400, loop: 22000 };
   const AUTO = { draw: 420, fly: 520, type: 600, char: 110 };
   const QUICK = { draw: 300, fly: 380, type: 420, char: 90 };
   function play() {
@@ -1140,8 +1344,11 @@
     const live = () => mine === seq;
     reset();
     if (!still) stage.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 650, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+    later(T.fairy, fairyIn);
     later(T.likes, () => countUp(1300));
     T.comments.forEach((t, i) => later(t, () => showComment(i, true)));
+    T.comments.forEach((t, i) => later(t + T.keys, () => keyFrom(i)));
+    later(T.fairyOut, fairyOut);
     later(T.flip, () => flipTo(true));
     T.fields.forEach((t, k) => later(t, () => feed(k, AUTO, live)));
     later(T.match, () => showMatch(true));
@@ -1179,6 +1386,7 @@
     clearTimeout(resume);
     resume = setTimeout(play, 12000);
     stage.getAnimations().forEach((a) => a.cancel());
+    fairyAway();
     settleFeed();
     // A half-filled form stops making sense when the lines stop: finish it.
     if (onBack && !match.classList.contains('on')) {
@@ -1218,7 +1426,11 @@
   $('.pk-x').addEventListener('click', () => closePicker(true));
   $('.adv-x').addEventListener('click', () => { hideAdvice(); flipBtn.focus({ preventScroll: true }); });
 
-  addEventListener('resize', () => { fitComments(); if (drawn.size) relayWires(); });
+  addEventListener('resize', () => {
+    fitComments();
+    if (drawn.size) relayWires();
+    if (fairy.classList.contains('perched')) { const w = fairyWidth(); const p = perchAt(w); putFairy(p.x, p.y, w); }
+  });
 
   /* ---- Start ---- */
   fitComments();

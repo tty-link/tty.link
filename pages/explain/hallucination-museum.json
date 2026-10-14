@@ -1,0 +1,138 @@
+{
+  "id": "hallucination-museum",
+  "title": {
+    "en": "The Museum of Confident Answers",
+    "ko": "자신만만한 답변 박물관"
+  },
+  "updated": "2026-10-14",
+  "ko": {
+    "line": "AI가 틀린 내용을 아주 자신 있게 지어내는 '환각'을, 일어난 적 없는 일만 모아 둔 박물관으로 놀린다.",
+    "points": [
+      "금빛 액자 속 첫 전시물 '세종대왕의 맥북프로 던짐 사건' → 말도 안 되는 일을 시대와 출처까지 박물관 설명판 말투로 또박또박 적어 놓아서, 그럴듯할수록 더 웃기다. 2023년 2월, \"조선왕조실록에 기록된 세종대왕의 맥북프로 던짐 사건\"을 묻자 AI 챗봇이 훈민정음 초고를 쓰던 세종이 담당자에게 화가 나 맥북프로를 던졌다는 이야기를 지어내 답한 일이 밈으로 퍼졌다.",
+      "경비원이 붙이는 노란 '출처 필요' 스티커 → 출처를 요구받아도 확신도 막대는 90%로 잠깐 움찔했다가 바로 100%로 돌아온다.",
+      "끝 말풍선 '확인 완료. 여전히 100%.' → 확인했는데 하나도 안 바뀌었다. 스티커 붙은 설명판을 더 누르면 확신도가 101%, 103%… 999%로 오히려 올라간다. 따질수록 더 우긴다.",
+      "다른 전시물(존재하지 않는 논문, 지어낸 판례, 없는 패키지, 쓰인 적 없는 추천 도서) → 실제로 있었던 환각 사고를 본뜬 것이다. 미국에서는 AI가 지어낸 판례를 법원 서면에 인용한 변호사들이 벌금을 물었고, 2025년 미국 신문들에 실린 여름 추천 도서 15권 중 10권은 존재하지 않는 책이었다."
+    ],
+    "terms": [
+      {
+        "term": "환각(할루시네이션)",
+        "plain": "AI가 사실이 아닌 내용을 사실처럼 그럴듯하게 만들어 내는 현상."
+      },
+      {
+        "term": "확신도",
+        "plain": "답이 맞을 거라고 얼마나 믿는지를 나타낸 숫자. 이 박물관에서는 맞든 틀리든 늘 100%다."
+      },
+      {
+        "term": "출처 필요",
+        "plain": "위키백과에서 근거가 붙지 않은 문장 뒤에 다는 꼬리표. 영어로는 citation needed."
+      },
+      {
+        "term": "패키지 환각",
+        "plain": "AI가 존재하지 않는 소프트웨어 패키지를 추천하는 것. 누군가 먼저 그 이름으로 패키지를 올려 두면, AI 말을 믿은 사람이 그걸 설치하게 될 수 있다. 이 수법을 슬롭스쿼팅이라 부른다."
+      }
+    ],
+    "links": [
+      {
+        "title": "환각 (인공지능) - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/환각_%28인공지능%29",
+        "note": "AI 환각이 무엇인지",
+        "lang": "ko"
+      },
+      {
+        "title": "\"세종대왕 맥북 던짐 사건 알려줘\" 물었더니... - 한국일보",
+        "url": "https://www.hankookilbo.com/news/article/A2023022215200000727",
+        "note": "2023년 2월, 챗GPT의 엉뚱한 답이 밈으로 퍼진 일을 다룬 기사"
+      },
+      {
+        "title": "Mata v. Avianca, Inc.",
+        "url": "https://en.wikipedia.org/wiki/Mata_v._Avianca,_Inc.",
+        "note": "챗GPT가 지어낸 판례를 서면에 인용한 변호사들이 5,000달러 벌금을 받은 2023년 미국 소송",
+        "lang": "en"
+      },
+      {
+        "title": "AI-generated summer reading list gets published in major newspapers - NPR",
+        "url": "https://www.npr.org/2025/05/20/nx-s1-5405022/fake-summer-reading-list-ai",
+        "note": "2025년 미국 신문들에 실린 추천 도서 15권 중 실제 책은 5권뿐이었던 일",
+        "lang": "en"
+      },
+      {
+        "title": "Slopsquatting",
+        "url": "https://en.wikipedia.org/wiki/Slopsquatting",
+        "note": "AI가 지어낸 패키지 이름을 먼저 등록해 두는 수법과, 그 이름으로 올린 빈 패키지가 3만 번 넘게 내려받힌 실험",
+        "lang": "en"
+      }
+    ],
+    "deep": [
+      "논문 「인용은 없어도 된다」의 `2031년 작, 1998년 발표`와 `대부분 스스로를 인용함` → 쓰기도 전에 발표됐고, 인용 4,000회의 출처는 대부분 자기 자신이다.",
+      "여름 추천 도서 그림의 책 15권 → 색칠된 책은 5권뿐이고 10권은 점선 윤곽이다. 2025년 미국 신문 목록의 '15권 중 10권이 존재하지 않음'과 같은 숫자다.",
+      "`대법원 2019다4040 판결` → 한국 판결 번호는 '연도 + 사건 부호 + 번호'이고, 대법원 예규에서 '다'는 민사 상고 사건의 부호다. 번호 4040에는 '찾을 수 없음' 404가 숨어 있고, 그림에서는 사과가 위로 떠오른다(중력이 졌다).",
+      "'모두가 추천하는 패키지'의 `골판지, 내용물 없음`과 테이프 붙은 빈 상자 → 2023년 한 보안 연구자가 AI가 지어낸 패키지 이름(huggingface-cli)으로 빈 패키지를 올려 보니, 석 달 만에 3만 번 넘게 내려받혔다.",
+      "경비원의 '재확인. 여전히 100%.'와 계속 물을수록 101, 103, 108 … 999%로 오르는 확신도 → Mata 사건에서 변호사가 판례가 진짜냐고 묻자 챗GPT는 \"진짜 사건\"이라고 답했고, 출처를 묻자 \"다시 확인해 보니\"(Upon double-checking) 그 판례가 정말 있으며 판례 데이터베이스에서 찾을 수 있다고 했다. 순찰 중에 마지막 전시물을 먼저 올려 두면 경비원의 마지막 말도 그 숫자를 따라간다."
+    ]
+  },
+  "en": {
+    "line": "This page turns AI \"hallucination\", an AI making something up and stating it with total confidence, into a museum of famous events that never happened.",
+    "points": [
+      "The framed exhibits, starting with \"Abraham Lincoln's iPhone\" (used to send the Gettysburg Address as a group text) → nonsense written in a calm museum voice, with a date and materials. The more official it sounds, the funnier it gets. The Korean version opens with \"King Sejong's MacBook Pro throwing incident\": in February 2023 Koreans shared a chatbot's detailed answer about this invented event, supposedly recorded in the royal annals of the 15th-century king who created the Korean alphabet, and it became a meme.",
+      "The guard's yellow \"citation needed\" stickers → asked for a source, the confidence bar flinches to 90% and springs right back to 100%.",
+      "His closing line \"Checked. Still 100%.\" → he checked; nothing changed. Keep tapping a stickered placard and the confidence climbs instead: 101%, 103%… 999%. The more you question it, the surer it gets.",
+      "The other exhibits (a paper that doesn't exist, a made-up court case, a package nobody published, a reading list of unwritten books) → each copies a real AI mishap. In the US, lawyers were fined for citing court cases a chatbot invented, and a summer reading list printed in US newspapers in 2025 had 15 books, 10 of which don't exist."
+    ],
+    "terms": [
+      {
+        "term": "Hallucination",
+        "plain": "when an AI produces false information and presents it as fact."
+      },
+      {
+        "term": "Confidence",
+        "plain": "how sure a system says it is. In this museum it is always 100%, right or wrong."
+      },
+      {
+        "term": "Citation needed",
+        "plain": "the tag Wikipedia puts after a claim that has no source."
+      },
+      {
+        "term": "Package hallucination",
+        "plain": "an AI recommending a software package that doesn't exist. If someone then publishes a package under that name, people who trust the AI may install it (\"slopsquatting\")."
+      }
+    ],
+    "links": [
+      {
+        "title": "Hallucination (artificial intelligence) - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Hallucination_%28artificial_intelligence%29",
+        "note": "what AI hallucinations are and what they look like",
+        "lang": "en"
+      },
+      {
+        "title": "Wikipedia:Citation needed",
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Citation_needed",
+        "note": "the real tag the stickers copy",
+        "lang": "en"
+      },
+      {
+        "title": "Mata v. Avianca, Inc. - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Mata_v._Avianca,_Inc.",
+        "note": "the 2023 US case in which lawyers were fined $5,000 for citing fake cases made up by ChatGPT",
+        "lang": "en"
+      },
+      {
+        "title": "AI-generated summer reading list gets published in major newspapers - NPR",
+        "url": "https://www.npr.org/2025/05/20/nx-s1-5405022/fake-summer-reading-list-ai",
+        "note": "the 2025 list on which only 5 of 15 books were real"
+      },
+      {
+        "title": "Slopsquatting - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Slopsquatting",
+        "note": "registering the package names AI makes up, and the empty test package that was downloaded over 30,000 times",
+        "lang": "en"
+      }
+    ],
+    "deep": [
+      "The paper \"Citations Need Not Exist\", `Smith et al., 2031. Published 1998.`, `mostly by itself` → published decades before it was written, and most of its four thousand citations are its own.",
+      "The reading-list picture has 15 books → only 5 are painted in; the other 10 are dotted outlines, the same numbers as the 2025 newspaper list on which 10 of 15 books did not exist.",
+      "The court case → in English it is `Smith v. Gravity (2019)`, and the plaintiff won: in the picture the apple floats up. The Korean version names it the way Korean judgments are cited, year + case-type mark + number: `2019다4040`, where 다 is the Supreme Court's mark for a civil appeal and 4040 hides a 404, \"not found\".",
+      "\"The Package Everyone Recommends\", `Cardboard, nothing inside.`, drawn as an empty taped box → in 2023 a security researcher uploaded an empty package under a name AI kept inventing (huggingface-cli), and it was downloaded over 30,000 times in three months.",
+      "The guard's \"Rechecked. Still 100%.\" and the confidence that climbs 101, 103, 108 … 999% the more you ask → in Mata v. Avianca the lawyer asked ChatGPT whether a case was real; it said yes, and when he asked for a source it replied \"Upon double-checking\", the case \"does indeed exist\" and can be found in legal databases. Raise the last exhibit before the guard gets there and his closing line quotes your number."
+    ]
+  }
+}

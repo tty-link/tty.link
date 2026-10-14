@@ -57,7 +57,7 @@
     --prop: clamp(30px, min(9.2cqw, 7cqh), 60px);
     --tag-w: 20.5cqw;
     --tag-size: clamp(11px, min(2.85cqw, 2.1cqh), 16px);
-    --cat: clamp(36px, 9cqmin, 62px);
+    --cat: clamp(44px, 14cqw, 84px);
   }
 
   .sky {
@@ -299,7 +299,16 @@
   .bin-bulky .bin-art { width: min(100%, 11cqh); }
 
   /* ---- Cat on the wall ---- */
-  .cat { position: absolute; left: 0; top: 0; width: var(--cat); z-index: 7; pointer-events: none; }
+  .cat { position: absolute; left: 0; top: 0; width: var(--cat); z-index: 11; pointer-events: none; }
+  /* The lamp's own glow: the cat is caught in it, mid-leap, when the world stops. */
+  .halo {
+    position: absolute; left: 0; top: 0; width: calc(var(--cat) * 2.2); aspect-ratio: 1; z-index: 3; pointer-events: none;
+    translate: -50% -50%; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(255, 240, 200, .9), rgba(255, 207, 112, .5) 40%, rgba(255, 207, 112, .14) 68%, transparent);
+    opacity: .35; transition: opacity .25s;
+  }
+  .stw .halo { opacity: 1; }
+  .cat.flip svg { scale: -1 1; }
   .cat svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 1.2px rgba(200, 210, 255, .85)) drop-shadow(0 0 4px rgba(150, 165, 230, .35)); }
   .cat .pose { display: none; }
   .cat[data-pose="walk"] .walk, .cat[data-pose="leap"] .leap, .cat[data-pose="sit"] .sit { display: inline; }
@@ -326,6 +335,20 @@
   .stw .band { opacity: 1; translate: 0 0; }
   .stw .cloud, .stw .moth, .stw .clock .colon, .stw .sit .tail { animation-play-state: paused; }
   .stw .town { filter: saturate(.4) brightness(.8); }
+  /* Freeze frame (1.5–3 s): the picture goes grey like a paused video and a big pause sign
+     comes up in the middle; it then shrinks into the band's own pause sign. The cat sits above
+     the grey: a black shape hanging in the lamp's glow. */
+  .freeze { position: absolute; inset: 0; z-index: 8; pointer-events: none; opacity: 0; transition: opacity .7s; -webkit-backdrop-filter: grayscale(.9) brightness(.92); backdrop-filter: grayscale(.9) brightness(.92); }
+  .freeze.on { opacity: 1; transition-duration: .12s; }
+  .bigpause {
+    position: absolute; left: 50%; top: 52%; z-index: 12; pointer-events: none;
+    width: clamp(70px, 24cqmin, 170px); aspect-ratio: 1; translate: -50% -50%;
+    display: flex; align-items: center; justify-content: center; gap: 15%;
+    border-radius: 22%; background: rgba(10, 13, 30, .62); box-shadow: 0 0 0 2px rgba(255, 207, 112, .55), 0 1cqmin 4cqmin rgba(0, 0, 0, .45);
+    opacity: 0; visibility: hidden;
+  }
+  .bigpause i { width: 17%; height: 50%; border-radius: 3px; background: var(--amber); box-shadow: 0 0 1.4cqmin rgba(255, 207, 112, .8); }
+  .bigpause.on { visibility: visible; opacity: 1; }
 
   /* ---- Speech: the PA, bubbles, notes ---- */
   .pa, .bubble, .memo {
@@ -381,8 +404,13 @@
   .receipt .barcode { height: 1.6em; margin-top: .55em; background: repeating-linear-gradient(90deg, #1f2230 0 2px, transparent 2px 4px, #1f2230 4px 5px, transparent 5px 8px, #1f2230 8px 11px, transparent 11px 12px); opacity: .8; }
 
   /* ---- Button ---- */
+  /* The button and a one-line hint share a row: bottom left on phones, under the band on the
+     right on wide screens. Opened on its own, the row stops short of the kit's corner links. */
+  .controls { position: absolute; left: 3%; right: 3%; bottom: 2.2%; z-index: 15; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+  html:not(.embedded) .controls { right: 300px; }
+  @media (max-width: 600px) { html:not(.embedded) .controls { right: 88px; } }
   .start {
-    position: absolute; left: 3%; bottom: 2.2%; z-index: 15;
+    position: relative; flex: none; pointer-events: auto;
     display: inline-flex; align-items: center; gap: .55em;
     min-height: 36px; padding: .45em 1em .45em .55em; border: 0; border-radius: 999px;
     background: #ffcf70; color: #2a1e05; cursor: pointer;
@@ -393,6 +421,16 @@
   .start:hover { background: #ffd98a; }
   .start:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
   .start .knob { width: 1.5em; height: 1.5em; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #ff8a7a, #c8322b 70%); box-shadow: inset 0 -2px 0 rgba(0,0,0,.25); }
+
+  /* One line on what to do: beside the button on phones, under it on wide screens. On phones
+     it steps aside while a bubble or a note is up. */
+  .hint {
+    margin-left: auto; min-width: 0;
+    color: #d9ddf0; font-size: clamp(11px, min(3cqw, 2.2cqh), 14px); font-weight: 700; line-height: 1.25; text-align: right;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .7); pointer-events: none; transition: opacity .3s;
+  }
+  .lang-ko .hint { font-weight: 400; }
+  .scene:has(.bubble.on, .memo.on) .hint { opacity: 0; }
 
   /* ================================================================ wide layout */
   @container page (min-width: 640px) and (min-aspect-ratio: 1/1) {
@@ -411,7 +449,7 @@
       --prop: clamp(32px, 6.8cqmin, 62px);
       --tag-w: min(9.6cqw, 132px);
       --tag-size: clamp(11px, 1.6cqmin, 14.5px);
-      --cat: clamp(44px, 7cqmin, 72px);
+      --cat: clamp(56px, 10cqmin, 100px);
     }
     .lamp { scale: 1 1; }
     .notice-title { font-size: clamp(16px, 2.7cqmin, 24px); }
@@ -448,7 +486,9 @@
     .receipt { left: 2.4%; top: 6%; width: 25cqw; max-height: none; translate: none; }
     .receipt .r-rows { grid-template-columns: 1fr; }
     .item:not(.parked) .sticker { translate: -50% 0; }
-    .start { left: auto; right: 2.5%; bottom: auto; top: calc(.8% + clamp(30px, 5.6cqmin, 50px) + 1.4cqh); }
+    .controls, html:not(.embedded) .controls { left: auto; right: 2.5%; bottom: auto; top: calc(.8% + clamp(30px, 5.6cqmin, 50px) + 1.4cqh); max-width: 30%; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .hint { margin-left: 0; font-size: clamp(11px, 1.6cqmin, 14px); }
+    .scene:has(.bubble.on, .memo.on) .hint { opacity: 1; }
     .moon { right: 21%; top: 10%; }
     .cloud { right: 14%; top: 9%; }
     .sign { display: block; }
@@ -459,6 +499,19 @@
     .rules li + li { margin-top: .1em; }
     .rules { line-height: 1.28; }
     .sched caption { display: none; }
+  }
+
+  /* Phones with little height (the 358×396 and 328×408 home stages): smaller bin pictures so
+     the bin row and its names end above a slimmer button row; the button never sits on a bin. */
+  @container page (max-height: 470px) and ((max-width: 639.98px) or (max-aspect-ratio: 1/1)) {
+    .bins { top: 74.2%; }
+    .bin-art { width: min(84%, 7.6cqh); }
+    .controls { bottom: .8%; }
+    /* the bulky sticker sits low on its box here, over the bin pictures, clear of the kept
+       things on the floor just above */
+    .item.parked .sticker { bottom: 40%; translate: -40% 0; }
+    .start { min-height: 30px; padding: .2em .85em .2em .4em; }
+    .start .knob { width: 1.3em; height: 1.3em; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -526,6 +579,7 @@
     <div class="floor"></div>
     <div class="bins"></div>
 
+    <div class="halo" aria-hidden="true"></div>
     <div class="cat" data-pose="walk" aria-hidden="true">
       <svg viewBox="0 0 60 40">
         <g class="pose walk">
@@ -557,7 +611,9 @@
       </svg>
     </div>
 
+    <div class="freeze" aria-hidden="true"></div>
     <div class="vignette" aria-hidden="true"></div>
+    <div class="bigpause" aria-hidden="true"><i></i><i></i></div>
     <div class="band" aria-hidden="true"><i class="pause"></i><span class="band-text"></span></div>
 
     <div class="pa" aria-hidden="true">
@@ -569,7 +625,10 @@
 
     <article class="receipt" aria-hidden="true"></article>
 
-    <button class="start" type="button"><i class="knob" aria-hidden="true"></i><span class="start-text"></span></button>
+    <div class="controls">
+      <button class="start" type="button"><i class="knob" aria-hidden="true"></i><span class="start-text"></span></button>
+      <p class="hint" aria-hidden="true"></p>
+    </div>
     <p class="sr-only" id="howto"></p>
     <p class="sr-only" aria-live="polite" id="say"></p>
   </div>
@@ -604,9 +663,10 @@
       holiday: 'Burnout: not in general waste. Special collection: a holiday.',
       sticker: ['Reported', 'fee: tell one friend about it'],
       refuse: "Someone's still holding this one. Can't throw it out.",
-      receipt: ['Collection complete', 'freed {gb} GB of mind', 'paused 7 h 12 min (sleep)', 'next collection: tomorrow 11 p.m.'],
+      receipt: ['Collection complete', 'freed {gb} GB of mind', 'paused 7 h 12 min (sleep)', 'next collection: tonight, 11 p.m.'],
       weak: "Most worries don't survive a single day (the weak generational hypothesis).",
       start: 'Start collection',
+      hint: 'Drag an item into a bin.',
       days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       daily: 'every day · 23:00',
       roots: 'Roots',
@@ -624,9 +684,10 @@
       holiday: '번아웃은 일반 쓰레기 아님. 전용 수거함: 휴가.',
       sticker: ['대형 폐기물 신고 완료', '수수료: 친구에게 털어놓기 1회'],
       refuse: '아직 붙잡고 있는 사람이 있어요. 버릴 수 없음.',
-      receipt: ['수거 완료', '확보된 마음 {gb}GB', '일시 정지 7시간 12분(수면)', '다음 수거: 내일 23:00'],
+      receipt: ['수거 완료', '확보된 마음 {gb}GB', '일시 정지 7시간 12분(수면)', '다음 수거: 오늘 밤 23:00'],
       weak: '대부분의 걱정은 하루를 넘기지 못합니다(약한 세대 가설).',
       start: '수거 시작',
+      hint: '물건을 수거함으로 끌어 보세요.',
       days: ['월', '화', '수', '목', '금', '토', '일'],
       daily: '매일 23:00',
       roots: '뿌리',
@@ -664,14 +725,14 @@
     { id: 'shortcut', root: 'tomorrow', refs: [], r: 4, label: { en: 'a shortcut you learned today', ko: '오늘 배운 단축키' } },
     { id: 'lunch', root: 'friends', refs: [], r: -3, label: { en: 'lunch plans tomorrow', ko: '내일 점심 약속' } },
     { id: 'voice', root: 'family', refs: [], r: 5, label: { en: "Mom's voice", ko: '엄마 목소리' } },
-    { id: 'todo', root: null, refs: [], bin: 'paper', t: 9.0, gb: 0.1, r: 6, label: { en: 'a finished to-do list', ko: '다 끝낸 할 일 목록' } },
-    { id: 'opinions', root: null, refs: [], bin: 'plastic', t: 9.9, gb: 0.3, r: -6, label: { en: "other people's opinions", ko: '남의 평가' }, sub: { en: '(light, never rots)', ko: '(가볍고 오래 안 썩음)' } },
-    { id: 'lecture', root: null, refs: [], bin: 'food', t: 10.8, gb: 0.3, r: -4, note: 'chew', label: { en: 'a lecture you kept chewing on', ko: '곱씹던 잔소리' } },
-    { id: 'slip', root: null, refs: [], bin: 'general', t: 11.8, gb: 0.2, r: 8, label: { en: 'a slip of the tongue in the meeting', ko: '회의에서 한 말실수' } },
-    { id: 'worry', root: null, refs: ['worry2'], bin: 'general', t: 12.7, gb: 0.2, r: -3, label: { en: 'worry', ko: '걱정' } },
+    { id: 'todo', root: null, refs: [], bin: 'paper', t: 8.6, gb: 0.1, r: 6, label: { en: 'a finished to-do list', ko: '다 끝낸 할 일 목록' } },
+    { id: 'opinions', root: null, refs: [], bin: 'plastic', t: 9.4, gb: 0.3, r: -6, label: { en: "other people's opinions", ko: '남의 평가' }, sub: { en: '(light, never rots)', ko: '(가볍고 오래 안 썩음)' } },
+    { id: 'lecture', root: null, refs: [], bin: 'food', t: 10.2, gb: 0.3, r: -4, note: 'chew', label: { en: 'a lecture you kept chewing on', ko: '곱씹던 잔소리' } },
+    { id: 'slip', root: null, refs: [], bin: 'general', t: 11.0, gb: 0.2, r: 8, label: { en: 'a slip of the tongue in the meeting', ko: '회의에서 한 말실수' } },
+    { id: 'worry', root: null, refs: ['worry2'], bin: 'general', t: 11.8, gb: 0.2, r: -3, label: { en: 'worry', ko: '걱정' } },
     { id: 'worry2', root: null, refs: ['worry'], bin: 'general', gb: 0.2, r: 4, label: { en: 'worrying about the worry', ko: '걱정에 대한 걱정' } },
-    { id: 'burnout', root: null, refs: [], bin: 'battery', t: 13.7, gb: 0.5, r: -8, note: 'holiday', label: { en: 'burnout', ko: '번아웃' } },
-    { id: 'cringe', root: null, refs: [], bin: 'bulky', t: 15.0, gb: 0.5, r: 3, label: { en: 'the cringe from three years ago', ko: '3년 전 흑역사' } },
+    { id: 'burnout', root: null, refs: [], bin: 'battery', t: 12.5, gb: 0.5, r: -8, note: 'holiday', label: { en: 'burnout', ko: '번아웃' } },
+    { id: 'cringe', root: null, refs: [], bin: 'bulky', t: 14.8, gb: 0.5, r: 3, label: { en: 'the cringe from three years ago', ko: '3년 전 흑역사' } },
   ];
   const byId = Object.fromEntries(ITEMS.map((it) => [it.id, it]));
 
@@ -822,6 +883,7 @@
   $('.band-text').textContent = L.band;
   $('.pa-text').textContent = L.bell;
   $('.start-text').textContent = L.start;
+  $('.hint').textContent = L.hint;
   $('#howto').textContent = L.howto;
 
   // Far apartments with windows.
@@ -1062,7 +1124,7 @@
     it.state = 'binned';
     lightBin(bin);
     lidBounce(bin);
-    if (it.note) showMemo(L[it.note], bin, 'note', 3000);
+    if (it.note) showMemo(L[it.note], bin, 'note', 2400);
     settled();
   }
 
@@ -1075,6 +1137,10 @@
       st.animate([{ transform: 'scale(2.4) rotate(14deg)', opacity: 0 }, { transform: 'scale(.92) rotate(-2deg)', opacity: 1, offset: .65 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.5, 0, .9, .4)' });
       it.el.animate([{ transform: `translate(${it.dx}px, ${it.dy}px)` }, { transform: `translate(${it.dx}px, ${it.dy + 4}px) scale(.96, 1.02)` }, { transform: `translate(${it.dx}px, ${it.dy}px)` }], { duration: 260, delay: 260 });
       await sleep(900);
+      // a note up over the bins (burnout's) goes first, so the box and its sticker never slide
+      // in under it
+      while (memo.classList.contains('on') && g === gen) await sleep(100);
+      await sleep(memo.classList.contains('on') ? 0 : 250);
       if (g !== gen) return;
     }
     await park(it, false);
@@ -1175,17 +1241,35 @@
 
   let catAnim = null;
   let catPhase = 'walk';
+  const halo = $('.halo');
+  // The cat walks along the wall top and leaps at the lamp: the top of the leap puts it right
+  // on the bulb, a black shape against the glow, and that is where the world stops it. Wide:
+  // from the left, leaping up and right. Phones: from the pole end, leaping up and left (the
+  // notice takes the left of the wall there).
   function catPoints() {
     const s = sRect();
     const f = $('.fence').getBoundingClientRect();
-    const w = cat.offsetWidth;
-    const top = f.top - s.top - w * (40 / 60) * .92;
-    const x0 = f.left - s.left + (wide ? .06 : .46) * s.width;
-    return { top, x0, x1: x0 + (wide ? .07 : .06) * s.width, x2: x0 + (wide ? .26 : .32) * s.width, lift: Math.max(30, s.height * (wide ? .12 : .065)) };
+    const w = cat.offsetWidth, h = w * 40 / 60;
+    const top = f.top - s.top - h * .92;
+    const b = $('.lamp .bulb').getBoundingClientRect();
+    const bx = b.left + b.width / 2 - s.left, by = b.top + b.height / 2 - s.top;
+    const ay = Math.max(4, by - h * .6);
+    if (wide) {
+      const ax = bx - w * .55;
+      const x0 = f.left - s.left + .015 * s.width;
+      return { top, bx, by, ax, ay, x0, x1: Math.max(x0, Math.min(x0 + .04 * s.width, ax - w * .25)), x2: ax + .12 * s.width, dir: 1 };
+    }
+    const n = $('.notice').getBoundingClientRect();
+    const ax = bx - w * .45;
+    const x0 = Math.min(s.width - w - 4, ax + w * .9);
+    return { top, bx, by, ax, ay, x0, x1: Math.max(ax + w * .2, x0 - .05 * s.width), x2: Math.max(n.right - s.left + 4, ax - .12 * s.width), dir: -1 };
   }
   function placeCat() {
     const p = catPoints();
+    cat.classList.toggle('flip', p.dir < 0);
     cat.style.top = p.top + 'px';
+    halo.style.left = p.bx + 'px';
+    halo.style.top = p.by + 'px';
     if (catPhase === 'walk') cat.style.left = p.x0 + 'px';
     if (catPhase === 'sit') cat.style.left = p.x2 + 'px';
   }
@@ -1195,25 +1279,27 @@
     if (catAnim) catAnim.cancel();
     placeCat();
     const p = catPoints();
-    catAnim = reduce ? null : cat.animate([{ transform: 'none' }, { transform: `translateX(${p.x1 - p.x0}px)` }], { duration: 1300, fill: 'forwards' });
+    catAnim = reduce ? null : cat.animate([{ transform: 'none' }, { transform: `translateX(${p.x1 - p.x0}px)` }], { duration: 950, fill: 'forwards' });
   }
+  // A curve from the walk's end to the landing that passes the apex halfway (t = .5).
+  const LEAP = 1100;
   function catJump() {
     if (reduce) return;
     const p = catPoints();
     catPhase = 'leap';
     if (catAnim) catAnim.cancel();
     cat.dataset.pose = 'leap';
-    const dx = p.x2 - p.x0, d1 = p.x1 - p.x0;
+    const cx = 2 * p.ax - (p.x1 + p.x2) / 2, cy = 2 * p.ay - p.top;
     const frames = [];
-    for (let k = 0; k <= 10; k++) {
-      const t = k / 10;
-      const x = d1 + (dx - d1) * t;
-      const y = -4 * p.lift * t * (1 - t);
-      frames.push({ transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${(-14 + 28 * t).toFixed(1)}deg)` });
+    for (let k = 0; k <= 12; k++) {
+      const t = k / 12;
+      const x = (1 - t) ** 2 * p.x1 + 2 * (1 - t) * t * cx + t * t * p.x2;
+      const y = (1 - t) ** 2 * p.top + 2 * (1 - t) * t * cy + t * t * p.top;
+      frames.push({ transform: `translate(${(x - p.x0).toFixed(1)}px, ${(y - p.top).toFixed(1)}px) rotate(${(p.dir * (-16 + 32 * t)).toFixed(1)}deg)` });
     }
-    catAnim = cat.animate(frames, { duration: 1100, fill: 'forwards' });
-    // Stop the world: the cat stays at the top of its jump.
-    setTimeout(() => { if (catPhase === 'leap' && catAnim && catAnim.playState === 'running') catAnim.pause(); }, 380);
+    catAnim = cat.animate(frames, { duration: LEAP, fill: 'forwards' });
+    // Stop the world: the cat stays at the top of its leap, on the light.
+    setTimeout(() => { if (catPhase === 'leap' && catAnim && catAnim.playState === 'running') { catAnim.pause(); catAnim.currentTime = LEAP / 2; } }, LEAP / 2);
   }
   function catLand() {
     if (catPhase === 'sit') return;
@@ -1229,10 +1315,39 @@
     catAnim.finished.then(finish).catch(() => {});
   }
 
+  // Freeze frame: grey picture and a big pause sign, which then shrinks into the band's sign.
+  const freeze = $('.freeze');
+  const bigpause = $('.bigpause');
+  let freezeTimer = 0;
+  function freezeFrame() {
+    if (reduce) return;
+    freeze.classList.add('on');
+    bigpause.getAnimations().forEach((a) => a.cancel());
+    bigpause.classList.add('on');
+    bigpause.animate([{ opacity: 0, transform: 'scale(1.35)' }, { opacity: 1, transform: 'scale(.94)', offset: .7 }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'ease-out' });
+    clearTimeout(freezeTimer);
+    freezeTimer = setTimeout(() => {
+      const g = bigpause.getBoundingClientRect();
+      const t = $('.band .pause').getBoundingClientRect();
+      const k = Math.max(.08, t.height / g.height);
+      const dx = t.left + t.width / 2 - (g.left + g.width / 2), dy = t.top + t.height / 2 - (g.top + g.height / 2);
+      bigpause.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${dx}px, ${dy}px) scale(${k})`, opacity: .2 }], { duration: 520, easing: 'cubic-bezier(.5, 0, .7, 1)' })
+        .finished.then(() => bigpause.classList.remove('on')).catch(() => {});
+      freeze.classList.remove('on');
+    }, 1400);
+  }
+  function unfreeze() {
+    clearTimeout(freezeTimer);
+    freeze.classList.remove('on');
+    bigpause.getAnimations().forEach((a) => a.cancel());
+    bigpause.classList.remove('on');
+  }
+
   let wakeTimer = 0;
   function stopTheWorld() {
     setClock('23', '00');
     scene.classList.add('stw');
+    freezeFrame();
     const s = sRect();
     const sp = $('.lamp .speaker').getBoundingClientRect();
     // beside the speaker, on the side the lamp arm points to
@@ -1248,6 +1363,7 @@
     else [.42, .26, .14, .06].forEach((share, k) => setTimeout(() => scene.classList.contains('stw') && lights(share), 500 + k * 700));
   }
   function wake() {
+    unfreeze();
     scene.classList.remove('stw');
     scene.classList.add('dawn');
     setClock('06', '12');
@@ -1298,6 +1414,7 @@
     clearRefs();
     hideCycle(false);
     scene.classList.remove('stw', 'dawn');
+    unfreeze();
     setClock('22', '59');
     lights(.5);
     BINS.forEach((b) => binEl[b.id].classList.remove('lit', 'over'));
@@ -1348,7 +1465,7 @@
     resetScene();
     if (reduce) { finalScene(); return; }
     const at = (sec, fn) => timers.push(setTimeout(() => { if (run === mine) fn(); }, sec * 1000));
-    at(1.25, catJump);
+    at(1.5 - LEAP / 2000, catJump);
     at(1.5, stopTheWorld);
     // Mark: the edges in the order the collector walked them, one a second from 3 s.
     GC.walked.forEach(([from, to], k) => at(3 + k * 1.0, () => drawRef(from, to, true)));
@@ -1360,8 +1477,8 @@
     });
     // Sweep: everything the mark did not reach, each at its time.
     garbage.filter((it) => it.t !== undefined).forEach((it) => at(it.t, () => collect(it)));
-    at(16.5, wake);
-    at(17.0, showReceipt);
+    at(17.0, wake);
+    at(17.4, showReceipt);
     at(22, play);
   }
 
@@ -1374,6 +1491,7 @@
       run++;
       clearTimers();
       if (scene.classList.contains('stw')) wake();
+      else if (catPhase === 'leap') catLand();
       else if (catPhase === 'walk') { catPhase = 'rest'; cat.dataset.pose = 'sit'; }
       hideReceipt();
       pa.classList.remove('on');

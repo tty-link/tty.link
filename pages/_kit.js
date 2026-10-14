@@ -6,6 +6,12 @@
  *   TTY.embedded   true inside the home page's stage
  *   TTY.onShow(fn) run fn when the page is actually on screen. On the home page a page is
  *                  loaded hidden a few seconds early; start timelines here, not on load.
+ *                  Opened on its own, a page is on screen at once: fn runs right after the
+ *                  page's script, before the load and the fonts.
+ *   TTY.drawn      a promise, settled once the page has loaded with its fonts (at most 2.5 s
+ *                  after the kit starts). A timeline whose first second matters, or that
+ *                  measures text, waits for it: TTY.onShow(() => TTY.drawn.then(play)).
+ *                  On the home stage it has nearly always settled by the time the page is shown.
  *   TTY.ready()    tell the home page this page has drawn and can be shown
  *   TTY.hold(ms)   ask the home page to keep this page up a little longer (someone is playing)
  *
@@ -39,6 +45,17 @@
     if (embedded) parent.postMessage(Object.assign({ source: 'tty-page' }, message), location.origin);
   };
 
+  // Until the page has its styles, fonts and pictures, its layout is not what it will be: a
+  // timeline started earlier plays its first second in fallback fonts and measures the wrong
+  // boxes. Fonts are asked for once the page lays out, so they are awaited after the load.
+  // (onShow itself does not wait on its own: several pages draw their last scene first and set
+  // the opening up in onShow, and that would show for a moment.)
+  const loaded = document.readyState === 'complete' ? Promise.resolve()
+    : new Promise((resolve) => addEventListener('load', resolve, { once: true }));
+  const drawn = Promise.race([
+    loaded.then(() => (document.fonts ? document.fonts.ready : null)),
+    new Promise((resolve) => setTimeout(resolve, 2500)),
+  ]).then(() => {});
   let shown = !embedded;
   const showQueue = [];
   const TTY = {
@@ -50,6 +67,7 @@
       if (shown) setTimeout(fn, 0);
       else showQueue.push(fn);
     },
+    drawn,
     ready: () => post({ type: 'ready' }),
     hold: (ms) => post({ type: 'hold', ms: ms || 12000 }),
   };
@@ -65,6 +83,18 @@
 
   // Someone touching or typing in a page wants it to stay.
   ['pointerdown', 'keydown'].forEach((type) => addEventListener(type, () => TTY.hold(), { passive: true }));
+
+  // On the home stage, "?" asks the home page to explain this page (focus is often in here after a
+  // click or a Tab). Not while typing in a field, and not when the page used the key itself
+  // (called preventDefault, e.g. a typing game); that is known only once its own handlers have run.
+  if (embedded) {
+    addEventListener('keydown', (event) => {
+      if (event.key !== '?' || event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+      const t = event.target;
+      if (t && t.closest && t.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+      setTimeout(() => { if (!event.defaultPrevented) post({ type: 'ask' }); }, 0);
+    });
+  }
 
   // Elements for the other language are removed as the parser inserts them, so a page's
   // own script (which runs before DOMContentLoaded) only ever sees the current language.
@@ -93,26 +123,80 @@
     }
 
     // Opened on its own (a shared link, or from the all-pages list), a page gets a quiet
-    // way back to the home page and to the list. On narrow screens it folds into a small
-    // ":)" button so it does not cover the page; tapping it shows the two links.
+    // way back to the home page and to the list. Up to 900px wide (phones either way up,
+    // tablets, narrow windows) it folds into a small ":)" button so it does not cover the
+    // page; tapping it shows the two links. (Unfolded it is about 290px wide: on a 648px
+    // window that is the corner of nearly half the width, and it covered titles and hints.)
+    // A "?" explains the joke ("이게 왜 웃겨요?"); it loads /assets/tty-explain.js only when
+    // pressed. It sits right beside the corner: after "tty.link :)" on wide screens, and on
+    // phones next to ":)" and outside the fold, so opening the fold adds the links to the
+    // left without moving it. Its footprint is about 290×46px on wide screens and 84×50px
+    // folded.
+    // The nav sits at the bottom right unless the page has more there than in another corner:
+    // see `placeNav` below. A page can also pin it to a corner, and then it is not moved:
+    //   <html data-tty-nav="top">          top right   ("left": bottom left, "top left": top left,
+    //                                                   "bottom right": the bottom right)
+    //   <html data-tty-nav-phone="top">    the same, only where the nav is folded (up to 900px wide);
+    //                                      it wins over data-tty-nav there ("auto": let the kit pick)
+    // Both are read again when they change and when the window is resized.
     if (!embedded) {
       const style = document.createElement('style');
       style.textContent = [
-        '.tty-nav{position:fixed;right:12px;bottom:12px;z-index:2147483647;display:flex;gap:6px;align-items:center}',
-        '.tty-nav a,.tty-nav button{display:inline-flex;align-items:center;box-sizing:border-box;min-height:30px;padding:4px 10px;border:0;border-radius:999px;background:#ffd84a;color:#1b2b7a;',
-        'font:600 13px/1 ui-monospace,Menlo,Consolas,monospace;text-decoration:none;cursor:pointer;',
+        '.tty-nav{position:fixed;right:12px;bottom:12px;left:auto;top:auto;z-index:2147483647;display:flex;gap:6px;align-items:center;margin:0;padding:0}',
+        '.tty-nav a,.tty-nav button{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:30px;margin:0;padding:4px 10px;border:0;border-radius:999px;background:#ffd84a;color:#1b2b7a;',
+        'font:600 13px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:0;text-transform:none;text-decoration:none;cursor:pointer;',
         'box-shadow:0 0 0 1px rgba(27,43,122,.25),0 2px 8px rgba(0,0,0,.15)}',
-        '.tty-nav button{display:none;width:34px;height:34px;padding:0}',
-        '@media (max-width:600px){.tty-nav{right:8px;bottom:8px}.tty-nav button{display:block}',
-        '.tty-nav:not(.open) a{display:none}}',
+        // Hangul has no monospace face; the sans stack keeps "전체 보기" from getting a wide gap.
+        "html:lang(ko) .tty-nav a{font-family:system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif}",
+        '.tty-nav a:focus-visible,.tty-nav button:focus-visible{outline:3px solid #1b2b7a;outline-offset:2px;box-shadow:0 0 0 5px #fff}',
+        '.tty-nav .tty-nav-ask{width:30px;height:30px;padding:0;font-size:15px;font-weight:800}',
+        '.tty-nav .tty-nav-menu{display:none;width:34px;height:34px;padding:0}',
+        '.tty-nav.tty-nav-wait{visibility:hidden}',
+        // The corner is data-at ("top", "left", "top left"; none = bottom right), set by the script
+        // from the page's pin or its own choice, so a pin can differ by width.
+        '.tty-nav[data-at~="top"]{top:12px;bottom:auto}',
+        '.tty-nav[data-at~="left"]{left:12px;right:auto;flex-direction:row-reverse}',
+        '@media (max-width:900px){.tty-nav{right:8px;bottom:8px}.tty-nav .tty-nav-menu{display:inline-flex}',
+        '.tty-nav[data-at~="top"]{top:8px}.tty-nav[data-at~="left"]{left:8px}',
+        '.tty-nav .tty-nav-ask{width:34px;height:34px}.tty-nav:not(.open) a{display:none}}',
       ].join('');
       document.head.append(style);
       const bar = document.createElement('nav');
       bar.className = 'tty-nav';
       bar.setAttribute('aria-label', 'tty.link');
       const link = (href, text) => Object.assign(document.createElement('a'), { href, textContent: text });
+      const home = link('/', 'tty.link :)');
+      home.setAttribute('aria-label', 'tty.link');
+      bar.append(link('/all/?lang=' + lang, lang === 'ko' ? '전체 보기' : 'All pages'), home);
+      const page = (location.pathname.match(/\/pages\/([a-z0-9][a-z0-9-]*?)(?:\.html)?\/?$/i) || [])[1];
+      if (page) {
+        const ask = document.createElement('button');
+        ask.type = 'button';
+        ask.className = 'tty-nav-ask';
+        // Named by its title (the "?" itself is hidden from screen readers), so the tooltip
+        // is not read a second time as a description.
+        const mark = document.createElement('span');
+        mark.textContent = '?';
+        mark.setAttribute('aria-hidden', 'true');
+        ask.append(mark);
+        ask.title = lang === 'ko' ? '이게 왜 웃겨요?' : 'Why is this funny?';
+        ask.setAttribute('aria-haspopup', 'dialog');
+        let script = null;
+        ask.addEventListener('click', () => {
+          script = script || new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = '/assets/tty-explain.js';
+            s.onload = resolve;
+            s.onerror = () => { script = null; reject(); };
+            document.head.append(s);
+          });
+          script.then(() => window.TTYExplain && window.TTYExplain.open({ id: page, lang, returnFocus: ask }), () => {});
+        });
+        bar.append(ask);
+      }
       const toggle = document.createElement('button');
       toggle.type = 'button';
+      toggle.className = 'tty-nav-menu';
       toggle.textContent = ':)';
       toggle.setAttribute('aria-label', lang === 'ko' ? 'tty.link 메뉴' : 'tty.link menu');
       toggle.setAttribute('aria-expanded', 'false');
@@ -120,10 +204,225 @@
         const open = bar.classList.toggle('open');
         toggle.setAttribute('aria-expanded', String(open));
       });
-      const home = link('/', 'tty.link :)');
-      home.setAttribute('aria-label', 'tty.link');
-      bar.append(link('/all/?lang=' + lang, lang === 'ko' ? '전체 보기' : 'All pages'), home, toggle);
+      bar.append(toggle);
       document.body.append(bar);
+
+      // placeNav: pages differ in what they keep in their corners (a button, a punchline, a
+      // ticker), so the nav looks at what lies under its footprint in each corner and takes the
+      // quietest. Counted: text (the boxes of its lines, not the whole element; font-kku
+      // lettering by the boxes of its words), controls and small pictures (an icon, a
+      // character; least, as a picture with a corner hidden still reads), as far as overflow
+      // clipping lets them show. A backdrop, or a whole scene that reacts to a tap, is not
+      // something the nav could hide. Transparent elements count too, so a line that fades in
+      // later already keeps the nav away; what is not there yet (display: none, visibility:
+      // hidden, text still to be written, an element still to be placed) cannot. Each element
+      // is remembered at the most it has covered of each corner; one that is nearly always found
+      // moving (a ticker, a wandering bug) passes under the nav and shows elsewhere, so it counts
+      // a quarter. The nav moves only to a clearly quieter corner and never back to one it has
+      // left, so it settles instead of chasing the page. It looks while the page builds and
+      // plays its opening (about 25 s) and again after a resize, but never moves while the
+      // visitor is using it, and not at all while the page pins it.
+      {
+        const SPOTS = ['', 'top', 'left', 'top left']; // in order of preference on a tie
+        const WEIGHT = { text: 2, control: 3, picture: 0.5 };
+        const CONTROL = 'a[href],button,input,select,textarea,label,summary,[role=button],[role=link],[role=slider],[role=tab],[tabindex]:not([tabindex="-1"])';
+        const SKIP = /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE|HEAD)$/;
+        const KKU = 'data-fy-upgraded'; // on a <font-kku> (or .font-kku) once it has drawn its letters
+        const folded = matchMedia('(max-width: 900px)'); // the nav's own fold, in the style above
+        // The corner the page pins the nav to at this width (one of SPOTS), or null.
+        const pin = () => {
+          const own = folded.matches && root.hasAttribute('data-tty-nav-phone')
+            ? root.getAttribute('data-tty-nav-phone') : root.getAttribute('data-tty-nav');
+          if (own === null || own.trim() === 'auto') return null;
+          const words = own.trim().split(/\s+/);
+          return ['top', 'left'].filter((w) => words.includes(w)).join(' ');
+        };
+        const range = document.createRange();
+        let was, held, spot, gone;
+        // was: element -> where it was at the last look; held: element -> { parts: most covered
+        // per corner, moving, still }; spot: index in SPOTS; gone: corners the nav has left.
+        const forget = () => { was = new WeakMap(); held = new Map(); spot = 0; gone = new Set(); };
+        forget();
+
+        const look = (boxes) => {
+          const screen = innerWidth * innerHeight;
+          const footprint = (boxes[0].right - boxes[0].left) * (boxes[0].bottom - boxes[0].top);
+          const meets = (q) => boxes.some((b) => q.right > b.left && q.left < b.right && q.bottom > b.top && q.top < b.bottom);
+          // What of q its ancestors' overflow clipping leaves on screen; null if nothing.
+          const shown = (q, el, own) => {
+            let { left, top, right, bottom } = q;
+            for (let n = el; n && n !== document.body; n = n.parentElement) {
+              const cs = getComputedStyle(n);
+              if (n === el && cs.visibility === 'hidden') return null;
+              if ((n !== el || !own) && (cs.overflowX !== 'visible' || cs.overflowY !== 'visible')) {
+                const c = n.getBoundingClientRect();
+                left = Math.max(left, c.left); top = Math.max(top, c.top);
+                right = Math.min(right, c.right); bottom = Math.min(bottom, c.bottom);
+                if (right <= left || bottom <= top) return null;
+              }
+              if (cs.position === 'fixed') break;
+            }
+            return { left, top, right, bottom };
+          };
+          const now = new Map(); // element -> what it covers of each corner in this look
+          const add = (el, q, weight) => boxes.forEach((b, k) => {
+            const w = Math.min(q.right, b.right) - Math.max(q.left, b.left);
+            const h = Math.min(q.bottom, b.bottom) - Math.max(q.top, b.top);
+            if (w <= 0 || h <= 0) return;
+            if (!now.has(el)) now.set(el, boxes.map(() => 0));
+            now.get(el)[k] += w * h * weight;
+          });
+          const motion = new Map(); // element -> moved since the last look (true/false)
+          // font-kku draws its letters as empty boxes (the real text is a screen-reader copy), so
+          // its insides are not walked: the lettering is counted at its host, below.
+          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+            acceptNode: (n) => (n === bar || (n.nodeType === 1 && (SKIP.test(n.tagName) || n.id === 'tty-explain'
+              || (n.parentElement && n.parentElement.hasAttribute(KKU))))
+              ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+          });
+          for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+            if (n.nodeType === 3) {
+              if (!n.data.trim()) continue;
+              range.selectNodeContents(n);
+              for (const q of range.getClientRects()) {
+                const v = meets(q) && shown(q, n.parentElement, false);
+                if (v) add(n.parentElement, v, WEIGHT.text);
+              }
+              continue;
+            }
+            const q = n.getBoundingClientRect();
+            const before = was.get(n);
+            was.set(n, [q.left, q.top]);
+            if (before) motion.set(n, Math.abs(before[0] - q.left) + Math.abs(before[1] - q.top) > 4);
+            if (n.hasAttribute(KKU)) {
+              const words = n.querySelectorAll('[part~="word"]');
+              for (const w of words.length ? words : [n]) {
+                const r = w.getBoundingClientRect();
+                const v = meets(r) && shown(r, w, false);
+                if (v) add(n, v, WEIGHT.text);
+              }
+              continue;
+            }
+            if (!meets(q)) continue;
+            const area = q.width * q.height;
+            const tag = n.tagName.toLowerCase();
+            let kind = null;
+            if (n.matches(CONTROL) || (getComputedStyle(n).cursor === 'pointer'
+              && !(n.parentElement && getComputedStyle(n.parentElement).cursor === 'pointer'))) {
+              if (area < screen / 4) kind = 'control';
+            } else if (/^(img|video|canvas|picture)$/.test(tag) || (tag === 'svg' && !n.ownerSVGElement)) {
+              if (area < footprint * 4) kind = 'picture';
+            }
+            const v = kind && shown(q, n, true);
+            if (v) add(n, v, WEIGHT[kind]);
+          }
+          now.forEach((parts, el) => {
+            const h = held.get(el) || { parts: boxes.map(() => 0), moving: 0, still: 0 };
+            parts.forEach((p, k) => { h.parts[k] = Math.max(h.parts[k], p); });
+            if (motion.has(el)) { if (motion.get(el)) h.moving++; else h.still++; }
+            held.set(el, h);
+          });
+        };
+
+        // How busy each corner has been, for a nav of the current size; null while unseen.
+        const measure = () => {
+          const r = bar.getBoundingClientRect();
+          if (!r.width) return null;
+          const inset = folded.matches ? 8 : 12;
+          const pad = 4; // a little air between the nav and the page's text
+          const W = root.clientWidth, H = root.clientHeight;
+          look(SPOTS.map((s) => {
+            const left = /left/.test(s) ? inset : W - inset - r.width;
+            const top = /top/.test(s) ? inset : H - inset - r.height;
+            return { left: left - pad, top: top - pad, right: left + r.width + pad, bottom: top + r.height + pad };
+          }));
+          const score = SPOTS.map(() => 0);
+          held.forEach((h) => {
+            const share = h.moving > 2 * h.still ? 0.25 : 1;
+            h.parts.forEach((p, k) => { score[k] += p * share; });
+          });
+          return score;
+        };
+
+        const setAt = (at, fade) => {
+          if ((bar.dataset.at || '') === at) return;
+          if (at) bar.dataset.at = at; else delete bar.dataset.at;
+          if (fade && !TTY.reduce && bar.animate && !bar.classList.contains('tty-nav-wait')) {
+            bar.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
+          }
+        };
+
+        let pinned = pin();
+        const placeNav = () => {
+          if (pinned !== null || bar.classList.contains('open') || bar.matches(':hover, :focus-within')
+            || (window.TTYExplain && window.TTYExplain.isOpen())) return;
+          const score = measure();
+          if (!score) return;
+          let best = spot;
+          score.forEach((s, k) => { if (!gone.has(k) && s < score[best]) best = k; });
+          // Move only to a clearly quieter corner: a third quieter, and by more than a few
+          // letters' worth.
+          if (score[best] + Math.max(160, score[spot] / 3) < score[spot]) { gone.add(spot); spot = best; }
+          setAt(SPOTS[spot], true);
+        };
+
+        let until = 0, timer = 0;
+        const watch = (ms) => {
+          until = Math.max(until, Date.now() + ms);
+          if (!timer) timer = setInterval(() => {
+            if (!document.hidden) placeNav();
+            if (Date.now() > until || pinned !== null) { clearInterval(timer); timer = 0; }
+          }, 1500);
+        };
+        // A pinned nav is in its corner from the start. Otherwise, until the page has its styles,
+        // fonts and pictures its corners are not what they will be, so the nav waits unseen for
+        // TTY.drawn (load and fonts, at most 2.5 s). Then it looks twice, a second apart, to tell
+        // what moves, and appears in its place.
+        let settled = false;
+        const settle = () => {
+          if (settled) return;
+          settled = true;
+          if (pinned !== null) return;
+          measure();
+          setTimeout(() => {
+            if (pinned !== null) return; // pinned meanwhile: already shown in its corner
+            placeNav();
+            if (bar.classList.contains('tty-nav-wait')) {
+              bar.classList.remove('tty-nav-wait');
+              if (!TTY.reduce && bar.animate) bar.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
+            }
+            watch(25000);
+          }, 1000);
+        };
+        if (pinned !== null) setAt(pinned, false);
+        else bar.classList.add('tty-nav-wait');
+        drawn.then(settle);
+        // A new size (a phone turned, a window resized) is a new layout: forget the corners and
+        // start over from the bottom right. A pin that changes (or differs at the new width)
+        // simply moves the nav there.
+        let again = 0;
+        const restart = () => {
+          clearTimeout(again);
+          again = setTimeout(() => {
+            const before = pinned;
+            pinned = pin();
+            if (pinned !== null) {
+              bar.classList.remove('tty-nav-wait');
+              setAt(pinned, true);
+              return;
+            }
+            forget();
+            if (!settled) return; // settle() will look
+            if (before !== null) setAt('', true);
+            measure();
+            setTimeout(placeNav, 1000);
+            watch(6000);
+          }, 200);
+        };
+        addEventListener('resize', restart);
+        new MutationObserver(restart).observe(root, { attributes: true, attributeFilter: ['data-tty-nav', 'data-tty-nav-phone'] });
+      }
+
       // Same wordmark as the home page; the text stays if the alphabet cannot load.
       const glyphs = document.createElement('script');
       glyphs.src = '/assets/tty-glyphs.js';

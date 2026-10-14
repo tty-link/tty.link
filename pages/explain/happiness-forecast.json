@@ -1,0 +1,124 @@
+{
+  "id": "happiness-forecast",
+  "title": {
+    "en": "The Happiness Forecast",
+    "ko": "오늘의 행복 예보"
+  },
+  "updated": "2026-10-14",
+  "ko": {
+    "line": "저녁 뉴스 일기예보를 그대로 흉내 내되, 비 대신 칭찬이 내리고 기온 대신 웃음 확률을 알려 주는 행복 예보다.",
+    "points": [
+      "첫 장면의 먹구름 → 잔뜩 찌푸린 먹구름이 몰려오고 번개까지 치는데, 쏟아지는 건 비가 아니라 하트다. 구름도 그제야 웃는다. 폭풍 예보인 줄 알았더니 칭찬 예보였다.",
+      "사무실 \"칭찬 이슬비\", 공원 \"곳곳에 웃음 소나기\", 부엌 \"간식 확률 100%\", 특보 띠의 \"칭찬주의보 발효 중\" → 일기예보와 기상특보 말투(주의보·경보·예비특보·발효·해제)는 그대로 두고 낱말만 바꿔 끼웠다. 특보 한 줄은 보는 날의 요일에 맞춰 \"월요병주의보 오후 3시부로 해제\"처럼 바뀐다.",
+      "지도를 가로지르는 분홍 \"칭찬 전선\" → 일기도에서 따뜻한 공기가 밀려오는 선(온난 전선)은 진행 방향 쪽에 반원을 달아 그리는데, 그 반원을 하트로 바꿨다. 전선이 지나가는 섬마다 날씨가 다시 들썩인다.",
+      "서버실 18도 → 전선이 지나가도 서버실만 아무 일이 없고, 특보 띠도 \"서버실 18도 · 내일도 18도 · 모레도 18도\". 서버실은 기계가 뜨거워지지 않게 늘 같은 온도로 냉방하는 곳이라 날씨가 없다."
+    ],
+    "terms": [
+      {
+        "term": "전선(날씨)",
+        "plain": "따뜻한 공기 덩어리와 찬 공기 덩어리가 만나는 경계. 온난 전선은 일기도에서 진행 방향 쪽에 반원을 단 선으로 그린다."
+      },
+      {
+        "term": "주의보·경보·예비특보",
+        "plain": "재해가 걱정될 때 기상청이 내는 기상특보. 주의보는 재해가 일어날 우려가 있을 때, 경보는 중대한 재해가 예상될 때 낸다. 예비특보는 특보가 나오기 몇 시간 전에 '곧 특보가 나올 수 있다'고 미리 알리는 것. 미국 기상청은 Advisory(큰 불편을 줄 정도)·Watch(위험이 커짐)·Warning(생명·재산 위협)으로 나눈다."
+      },
+      {
+        "term": "서버실 온도",
+        "plain": "서버가 과열되지 않게 늘 냉방한다. 미국 냉난방공조학회(ASHRAE)가 권하는 범위가 18~27°C라서 18도는 그 맨 아래 값이다."
+      }
+    ],
+    "links": [
+      {
+        "title": "온난전선 - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/온난전선",
+        "note": "따뜻한 공기가 찬 공기 쪽으로 밀려가는 전선과 일기도 기호.",
+        "lang": "ko"
+      },
+      {
+        "title": "기상특보 - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/기상특보",
+        "note": "주의보와 경보의 차이, 특보를 내는 기상 현상들.",
+        "lang": "ko"
+      },
+      {
+        "title": "기상정보 및 특보 - 기상청",
+        "url": "https://www.kma.go.kr/kma/biz/forecast03.jsp",
+        "note": "기상청이 직접 설명하는 예비특보, 그리고 주의보·경보의 발표 기준 표."
+      },
+      {
+        "title": "Watch, Warning, and Advisory Definitions - 미국 기상청",
+        "url": "https://www.weather.gov/dtx/wwa_defs",
+        "note": "영어판 특보 띠가 쓰는 Advisory·Watch·Warning의 공식 정의.",
+        "lang": "en"
+      },
+      {
+        "title": "Data center - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Data_center",
+        "note": "데이터 센터 냉방과 권장 온도 범위(18~27°C).",
+        "lang": "en"
+      }
+    ],
+    "deep": [
+      "오프닝의 먹구름 → 사무실 구름 아이콘과 같은 그림을 4.5배쯤(지도 폭의 절반) 키운 것이다. 웃고 나서 작아지면 그대로 사무실 구름 자리에 앉는다. 그래서 사무실에 내리는 하트 이슬비는 그 폭풍의 끝자락이다.",
+      "칭찬 전선의 하트 → 일기도에서 온난 전선의 반원은 전선이 나아가는 쪽에 붙는다. 하트도 모두 동쪽(오른쪽)을 향하고, 전선은 실제로 서쪽에서 동쪽으로 간다.",
+      "시간대별 웃음 확률의 두 흰 봉우리 → 13시(점심, 92)와 18시(퇴근, 96)다.",
+      "두 번째 특보 → 보는 날의 요일에 따라 바뀐다. 월요일은 \"월요병주의보 오후 3시부로 해제\", 일요일은 \"월요병 예비특보\".",
+      "서버실의 18 → 흔히 쓰는 데이터 센터 권장 온도 범위(ASHRAE, 18~27°C)의 맨 아래 값이다."
+    ]
+  },
+  "en": {
+    "line": "It's the evening TV weather forecast, except compliments fall instead of rain and you get the chance of giggles instead of the temperature.",
+    "points": [
+      "The storm at the start → a scowling black cloud rolls in, rumbles and flashes, and what pours out is hearts. Only then does the cloud smile. A storm warning that turns out to be a compliment forecast.",
+      "\"Light drizzle of compliments\", \"Scattered giggles\", \"100% chance of snacks\", \"Compliment Advisory in effect until 6 pm\" → the forecaster’s phrasing and the grammar of real weather alerts (Advisory, Watch, Warning, in effect, lifted) stay; only the nouns change. One advisory follows the viewer’s day of the week, such as \"Monday Blues Advisory lifted as of 3 pm\".",
+      "The pink \"Compliment front\" crossing the map → on weather maps a warm front is a line with semicircles on the side it moves toward; here the semicircles are hearts. Every island it passes gets its weather again.",
+      "The server room at 18° → the front passes and nothing happens, and the advisory strip says \"Server room: 18°. Tomorrow: 18°. The day after: 18°.\" Server rooms are kept cool at one steady temperature, so they have no weather."
+    ],
+    "terms": [
+      {
+        "term": "Weather front",
+        "plain": "the boundary where a warm air mass meets a cold one. A warm front is drawn as a line with semicircles pointing the way it moves."
+      },
+      {
+        "term": "Advisory, Watch, Warning",
+        "plain": "US National Weather Service alert words. A watch means the risk has risen; a warning means a hazard is happening or very likely and threatens life or property; an advisory is for a hazard that causes significant inconvenience."
+      },
+      {
+        "term": "Server room temperature",
+        "plain": "rooms full of computers are kept cool; ASHRAE, the US society of heating and air-conditioning engineers, recommends 18–27 °C, so 18° is the cold end."
+      }
+    ],
+    "links": [
+      {
+        "title": "Warm front - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Warm_front",
+        "note": "what a warm front is and the symbol used on weather maps.",
+        "lang": "en"
+      },
+      {
+        "title": "Surface weather analysis - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Surface_weather_analysis",
+        "note": "how weather maps draw fronts and pressure centres.",
+        "lang": "en"
+      },
+      {
+        "title": "Watch, Warning, and Advisory Definitions - National Weather Service",
+        "url": "https://www.weather.gov/dtx/wwa_defs",
+        "note": "the official meaning of the words on the advisory strip."
+      },
+      {
+        "title": "Data center - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Data_center",
+        "note": "data center cooling and the recommended temperature range (18–27 °C).",
+        "lang": "en"
+      }
+    ],
+    "deep": [
+      "The storm cloud → it is the office's cloud icon drawn about four and a half times larger (half the map wide). Once it smiles it shrinks and settles exactly where the office cloud sits, so the office's drizzle of hearts is the tail of that storm.",
+      "The hearts on the compliment front → on a weather map a warm front's semicircles sit on the side the front is moving toward. These hearts all face east, and the front does move west to east.",
+      "The two white peaks in the chance-of-giggles chart → 1 pm (lunch, 92) and 6 pm (going home, 96).",
+      "The second advisory → it changes with the viewer's day of the week: on Mondays \"Monday Blues Advisory lifted as of 3 pm\", on Sundays a \"Sunday Scaries Watch\".",
+      "The server room's 18 → the cold end of a widely used recommended range for data centres (ASHRAE, 18–27 °C)."
+    ]
+  }
+}

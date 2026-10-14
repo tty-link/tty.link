@@ -61,6 +61,9 @@
   .headline { position: absolute; left: 4cqw; top: calc(clamp(26px, 4.4cqmin, 36px) + 3cqmin); max-width: 60cqw; }
   .headline h1 { font-size: clamp(20px, 5.4cqmin, 46px); font-weight: 700; line-height: 1.05; letter-spacing: -.02em; }
   .headline p { margin-top: .8cqmin; font-size: clamp(12px, 2cqmin, 16px); color: var(--soft); }
+  /* the one-line hint: the dialogs are real buttons */
+  .headline p.hint { margin-top: .4em; font-size: clamp(11px, 1.7cqmin, 14px); font-style: italic; opacity: .85; }
+  .lang-ko .headline p.hint { font-style: normal; }
   .headline h1 > font-kku { color: var(--ink); }
 
   /* ---- Desktop things ---- */
@@ -69,6 +72,10 @@
     left: 0;
     top: 0;
     display: grid;
+    /* One column exactly as wide as the icon: a longer label is centred on it and overflows both
+       sides evenly (an auto column grew to the label's width and pushed it, and the picture, right
+       of where place() puts the icon). */
+    grid-template-columns: minmax(0, 1fr);
     justify-items: center;
     gap: .6cqmin;
     width: clamp(54px, 11cqmin, 96px);
@@ -79,8 +86,9 @@
   /* Labels never go below 11px and wrap within the spacing of the smile, so neighbours
      never touch: 8% of the width apart on wide stages (the cap is 7.8%), about 14% on tall ones. */
   .icon span {
+    justify-self: center;
     width: max-content;
-    max-width: min(100%, 7.8cqw);
+    max-width: 7.8cqw;
     min-width: min-content;
     padding: .1em .4em;
     border-radius: 4px;
@@ -93,6 +101,9 @@
     text-shadow: 0 1px 2px rgba(0,0,0,.45);
   }
   .icon.lit span { background: var(--accent); text-shadow: none; }
+  .icon span { transition: opacity .3s; }
+  /* (on a short stage the finale's smile is drawn without labels: see arrange()) */
+  .icon.bare span { position: absolute; top: 100%; opacity: 0; }
 
   .plant { position: absolute; left: 3cqw; bottom: 3cqh; width: clamp(56px, 12cqmin, 110px); }
   .plant .stem { transform-box: fill-box; transform-origin: 50% 100%; }
@@ -115,7 +126,37 @@
     box-shadow: 0 2px 6px rgba(0,0,0,.12);
   }
   .agent .eye { transform-box: fill-box; transform-origin: center; }
-  .agent { transition: translate 1.2s cubic-bezier(.4, 0, .3, 1); }
+  .agent { transition: translate 1.2s cubic-bezier(.4, 0, .3, 1), scale 1.2s cubic-bezier(.4, 0, .3, 1); }
+  /* Before anything else it asks to blink: a tiny prompt over its head (its own face, blinking,
+     a question mark, deny and allow), and it holds its eyes wide open until allowed. */
+  .beg {
+    position: absolute;
+    right: 50%;
+    bottom: calc(100% + .9cqmin);
+    display: flex;
+    align-items: center;
+    gap: .35em;
+    padding: .35em .4em .35em .55em;
+    border-radius: .8em .8em .25em .8em;
+    background: var(--card);
+    box-shadow: 0 6px 18px rgba(18, 40, 30, .25);
+    font-size: clamp(14px, 2.8cqmin, 24px);
+    opacity: 0;
+    scale: .6;
+    transform-origin: 100% 100%;
+    transition: opacity .18s, scale .22s cubic-bezier(.2, .9, .3, 1.3);
+    pointer-events: none;
+  }
+  .beg.on { opacity: 1; scale: 1; }
+  .beg svg { display: block; width: 3.6em; height: 1.8em; }
+  .beg i { display: grid; place-items: center; width: 1.7em; height: 1.7em; border-radius: .5em; background: #eef1ea; }
+  .beg i.yes { background: var(--accent); }
+  .beg i svg { width: .9em; height: .9em; }
+  /* the face in the prompt shows what it wants to do: blink */
+  .beg .wink { transform-box: fill-box; transform-origin: center; animation: wink .8s infinite; }
+  @keyframes wink { 0%, 55%, 85%, 100% { scale: 1 1; } 65%, 75% { scale: 1 .12; } }
+  .agent.holding .eye { animation: hold .09s steps(2, jump-none) infinite alternate; }
+  @keyframes hold { from { scale: 1.3 1.4; translate: -.5px 0; } to { scale: 1.3 1.4; translate: .5px 0; } }
 
   .toast {
     position: absolute;
@@ -193,13 +234,23 @@
 
   .cursor { position: absolute; left: 0; top: 0; z-index: 20; width: clamp(18px, 3.2cqmin, 28px); pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
 
-  /* On a phone the message to Mom is a one-line banner over the status bar, like a real
+  /* On a phone, and on any portrait stage (the home's 648×732, where the card covered the
+     title), the message to Mom is a one-line banner over the status bar, like a real
      notification, so it never covers the title. */
-  @media (max-aspect-ratio: 9/10) { .icon span { max-width: min(100%, 13.5cqw); } }
-  @media (max-width: 560px) {
-    .toast { top: 3px; left: 6px; right: 6px; width: auto; padding: .5em .8em; border-radius: 12px; font-size: 11px; line-height: 1.3; }
+  @media (max-aspect-ratio: 9/10) { .icon span { max-width: 13.5cqw; } }
+  /* On a short stage there is room for wider labels but not for three-line ones. */
+  @media (max-height: 560px) { .icon span { max-width: min(18cqw, 80px); } }
+  @media (max-width: 700px), (max-aspect-ratio: 1/1) {
+    .toast { top: 3px; left: 6px; right: 6px; width: auto; padding: .5em .8em; border-radius: 12px; font-size: clamp(11px, 1.9cqmin, 14px); line-height: 1.3; }
     .toast b { display: inline; margin: 0 .6em 0 0; }
   }
+
+  /* Opened on its own, _kit.js puts its small nav in the bottom-right corner; the agent and the
+     mug stand a little higher there so it covers neither the agent nor what it says. */
+  html:not(.embedded) .agent { bottom: calc(3.6cqh + 46px); }
+  html:not(.embedded) .mug { bottom: calc(4cqh + 46px); }
+  /* (on a phone the nav is a small button, so the mug just steps left, clear of the note above it) */
+  @media (max-width: 600px) { html:not(.embedded) .mug { bottom: 4cqh; right: calc(4cqw + 100px); } }
 
   @media (prefers-reduced-motion: reduce) { .icon, .agent { transition: none; } }
 </style>
@@ -221,6 +272,10 @@
   <p>
     <span data-lang="en">It just wants to help. Carefully. Very carefully.</span>
     <span data-lang="ko">도와드리고 싶을 뿐이에요. 조심스럽게요. 아주 조심스럽게.</span>
+  </p>
+  <p class="hint">
+    <span data-lang="en">Answer them yourself if you like.</span>
+    <span data-lang="ko">직접 답해 봐도 돼요.</span>
   </p>
 </header>
 
@@ -248,6 +303,11 @@
 </svg>
 
 <div class="agent" aria-hidden="true">
+  <span class="beg">
+    <svg viewBox="0 0 72 36"><rect x="1" y="2" width="36" height="32" rx="12" fill="#ff6b4a"/><ellipse class="wink" cx="13" cy="17" rx="4" ry="6" fill="#fff"/><ellipse class="wink" cx="25" cy="17" rx="4" ry="6" fill="#fff"/><path d="M46 12 q0 -7 7.5 -7 q7.5 0 7.5 6.5 q0 4.5 -6 7 v4" stroke="#22302a" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55" cy="30" r="2.6" fill="#22302a"/></svg>
+    <i class="no"><svg viewBox="0 0 10 10"><path d="M2 2 L8 8 M8 2 L2 8" stroke="#5c6c63" stroke-width="1.8" stroke-linecap="round"/></svg></i>
+    <i class="yes"><svg viewBox="0 0 10 10"><path d="M1.6 5.4 L4 7.8 L8.6 2.4" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+  </span>
   <svg viewBox="0 0 80 80">
     <rect x="8" y="12" width="64" height="58" rx="22" fill="#ff6b4a"/>
     <ellipse class="eye" cx="30" cy="40" rx="5" ry="7" fill="#fff"/><ellipse class="eye" cx="50" cy="40" rx="5" ry="7" fill="#fff"/>
@@ -278,6 +338,7 @@
   const mug = $('.mug');
   const eyes = [...document.querySelectorAll('.agent .eye')];
   const agent = $('.agent');
+  const beg = $('.beg');
 
   // Each ask reads like a real permission prompt: the question, why, the tool call it would
   // make and its scope. The calls are plain function calls, not any one product's format.
@@ -289,7 +350,7 @@
       deny: 'Deny', once: 'Allow once', always: 'Always allow', scope: 'Scope',
       asks: [
         { q: 'Allow the agent to read <code>README.md</code>?', why: 'It wants to understand you better.', tool: 'read_file("README.md")', scope: 'this project' },
-        { q: 'Allow the agent to open <code>package.json</code>?', why: "It's a big one. 1,204 dependencies.", tool: 'shell("ls node_modules | wc -l")', scope: 'node_modules (all of it)' },
+        { q: 'Allow the agent to install what <code>package.json</code> asks for?', why: "It's a big one. 1,204 packages.", tool: 'shell("npm install")', scope: 'node_modules (all of it)' },
         { q: 'Allow the agent to rename <code>temp2_final_REAL</code>?', why: 'Suggested name: final_final.', rename: 'final_final', tool: 'rename("temp2_final_REAL", "final_final")', scope: '~/Desktop' },
         { q: 'Allow the agent to make you a coffee?', why: "You've been staring at that bug for 40 minutes.", tool: 'brew_coffee(strength="strong")', scope: 'the office kitchen' },
         { q: 'Allow the agent to tell your mom you are eating well?', why: 'She asked. Twice.', tool: 'send_message(to="Mom", text="I am eating well.")', scope: 'family group chat' },
@@ -315,7 +376,7 @@
         { q: 'Allow the agent to just sit here quietly?', why: 'It will not touch anything.', tool: 'sit(quietly=true)', scope: 'this corner' },
         { q: 'Allow the agent to keep the plant company?', why: 'It is already there.', tool: 'keep_company("plant")', scope: 'one plant' },
       ],
-      status: { idle: 'Thinking…', ask: 'Asking…', read: 'Reading README.md…', pkg: 'Counting dependencies…', rename: 'Renaming…', wait: 'Waiting politely…', done: 'All done :)', plant: 'Sitting with the plant.' },
+      status: { idle: 'Thinking…', blink: 'Trying not to blink…', blinked: 'Thank you!', ask: 'Asking…', read: 'Reading README.md…', pkg: 'Installing 1,204 packages…', rename: 'Renaming…', wait: 'Waiting politely…', done: 'All done :)', plant: 'Sitting with the plant.' },
       momTitle: 'Message sent to Mom',
       momBody: '“I am eating well. Promise.”',
       note: 'Thanks for trusting me. I only used it for nice things.',
@@ -325,7 +386,7 @@
       deny: '거부', once: '이번만 허용', always: '항상 허용', scope: '범위',
       asks: [
         { q: '에이전트가 <code>README.md</code>를 읽어도 될까요?', why: '당신을 더 잘 이해하고 싶대요.', tool: 'read_file("README.md")', scope: '이 프로젝트' },
-        { q: '<code>package.json</code>을 열어도 될까요?', why: '좀 무거워요. 의존성이 1,204개예요.', tool: 'shell("ls node_modules | wc -l")', scope: 'node_modules 전체' },
+        { q: '<code>package.json</code>에 적힌 패키지를 설치해도 될까요?', why: '좀 무거워요. 패키지가 1,204개예요.', tool: 'shell("npm install")', scope: 'node_modules 전체' },
         { q: '<code>temp2_final_REAL</code>의 이름을 바꿔도 될까요?', why: '추천 이름: 진짜_최종_마지막', rename: '진짜_최종_마지막', tool: 'rename("temp2_final_REAL", "진짜_최종_마지막")', scope: '~/바탕화면' },
         { q: '커피 한 잔 타 드려도 될까요?', why: '그 버그를 40분째 보고 계세요.', tool: 'brew_coffee(strength="진하게")', scope: '탕비실' },
         { q: '어머니께 밥 잘 먹고 있다고 전해 드려도 될까요?', why: '두 번이나 물어보셨어요.', tool: 'send_message(to="엄마", text="밥 잘 먹고 다녀요")', scope: '가족 단톡방' },
@@ -348,7 +409,7 @@
         { q: '그냥 조용히 앉아 있어도 될까요?', why: '아무것도 안 만질게요.', tool: 'sit(quietly=true)', scope: '이 구석' },
         { q: '화분 곁에 있어 줘도 될까요?', why: '이미 와 있어요.', tool: 'keep_company("plant")', scope: '화분 1개' },
       ],
-      status: { idle: '생각 중…', ask: '물어보는 중…', read: 'README.md 읽는 중…', pkg: '의존성 세는 중…', rename: '이름 바꾸는 중…', wait: '얌전히 기다리는 중…', done: '다 했어요 :)', plant: '화분 옆에 앉아 있어요.' },
+      status: { idle: '생각 중…', blink: '눈 깜빡임 참는 중…', blinked: '감사합니다!', ask: '물어보는 중…', read: 'README.md 읽는 중…', pkg: '패키지 1,204개 설치하는 중…', rename: '이름 바꾸는 중…', wait: '얌전히 기다리는 중…', done: '다 했어요 :)', plant: '화분 옆에 앉아 있어요.' },
       momTitle: '엄마에게 보냄',
       momBody: '“밥 잘 먹고 다녀요. 진짜로요.”',
       note: '믿어 줘서 고마워요. 좋은 일에만 썼어요.',
@@ -378,25 +439,116 @@
     image: '<rect x="8" y="10" width="48" height="44" rx="4" fill="#fff"/><path d="M12 48 L26 30 L36 42 L42 34 L52 48 Z" fill="#7cc48f"/><circle cx="42" cy="22" r="5" fill="#ffd43b"/>',
     sheet: '<rect x="12" y="6" width="40" height="52" rx="3" fill="#fff"/><path d="M12 20 H52 M12 32 H52 M12 44 H52 M26 6 V58 M40 6 V58" stroke="#5fb37f" stroke-width="2.4"/>',
   };
+  // Long file names wrap after a dot or underscore rather than mid-word (every time a name is
+  // set: the renamed folder too, or its label stays one long line).
+  const setName = (icon, name) => { icon.el.querySelector('span').textContent = name.replace(/([._])/g, '$1\u200b'); };
   const icons = ICONS.map((d) => {
     const el = document.createElement('div');
     el.className = 'icon';
     el.innerHTML = `<svg viewBox="0 0 64 64">${SHAPES[d.kind]}</svg><span></span>`;
-    // Let long file names wrap after a dot or underscore rather than mid-word.
-    el.querySelector('span').textContent = d.name.replace(/([._])/g, '$1\u200b');
     desk.append(el);
-    return Object.assign(d, { el });
+    const icon = Object.assign(d, { el });
+    setName(icon, d.name);
+    return icon;
   });
-  // On tall screens the smile is drawn wider so the icons do not sit on each other.
-  const place = (icon, [x, y], smile) => {
-    if (smile && innerWidth < innerHeight * .9) { x = 50 + (x - 50) * 1.75; y = 29 + (y - 30) * .95; }
-    // Keep the whole label on screen (labels can be wider than the icon near the edges).
-    const W = desk.clientWidth || innerWidth;
-    const half = Math.max(icon.el.offsetWidth, icon.el.querySelector('span').offsetWidth) / 2 + 6;
-    x = Math.min(Math.max(x / 100 * W, half), W - half) / W * 100;
-    icon.el.style.left = x + '%'; icon.el.style.top = y + '%';
-  };
   const temp = icons.find((i) => i.id === 'temp');
+
+  // Where the icons go. The designed spots (% of the screen; the smile drawn wider on tall
+  // screens) are kept wherever they leave the icons apart, which on a roomy stage is always.
+  // On a short one (a phone's 358×396) they are fitted into the band between the headline and
+  // the plant and agent (in the finale, the note), and pushed apart until no two touch; the
+  // smile there drops its labels, which is what kept it from fitting.
+  const headline = $('.headline');
+  const plantEl = $('.plant');
+  let arranged = 'at';
+  function arrange(kind, stagger = 0) {
+    arranged = kind;
+    const W = innerWidth, H = innerHeight, pad = 6, gap = 4;
+    const smile = kind === 'smile';
+    const spots = icons.map((icon) => {
+      let [x, y] = smile ? icon.smile : icon.at;
+      if (smile && W < H * .9) { x = 50 + (x - 50) * 1.75; y = 29 + (y - 30) * .95; }
+      return [x / 100 * W, y / 100 * H];
+    });
+    const top = headline.getBoundingClientRect().bottom + gap;
+    const floor = (smile ? note.getBoundingClientRect().top : Math.min(plantEl.getBoundingClientRect().top, agent.offsetTop)) - gap;
+    // An icon is two boxes: its picture on top, its label (wider or narrower) under it.
+    const size = () => icons.map((icon) => {
+      const span = icon.el.querySelector('span'), svg = icon.el.querySelector('svg');
+      const bare = icon.el.classList.contains('bare');
+      const h = bare ? svg.offsetHeight || svg.getBoundingClientRect().height : icon.el.offsetHeight;
+      const sw = svg.getBoundingClientRect().width, sh = svg.getBoundingClientRect().height;
+      const parts = [[sw, -h / 2, -h / 2 + sh]];
+      if (!bare) parts.push([span.offsetWidth, h / 2 - span.offsetHeight, h / 2]);
+      return { w: Math.max(sw, bare ? 0 : span.offsetWidth), h, parts };
+    });
+    let box = size();
+    const inside = () => spots.forEach((p, i) => {
+      p[0] = Math.min(Math.max(p[0], box[i].w / 2 + pad), W - box[i].w / 2 - pad);
+      p[1] = Math.min(Math.max(p[1], top + box[i].h / 2), Math.max(top + box[i].h / 2, floor - box[i].h / 2));
+    });
+    // How far two icons would have to move apart, across and up/down, to stop touching (0 if apart).
+    const clash = (i, j) => {
+      let ox = 0, oy = 0;
+      const p = spots[i], q = spots[j];
+      box[i].parts.forEach(([wa, ta, ba]) => box[j].parts.forEach(([wb, tb, bb]) => {
+        const x = (wa + wb) / 2 + gap - Math.abs(p[0] - q[0]);
+        const y = Math.min(p[1] + ba, q[1] + bb) - Math.max(p[1] + ta, q[1] + tb) + gap;
+        if (x > 0 && y > 0) { ox = Math.max(ox, x); oy = Math.max(oy, y); }
+      }));
+      return [ox, oy];
+    };
+    const touching = () => spots.some((p, i) => spots.some((q, j) => j > i && clash(i, j)[0] > 0));
+    const outside = () => spots.some((p, i) => p[1] - box[i].h / 2 < top || p[1] + box[i].h / 2 > floor);
+    icons.forEach((icon) => icon.el.classList.remove('bare'));
+    box = size();
+    const design = spots.map((p) => [...p]);
+    // Fit the spread of the spots into the band (shrinking only), the smile across the width,
+    // then push apart whatever still touches, a little at a time, staying in the band: along
+    // the shorter overlap, unless the band has no room for that (then sideways).
+    const solve = () => {
+      spots.forEach((p, i) => { p[0] = design[i][0]; p[1] = design[i][1]; });
+      const fit = (axis, lo, hi) => {
+        const v = spots.map((p) => p[axis]);
+        const min = Math.min(...v), max = Math.max(...v);
+        const k = max > min ? Math.min(1, (hi - lo) / (max - min)) : 1;
+        const shift = Math.min(Math.max(lo, (lo + hi) / 2 - (max - min) * k / 2), hi - (max - min) * k);
+        spots.forEach((p) => { p[axis] = shift + (p[axis] - min) * k; });
+      };
+      const hMax = Math.max(...box.map((b) => b.h)), wMax = Math.max(...box.map((b) => b.w));
+      fit(1, top + hMax / 2, floor - hMax / 2);
+      if (smile) {
+        const v = spots.map((p) => Math.abs(p[0] - W / 2));
+        const k = (W / 2 - wMax / 2 - pad) / Math.max(...v);
+        if (k > 1) spots.forEach((p) => { p[0] = W / 2 + (p[0] - W / 2) * k; });
+      }
+      const fits = (y, h) => y - h / 2 >= top - .5 && y + h / 2 <= floor + .5;
+      for (let n = 0; n < 160 && touching(); n++) {
+        spots.forEach((p, i) => spots.forEach((q, j) => {
+          if (j <= i) return;
+          const [ox, oy] = clash(i, j);
+          if (!ox) return;
+          const dy = (p[1] < q[1] || (p[1] === q[1] && i < j) ? -1 : 1) * oy / 2;
+          const upDown = oy <= ox && fits(p[1] + dy, box[i].h) && fits(q[1] - dy, box[j].h);
+          if (upDown) { p[1] += dy; q[1] -= dy; }
+          else { const d = (p[0] < q[0] || (p[0] === q[0] && i < j) ? -1 : 1) * Math.min(ox, oy * 3) / 2; p[0] += d; q[0] -= d; }
+        }));
+        inside();
+      }
+      return !touching() && !outside();
+    };
+    // (the smile tries with its labels first, and drops them only if they cannot fit)
+    if ((outside() || touching()) && !solve() && smile) {
+      icons.forEach((icon) => icon.el.classList.add('bare'));
+      box = size();
+      solve();
+    }
+    inside();
+    icons.forEach((icon, i) => {
+      const go = () => { icon.el.style.left = spots[i][0] / W * 100 + '%'; icon.el.style.top = spots[i][1] / H * 100 + '%'; };
+      if (stagger && !TTY.reduce) setTimeout(go, i * stagger); else go();
+    });
+  }
 
   /* ---- Small pieces of motion ---- */
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -404,6 +556,27 @@
   function status(text) { say.textContent = text; }
   function blink() { eyes.forEach((e) => anim(e, [{ scale: '1 1' }, { scale: '1 .1' }, { scale: '1 1' }], { duration: 220 })); }
   function hop() { anim($('.agent svg'), [{ transform: 'none' }, { transform: 'translateY(-18%) rotate(-6deg)' }, { transform: 'none' }], { duration: 480, easing: 'cubic-bezier(.3,1.4,.5,1)' }); }
+  // The opening beat is a close-up: the agent stands in the middle of the desk, bigger, under its
+  // little prompt, and goes back to its corner once it has blinked. (Its spot is worked out from
+  // its untransformed box, so a move still under way does not throw it off.)
+  function spotlight(on, instant = false) {
+    if (instant) agent.style.transition = 'none';
+    if (!on) { agent.style.translate = ''; agent.style.scale = ''; }
+    else {
+      const svg = parseFloat(getComputedStyle(agent.querySelector('svg')).width);
+      const m = Math.min(innerWidth, innerHeight) / 100;
+      const k = Math.min(Math.max(72, 17 * m), 130) / svg;
+      const pw = beg.offsetWidth, ph = beg.offsetHeight, aw = agent.offsetWidth, ah = agent.offsetHeight;
+      const top = $('.headline').getBoundingClientRect().bottom;
+      const bottom = innerHeight - Math.max(8, innerHeight - agent.offsetTop - ah);
+      // centre the agent and its prompt (which opens to its left, above its head) on the desk
+      const cx = innerWidth / 2 + (pw * k) / 2 - (aw * k) / 4;
+      const cy = (top + bottom) / 2 + (ph * k) / 2;
+      agent.style.translate = `${cx - (agent.offsetLeft + aw / 2)}px ${cy - (agent.offsetTop + ah / 2)}px`;
+      agent.style.scale = k.toFixed(3);
+    }
+    if (instant) { void agent.offsetWidth; agent.style.transition = ''; }
+  }
   let requests = 0;
   let denies = 0;
   function bump() { requests += 1; count.textContent = T.requests(requests); anim(count, [{ scale: 1.25 }, { scale: 1 }], { duration: 260 }); }
@@ -466,8 +639,19 @@
     denies = 0;
     status(T.status.done);
     hop();
+    // The note is written now (it shows later), so the smile knows where the note will be.
+    if (ko) {
+      const el = document.createElement('font-kku');
+      el.setAttribute('font', 'pilgi');
+      el.setAttribute('size', 'clamp(16px, 3cqmin, 25px)');
+      el.setAttribute('wrap-unit', 'word');
+      el.textContent = T.note;
+      note.replaceChildren(el);
+    } else {
+      note.textContent = T.note;
+    }
     // A smile out of the desktop icons.
-    icons.forEach((icon, i) => setTimeout(() => place(icon, icon.smile, true), TTY.reduce ? 0 : i * 70));
+    arrange('smile', 70);
     await wait(TTY.reduce ? 0 : 1100);
 
     // Water the plant.
@@ -504,16 +688,6 @@
     await wait(TTY.reduce ? 0 : 700);
 
     // A note.
-    if (ko) {
-      const el = document.createElement('font-kku');
-      el.setAttribute('font', 'pilgi');
-      el.setAttribute('size', 'clamp(16px, 3cqmin, 25px)');
-      el.setAttribute('wrap-unit', 'word');
-      el.textContent = T.note;
-      note.replaceChildren(el);
-    } else {
-      note.textContent = T.note;
-    }
     note.style.opacity = 1;
     anim(note, [{ opacity: 0, transform: 'scale(1.4) rotate(8deg)' }, { opacity: 1, transform: 'none' }], { duration: 480, easing: 'cubic-bezier(.2,.9,.3,1.1)' });
     blink();
@@ -521,16 +695,18 @@
 
   function resetScene() {
     stack.replaceChildren();
-    icons.forEach((icon) => place(icon, icon.at));
-    temp.el.querySelector('span').textContent = temp.name;
+    setName(temp, temp.name);
     icons.forEach((i) => i.el.classList.remove('lit'));
+    arrange('at');
     requests = 0; count.textContent = '';
     toast.style.opacity = 0; toast.style.translate = '0 -12px';
     note.style.opacity = 0; note.replaceChildren();
     mug.style.opacity = 0; mug.getAnimations({ subtree: true }).forEach((a) => a.cancel());
     plantStem.getAnimations().forEach((a) => a.cancel()); plantStem.style.scale = '';
     bloom.style.scale = 0;
-    agent.style.translate = '';
+    agent.style.translate = ''; agent.style.scale = '';
+    agent.classList.remove('holding');
+    beg.classList.remove('on');
     denies = 0;
     status(T.status.idle);
   }
@@ -540,15 +716,38 @@
   async function play() {
     const mine = ++run;
     const live = () => run === mine;
+    let round = 0;
     while (live()) {
       resetScene();
-      cursor.style.opacity = 1;
+      // (the first round starts with the agent already in the middle, as the page was drawn)
+      spotlight(true, round++ === 0 && !played);
+      played = true;
+      // The cursor starts below the screen. (Its last round left a fade-out holding it at
+      // opacity 0, and a visitor's click cancels its moves, which put it at the top left.)
+      cursor.getAnimations().forEach((a) => a.cancel());
       cur = [innerWidth * .5, innerHeight + 30];
-      await wait(700); if (!live()) return;
+      cursor.style.transform = `translate(${cur[0]}px, ${cur[1]}px)`;
+      cursor.style.opacity = 1;
+      await wait(250); if (!live()) return;
+      // First the smallest ask of all: may it blink? It holds its eyes wide open, trembling,
+      // while the cursor takes its time (over ✕ first), and only blinks once allowed.
+      agent.classList.add('holding'); status(T.status.blink);
+      beg.classList.add('on'); bump();
+      await wait(800); if (!live()) return;
+      await glide(beg.querySelector('.no'), 700); if (!live()) return;
+      await wait(250); if (!live()) return;
+      await glide(beg.querySelector('.yes'), 260); if (!live()) return;
+      click(); anim(beg.querySelector('.yes'), [{ filter: 'brightness(1)' }, { filter: 'brightness(1.5)' }, { filter: 'brightness(1)' }], { duration: 160 });
+      await wait(150); if (!live()) return;
+      beg.classList.remove('on'); agent.classList.remove('holding'); status(T.status.blinked);
+      for (let k = 0; k < 3; k++) { blink(); await wait(200); }
+      if (!live()) return;
+      spotlight(false);
+      await wait(320); if (!live()) return;
       const after = [
         () => { icons[0].el.classList.add('lit'); status(T.status.read); },
         () => { icons[1].el.classList.add('lit'); status(T.status.pkg); },
-        () => { status(T.status.rename); temp.el.querySelector('span').textContent = T.asks[2].rename; temp.el.classList.add('lit'); },
+        () => { status(T.status.rename); setName(temp, T.asks[2].rename); temp.el.classList.add('lit'); },
         () => { status(T.status.wait); },
         () => { status(T.status.wait); },
       ];
@@ -558,16 +757,16 @@
         await wait(500); if (!live()) return;
         const once = d.querySelector('.once');
         if (i === 3) { await glide(d.querySelector('.deny'), 500); if (!live()) return; await wait(350); }
-        await glide(once, i === 0 ? 800 : 450); if (!live()) return;
+        await glide(once, i === 0 ? 550 : 450); if (!live()) return;
         click(); await wait(160);
         await close(d); if (!live()) return;
         after[i]();
-        await wait(650); if (!live()) return;
+        await wait(500); if (!live()) return;
       }
       // Then they arrive faster than anyone can read.
       status(T.status.ask);
       const pile = T.burst.map((ask, i, all) => dialog(ask, i, all.length));
-      await wait(1100); if (!live()) return;
+      await wait(1000); if (!live()) return;
       const top = pile[pile.length - 1];
       await glide(top.querySelector('.once'), 450); if (!live()) return;
       await wait(500); if (!live()) return;
@@ -582,10 +781,17 @@
   }
 
   /* ---- A visitor answers ---- */
+  // Like the other pages, the autoplay comes back 12 s after the visitor's last answer
+  // (from the start: the desktop is tidied back into its mess).
+  let resume = 0;
+  const resumeLater = () => { clearTimeout(resume); if (!TTY.reduce) resume = setTimeout(play, 12000); };
   stack.addEventListener('click', async (e) => {
     const b = e.target.closest('button');
     if (!b || !e.isTrusted) return;
-    if (run >= 0) { run++; cursor.style.opacity = 0; cursor.getAnimations().forEach((a) => a.cancel()); }
+    run++; cursor.style.opacity = 0; cursor.getAnimations().forEach((a) => a.cancel());
+    agent.classList.remove('holding'); beg.classList.remove('on');
+    if (agent.style.scale) spotlight(false);
+    resumeLater();
     const d = b.closest('.dialog');
     if (b.classList.contains('always')) {
       const all = [...stack.querySelectorAll('.dialog')];
@@ -603,7 +809,7 @@
         status(T.status.plant);
         const p = $('.plant').getBoundingClientRect();
         const a = agent.getBoundingClientRect();
-        agent.style.translate = `${p.right + 8 - a.left}px 0`;
+        agent.style.translate = `${p.right + 8 - a.left}px ${p.bottom - a.bottom}px`;
         await wait(TTY.reduce ? 0 : 1300);
         if (stack.querySelector('.dialog')) return;
         blink();
@@ -627,19 +833,23 @@
   let askedNight = false;
 
   /* ---- Start ---- */
+  let played = false;
   resetScene();
   if (TTY.reduce) {
     cursor.style.opacity = 0;
-    requests = T.asks.length + T.burst.length - 1;
+    requests = 1 + T.asks.length + T.burst.length - 1; // the blink, the five asks, the burst of four
     bump();
-    temp.el.querySelector('span').textContent = T.asks[2].rename;
+    setName(temp, T.asks[2].rename);
     niceThings();
   } else {
     cursor.style.opacity = 0;
+    spotlight(true, true);
   }
   TTY.onShow(() => { if (!TTY.reduce) play(); });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
-  Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
+  // (labels and the headline take their real size once the fonts are in; a new size, a new fit)
+  Promise.all([loaded, document.fonts.ready]).then(() => { arrange(arranged); TTY.ready(); });
+  addEventListener('resize', () => { arrange(arranged); if (agent.style.scale) spotlight(true, true); });
 })();
 </script>
 </body>

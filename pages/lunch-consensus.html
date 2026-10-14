@@ -8,12 +8,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;800&family=DM+Mono:wght@500&family=Gowun+Dodum&display=swap">
-<script src="https://font.tty.link/lib/font-kku.js" data-fonts="dunggeun sebul"></script>
+<script src="https://font.tty.link/lib/font-kku.js" data-fonts="sebul"></script>
 <style>
   /* Five teammates run Raft to decide lunch. A network partition leaves the old leader on
-     the minority side: she can write black-bean but never commit it, while the majority
-     elects a new leader and commits spicy. When it heals, her order is retried, and the
-     kitchen applies the log in order to one bowl: the half-and-half. */
+     the minority side: she can write her order but never commit it, while the majority
+     elects a new leader and commits the other one. When it heals, her order is retried, and
+     the kitchen applies the log in order to one dish: half and half. The orders are local:
+     짜장 vs 짬뽕 (one bowl, 짬짜면) in Korean, pineapple vs no pineapple (one pizza) in English. */
   :root {
     --bg: #fff1e2;
     --card: #fffaf3;
@@ -89,11 +90,17 @@
   .node.napping .zzz { opacity: 1; }
   .node.napping .body { fill: #d8cbc0 !important; }
   .node .timer { fill: none; stroke: var(--cand); stroke-width: 6; stroke-linecap: round; opacity: 0; }
-  .node .name { font: 700 19px 'Hanken Grotesk', sans-serif; fill: var(--ink); text-anchor: middle; }
-  .lang-ko .node .name { font-family: 'Gowun Dodum', sans-serif; font-size: 21px; }
+  /* --name is set from script so a name never renders below about 11px, however small the ring. */
+  .node .name { font: 700 var(--name, 19px) 'Hanken Grotesk', sans-serif; fill: var(--ink); text-anchor: middle; }
+  .lang-ko .node .name { font-family: 'Gowun Dodum', sans-serif; font-size: var(--name, 21px); }
   .node:focus, .node:focus-visible { outline: none; }
   .node:focus-visible .body { stroke: var(--cut); stroke-width: 5; }
   @keyframes spin { to { rotate: 1turn; } }
+  /* Before anyone votes: everyone already wants something, and glares at the other camp. */
+  .want-pop, .eyes, .sparks path { transform-box: fill-box; transform-origin: center; }
+  .want-pop { opacity: 0; }
+  .sparks path { opacity: 0; fill: none; stroke: var(--cut); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+  .frown { opacity: 0; }
   .bowl-top.half-a { fill: var(--jjajang); }
   .bowl-top.half-b { fill: var(--jjamppong); }
   .chip { transition: opacity .3s; }
@@ -103,6 +110,10 @@
     position: absolute;
     left: 50%;
     top: 49.6%;
+    /* a column, so the pill below stays centred even when its 11px floor makes it wider than the disc */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 40cqmin;
     padding: 3cqmin 0 3.4cqmin;
     border-radius: 50%;
@@ -115,7 +126,7 @@
   .verdict svg { position: static; display: block; width: 19cqmin; height: auto; margin: 0 auto; }
   .verdict .dish { display: block; margin-top: .8cqmin; font-size: 6cqmin; font-weight: 800; line-height: 1.05; letter-spacing: -.02em; }
   .verdict .dish > font-kku { color: var(--ink); }
-  .verdict .done { display: inline-block; margin-top: 1.2cqmin; padding: .25em .8em; border-radius: 999px; background: var(--ink); color: var(--card); font-size: 2.5cqmin; font-weight: 700; white-space: nowrap; }
+  .verdict .done { display: inline-block; margin-top: 1.2cqmin; padding: .25em .8em; border-radius: 999px; background: var(--ink); color: var(--card); font-size: max(11px, 2.5cqmin); font-weight: 700; white-space: nowrap; }
 
   /* ---- the event log ---- */
   .log { grid-area: log; display: flex; flex-direction: column; min-height: 0; padding: clamp(14px, 2.6cqmin, 22px); border: 2px solid var(--ink); border-radius: 18px; background: var(--card); box-shadow: 0 5px 0 var(--ink); }
@@ -129,20 +140,66 @@
   .events li.win { background: var(--ink); color: var(--card); }
   .events li.win .t { color: #d7c4b2; }
   .aside { margin-top: 10px; font-size: clamp(12px, 1.7cqmin, 14px); color: var(--soft); }
+  /* The one-line hint, at the foot of the log card on every layout. */
+  .hint { margin-top: 8px; font-size: clamp(12px, 1.7cqmin, 14px); line-height: 1.3; color: var(--soft); }
+  .hint::before { content: "\2192\00a0"; color: var(--cand); font-weight: 800; }
+  /* Opened on its own, _kit.js puts its "?" and ":)" buttons bottom-right; end the log card above
+     them (small landscape stages below take a little more). */
+  @media (min-width: 601px) { html:not(.embedded) .log { margin-bottom: 26px; } }
 
-  /* Portrait stages: the cluster on top, the latest log line under it (two on tall ones).
+  /* Portrait stages, and narrow ones that are about square (the home page's stage on a 390 × 600
+     phone is 358 × 396): the cluster on top, the latest log line under it (two on tall ones).
      The card grows to fit its lines, so a long entry is never cut off at the top. */
-  @media (max-aspect-ratio: 4/5) {
+  @media (max-aspect-ratio: 4/5), (max-aspect-ratio: 1/1) and (max-width: 520px) {
     .room { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "head" "scene" "log"; }
     .aside { display: none; }
     .events li:not(:last-child) { display: none; }
+    /* at least two lines, so a one-line entry doesn't make the ring jump */
+    .events li:last-child { min-height: calc(2 * 1.35em + 16px); }
     .head { flex-wrap: wrap; }
   }
   @media (max-aspect-ratio: 4/5) and (min-height: 700px) {
     .events li:nth-last-child(2) { display: grid; }
   }
-  /* Opened on its own on a phone, _kit.js puts a small ":)" button bottom-right; end the log above it. */
-  @media (max-aspect-ratio: 4/5) and (max-width: 600px) { html:not(.embedded) .room { padding-bottom: 50px; } }
+  /* Short portrait stages (a phone opening the page on its own, about 360 × 520; the home page's
+     phone stages, 358 × 396 and 328 × 408): the title and the button share one row, and under
+     470px the subtitle and the log's heading go too, so the ring gets the height. */
+  @media (max-aspect-ratio: 1/1) and (max-height: 560px) {
+    .room { padding: 12px 14px; gap: 8px; }
+    .head { flex-wrap: nowrap; align-items: center; gap: 8px; }
+    .head h1 { font-size: 20px; }
+    .head .sub { margin-top: 4px; font-size: 12.5px; }
+    .again { min-height: 32px; padding: 0 12px; font-size: 13px; }
+    .log { padding: 10px 12px 10px; }
+    .events { margin-top: 8px; }
+  }
+  @media (max-aspect-ratio: 1/1) and (max-height: 470px) {
+    .head .sub, .log h2 { display: none; }
+    .events { margin-top: 0; }
+    .events .t { display: none; }
+    .events li { grid-template-columns: minmax(0, 1fr); padding: 5px 8px; font-size: 12.5px; line-height: 1.3; }
+    .events li:last-child { min-height: calc(2 * 1.3em + 10px); }
+    .log { padding: 7px 8px 8px; border-radius: 14px; box-shadow: 0 3px 0 var(--ink); }
+    .hint { margin-top: 5px; font-size: 11.5px; }
+    /* the 11px pill is large next to so small a ring: lift the verdict a little off Jihoon's star */
+    .verdict { top: 47%; }
+  }
+  /* Small landscape stages (a phone held sideways): the log column is narrow, so keep only the
+     latest line and drop the aside, or the line is cut off at the top. */
+  @media (max-height: 440px) and (min-aspect-ratio: 1001/1000) {
+    .room { grid-template-areas: "head log" "scene log"; }
+    .head { flex-wrap: wrap; align-items: start; gap: 8px; }
+    .head h1 { font-size: 22px; }
+    .again { min-height: 32px; padding: 0 12px; }
+    .aside { display: none; }
+    .events li:not(:last-child) { display: none; }
+    .events .t { display: none; }
+    .events li { grid-template-columns: minmax(0, 1fr); padding: 6px 8px; font-size: 12.5px; line-height: 1.3; }
+    .log { padding: 10px 10px 12px; }
+    html:not(.embedded) .log { margin-bottom: 38px; }
+  }
+  /* Opened on a phone held upright, the same buttons sit under the log card. */
+  @media (max-aspect-ratio: 1/1) and (max-width: 600px) { html:not(.embedded) .room { padding-bottom: 50px; } }
 </style>
 </head>
 <body>
@@ -150,8 +207,8 @@
   <header class="head">
     <div>
       <h1 data-lang="en">Lunch, by Consensus</h1>
-      <h1 data-lang="ko"><font-kku font="dunggeun" size="5.4cqmin">점심 메뉴 합의 알고리즘</font-kku></h1>
-      <p class="sub" data-lang="en">Five nodes. Two noodles. One bowl.</p>
+      <h1 data-lang="ko"><font-kku font="sebul" size="5.4cqmin">점심 메뉴 합의 알고리즘</font-kku></h1>
+      <p class="sub" data-lang="en">Five nodes. Two camps. One pizza.</p>
       <p class="sub" data-lang="ko">노드 다섯, 면 두 종류, 그릇 하나.</p>
     </div>
     <button class="again" type="button" data-lang="en">Order again</button>
@@ -174,13 +231,16 @@
       <g class="nodes"></g>
     </svg>
     <div class="verdict">
-      <svg viewBox="-40 -34 80 70" aria-hidden="true">
+      <svg viewBox="-40 -34 80 70" aria-hidden="true" data-lang="ko">
         <use href="#bowl" transform="scale(1.3)"/>
         <g transform="translate(0 -3) scale(1.3)">
           <ellipse class="bowl-top half-a" cx="0" cy="-2" rx="24" ry="7" clip-path="url(#left-half)"/>
           <ellipse class="bowl-top half-b" cx="0" cy="-2" rx="24" ry="7" clip-path="url(#right-half)"/>
           <path d="M0 -9 V5" stroke="#fff" stroke-width="2.4"/>
         </g>
+      </svg>
+      <svg viewBox="-40 -38 80 76" aria-hidden="true" data-lang="en">
+        <g class="pizza-big" transform="scale(1.32)"></g>
       </svg>
       <span class="dish" data-lang="en">Half &amp; half</span>
       <span class="dish" data-lang="ko"><font-kku font="sebul" size="8cqmin">짬짜면</font-kku></span>
@@ -192,8 +252,10 @@
   <aside class="log">
     <h2><span data-lang="en">Event log</span><span data-lang="ko">사건 기록</span> <span class="term">term 0</span></h2>
     <ol class="events" aria-live="polite"></ol>
-    <p class="aside" data-lang="en">Black-bean noodles or spicy seafood noodles? Korean restaurants solved this years ago: one bowl, split down the middle.</p>
+    <p class="aside" data-lang="en">Not majority rule. Half-and-half rule.</p>
     <p class="aside" data-lang="ko">다수결이 아니라 반반결입니다.</p>
+    <p class="hint" data-lang="en">Tap Junho, Seoyeon or Haeun to make them nap.</p>
+    <p class="hint" data-lang="ko">준호·서연·하은을 누르면 잠깐 졸아요.</p>
   </aside>
 </main>
 
@@ -220,13 +282,47 @@
   const CUT = [0, 4], MAJOR = [1, 2, 3], ALL = [0, 1, 2, 3, 4];
   const NAPPERS = [1, 2, 4];
   const SPLIT = [{ x: 553, y: 10 }, { x: 10, y: 404 }]; // the crack's straight line, for dropped packets
-  const ASK = '#ff8a3d', YES = '#2ec27e', INK = { jjajang: '#3d2a1e', jjamppong: '#e0412a' };
+  // The two orders. A is Minji's (짜장 / pineapple), B is Jihoon's (짬뽕 / no pineapple).
+  const PIZZA = TTY.lang === 'en';
+  const ASK = '#ff8a3d', YES = '#2ec27e';
+  const INK = PIZZA ? { A: '#f2b705', B: '#e0412a' } : { A: '#3d2a1e', B: '#e0412a' };
+
+  // Who wants what before the story starts: the two camps are exactly the two sides of the
+  // partition to come. Where each thought bubble sits, clear of the crack and the links.
+  const WANT = ['A', 'B', 'B', 'B', 'A'];
+  const WANT_AT = [[-85, -53], [70, -70], [96, 10], [-96, 10], [-50, -86]];
 
   const DISH = {
-    jjajang: { en: 'black-bean', ko: '짜장' },
-    jjamppong: { en: 'spicy', ko: '짬뽕' },
+    A: { en: 'pineapple', ko: '짜장' },
+    B: { en: 'no pineapple', ko: '짬뽕' },
     half: { en: 'half & half', ko: '짬짜면' },
   };
+
+  // A pizza from above, r 25: crust, then each half either pineapple (cheese and yellow chunks)
+  // or no pineapple (tomato and mozzarella). Returns the two halves' layers to switch.
+  function pizza(g) {
+    el('circle', { r: 25, fill: '#e9b26a', stroke: '#2b1d14', 'stroke-width': 3 }, g);
+    const half = (clip) => {
+      const h = el('g', { 'clip-path': `url(#${clip})` }, g);
+      const plain = el('g', {}, h);
+      el('circle', { r: 19.5, fill: '#e0412a' }, plain);
+      [[-12, -8, 4.2], [-6, 9, 3.6], [-14, 6, 3], [9, -10, 4], [12, 6, 3.8], [5, 13, 3]].forEach(([x, y, r]) => el('circle', { cx: x, cy: y, r, fill: '#fff3dc' }, plain));
+      const pine = el('g', {}, h);
+      el('circle', { r: 19.5, fill: '#ffd760' }, pine);
+      [[-13, -6, 20], [-6, -13, -15], [-9, 6, 40], [-15, 4, -30], [-4, 14, 10], [5, -12, 30], [12, -4, -20], [9, 8, 15], [3, 2, -40], [15, 9, 55]].forEach(([x, y, a]) => el('path', { d: 'M-3.6 -2.6 H3.6 L2.2 2.6 H-2.2 Z', fill: '#f7a600', stroke: '#9a6200', 'stroke-width': 1, transform: `translate(${x} ${y}) rotate(${a})` }, pine));
+      return { plain, pine };
+    };
+    const a = half('left-half'), b = half('right-half');
+    const cut = el('path', { d: 'M0 -25 V25', stroke: '#2b1d14', 'stroke-width': 2, opacity: 0 }, g);
+    return { a, b, cut };
+  }
+  // Paint a pizza for a dish: pineapple, no pineapple, or one of each half.
+  function paintPizza(pz, dish) {
+    const left = dish !== 'B', right = dish === 'A';
+    pz.a.pine.style.display = left ? '' : 'none';
+    pz.b.pine.style.display = right ? '' : 'none';
+    pz.cut.setAttribute('opacity', dish === 'half' ? .6 : 0);
+  }
 
   const el = (tag, attrs = {}, parent) => {
     const e = document.createElementNS(NS, tag);
@@ -249,9 +345,24 @@
     el('circle', { class: 'ring', r: 52 }, g);
     const timer = el('circle', { class: 'timer', r: 52, pathLength: 1, 'stroke-dasharray': '1', transform: 'rotate(-90)' }, g);
     el('circle', { class: 'body', r: 42, fill: COLORS[i] }, g);
-    el('circle', { cx: -14, cy: -6, r: 4.5, fill: '#2b1d14' }, g);
-    el('circle', { cx: 14, cy: -6, r: 4.5, fill: '#2b1d14' }, g);
-    el('path', { d: 'M-12 10 Q0 21 12 10', fill: 'none', stroke: '#2b1d14', 'stroke-width': 3.5, 'stroke-linecap': 'round' }, g);
+    const eyes = el('g', { class: 'eyes' }, g);
+    el('circle', { cx: -14, cy: -6, r: 4.5, fill: '#2b1d14' }, eyes);
+    el('circle', { cx: 14, cy: -6, r: 4.5, fill: '#2b1d14' }, eyes);
+    const smile = el('path', { d: 'M-12 10 Q0 21 12 10', fill: 'none', stroke: '#2b1d14', 'stroke-width': 3.5, 'stroke-linecap': 'round' }, g);
+    const frown = el('path', { class: 'frown', d: 'M-11 15 Q0 10 11 15', fill: 'none', stroke: '#2b1d14', 'stroke-width': 3.5, 'stroke-linecap': 'round' }, g);
+    // What this node wants for lunch, in a thought bubble: Minji's camp A, Jihoon's camp B.
+    const [bx, by] = WANT_AT[i];
+    const want = el('g', { transform: `translate(${bx} ${by})` }, g);
+    const pop = el('g', { class: 'want-pop' }, want);
+    const d = Math.hypot(bx, by);
+    [[70, 4.5], [58, 3]].forEach(([at, r]) => el('circle', { cx: (bx * at) / d - bx, cy: (by * at) / d - by, r, fill: '#fff', stroke: '#2b1d14', 'stroke-width': 2.5 }, pop));
+    el('ellipse', { rx: 31, ry: 24, fill: '#fff', stroke: '#2b1d14', 'stroke-width': 3 }, pop);
+    if (PIZZA) paintPizza(pizza(el('g', { transform: 'scale(.7)' }, pop)), WANT[i]);
+    else {
+      const bowl = el('g', { transform: 'translate(0 -4) scale(.72)' }, pop);
+      el('use', { href: '#bowl' }, bowl);
+      el('ellipse', { cx: 0, cy: -2, rx: 24, ry: 7, fill: INK[WANT[i]] }, bowl);
+    }
     const badge = el('g', { class: 'badge', transform: 'translate(34 -36)' }, g);
     el('circle', { r: 15, fill: '#f4b400', stroke: '#2b1d14', 'stroke-width': 3 }, badge);
     el('path', { d: 'M0 -8 L2.4 -2.4 L8.4 -2.4 L3.6 1.4 L5.2 7.6 L0 4 L-5.2 7.6 L-3.6 1.4 L-8.4 -2.4 L-2.4 -2.4 Z', fill: '#fff' }, badge);
@@ -260,12 +371,17 @@
     const name = el('text', { class: 'name', x: 0, y: 76 }, g);
     name.textContent = NAMES[i];
     // the dish this node has in its log
-    const chip = el('g', { class: 'chip', transform: `translate(${p.x < C.x - 20 ? -70 : p.x > C.x + 20 ? 70 : -82} ${p.y < C.y ? -8 : 18}) scale(.72)`, opacity: 0 }, g);
-    el('use', { href: '#bowl' }, chip);
-    const topA = el('ellipse', { class: 'bowl-top', cx: 0, cy: -2, rx: 24, ry: 7, 'clip-path': 'url(#left-half)' }, chip);
-    const topB = el('ellipse', { class: 'bowl-top', cx: 0, cy: -2, rx: 24, ry: 7, 'clip-path': 'url(#right-half)' }, chip);
+    const off = PIZZA ? 76 : 70;   // "no pineapple" is a longer label than 짬뽕
+    const chip = el('g', { class: 'chip', transform: `translate(${p.x < C.x - 20 ? -off : p.x > C.x + 20 ? off : -82} ${p.y < C.y ? -8 : 18}) scale(.72)`, opacity: 0 }, g);
+    let topA = null, topB = null, pz = null;
+    if (PIZZA) pz = pizza(el('g', { transform: 'translate(0 10)' }, chip));
+    else {
+      el('use', { href: '#bowl' }, chip);
+      topA = el('ellipse', { class: 'bowl-top', cx: 0, cy: -2, rx: 24, ry: 7, 'clip-path': 'url(#left-half)' }, chip);
+      topB = el('ellipse', { class: 'bowl-top', cx: 0, cy: -2, rx: 24, ry: 7, 'clip-path': 'url(#right-half)' }, chip);
+    }
     const chipLabel = el('text', { y: 50, 'text-anchor': 'middle', style: `font: 700 ${TTY.lang === 'ko' ? 21 : 18}px ${TTY.lang === 'ko' ? "'Gowun Dodum'" : "'Hanken Grotesk'"}, sans-serif; fill: #8a6f5c` }, chip);
-    return { g, timer, chip, topA, topB, chipLabel, napping: false, dish: null, pending: false };
+    return { g, timer, chip, topA, topB, pz, chipLabel, eyes, smile, frown, pop, napping: false, dish: null, pending: false };
   });
 
   // A dish in a node's log; a pending (uncommitted) entry is drawn faint.
@@ -275,10 +391,11 @@
     n.pending = !!dish && pending;
     n.chip.setAttribute('opacity', dish ? (n.pending ? .42 : 1) : 0);
     if (!dish) return;
-    const a = dish === 'jjamppong' ? '#e0412a' : '#3d2a1e';
-    const b = dish === 'jjajang' ? '#3d2a1e' : '#e0412a';
-    n.topA.setAttribute('fill', a);
-    n.topB.setAttribute('fill', b);
+    if (n.pz) paintPizza(n.pz, dish);
+    else {
+      n.topA.setAttribute('fill', dish === 'B' ? INK.B : INK.A);
+      n.topB.setAttribute('fill', dish === 'A' ? INK.A : INK.B);
+    }
     n.chipLabel.textContent = DISH[dish][TTY.lang];
   }
   const setRole = (i, role) => {
@@ -345,14 +462,14 @@
       leader: (t, v) => `Minji is leader of term ${t} with ${v} of 5 votes.`,
       lost: (n, t, v) => `${n} gets ${v} of 5 votes in term ${t}. No majority, so the timer starts again.`,
       partition: 'Network partition. Minji and Haeun are cut off from the other three.',
-      stale: (k) => `Minji, still leader in her own mind, writes black-bean at index 1. ${k} of 5 nodes have it: no commit.`,
+      stale: (k) => `Minji, still leader in her own mind, writes pineapple at index 1. ${k} of 5 nodes have it: no commit.`,
       second: (t, v) => `No heartbeats reach the far side. Jihoon times out and wins term ${t} with ${v} of 5 votes.`,
-      commit: 'Jihoon writes spicy at index 1. Three of five have it: committed.',
+      commit: 'Jihoon writes no pineapple at index 1. Three of five have it: committed.',
       stall: 'Not enough nodes awake for a majority. The commit waits.',
       two: 'Two leaders, two lunches. Only one side can commit.',
-      heal: (t) => `Partition heals. Minji sees term ${t} and steps down. Her uncommitted black-bean is overwritten.`,
-      retry: 'Minji orders again. Index 2: black-bean, committed on 5 of 5.',
-      apply: 'The kitchen applies the log in order, to one bowl: spicy, then black-bean.',
+      heal: (t) => `Partition heals. Minji sees term ${t} and steps down. Her uncommitted pineapple is overwritten.`,
+      retry: 'Minji orders again. Index 2: pineapple, committed on 5 of 5.',
+      apply: 'The kitchen applies the log in order, to one pizza: no pineapple, then pineapple.',
       nap: (n, ok) => `${n} is napping. ${ok ? 'A majority is still awake.' : 'No majority awake on this side.'}`,
       wake: (n) => `${n} is back and catches up on the log.`,
     },
@@ -405,7 +522,58 @@
     crack.style.strokeDashoffset = 1;
     verdict.getAnimations().forEach((a) => a.cancel());
     verdict.style.opacity = 0;
+    prelude().forEach((e) => e.getAnimations().forEach((a) => a.cancel()));
     packetsG.replaceChildren();
+  }
+
+  // The first seconds, before the first vote: thought bubbles pop up (two of one dish, three of
+  // the other), everyone narrows their eyes at the other camp, and sparks fly between them right
+  // where the network is about to split. The bubbles go once the partition has struck.
+  const sparks = el('g', { class: 'sparks' });
+  svg.insertBefore(sparks, packetsG);
+  [[362, 150, 0], [282, 206, 1], [204, 262, 0]].forEach(([x, y, flip]) => {
+    const g = el('g', { transform: `translate(${x} ${y}) rotate(${flip ? 20 : -8}) scale(1.6)` }, sparks);
+    el('path', { d: 'M-12 -11 L1 -2 L-4 2 L12 11 M8 -13 L13 -18 M-8 13 L-13 18' }, g);
+  });
+  const LOOK = (() => {
+    const mid = (ids) => ids.reduce((m, j) => ({ x: m.x + POS[j].x / ids.length, y: m.y + POS[j].y / ids.length }), { x: 0, y: 0 });
+    const a = mid(CUT), b = mid(MAJOR);
+    return POS.map((p, i) => {
+      const t = CUT.includes(i) ? b : a, d = Math.hypot(t.x - p.x, t.y - p.y);
+      return { x: ((t.x - p.x) / d) * 7, y: ((t.y - p.y) / d) * 5 };
+    });
+  })();
+  const prelude = () => [...nodes.flatMap((n) => [n.pop, n.eyes, n.smile, n.frown]), ...sparks.querySelectorAll('path')];
+  const fade = (from, to) => [{ opacity: from }, { opacity: to }];
+  function squabble() {
+    if (TTY.reduce) return;
+    nodes.forEach((n, i) => {
+      n.pop.animate([
+        { transform: 'scale(0)', opacity: 0, easing: 'cubic-bezier(.3, 1.6, .5, 1)' },
+        { transform: 'scale(1)', opacity: 1 },
+      ], { duration: 380, delay: 100 + i * 70, fill: 'both' });
+      const { x, y } = LOOK[i];
+      n.eyes.animate([{ transform: 'none' }, { transform: `translate(${x}px, ${y}px) scaleY(.45)` }], { duration: 260, delay: 520, easing: 'ease-in-out', fill: 'forwards' });
+      n.smile.animate(fade(1, 0), { duration: 160, delay: 560, fill: 'forwards' });
+      n.frown.animate(fade(0, 1), { duration: 160, delay: 560, fill: 'forwards' });
+    });
+    sparks.querySelectorAll('path').forEach((path, k) => {
+      const on = (s) => ({ opacity: 1, transform: `scale(${s})`, easing: 'steps(1, end)' });
+      const off = { opacity: 0, transform: 'scale(1)', easing: 'steps(1, end)' };
+      path.animate([on(.8), { ...off, offset: .16 }, { ...on(1.1), offset: .3 }, { ...off, offset: .45 }, { ...on(1), offset: .6 }, { ...off, offset: .78 }, { ...on(1.2), offset: .86 }, off],
+        { duration: 1000, delay: 900 + k * 130 });
+    });
+  }
+  // Once the partition has struck along the camp line, the wishes become log entries.
+  function unsquabble() {
+    if (TTY.reduce) return;
+    nodes.forEach((n, i) => {
+      n.pop.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], { duration: 300, delay: i * 40, easing: 'ease-in', fill: 'forwards' });
+      const { x, y } = LOOK[i];
+      n.eyes.animate([{ transform: `translate(${x}px, ${y}px) scaleY(.45)` }, { transform: 'none' }], { duration: 260, easing: 'ease-in-out', fill: 'forwards' });
+      n.smile.animate(fade(0, 1), { duration: 200, fill: 'forwards' });
+      n.frown.animate(fade(1, 0), { duration: 200, fill: 'forwards' });
+    });
   }
 
   function showVerdict() {
@@ -455,6 +623,7 @@
       showVerdict();
       return;
     }
+    squabble();
     try {
       await wait(500, id);
       // Term 1: Minji's timer runs out first, and the whole cluster votes.
@@ -470,15 +639,16 @@
       links.forEach((l) => { if (CUT.includes(l.a) !== CUT.includes(l.b)) l.line.classList.add('cut'); });
       log(L.partition, 'alert');
       await wait(500, id);
+      unsquabble();
 
       // Minji doesn't know. She writes black-bean and sends it to everyone; only her side
       // hears it, so it stays uncommitted. Meanwhile the far side stops hearing heartbeats.
       const farTimer = countdown(3, 1500, id);
       farTimer.catch(() => {}); // awaited below; a newer run may abandon it first
-      setDish(0, 'jjajang', true);
+      setDish(0, 'A', true);
       const heard = reach(0);
-      await step(Promise.all(awake(0).map((j) => packet(0, j, INK.jjajang, 700))), id);
-      heard.forEach((j) => setDish(j, 'jjajang', true));
+      await step(Promise.all(awake(0).map((j) => packet(0, j, INK.A, 700))), id);
+      heard.forEach((j) => setDish(j, 'A', true));
       await step(Promise.all(heard.map((j) => packet(j, 0, YES, 450))), id);
       log(L.stale(heard.length + 1));
       await farTimer;
@@ -490,12 +660,12 @@
       await wait(300, id);
 
       // Jihoon writes spicy. With three awake on his side, it commits.
-      setDish(3, 'jjamppong', true);
+      setDish(3, 'B', true);
       for (;;) {
         const got = reach(3, MAJOR);
-        await step(Promise.all(got.map((j) => packet(3, j, INK.jjamppong, 650))), id);
-        got.forEach((j) => setDish(j, 'jjamppong', true));
-        if (majority(got.length + 1)) { [3, ...got].forEach((j) => setDish(j, 'jjamppong')); break; }
+        await step(Promise.all(got.map((j) => packet(3, j, INK.B, 650))), id);
+        got.forEach((j) => setDish(j, 'B', true));
+        if (majority(got.length + 1)) { [3, ...got].forEach((j) => setDish(j, 'B')); break; }
         log(L.stall, 'alert');
         await until(() => majority(reach(3, MAJOR).length + 1), id);
       }
@@ -504,7 +674,7 @@
 
       // Two leaders at once, each shouting its dish at the gap; nothing gets across.
       log(L.two, 'alert');
-      await step(Promise.all([packet(0, 2, INK.jjajang, 600), packet(3, 4, INK.jjamppong, 600)]), id);
+      await step(Promise.all([packet(0, 2, INK.A, 600), packet(3, 4, INK.B, 600)]), id);
       await wait(500, id);
 
       // Heal: Jihoon's next heartbeat carries a higher term. Minji steps down, and the
@@ -513,17 +683,17 @@
       partitioned = false;
       links.forEach((l) => l.line.classList.remove('cut'));
       const back = reach(3, CUT);
-      await step(Promise.all(back.map((j) => packet(3, j, INK.jjamppong))), id);
+      await step(Promise.all(back.map((j) => packet(3, j, INK.B))), id);
       leaders.delete(0);
       setRole(0, 'follower');
-      back.forEach((j) => setDish(j, 'jjamppong'));
+      back.forEach((j) => setDish(j, 'B'));
       log(L.heal(T));
       await wait(500, id);
 
       // The client retries: Minji's order goes through the leader as index 2.
-      await step(packet(0, 3, INK.jjajang, 600), id);
+      await step(packet(0, 3, INK.A, 600), id);
       await until(() => nodes.every((n) => !n.napping), id);
-      await step(Promise.all(reach(3).map((j) => packet(3, j, INK.jjajang, 700))), id);
+      await step(Promise.all(reach(3).map((j) => packet(3, j, INK.A, 700))), id);
       log(L.retry);
       await wait(500, id);
       ALL.forEach((j) => setDish(j, 'half'));
@@ -559,6 +729,19 @@
   });
 
   document.querySelectorAll('.again').forEach((b) => b.addEventListener('click', story));
+
+  // The pizza in the middle of the ring (English): one pizza, half and half.
+  const big = document.querySelector('.pizza-big');
+  if (big) paintPizza(pizza(big), 'half');
+
+  // Names keep a readable size on small rings: about 11px on screen at least.
+  const sizeNames = () => {
+    const box = svg.getBoundingClientRect();
+    const scale = Math.min(box.width / 560, box.height / 540);
+    if (scale > 0) svg.style.setProperty('--name', `${Math.max(TTY.lang === 'ko' ? 21 : 19, 11 / scale).toFixed(1)}px`);
+  };
+  if (window.ResizeObserver) new ResizeObserver(sizeNames).observe(svg);
+  sizeNames();
 
   // Before the story starts every node is a quiet follower.
   nodes.forEach((n, i) => setRole(i, 'follower'));

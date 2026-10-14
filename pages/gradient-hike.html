@@ -168,8 +168,13 @@
   .lbl i { display: block; margin-top: .15em; font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-weight: 400; font-size: 1.04em; color: #4a3f30; }
   .lang-ko .lbl { font-weight: 400; font-family: 'Overpass', 'Gowun Dodum', sans-serif; }
   .lang-ko .lbl b { font-weight: 700; }
-  .lang-ko .lbl i { font-family: 'Gowun Dodum', sans-serif; font-style: normal; font-size: .96em; }
+  .lang-ko .lbl i { font-family: 'Gowun Dodum', sans-serif; font-style: normal; font-size: max(11px, .96em); }
   .lbl.tag { border-left: 4px solid var(--c, var(--ink)); }
+  .lbl.brief i { display: none; } /* a tiny map, at the end: the lake's tag keeps its first line */
+  .map.tiny .lbl.tag { max-width: min(44cqmin, 250px); }
+  .lbl .maybe { visibility: hidden; color: #b8322a; font-weight: 600; rotate: -3deg; transform-origin: 0 50%; width: max-content; }
+  .lbl.maybe-on .maybe { visibility: visible; }
+  .lbl i.maybe, .lang-ko .lbl i.maybe { font-size: 1.12em; }
   .lbl.herebox { padding: 0; background: none; box-shadow: none; }
   .herebox .here { display: inline-block; padding: .28em .55em .22em; border-radius: 3px; background: #c8322b; color: #fff; box-shadow: 0 2px 6px rgba(30, 20, 10, .25); white-space: nowrap; }
   .herebox .here b { font-weight: 800; }
@@ -178,6 +183,9 @@
   /* On small maps the second line wraps to the width of the first, to keep the top edge free. */
   .map.small .herebox { display: inline-grid; }
   .map.small .herebox .park { width: 0; min-width: 100%; }
+  /* On a tiny map the parking line keeps its room from the start, so nothing moves when it comes. */
+  .map.tiny .herebox .park { display: block; visibility: hidden; }
+  .map.tiny .herebox.parked .park { visibility: visible; }
   @keyframes drop { from { opacity: 0; transform: translateY(-4px); } }
   @media (prefers-reduced-motion: reduce) { .herebox.parked .park { animation: none; } }
   .lbl.sign {
@@ -191,6 +199,8 @@
     white-space: nowrap;
   }
   .lbl.nan { background: #2b1c14; color: #ffd9cc; border: 1.5px solid var(--red); white-space: nowrap; max-width: none; }
+  .lbl.nan .alt { white-space: nowrap; }
+  .map.tiny .lbl.nan .alt { display: block; } /* "Mount NaN / (elevation NaN m)" on two lines */
   .lbl.nan b { color: #fff; }
   .lbl.slip { max-width: min(44cqmin, 230px); background: #fff7c7; color: #3d3320; font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-weight: 400; rotate: -2deg; }
   .lang-ko .lbl.slip { font-family: 'Gowun Dodum', sans-serif; font-style: normal; }
@@ -232,6 +242,8 @@
     box-shadow: 0 1px 4px rgba(40, 20, 10, .25);
   }
   .stamp.on { opacity: .92; }
+  /* On a tiny map "DESCENT COMPLETE" goes on two lines, so it fits beside the tag instead of on it. */
+  .lang-en .map.tiny .stamp { white-space: normal; width: min-content; }
   .stamp > font-kku { color: var(--seal); }
 
   /* ---- Controls: stride buttons and the momentum switch ---- */
@@ -308,10 +320,12 @@
   .ticker .dots i { width: 5px; height: 5px; border-radius: 50%; background: rgba(243, 234, 211, .3); }
   .ticker .dots i.on { background: var(--cream); }
   .ticker b { font-weight: 800; }
+  .ticker .tap { font-family: 'Source Serif 4', Georgia, serif; font-style: italic; color: #f6ecd0; } /* the hint, as on the hint line */
+  .lang-ko .ticker .tap { font-family: 'Gowun Dodum', sans-serif; font-style: normal; }
   .lang-ko .ticker { font-family: 'Gowun Dodum', sans-serif; }
   .lang-ko .ticker b { font-weight: 400; text-decoration: underline 1px rgba(243, 234, 211, .5); text-underline-offset: 3px; }
 
-  /* ---- The ranger's note, taped on at the end ---- */
+  /* ---- The ranger's notice, taped up beside the title from the start ---- */
   .ranger {
     position: absolute;
     z-index: 3;
@@ -327,14 +341,12 @@
     line-height: 1.32;
     rotate: 2.2deg;
     box-shadow: 0 6px 16px rgba(0, 0, 0, .35);
-    opacity: 0;
     pointer-events: none;
   }
   .ranger::before { content: ""; position: absolute; left: 34%; top: -.65em; width: 32%; height: 1.3em; background: rgba(240, 230, 200, .7); rotate: -4deg; box-shadow: 0 1px 2px rgba(0, 0, 0, .1); }
   .ranger .by { display: flex; align-items: center; justify-content: flex-end; gap: .4em; margin-top: .35em; font-size: .88em; color: #5a5040; }
   .ranger .by svg { width: 1.7em; height: 1.1em; }
   .lang-ko .ranger { font-family: 'Gowun Dodum', sans-serif; font-style: normal; line-height: 1.45; }
-  .ranger.on { opacity: 1; }
 
   /* ---- Two columns when the stage is wide enough ---- */
   @container page (min-width: 700px) and (min-aspect-ratio: 21/20) {
@@ -353,7 +365,7 @@
     .profile { flex: none; height: calc(clamp(76px, 17cqh, 170px) + var(--extra, 0px)); padding-top: 5px; padding-bottom: 4px; }
     .profile h2 { padding-bottom: .2em; font-size: 11px; }
     .hint { flex-basis: 100%; }
-    .ranger { top: auto; right: clamp(6px, 2cqw, 14px); bottom: clamp(4px, 1.2cqh, 10px); width: min(56cqw, 250px); rotate: -2.5deg; font-size: clamp(12px, 3.3cqw, 14.5px); padding: .55em .75em .45em; }
+    .ranger { display: none; } /* no free corner on a stacked board; the legend's "Summit = where you start" carries it */
   }
   /* Tall, narrow phones: the full legend comes back instead of the one-line version. */
   @container page (max-width: 560px) and (min-height: 740px) {
@@ -368,9 +380,16 @@
   @container page (max-height: 600px) and (max-width: 699.98px) {
     .hint { display: none; }
   }
-  @container page (max-height: 560px) and (max-width: 699.98px) {
-    .ranger { font-size: 12px; line-height: 1.25; width: min(54cqw, 210px); }
-    .ranger .by { display: none; }
+  /* The home page's small phone stages (about 358 × 396 and 328 × 408): the map needs every pixel.
+     The buttons keep to one row and the profile gives up a little height. */
+  @container page (max-height: 460px) and (max-width: 699.98px) {
+    .ctl { padding-left: .5em; padding-right: .5em; }
+    .controls { gap: 4px; }
+    .profile { height: calc(clamp(58px, 15cqh, 170px) + var(--extra, 0px)); }
+    .ticker .dots { display: none; } /* room for each entry on one line */
+  }
+  @container page (max-height: 460px) and (max-width: 340px) {
+    .lang-en .ctl .pre { display: none; } /* "step 0.002 | 0.08 | 1.1": the group says what they are */
   }
   /* Short, wide stages: the legend tightens so the profile keeps its room. */
   @container page (min-width: 700px) and (min-aspect-ratio: 21/20) and (max-height: 700px) {
@@ -398,6 +417,7 @@
     <symbol id="i-fog" viewBox="0 0 32 20"><path d="M3 8 H20 M8 12 H29 M4 16 H22" stroke="#9aa3a8" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="24" cy="7" r="3" fill="#b7bec2"/></symbol>
     <symbol id="i-saddle" viewBox="0 0 32 20"><path d="M2 6 C 9 6, 11 14, 16 14 C 21 14, 23 6, 30 6" fill="none" stroke="#2c2318" stroke-width="2"/><path d="M16 14 v-6 M13 11 l3 -3 l3 3" fill="none" stroke="#c8322b" stroke-width="1.6" stroke-linecap="round"/></symbol>
     <symbol id="i-plateau" viewBox="0 0 32 20"><path d="M2 17 L8 7 H24 L30 17" fill="#c6d9a3" stroke="#2c2318" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 7 H22" stroke="#6f9a5c" stroke-width="2"/></symbol>
+    <symbol id="i-tap" viewBox="0 0 32 20"><circle cx="16" cy="10" r="2.8" fill="#f3ead3"/><circle cx="16" cy="10" r="6.4" fill="none" stroke="#f3ead3" stroke-width="1.5" opacity=".7"/><circle cx="16" cy="10" r="9.4" fill="none" stroke="#f3ead3" stroke-width="1.2" opacity=".35"/></symbol>
   </defs>
 </svg>
 
@@ -463,7 +483,7 @@
     <button class="ticker" type="button"></button>
   </aside>
 
-  <aside class="ranger" aria-hidden="true">
+  <aside class="ranger">
     <p data-lang="en">On this mountain the summit is where you start. Every step down, you're learning.</p>
     <p data-lang="ko">이 산은 정상이 출발점이에요. 내려가는 만큼 배우는 중입니다.</p>
     <p class="by"><svg viewBox="0 0 34 22" aria-hidden="true"><path d="M3 15 Q17 19 31 15 L27 13 Q26 6 17 5 Q8 6 7 13 Z" fill="#8a6a3a" stroke="#4a3518" stroke-width="1.3"/><path d="M8 12 Q17 9.5 26 12" stroke="#4a3518" stroke-width="1.6" fill="none"/></svg><span data-lang="en">— Ranger</span><span data-lang="ko">— 레인저</span></p>
@@ -500,15 +520,16 @@
       sign: 'Minimum ↓ ? km (fog)',
       parking: (v) => `<b>Still at the parking lot</b><span class="nw"><span class="sep">·</span>loss ${v}</span>`,
       lake: (v) => `<b>Local-minimum lake<span class="nw"><span class="sep">·</span>${v}</span></b><i>— nice view, the next valley is deeper</i>`,
-      nan: '<b>Mount NaN</b> (elevation NaN m)',
+      nan: '<b>Mount NaN</b> <span class="alt">(elevation NaN m)</span>',
       rescue: 'Rescue advises: install a railing (gradient clipping)',
-      global: (v) => `<b>Global minimum (probably)<span class="nw"><span class="sep">·</span>${v}</span></b>`,
+      global: (v) => `<b>Global minimum<span class="nw"><span class="sep">·</span>${v}</span></b><i class="maybe">(probably)</i>`,
       saddle: 'Saddle pass',
       plateau: 'Plateau',
       steps: ['step 0.002', 'step 0.08', 'step 1.1'],
       stepsLabel: 'Stride (learning rate)',
       momentum: 'momentum',
       map: 'Trail map. Click a spot, or press Enter for a random one, to start a hiker who walks downhill with the stride you picked.',
+      tap: 'Tap the map to start a hiker there.',
       axes: ['steps', 'loss'],
       profile: 'Learning curves: loss against steps for each hiker.',
       hikerAt: (v) => `New hiker finished at loss ${v}.`,
@@ -527,15 +548,16 @@
       sign: '최솟값 ↓ ?km (안개)',
       parking: (v) => `<b>아직 주차장</b><span class="nw"><span class="sep">·</span>손실 ${v}</span>`,
       lake: (v) => `<b>지역 최솟값 호수<span class="nw"><span class="sep">·</span>${v}</span></b><i>— 경치는 좋은데 옆 골짜기가 더 깊음</i>`,
-      nan: '<b>NaN봉</b> (해발 NaN m)',
+      nan: '<b>NaN봉</b> <span class="alt">(해발 NaN m)</span>',
       rescue: '구조대 의견: 난간(기울기 클리핑) 설치 권고',
-      global: (v) => `<b>전역 최솟값(아마도)<span class="nw"><span class="sep">·</span>${v}</span></b>`,
+      global: (v) => `<b>전역 최솟값<span class="nw"><span class="sep">·</span>${v}</span></b><i class="maybe">(아마도)</i>`,
       saddle: '말안장 고개',
       plateau: '평원',
       steps: ['보폭 0.002', '보폭 0.08', '보폭 1.1'],
       stepsLabel: '보폭(학습률)',
       momentum: '관성',
       map: '탐방 지도. 누른 자리(Enter는 아무 자리)에서 새 등산객이 지금 고른 보폭으로 내려갑니다.',
+      tap: '지도를 누르면 한 명 더 출발해요.',
       axes: ['걸음', '손실'],
       profile: '등산객마다 걸음에 따른 손실을 그린 학습 곡선.',
       hikerAt: (v) => `새 등산객이 손실 ${v}에서 멈췄어요.`,
@@ -632,7 +654,7 @@
      walker takes 0.2 s a step and settles in the lake at about 7.6 s; the slow one shuffles
      80 steps by 10 s. The momentum hiker sets off at 10.5 s and runs (0.05 s a step). */
   const LOOP = 22;
-  const AT = { reveal: 0.4, revealDur: 1.2, legend: 0.55, summit: 1.6, go: 2, dusk: 10, orangeShow: 10.2, orangeGo: 10.5, lift: 16.5, note: 17 };
+  const AT = { reveal: 0.4, revealDur: 1.2, legend: 0.55, summit: 1.6, go: 2, dusk: 10, orangeShow: 10.2, orangeGo: 10.5, lift: 16.5, stamp: 17, maybe: 18.2 };
   const PACE = { blue: 0.1, green: 0.2, red: 0.27, orange: 0.05 };
   const AUTO = {
     blue: descend(START[0], START[1], 0.002, 0, 80, -0.6, 1.6),
@@ -653,7 +675,6 @@
   const leaders = $('.leaders');
   const labelsBox = $('.labels');
   const hit = $('.hit');
-  const ranger = $('.ranger');
   const live = $('.sr');
   hit.setAttribute('aria-label', S.map);
 
@@ -667,14 +688,41 @@
   });
   const rules = $('.rules');
   const ticker = $('.ticker');
+  // Short stacked stages hide the hint line under the map (no room); there the legend line
+  // carries it as its first entry instead (null below), shown first and again every round.
+  const hintLine = $('.controls .hint');
+  let withHint = null;
+  const tickerItems = () => (withHint ? [null, ...S.legend] : S.legend);
   let tick = 0;
   function showTicker(i) {
-    tick = (i + S.legend.length) % S.legend.length;
-    const [id, term, def] = S.legend[tick];
-    ticker.innerHTML = `${icon(id)}<span><b>${term}</b> = ${def}</span><span class="dots" aria-hidden="true">${S.legend.map((_, k) => `<i${k === tick ? ' class="on"' : ''}></i>`).join('')}</span>`;
+    const items = tickerItems();
+    tick = (i + items.length) % items.length;
+    const dots = `<span class="dots" aria-hidden="true">${items.map((_, k) => `<i${k === tick ? ' class="on"' : ''}></i>`).join('')}</span>`;
+    if (!items[tick]) {
+      ticker.innerHTML = `${icon('tap')}<span class="tap">${S.tap}</span>${dots}`;
+      ticker.setAttribute('aria-label', S.tap);
+      return;
+    }
+    const [id, term, def] = items[tick];
+    ticker.innerHTML = `${icon(id)}<span><b>${term}</b> = ${def}</span>${dots}`;
     ticker.setAttribute('aria-label', `${term} = ${def}`);
   }
-  showTicker(0);
+  // The legend line keeps the height of its longest entry. Otherwise the map above it resizes (its
+  // terrain redrawn, its tags moved) whenever an entry wraps to a second line on a narrow stage.
+  function fitTicker() {
+    const had = withHint;
+    withHint = getComputedStyle(hintLine).display === 'none';
+    if (had !== null && withHint !== had) tick = withHint ? tick + 1 : Math.max(0, tick - 1); // the same entry stays up
+    ticker.style.minHeight = '';
+    if (!ticker.offsetParent) { showTicker(tick); return; }
+    const keep = tick;
+    let tallest = 0;
+    for (let i = 0; i < tickerItems().length; i++) { showTicker(i); tallest = Math.max(tallest, ticker.offsetHeight); }
+    showTicker(keep);
+    ticker.style.minHeight = tallest + 'px';
+  }
+  fitTicker();
+  addEventListener('resize', fitTicker);
   ticker.addEventListener('click', () => { takeOver(); showTicker(tick + 1); });
 
   // Stride buttons and the momentum switch.
@@ -685,7 +733,10 @@
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'ctl';
-    b.textContent = text;
+    // The word before the number ("step", "보폭") can be dropped on the narrowest stages from the
+    // second button on; the group's name still says what the numbers are.
+    const [word, num] = text.split(' ');
+    b.innerHTML = i ? `<span class="pre">${word} </span>${num}` : text;
     b.setAttribute('aria-pressed', String(i === stride));
     b.addEventListener('click', () => {
       takeOver();
@@ -705,6 +756,7 @@
 
   /* ================= View ================= */
   let W = 0, Hh = 0, X0 = 0, X1 = 1, unit = 1; // map size in px, visible x range, marker scale
+  let tiny = false; // a map too small for every tag at once (the home page's small phone stages)
   const px = (x) => (x - X0) / (X1 - X0) * W;
   const py = (y) => y * Hh;
 
@@ -717,21 +769,26 @@
     const stacked = getComputedStyle(board).gridTemplateColumns.split(' ').length < 2;
     const want = stacked ? (ch > cw + 1 ? extra + ch - cw : ch < cw - 1 && extra ? Math.max(0, extra - (cw - ch)) : extra) : 0;
     if (Math.abs(want - extra) > 1) { extra = want; board.style.setProperty('--extra', extra + 'px'); }
-    // At least the core square; at most 1.7 times as wide as tall.
+    // At least the core square; at most 1.7 times as wide as tall (2.1 on short maps, where the
+    // extra width on both sides is the only room the tags around the summit can get).
     let w = cw, h = ch;
+    const maxA = ch < 200 ? 2.1 : 1.7;
     if (w / h < 1) h = w;
-    if (w / h > 1.7) w = Math.round(h * 1.7);
+    if (w / h > maxA) w = Math.round(h * maxA);
     w = Math.floor(w); h = Math.floor(h);
     map.style.width = w + 'px';
     map.style.height = h + 'px';
     map.style.left = Math.round((cw - w) / 2) + 'px';
     map.style.top = Math.round((ch - h) / 2) + 'px';
     const changed = w !== W || h !== Hh;
+    if (changed) labels.forEach((l) => { l.box = null; l.gaveWay = false; });
     W = w; Hh = h;
     const A = W / Hh;
     X0 = 0.5 - A / 2; X1 = 0.5 + A / 2;
     unit = clamp(Math.min(W, Hh) / 520, 0.72, 1.25);
     map.classList.toggle('small', W < 440);
+    tiny = Hh < 200 || W < 440;
+    map.classList.toggle('tiny', tiny);
     for (const svg of [marks, ink, leaders]) svg.setAttribute('viewBox', `0 0 ${W} ${Hh}`);
     return changed;
   }
@@ -910,6 +967,7 @@
   }
   function setLabel(l, on, text) {
     if (text !== undefined) l.el.innerHTML = text;
+    if (!on) l.gaveWay = false;
     l.on = on;
     l.el.classList.toggle('on', on);
     layoutLabels();
@@ -925,6 +983,26 @@
     center: () => [0, 0, 0.5, 0.5],
   };
   const overlap = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+  // On a tiny map a tag can carry other rules (`tiny: { prio, optional, reserve, spots, clampOk,
+  // stamp }`): the punchline's tag and its stamp keep their place from the start, and the
+  // extras give way.
+  const rule = (l, k) => (tiny && l.tiny && k in l.tiny ? l.tiny[k] : l[k]);
+  const cost = (box, placed) => placed.reduce((sum, p) => sum + overlap(box, p), 0);
+  // Where the stamp can go on a tag's box b. Normally over its lower right corner (or its upper
+  // edge when there is no room below); on a tiny map also against its left or right edge, so it
+  // need not land on the valley itself.
+  function stampSpots(b) {
+    const w = stamp.offsetWidth, h = stamp.offsetHeight, bw = b.r - b.l, bh = b.b - b.t;
+    const at = (x, y) => ({ l: x, t: y, r: x + w, b: y + h });
+    const corner = b.b - h * 0.18 + h > Hh - 4 ? at(b.l + bw * 0.42, b.t - h * 0.82) : at(b.l + bw * 0.42, b.b - h * 0.18);
+    if (!tiny) return [corner];
+    // The side spots stand clear of the tag (6 px, enough for the -11° tilt); pressed 12 px into it,
+    // the stamp covered the tag's colour bar and the "(" of "(probably)". Only when neither side
+    // has the room does it touch the tag's edge (4 px), never its words.
+    const mid = b.t + (bh - h) / 2;
+    return [corner, at(b.l + bw * 0.42, b.t - h * 0.82), at(b.l - w - 6, mid), at(b.r + 6, mid), at(b.l - w + 4, mid), at(b.r - 4, mid)];
+  }
+  const onMap = (b) => b.l >= 4 && b.t >= 4 && b.r <= W - 4 && b.b <= Hh - 4;
   function layoutLabels() {
     if (!W) return;
     // Hikers' resting places are kept clear too, so no tag hides the hiker it is about.
@@ -933,39 +1011,33 @@
       return { l: x - r, t: y - r, r: x + r, b: y + r };
     });
     leaders.replaceChildren();
-    const pad = 4;
-    [...labels].sort((a, b) => a.prio - b.prio).forEach((l) => {
-      l.el.classList.toggle('hide', !l.on);
-      if (!l.on) return;
-      // A value that wrapped to its own line drops its leading dot.
-      l.el.querySelectorAll('.nw').forEach((n) => {
-        n.classList.remove('wrapped');
-        const r = n.getBoundingClientRect(), b = n.closest('.park, .here, .lbl').getBoundingClientRect();
-        n.classList.toggle('wrapped', r.top - b.top > r.height * 0.8);
-      });
+    // Once the global minimum is up on a tiny map, the lake's tag keeps only its first line
+    // (before that, only when it finds no clear place with both).
+    L.lake.el.classList.toggle('brief', tiny && L.valley.on);
+    [...labels].sort((a, b) => rule(a, 'prio') - rule(b, 'prio')).forEach((l) => {
+      const held = !l.on && rule(l, 'reserve'); // placed and kept clear, still unseen
+      l.el.classList.toggle('hide', !l.on && !held);
+      l.el.toggleAttribute('aria-hidden', held);
+      if (!l.on && !held) return;
       const at = typeof l.at === 'function' ? l.at() : l.at;
       const a = [px(at[0]), py(at[1])];
-      const w = l.el.offsetWidth, h = l.el.offsetHeight;
-      const g = (l.gap || 12) * unit;
-      let best = null, bestCost = Infinity;
-      for (const s of l.spots) {
-        const [dx, dy, ax, ay] = typeof s === 'string' ? SPOT[s](g) : [s[0] * unit, s[1] * unit, s[2], s[3]];
-        let x = a[0] + dx - ax * w, y = a[1] + dy - ay * h;
-        const inside = x >= pad && y >= pad && x + w <= W - pad && y + h <= Hh - pad;
-        x = clamp(x, pad, W - pad - w);
-        y = clamp(y, pad, Hh - pad - h);
-        const box = { l: x, t: y, r: x + w, b: y + h };
-        let cost = placed.reduce((sum, p) => sum + overlap(box, p), 0) + (inside || l.clampOk ? 0 : 150);
-        if (cost < bestCost) { best = box; bestCost = cost; }
-        if (cost === 0) break;
+      let [best, bestCost, bestStamp] = place(l, a, placed);
+      // On a tiny map the lake's tag drops its second line when it has no clear place with it.
+      if (tiny && bestCost > 0 && l === L.lake && !l.el.classList.contains('brief')) {
+        l.el.classList.add('brief');
+        [best, bestCost, bestStamp] = place(l, a, placed);
       }
-      if (l.optional && bestCost > 0) { l.el.classList.add('hide'); l.box = null; return; }
+      // An extra that gave way on a tiny map stays down for the rest of the round (it would
+      // otherwise pop back up whenever a tag shrinks).
+      if ((rule(l, 'optional') && bestCost > 0) || (tiny && l.gaveWay)) { l.el.classList.add('hide'); l.box = null; l.gaveWay = tiny; return; }
       placed.push({ l: best.l - 3, t: best.t - 3, r: best.r + 3, b: best.b + 3 });
       l.el.style.left = best.l.toFixed(1) + 'px';
       l.el.style.top = best.t.toFixed(1) + 'px';
       l.box = best;
+      l.stampAt = bestStamp;
+      if (bestStamp) placed.push({ l: bestStamp.l - 3, t: bestStamp.t - 3, r: bestStamp.r + 3, b: bestStamp.b + 3 });
       // a thin leader from the spot to the tag when they drifted apart
-      if (l.leader) {
+      if (rule(l, 'leader') && !held) {
         const cx = clamp(a[0], best.l, best.r), cy = clamp(a[1], best.t, best.b);
         if (Math.hypot(cx - a[0], cy - a[1]) > 5) {
           mk('line', { x1: a[0], y1: a[1], x2: cx, y2: cy, stroke: 'rgba(44, 35, 24, .75)', 'stroke-width': 1.2 }, leaders);
@@ -975,21 +1047,96 @@
     });
     placeStamp();
   }
+  // Where tag l goes (anchor a, clear of the boxes in placed): [box, cost, stamp box or null].
+  function place(l, a, placed) {
+    const pad = 4;
+    // On a tiny map a tag near the right edge would be measured squeezed: measure it at the left.
+    if (tiny) l.el.style.left = '0px';
+    // A value that wrapped to its own line drops its leading dot.
+    l.el.querySelectorAll('.nw').forEach((n) => {
+      n.classList.remove('wrapped');
+      const r = n.getBoundingClientRect(), b = n.closest('.park, .here, .lbl').getBoundingClientRect();
+      n.classList.toggle('wrapped', r.top - b.top > r.height * 0.8);
+    });
+    const w = l.el.offsetWidth, h = l.el.offsetHeight;
+    const g = (l.gap || 12) * unit;
+    const withStamp = rule(l, 'stamp');
+    // A tag that brings its stamp keeps its own spot clear too (the hiker stands there).
+    const mine = withStamp ? [...placed, { l: a[0] - 10 * unit, t: a[1] - 10 * unit, r: a[0] + 10 * unit, b: a[1] + 10 * unit }] : placed;
+    // The cost of a box (and of the best place for the stamp on it): overlap, and 150 off the map.
+    const price = (box, inside) => {
+      let c = cost(box, mine) + (inside || rule(l, 'clampOk') ? 0 : 150), st = null;
+      if (withStamp) {
+        let sc = Infinity;
+        for (const sb of stampSpots(box)) {
+          const k = cost(sb, mine) + (onMap(sb) ? 0 : 150);
+          if (k < sc) { sc = k; st = sb; }
+          if (!k) break;
+        }
+        c += sc;
+      }
+      return [c, st];
+    };
+    let best = null, bestCost = Infinity, bestStamp = null;
+    // On a tiny map a tag stays where it was while that place is still clear (tags that grow or
+    // shrink would otherwise hop between spots).
+    if (tiny && l.box && l.box.l + w <= W - pad && l.box.t + h <= Hh - pad) {
+      const box = { l: l.box.l, t: l.box.t, r: l.box.l + w, b: l.box.t + h };
+      const [c, st] = price(box, true);
+      if (!c) { best = box; bestCost = 0; bestStamp = st; }
+    }
+    for (const s of bestCost ? rule(l, 'spots') : []) {
+      const [dx, dy, ax, ay] = typeof s === 'string' ? SPOT[s](g) : [s[0] * unit, s[1] * unit, s[2], s[3]];
+      let x = a[0] + dx - ax * w, y = a[1] + dy - ay * h;
+      const inside = x >= pad && y >= pad && x + w <= W - pad && y + h <= Hh - pad;
+      x = clamp(x, pad, W - pad - w);
+      y = clamp(y, pad, Hh - pad - h);
+      const box = { l: x, t: y, r: x + w, b: y + h };
+      const [c, st] = price(box, inside);
+      if (c < bestCost) { best = box; bestCost = c; bestStamp = st; }
+      if (c === 0) break;
+    }
+    // A tiny map has few good spots: when none of the tag's own is clear, a tag that may roam
+    // takes the clear place nearest its anchor anywhere on the map (a leader points back).
+    if (tiny && bestCost > 0 && rule(l, 'roam')) {
+      let near = Infinity;
+      // every 4 px, and flush with the right and bottom edges
+      const steps = (n) => { const v = []; for (let k = pad; k < n; k += 4) v.push(k); if (n >= pad) v.push(n); return v; };
+      for (const y of steps(Hh - pad - h)) {
+        for (const x of steps(W - pad - w)) {
+          const box = { l: x, t: y, r: x + w, b: y + h };
+          const [c, st] = price(box, true);
+          if (c) continue;
+          const d = Math.hypot(clamp(a[0], x, x + w) - a[0], clamp(a[1], y, y + h) - a[1]);
+          if (d < near) { near = d; best = box; bestCost = 0; bestStamp = st; }
+        }
+      }
+    }
+    return [best, bestCost, bestStamp];
+  }
 
   const L = {};
   // Mount NaN is pinned where the long-strider left the map; the rescue slip goes up nearby.
   const exitAt = () => [AUTO.red.exitX, 0];
   L.nan = label('nan', S.nan, exitAt, [[14, 5, 0, 0], [-14, 5, 1, 0], [0, 5, 0.5, 0]], 2, { leader: false, say: true });
-  L.rescue = label('slip', S.rescue, exitAt, [[34, 36, 0, 0], [18, 36, 0, 0], [60, 44, 0, 0], [-18, 36, 1, 0], [0, 80, 0.5, 0]], 3, { leader: false, say: true });
+  L.rescue = label('slip', S.rescue, exitAt, [[34, 36, 0, 0], [18, 36, 0, 0], [60, 44, 0, 0], [-18, 36, 1, 0], [0, 80, 0.5, 0]], 3, { leader: false, say: true, tiny: { prio: 9, optional: true, roam: true, leader: true } });
   /* The trailhead sign; the slow walker never really leaves it, so its "still at the parking
      lot" line is added under the same sign rather than as a tag of its own. Priorities follow
      the order labels appear, so a new tag finds room around the ones already up. */
   L.here = label('herebox', `<div class="here">${S.here(fmt(loss(START[0], START[1]), 3))}</div><div class="park"></div>`, START,
-    [[0, -20, 0.5, 1], [6, -20, 1, 1], [-6, -20, 0, 1]], 0, { leader: false, clampOk: true });
-  L.sign = label('sign', S.sign, START, [[10, 24, 0, 0], [10, 50, 0, 0], [-10, 24, 1, 0]], 1, { leader: false });
-  L.lake = label('tag', '', LAKE, [[-30, 92, 0.5, 0], [0, 92, 0.5, 0], [-30, 130, 0.5, 0], [40, 60, 0, 0], [-60, 60, 1, 0]], 4, { say: true });
+    [[0, -20, 0.5, 1], [6, -20, 1, 1], [-6, -20, 0, 1]], 0,
+    // On a tiny map it hangs below and left of the summit, its parking line kept from the start:
+    // above, it would sit on the summit's hikers and on Mount NaN's corner of the top edge.
+    { leader: false, clampOk: true, tiny: { spots: [[6, 16, 1, 0], [6, -20, 1, 1]] } });
+  L.here.el.querySelector('.park').innerHTML = S.parking(fmt(AUTO.blue[AUTO.blue.length - 1].loss));
+  L.sign = label('sign', S.sign, START, [[10, 24, 0, 0], [10, 50, 0, 0], [-10, 24, 1, 0]], 1, { leader: false, tiny: { prio: 8, optional: true, spots: [[16, 22, 0, 0], [16, 44, 0, 0], [66, 22, 0, 0]] } });
+  L.lake = label('tag', '', LAKE, [[-30, 92, 0.5, 0], [0, 92, 0.5, 0], [-30, 130, 0.5, 0], [40, 60, 0, 0], [-60, 60, 1, 0]], 4,
+    { say: true, tiny: { spots: [[24, 10, 0, 0], [40, 60, 0, 0], [-30, 92, 0.5, 0], [0, 92, 0.5, 0], [-60, 60, 1, 0]], roam: true } });
   L.lake.el.style.setProperty('--c', COLORS.green);
-  L.valley = label('tag', '', VALLEY, [[0, 26, 0.5, 0], [-20, 26, 1, 0], [20, 26, 0, 0], [-24, 0, 1, 0.5], [24, 0, 0, 0.5]], 5, { say: true });
+  // Its text is known from the start (the orange path is computed on load), so on a tiny map its
+  // place, and the stamp's, can be kept clear before it shows.
+  L.valley = label('tag', S.global(fmt(AUTO.orange[AUTO.orange.length - 1].loss)), VALLEY, [[0, 26, 0.5, 0], [-20, 26, 1, 0], [20, 26, 0, 0], [-24, 0, 1, 0.5], [24, 0, 0, 0.5]], 5,
+    { say: true, tiny: { prio: 0.5, reserve: true, clampOk: true, stamp: true, roam: true } });
   L.valley.el.style.setProperty('--c', COLORS.orange);
   L.saddle = label('place', S.saddle, SADDLE, [[8, 10, 0, 0], [10, 0, 0, 0.5], [0, 12, 0.5, 0], [-8, 10, 1, 0], [8, -8, 0, 1]], 6, { optional: true });
   L.plateau = label('place', S.plateau, PLATEAU, ['center', 'above', 'below'], 7, { leader: false, optional: true });
@@ -1011,12 +1158,9 @@
   function placeStamp() {
     const b = L.valley.box;
     if (!b || !L.valley.on) return;
-    const w = stamp.offsetWidth, h = stamp.offsetHeight;
-    let x = b.l + (b.r - b.l) * 0.42, y = b.b - h * 0.18;
-    if (y + h > Hh - 4) y = b.t - h * 0.82; // no room below: lean on its top edge instead
-    x = clamp(x, 4, W - w - 4); y = clamp(y, 4, Hh - h - 4);
-    stamp.style.left = x.toFixed(1) + 'px';
-    stamp.style.top = y.toFixed(1) + 'px';
+    const st = L.valley.stampAt || stampSpots(b)[0];
+    stamp.style.left = clamp(st.l, 4, W - (st.r - st.l) - 4).toFixed(1) + 'px';
+    stamp.style.top = clamp(st.t, 4, Hh - (st.b - st.t) - 4).toFixed(1) + 'px';
   }
 
   function say(text) {
@@ -1241,7 +1385,7 @@
     L.here.el.classList.remove('parked');
     L.lake.el.innerHTML = '';
     stamp.classList.remove('on');
-    ranger.classList.remove('on');
+    L.valley.el.classList.remove('maybe-on');
     root.classList.remove('dusk-on');
     fogC.classList.remove('lifted');
     inkPin.classList.remove('on');
@@ -1288,8 +1432,10 @@
     once('dusk', AT.dusk, () => root.classList.add('dusk-on'));
     once('orange', AT.orangeShow, () => spawnOrange(now, loopStart + AT.orangeShow * 1000, loopStart + AT.orangeGo * 1000));
     once('lift', AT.lift, () => { fogC.classList.add('lifted'); setLabel(L.saddle, true); setLabel(L.plateau, true); });
-    once('note', AT.note, () => { ranger.classList.add('on'); stampDown(); thumpNote(); });
-    if (!TTY.reduce && t >= 2 && (Math.floor(t / 2.6) % S.legend.length) !== tick && autoplay) showTicker(Math.floor(t / 2.6));
+    once('stamp', AT.stamp, stampDown);
+    once('maybe', AT.maybe, writeMaybe);
+    const n = tickerItems().length;
+    if (!TTY.reduce && t >= 2 && (Math.floor(t / 2.6) % n) !== tick && autoplay) showTicker(Math.floor(t / 2.6));
   }
   function stampDown() {
     stamp.classList.add('on');
@@ -1302,13 +1448,13 @@
     ], { duration: 420, easing: 'cubic-bezier(.5, 0, .9, .4)' });
     map.animate([{ transform: 'none' }, { transform: 'translateY(1.5px)' }, { transform: 'none' }], { duration: 260, delay: 300 });
   }
-  function thumpNote() {
+  // The last beat: after the stamp says the descent is complete, someone pencils in a doubt.
+  // Its line is reserved in the tag from the start, so nothing moves when it is written.
+  function writeMaybe() {
+    L.valley.el.classList.add('maybe-on');
     if (TTY.reduce) return;
-    ranger.animate([
-      { transform: 'translate(30%, -40%) rotate(16deg)', opacity: 0 },
-      { transform: 'translate(-1%, 1%) rotate(-1deg)', opacity: 1, offset: 0.75 },
-      { transform: 'none', opacity: 1 },
-    ], { duration: 650, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
+    const m = L.valley.el.querySelector('.maybe');
+    if (m) m.animate([{ clipPath: 'inset(-20% 100% -20% 0)' }, { clipPath: 'inset(-20% 0 -20% 0)' }], { duration: 650, easing: 'steps(9, end)' });
   }
 
   /* ================= Visitors: tap the map, pick a stride ================= */
@@ -1395,8 +1541,8 @@
     setLabel(L.saddle, true); setLabel(L.plateau, true);
     hikers.forEach((h) => drawHiker(h, now));
     setLabel(L.rescue, true);
-    ranger.classList.add('on');
     stamp.classList.add('on');
+    writeMaybe();
     layoutLabels();
     drawFog();
   }
@@ -1419,8 +1565,12 @@
     hikers.forEach((h) => { h.shown = -2; styleTrail(h); drawHiker(h, now); });
     drawFog();
   }
-  new ResizeObserver(relayout).observe(cell);
-  new ResizeObserver(layoutProfile).observe(prof.parentElement);
+  // The observers only schedule the work for the next frame: done inside the callback, it resized
+  // what they observe (the profile's --extra, the map cell) and Chrome reported "ResizeObserver
+  // loop completed with undelivered notifications" on the 358 x 640 and 390 x 844 stages.
+  const nextFrame = (fn) => { let id = 0; return () => { cancelAnimationFrame(id); id = requestAnimationFrame(fn); }; };
+  new ResizeObserver(nextFrame(relayout)).observe(cell);
+  new ResizeObserver(nextFrame(layoutProfile)).observe(prof.parentElement);
 
   fitMap();
   drawTerrain();
@@ -1441,7 +1591,7 @@
     wake();
   });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
-  Promise.all([loaded, document.fonts.ready]).then(() => { layoutLabels(); TTY.ready(); });
+  Promise.all([loaded, document.fonts.ready]).then(() => { fitTicker(); layoutLabels(); TTY.ready(); });
 })();
 </script>
 </body>

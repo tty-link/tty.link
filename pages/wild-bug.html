@@ -12,6 +12,16 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiny5&text=5&display=swap">
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="pixel"></script>
 <script src="https://font.tty.link/lib/font-kku-fx.js"></script>
+<script>
+  // Opened on its own on a phone, the four moves fill the bottom of the screen right into the
+  // corner, so the tty.link links ("?" and ":)") go to the top right, over the empty sky. On a
+  // phone held sideways the moves still reach the bottom right (and the bug stands top right),
+  // so they go bottom left, under the dialog's short lines. Other screens leave it to the kit.
+  {
+    const at = matchMedia('(max-width: 600px)').matches ? 'top' : matchMedia('(max-height: 500px)').matches ? 'left' : '';
+    if (at) document.documentElement.setAttribute('data-tty-nav', at);
+  }
+</script>
 <style>
   /* A monster battle where the monster is a bug and the winning move is explaining your code
      to a rubber duck. Sprites are drawn pixel by pixel on tiny canvases and scaled up crisp. */
@@ -54,6 +64,11 @@
   .cloud.c1 { animation: drift 40s linear infinite alternate; }
   @keyframes drift { to { translate: -10cqw 0; } }
 
+  /* The hidden evolution: the field goes dark around the glowing bug. */
+  .dim { position: absolute; inset: 0; background: #1d1f33; opacity: 0; pointer-events: none; }
+  .pad { transition: filter .5s steps(4); }
+  .field.evolving .pad { filter: brightness(.42); }
+
   canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
   .sprite { position: absolute; }
   .pad { width: 100%; height: auto; }
@@ -67,6 +82,9 @@
   .me { left: 4cqw; bottom: -6cqmin; width: 46cqmin; }
   .me .dev { position: absolute; left: 50%; bottom: 30%; width: 64%; translate: -50% 0; }
   .me .duck { position: absolute; left: 84%; bottom: 52%; width: 30%; opacity: 0; }
+  /* Where DEV's info box stands on the duck's spot in the grass (portrait and square-ish
+     screens, measured by placeDuck()), the duck perches on DEV's shoulder, as on a phone. */
+  .me.perch .duck { left: calc(50% - var(--nudge, 0px)); bottom: 84%; }
 
   /* ---- Pixel boxes ---- */
   .box {
@@ -135,8 +153,12 @@
     clip-path: polygon(0 0, 100% 50%, 0 100%);
     opacity: 0;
   }
-  .menu button.on::before, .menu button:hover::before, .menu button:focus-visible::before { opacity: 1; }
+  /* One cursor: hover and keyboard focus both move .on (see the menu's handlers). */
+  .menu button.on::before { opacity: 1; }
   .menu button:focus-visible { outline: none; }
+  /* The one-line hint, under the question while the moves are open. */
+  .pick { display: block; margin-top: .3em; font-size: max(13px, .74em); line-height: 1.3; opacity: .62; visibility: hidden; }
+  .dialog.choosing .pick { visibility: visible; }
   .menu button.pressed { translate: .1em .1em; }
 
   @container (max-width: 640px) {
@@ -173,6 +195,7 @@
   <div class="field">
     <span class="cloud c1"></span>
     <span class="cloud c2"></span>
+    <div class="dim"></div>
 
     <div class="sprite foe">
       <canvas class="pad" data-sprite="pad"></canvas>
@@ -211,6 +234,8 @@
     <div class="say" role="status">
       <p class="say-text" data-lang="en"></p>
       <font-kku class="say-text" data-lang="ko" font="pixel" size="clamp(16px, 3.5cqmin, 30px)"> </font-kku>
+      <span class="pick" data-lang="en" aria-hidden="true">Pick a move.</span>
+      <span class="pick" data-lang="ko" aria-hidden="true"><font-kku font="pixel" size="clamp(16px, 2.7cqmin, 23px)">기술을 골라 보세요.</font-kku></span>
       <span class="more" aria-hidden="true"></span>
     </div>
     <div class="menu" role="group"></div>
@@ -228,6 +253,8 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   /* ---------- Script ---------- */
+  // Korean particles follow the last syllable: 버그는 / 오프바이원은, 버그가 / 오프바이원이.
+  const batchim = (w) => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c < 11172 && c % 28 > 0; };
   const L = TTY.t({
     en: {
       // A different bug each battle. hold: a line after the super-effective hit (the bug is left
@@ -245,6 +272,11 @@
       stash: ['DEV stashed everything and ran!', 'Got away safely…', '…but the BUG will still be here on Monday.'],
       reboot: ['DEV turned it off and on again.', '…', 'It works?!', 'Nobody knows why.\nThe BUG is confused!'],
       back: 'DEV came back.\nBugs don’t leave on their own.',
+      // Run away three times in a row and the bug, left alone, evolves.
+      glow: (n) => `Left alone, ${n} began to glow…`,
+      evolving: (n) => `What? ${n} is evolving!`,
+      evolved: (n) => `${n} evolved into FEATURE!`,
+      feature: 'FEATURE',
       logs: ['here', 'here 2', 'here 3'],
       quack: 'Quack.',
     },
@@ -262,6 +294,10 @@
       stash: ['개발자는 전부 stash 하고 도망쳤다!', '무사히 도망쳤다…', '…버그는 월요일에도 기다리고 있을 것이다.'],
       reboot: ['개발자는 껐다 켰다.', '…', '된다?!', '아무도 이유를 모른다.\n버그는 혼란에 빠졌다!'],
       back: '개발자는 돌아왔다.\n버그는 저절로 사라지지 않는다.',
+      glow: (n) => `혼자 남은 ${n}${batchim(n) ? '이' : '가'} 빛나기 시작했다…`,
+      evolving: (n) => `어라…? ${n}의 모습이…!`,
+      evolved: (n) => `${n}${batchim(n) ? '은' : '는'} 기능(FEATURE)으로 진화했다!`,
+      feature: '기능',
       logs: ['여기', '여기2', '여기3'],
       quack: '꽥.',
     },
@@ -366,6 +402,29 @@
       p.outline(NAVY);
       return p;
     },
+    // What a bug becomes when nobody fixes it: the same face, smiling, with wings and a gold shell.
+    feature() {
+      const p = Pix(40, 32);
+      p.line(16, 6, 12, 1, NAVY); p.line(23, 6, 27, 1, NAVY);
+      [[11, 1], [28, 1]].forEach(([x, y]) => { p.rect(x - 1, y, 3, 1, '#ffd166'); p.rect(x, y - 1, 1, 3, '#ffd166'); });
+      p.ell(8, 11, 7.6, 8, '#ff9fd5');
+      p.ell(31, 11, 7.6, 8, '#ff9fd5');
+      p.ell(7, 10, 3, 3.4, '#fff0f6'); p.ell(32, 10, 3, 3.4, '#fff0f6');
+      p.ell(9.5, 23.5, 6.2, 5.6, '#b197fc');
+      p.ell(29.5, 23.5, 6.2, 5.6, '#b197fc');
+      p.ell(19.5, 20, 10, 9.5, '#ffd43b');
+      p.ell(19.5, 20, 10, 9.5, '#f59f00', (x, y) => (x - 19.5) * .5 + (y - 20) > 4);
+      p.ell(14.5, 15, 3.4, 2.2, '#fff3bf');
+      for (let y = 12; y <= 29; y++) { p.px(19, y, NAVY); p.px(20, y, NAVY); }
+      [[14, 22], [25, 18], [24, 25]].forEach(([x, y]) => { p.px(x, y, '#fff'); p.px(x - 1, y, '#fff8db'); p.px(x + 1, y, '#fff8db'); p.px(x, y - 1, '#fff8db'); p.px(x, y + 1, '#fff8db'); });
+      p.ell(19.5, 9, 7.6, 5.4, '#3a3d5c');
+      p.px(14, 9, '#fff'); p.px(15, 8, '#fff'); p.px(16, 9, '#fff'); // happy eyes ^ ^
+      p.px(22, 9, '#fff'); p.px(23, 8, '#fff'); p.px(24, 9, '#fff');
+      p.px(13, 11, '#ff8fab'); p.px(25, 11, '#ff8fab');
+      p.px(17, 11, '#ffd166'); p.rect(18, 12, 4, 1, '#ffd166'); p.px(22, 11, '#ffd166'); // a smile
+      p.outline(NAVY);
+      return p;
+    },
     duck() {
       const p = Pix(30, 26);
       p.ell(13, 17, 11, 7, '#ffd43b');
@@ -380,6 +439,12 @@
     },
   };
   document.querySelectorAll('[data-sprite]').forEach((c) => SPRITES[c.dataset.sprite]().paint(c));
+  // The glowing white shape of a sprite, for the evolution.
+  function silhouette(p) {
+    const q = Pix(p.w, p.h);
+    for (let y = 0; y < p.h; y++) for (let x = 0; x < p.w; x++) if (p.get(x, y)) q.px(x, y, '#fff');
+    return q;
+  }
 
   /* ---------- Elements ---------- */
   const say = $('.say');
@@ -390,6 +455,7 @@
   const duck = $('.duck');
   const hp = $('.hp-bug');
   const field = $('.field');
+  const dim = $('.dim');
   const foeName = $('.foe-name');
   const foeLv = $('.foe-lv');
 
@@ -486,7 +552,50 @@
       const a = anim(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'steps(2)' });
       if (a) a.finished.then(() => el.remove()); else el.remove();
     }, hold);
+    return el;
   }
+  // A pop just over a sprite's head (the duck's "Quack."), inside the field and never under
+  // DEV's info box, which is drawn over the field.
+  function popOver(label, sprite, hold) {
+    const el = pop(label, '0px', '0px', hold);
+    const f = field.getBoundingClientRect(), s = sprite.getBoundingClientRect(), info = meInfo.getBoundingClientRect();
+    const w = el.offsetWidth, h = el.offsetHeight;
+    // The duck's head is the right part of its sprite; its top rows are empty.
+    const x = Math.max(4, Math.min(f.width - w - 4, s.left - f.left + s.width * .62 - w / 2));
+    let y = s.top - f.top + s.height * .1 - h;
+    if (x + w > info.left - f.left && x < info.right - f.left) y = Math.min(y, info.top - f.top - h - 4);
+    el.style.left = x + 'px';
+    el.style.top = Math.max(4, y) + 'px';
+  }
+
+  /* ---------- The duck's spot ---------- */
+  // In the grass beside DEV, unless DEV's info box stands there (portrait and square-ish
+  // screens): then on DEV's shoulder. Layout boxes, so the battle's slide-in does not count.
+  const me = $('.me');
+  const meInfo = $('.me-info');
+  const game = $('.game');
+  function layoutBox(el) {
+    let x = 0, y = 0;
+    for (let n = el; n && n !== game; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; }
+    return { l: x, t: y, r: x + el.offsetWidth, b: y + el.offsetHeight };
+  }
+  function placeDuck() {
+    // How far the duck reaches in under the box (0: clear of it).
+    const under = () => {
+      const d = layoutBox(duck), i = layoutBox(meInfo), gap = 8;
+      return d.r + gap > i.l && d.l - gap < i.r && d.b + gap > i.t && d.t - gap < i.b ? d.r + gap - i.l : 0;
+    };
+    me.classList.remove('perch');
+    me.style.removeProperty('--nudge');
+    if (!under()) return;
+    me.classList.add('perch');
+    // On a phone the box comes close to DEV's head too: the duck shuffles in a little.
+    const more = under();
+    if (more > 0) me.style.setProperty('--nudge', Math.min(more, me.offsetWidth * .12) + 'px');
+  }
+  placeDuck();
+  new ResizeObserver(placeDuck).observe(meInfo);
+  new ResizeObserver(placeDuck).observe(game);
   const blink = (el, times = 3) => anim(el, [{ opacity: 1 }, { opacity: 0 }, { opacity: 1 }], { duration: 160, iterations: times, easing: 'steps(1)' });
   const shake = (el) => anim(el, [{ translate: '-50% 0' }, { translate: 'calc(-50% - 4%) 0' }, { translate: 'calc(-50% + 4%) 0' }, { translate: '-50% 0' }], { duration: 240, iterations: 2, easing: 'steps(3)' });
 
@@ -496,7 +605,13 @@
       const said = sp.log || L.log;
       await type(said[0]);
       await sleep(300);
-      for (let i = 0; i < 3; i++) { pop(L.logs[i], (58 + i * 7) + '%', (8 + i * 9) + '%', 1500); await sleep(260); }
+      // On a phone the bug's info box reaches past the middle, so the log lines start lower and
+      // further right (and still below the tty.link links pinned to the top right).
+      const narrow = field.clientWidth <= 640;
+      for (let i = 0; i < 3; i++) {
+        pop(L.logs[i], (narrow ? 62 + i * 6 : 58 + i * 7) + '%', (narrow ? 15 + i * 9 : 8 + i * 9) + '%', 1500);
+        await sleep(260);
+      }
       await sleep(500);
       if (sp.log) {
         // Watched, the HEISENBUG is simply not there.
@@ -516,7 +631,7 @@
       duck.style.opacity = 1;
       anim(duck, [{ translate: '0 -160%', opacity: 1 }, { translate: '0 8%', offset: .7 }, { translate: '0 -6%', offset: .85 }, { translate: '0 0' }], { duration: 650, easing: 'steps(8)' });
       await sleep(700);
-      pop(L.quack, KO ? '30%' : '29%', '46%', 900);
+      popOver(L.quack, duck, 900);
       await sleep(700);
       await lines([L.duck[1]], 900);
       await type(L.duck[2]);
@@ -541,11 +656,24 @@
       await type(sp.fixed);
       return 'won';
     },
+    // Running away works, for now. The second time in a row the bug, left alone, glows;
+    // the third time it evolves.
     async stash() {
+      const n = ++stashes;
       await type(L.stash[0]);
       anim(dev, [{ translate: '-50% 0' }, { translate: '-260% 0' }], { duration: 600, easing: 'steps(6)', fill: 'forwards' });
       await sleep(900);
-      await lines(L.stash.slice(1), 1100);
+      if (n >= 3) {
+        await lines([L.stash[1]], 900);
+        return evolve();
+      }
+      if (n === 2) {
+        await lines([L.stash[1]], 700);
+        await glimmer();
+        await lines([L.glow(sp.name)], 1100);
+      } else {
+        await lines(L.stash.slice(1), 1100);
+      }
       anim(dev, [{ translate: '-260% 0' }, { translate: '-50% 0' }], { duration: 600, easing: 'steps(6)', fill: 'forwards' });
       await sleep(600);
       await lines([L.back], 1300);
@@ -561,40 +689,104 @@
     },
   };
 
+  /* ---------- The hidden ending: ignore a bug long enough and it becomes a feature ---------- */
+  let stashes = 0; // git stash picked this many times in a row
+  async function glimmer() {
+    if (TTY.reduce) return;
+    const was = SPRITES.bug(sp.id), white = silhouette(was);
+    for (let k = 0; k < 2; k++) { white.paint(bug); await sleep(120); was.paint(bug); await sleep(180); }
+    await sleep(300);
+  }
+  // The classic cut: the field goes dark, the bug turns into a white shape that flickers
+  // between its old and new outlines, faster and faster, a flash, and there it is.
+  async function evolve() {
+    const name = sp.name;
+    const was = SPRITES.bug(sp.id), now = SPRITES.feature();
+    stopLeak();
+    bug.classList.remove('heisen');
+    anim(dim, [{ opacity: 0 }, { opacity: .74 }], { duration: 600, easing: 'steps(4)', fill: 'forwards' });
+    if (!TTY.reduce) field.classList.add('evolving');
+    await lines([L.evolving(name)], 300);
+    if (!TTY.reduce) {
+      const a = silhouette(was), b = silhouette(now);
+      a.paint(bug);
+      await sleep(700);
+      for (let k = 0, ms = 440; ms > 48; k++, ms *= .84) { (k % 2 ? a : b).paint(bug); await sleep(ms); }
+      b.paint(bug);
+      anim($('.flash'), [{ opacity: 0 }, { opacity: 1, offset: .3 }, { opacity: 1, offset: .5 }, { opacity: 0 }], { duration: 1000, easing: 'steps(6)' });
+      await sleep(420);
+    }
+    now.paint(bug);
+    foeName.textContent = L.feature;
+    anim(dim, [{ opacity: .74 }, { opacity: 0 }], { duration: 500, easing: 'steps(4)', fill: 'forwards' });
+    field.classList.remove('evolving');
+    await sleep(500);
+    anim(bug, [{ translate: '-50% 0' }, { translate: '-50% -10%' }, { translate: '-50% 0' }], { duration: 320, iterations: 2, easing: 'steps(4)' });
+    await sleep(500);
+    // DEV comes back to find it.
+    anim(dev, [{ translate: '-260% 0' }, { translate: '-50% 0' }], { duration: 600, easing: 'steps(6)', fill: 'forwards' });
+    await type(L.evolved(name));
+    return 'evolved';
+  }
+
   /* ---------- Turn loop ---------- */
   let waiting = null;
   let autoTimer = 0;
+  let byKeyboard = false; // the last move was chosen from the keyboard: focus the next menu
+  const dialog = $('.dialog');
+  const cursorTo = (b) => buttons.forEach((x) => x.classList.toggle('on', x === b));
+  // While a move has keyboard focus, the visitor is choosing: the cursor does not move on its own.
+  const steering = () => menu.contains(document.activeElement);
+  // Nobody playing? Then the cursor walks to the duck, as anyone wise would.
+  function autopilot(resolve, after) {
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(async () => {
+      if (waiting !== resolve || steering()) return;
+      cursorTo(null);
+      await sleep(240);
+      if (waiting !== resolve || steering()) return;
+      cursorTo(buttons[1]);
+      await sleep(520);
+      if (waiting !== resolve || steering()) return;
+      choose('duck');
+    }, after);
+  }
   function openMenu(autoAfter) {
     menu.classList.add('open');
-    buttons.forEach((b) => b.classList.remove('on'));
-    buttons[0].classList.add('on');
+    dialog.classList.add('choosing');
+    cursorTo(buttons[0]);
     return new Promise((resolve) => {
       waiting = resolve;
-      // Nobody playing? Then the cursor walks to the duck, as anyone wise would.
-      autoTimer = setTimeout(async () => {
-        if (waiting !== resolve) return;
-        buttons.forEach((b) => b.classList.remove('on'));
-        await sleep(240);
-        buttons[1].classList.add('on');
-        await sleep(520);
-        if (waiting !== resolve) return;
-        choose('duck');
-      }, autoAfter);
+      if (byKeyboard) buttons[0].focus();
+      autopilot(resolve, autoAfter);
     });
   }
   function choose(id) {
     if (!waiting) return;
     clearTimeout(autoTimer);
     const b = buttons.find((x) => x.dataset.move === id);
-    buttons.forEach((x) => x.classList.toggle('on', x === b));
+    byKeyboard = steering() && document.activeElement.matches(':focus-visible');
+    cursorTo(b);
     b.classList.add('pressed');
     setTimeout(() => b.classList.remove('pressed'), 140);
     const done = waiting;
     waiting = null;
-    setTimeout(() => { menu.classList.remove('open'); done(id); }, 180);
+    setTimeout(() => { menu.classList.remove('open'); dialog.classList.remove('choosing'); done(id); }, 180);
   }
+  menu.setAttribute('aria-label', TTY.t({ en: 'Pick a move.', ko: '기술을 골라 보세요.' }));
   menu.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) choose(b.dataset.move); });
-  menu.addEventListener('mouseover', (e) => { const b = e.target.closest('button'); if (b && waiting) buttons.forEach((x) => x.classList.toggle('on', x === b)); });
+  // One ▶: the mouse and keyboard focus both move the same cursor.
+  menu.addEventListener('mouseover', (e) => { const b = e.target.closest('button'); if (b && waiting) cursorTo(b); });
+  menu.addEventListener('focusin', (e) => { const b = e.target.closest('button'); if (b && waiting) { clearTimeout(autoTimer); cursorTo(b); } });
+  menu.addEventListener('focusout', (e) => { if (waiting && !menu.contains(e.relatedTarget)) autopilot(waiting, 4200); });
+  // The arrow keys walk the 2×2 grid.
+  menu.addEventListener('keydown', (e) => {
+    const i = buttons.indexOf(document.activeElement);
+    const to = { ArrowLeft: i % 2 ? i - 1 : -1, ArrowRight: i % 2 ? -1 : i + 1, ArrowUp: i - 2, ArrowDown: i + 2 }[e.key];
+    if (i < 0 || to === undefined) return;
+    e.preventDefault();
+    if (to >= 0 && to < buttons.length) buttons[to].focus();
+  });
 
   function reset() {
     setHp(100);
@@ -602,6 +794,9 @@
     bug.getAnimations().forEach((a) => a.cancel());
     dev.getAnimations().forEach((a) => a.cancel());
     bug.style.opacity = ''; bug.style.visibility = ''; duck.style.opacity = 0;
+    dim.getAnimations().forEach((a) => a.cancel());
+    field.classList.remove('evolving');
+    stashes = 0;
     put('');
     sp = nextSpecies();
     SPRITES.bug(sp.id).paint(bug);
@@ -626,10 +821,12 @@
     let first = true;
     for (;;) {
       await type(L.ask);
-      const id = await openMenu(first ? 2000 : 4200);
+      // The first menu waits about 3.8 s (with the hint) before the cursor picks the duck itself.
+      const id = await openMenu(first ? 3000 : 4200);
       first = false;
+      if (id !== 'stash') stashes = 0;
       const result = await MOVES[id]();
-      if (result === 'won') break;
+      if (result === 'won' || result === 'evolved') break;
       await sleep(400);
     }
     say.classList.add('waiting');

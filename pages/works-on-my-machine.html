@@ -24,13 +24,20 @@
   * { box-sizing: border-box; margin: 0; }
   html, body { height: 100%; }
   body {
-    display: grid;
-    place-items: center;
     overflow: hidden;
     background:
       radial-gradient(120% 90% at 50% 40%, #3a6f61 0%, var(--desk) 60%, #244a40 100%);
     color: var(--ink);
     font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+  /* The desk is the screen, and it clips: a stamp lifted at 2.6x or a note flying in from the
+     right must not widen a phone's layout viewport (body { overflow: hidden } alone does not). */
+  .desk {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    overflow: clip;
   }
 
   .cert {
@@ -57,19 +64,22 @@
   .cert::after { inset: 5.4cqi; border: .25cqi solid var(--gold-soft); }
 
   .cert > div[data-lang] { margin-top: 3cqi; }
-  .kicker { font-size: 3.6cqi; font-style: italic; letter-spacing: .02em; color: #6b5a3a; }
+  .kicker { font-size: max(3.6cqi, 9px); font-style: italic; letter-spacing: .02em; color: #6b5a3a; }
   .title { margin-top: 2.5cqi; font-family: 'UnifrakturCook', serif; font-size: 12.5cqi; line-height: .95; }
   .of { margin-top: 1.6cqi; font-size: 5.4cqi; font-weight: 700; }
   .rule { width: 34cqi; height: .35cqi; margin: 6cqi auto; background: var(--gold); }
   .body { font-size: 4.8cqi; line-height: 1.5; font-weight: 500; }
   .who { display: block; margin: 2cqi 0; font-size: 8.6cqi; font-style: italic; font-weight: 700; }
-  .date { margin-top: 8cqi; font-size: 3.6cqi; font-style: italic; color: #6b5a3a; }
+  .date { margin-top: 8cqi; font-size: max(3.6cqi, 9px); font-style: italic; color: #6b5a3a; }
   .sign { position: absolute; left: 9cqi; bottom: 9.5cqi; width: 38cqi; font-size: 3.2cqi; text-align: center; }
   .sign svg { display: block; width: 100%; height: 9cqi; }
   .sign svg path { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-  .sign > span { display: block; padding-top: 1cqi; border-top: .25cqi solid var(--ink); }
+  .sign > span { display: block; padding-top: 1cqi; border-top: .25cqi solid var(--ink); font-size: max(3.2cqi, 9px); }
   /* The second signer: the only witness there was. */
   .witness { left: auto; right: 9cqi; }
+  /* On the smallest certificates the signer's title (9 px at least) needs more than 38cqi to
+     stay on one line; the signer's box grows to the right, towards the empty middle. */
+  .sign:not(.witness) { width: max(38cqi, 106px); }
   .witness .hand { display: block; height: 9cqi; font: 6.4cqi/9cqi 'Gochi Hand', cursive; letter-spacing: .02em; rotate: -3deg; }
 
   .seal {
@@ -85,7 +95,7 @@
     color: var(--seal);
     font-family: 'Cormorant Garamond', serif;
     font-weight: 700;
-    font-size: 4cqi;
+    font-size: max(4cqi, 8.5px);
     line-height: 1.05;
     text-transform: uppercase;
     rotate: -14deg;
@@ -93,6 +103,12 @@
     opacity: .9;
   }
   .seal b { display: block; font-size: 8cqi; }
+  /* The round seal carries a picture too: a laptop with a tick on its screen, so the stamp
+     says "approved: this machine" before anyone reads it. */
+  .seal:not(.rect) { align-content: center; gap: .3cqi; line-height: 1; }
+  /* where its lettering stops shrinking (8.5 px), the seal stops too, so "machine" stays inside the ring */
+  .lang-en .seal:not(.rect) { width: max(30cqi, 66px); }
+  .seal .pc { display: block; width: 8.5cqi; height: auto; overflow: visible; }
   /* Rubber stamps for the excuses that follow (and for the shipment): a box, not a seal. */
   .seal.rect {
     width: auto;
@@ -100,12 +116,12 @@
     padding: 1.6cqi 3.2cqi 1.8cqi;
     border-width: 1cqi;
     border-radius: 1cqi;
-    font-size: 3.2cqi;
+    font-size: max(3.2cqi, 8.5px);
     line-height: 1.1;
     white-space: nowrap;
   }
   .seal.rect b { font-size: 5.8cqi; letter-spacing: .02em; }
-  .seal .tag { display: block; margin-top: .6cqi; font-size: 3.6cqi; letter-spacing: .01em; text-transform: none; }
+  .seal .tag { display: block; margin-top: .6cqi; font-size: max(3.6cqi, 9px); letter-spacing: .01em; text-transform: none; }
   /* Placed by its centre, in percent of the paper. */
   .seal.at { right: auto; bottom: auto; translate: -50% -50%; }
   .seal.shipped { left: 36%; top: 76%; rotate: 8deg; }
@@ -125,6 +141,8 @@
     box-shadow: 0 1.2cqi 2.4cqi rgba(0,0,0,.22);
   }
   .note::before { content: ""; position: absolute; left: 30%; top: -2cqi; width: 40%; height: 4cqi; background: rgba(255,255,255,.55); rotate: -3deg; }
+  /* Seven more stamps in, the other side answers again: a second note, top right. */
+  .note.reopened { left: auto; right: -5cqi; bottom: auto; top: 12%; width: 34cqi; padding: 4cqi 3.6cqi 5cqi; rotate: 6deg; }
 
   /* Korean: font-kku draws the display lines (title, award, stamp, note); running text is
      set in Gowun Batang, since font-kku is made for headlines rather than paragraphs. */
@@ -155,9 +173,15 @@
   }
   .lang-ko .hint { font-family: 'Gowun Batang', serif; }
   .hint.on { opacity: 1; }
+  /* Opened on its own on a phone, the tty.link nav ("?", ":)", about 84 px) takes the bottom
+     right; the hint is centred in the room left of it. */
+  @media (max-width: 600px) {
+    html:not(.embedded):has(.tty-nav:not([data-at])) .hint { translate: calc(-50% - 46px) 0; }
+  }
 </style>
 </head>
 <body>
+<main class="desk">
 <article class="cert" aria-labelledby="cert-title">
 
   <div data-lang="en">
@@ -193,6 +217,7 @@
   </div>
 
   <div class="seal hidden" aria-hidden="true">
+    <svg class="pc" viewBox="0 0 40 27"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="1.5" width="28" height="18" rx="2"/><path d="M13.5 10.5 l4.5 4.5 l8.5 -8.5"/></g><path d="M1 21.5 h38 l-3 4 h-32z" fill="currentColor"/></svg>
     <span data-lang="en">Works on<b>my</b>machine</span>
     <span data-lang="ko" class="ko"><font-kku font="dojang" size="5.4cqi">내 컴에선</font-kku><font-kku font="dojang" size="9cqi">됨</font-kku></span>
   </div>
@@ -201,7 +226,13 @@
     <span data-lang="en">Great. Then we'll ship your machine.</span>
     <span data-lang="ko"><font-kku font="pilgi" size="6cqi" wrap-unit="word">좋아요. 그럼 그 컴퓨터를 출시하죠.</font-kku></span>
   </p>
+
+  <p class="note reopened" hidden>
+    <span data-lang="en">Ticket reopened.</span>
+    <span data-lang="ko"><font-kku font="pilgi" size="6cqi" wrap-unit="word">티켓 다시 열었어요.</font-kku></span>
+  </p>
 </article>
+</main>
 <p class="hint" id="stamp-hint">
   <span data-lang="en">Tap the certificate to stamp it again.</span>
   <span data-lang="ko">상장을 누르면 도장을 한 번 더 찍어요.</span>
@@ -219,6 +250,7 @@
   const steps = [...document.querySelectorAll('.step')];
   const seal = document.querySelector('.seal');
   const note = document.querySelector('.note');
+  const reopened = document.querySelector('.note.reopened');
   const signature = document.querySelector('.sign path');
   const witness = document.querySelector('.witness .hand');
   const hint = document.querySelector('.hint');
@@ -265,6 +297,17 @@
   const extras = [];
   let stampable = false;
   let taps = 0;
+  // After the seventh excuse, a reply: stuck on top of the stamps, flying in from the right.
+  function reopen() {
+    cert.append(reopened);
+    reopened.hidden = false;
+    if (TTY.reduce) return;
+    reopened.animate([
+      { transform: 'translate(45%, -25%) rotate(28deg)', opacity: 0 },
+      { transform: 'translate(2%, 2%) rotate(-3deg)', opacity: 1, offset: .75 },
+      { transform: 'none', opacity: 1 },
+    ], { duration: 650, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
+  }
   function readyToStamp() {
     stampable = true;
     cert.classList.add('stampable');
@@ -287,6 +330,7 @@
     cert.append(copy);
     extras.push(copy);
     thump(copy);
+    if (taps === 7) setTimeout(reopen, TTY.reduce ? 0 : 900);
   }
   cert.addEventListener('click', (e) => {
     const box = cert.getBoundingClientRect();
@@ -305,21 +349,22 @@
     const ease = 'cubic-bezier(.2, .8, .2, 1)';
     cert.animate([{ transform: 'translateY(-6%) rotate(-1.5deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 700, easing: ease });
 
-    // The text is printed line by line, left to right.
+    // The text is printed line by line, left to right: briskly, so the stamp comes down by the
+    // third second (the title is read while the ink is still wet).
     steps.forEach((el, i) => {
       el.animate([{ clipPath: 'inset(0 100% 0 0)', opacity: 1 }, { clipPath: 'inset(0 0 0 0)', opacity: 1 }],
-        { duration: 520, delay: 450 + i * 190, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'backwards' });
-      setTimeout(() => el.classList.remove('hidden'), 450 + i * 190);
+        { duration: 460, delay: 300 + i * 120, easing: 'cubic-bezier(.6, 0, .3, 1)', fill: 'backwards' });
+      setTimeout(() => el.classList.remove('hidden'), 300 + i * 120);
     });
-    const signedAt = 450 + steps.length * 190;
+    const signedAt = 300 + steps.length * 120;
     signature.animate([{ strokeDasharray: '1', strokeDashoffset: 1 }, { strokeDasharray: '1', strokeDashoffset: 0 }],
-      { duration: 900, delay: signedAt - 300, easing: 'ease-in-out', fill: 'both' });
+      { duration: 700, delay: signedAt - 360, easing: 'ease-in-out', fill: 'both' });
     // Then the witness signs, neatly.
     witness.animate([{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }],
-      { duration: 700, delay: signedAt + 700, easing: 'ease-in-out', fill: 'both' });
+      { duration: 600, delay: signedAt + 100, easing: 'ease-in-out', fill: 'both' });
 
     // Stamp: lifted high, slammed down, the paper flinches.
-    const stampAt = signedAt + 1700;
+    const stampAt = signedAt + 740;
     setTimeout(() => {
       seal.classList.remove('hidden');
       thump(seal);
@@ -333,14 +378,14 @@
         { transform: 'translate(-2%, 2%) rotate(3deg)', opacity: 1, offset: .75 },
         { transform: 'none', opacity: 1 },
       ], { duration: 650, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
-    }, stampAt + 1700);
+    }, stampAt + 2000);
 
     // And the answer to the reply.
     setTimeout(() => {
       shipped.classList.remove('hidden');
       thump(shipped);
-    }, stampAt + 4300);
-    setTimeout(readyToStamp, stampAt + 5100);
+    }, stampAt + 4600);
+    setTimeout(readyToStamp, stampAt + 5400);
   }
 
   TTY.onShow(play);

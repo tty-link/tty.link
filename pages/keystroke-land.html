@@ -49,6 +49,9 @@
     grid-template: "sky" auto "map" minmax(0, 1fr) "tickets" auto "keybar" auto / minmax(0, 1fr);
     row-gap: 6px;
     padding-bottom: 8px;
+    /* Cards slide in from off-screen and the hall-of-fame text pops in at 1.6×; keep that (and
+       the finger coming in from the left) from widening the page for a moment. */
+    overflow: hidden;
     background:
       radial-gradient(circle at 30% 40%, rgba(255, 255, 255, .55) 0 1.3px, transparent 1.8px) 0 0 / 47px 41px,
       radial-gradient(circle at 70% 70%, rgba(255, 209, 102, .85) 0 1.4px, transparent 1.9px) 0 0 / 61px 53px,
@@ -122,6 +125,13 @@
 
   /* ---- The map: one SVG drawn for the box it gets, with HTML signs on top ---- */
   .map { grid-area: map; position: relative; min-width: 0; min-height: 0; margin: 0 clamp(4px, 1.4cqw, 18px); }
+  /* The camera: the first seconds of a lap are a close-up of the press pad and the bridge (the
+     finger and the first rider, big), then it pulls back to the whole park. While it is close,
+     the map is cut at its own edges (on the left, at the screen's) so the sky and the key stay
+     as they are. */
+  .camclip { position: absolute; inset: 0 0 0 -20px; }
+  .map.close .camclip { overflow: clip; }
+  .cam { position: absolute; inset: 0 0 0 20px; transform-origin: 0 0; }
   .art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .o { stroke: var(--ink); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
   .overlay { position: absolute; inset: 0; pointer-events: none; }
@@ -469,11 +479,27 @@
     .admit-big { font-size: 22px; }
     .admit-small { font-size: 11.5px; }
   }
-  /* Opened on its own, the page gets two small links in the bottom-right corner. */
+  /* Opened on its own, the page gets the kit's "? :)" in the bottom-right corner (74 px wide on a
+     phone): the key and its hint keep clear of it. */
   html:not(.embedded) .tickets { margin-bottom: 40px; }
   @container page (max-width: 639px), (max-aspect-ratio: 1/1) {
     html:not(.embedded) .tickets { margin-bottom: 0; }
-    html:not(.embedded) .keybar { padding-right: 46px; }
+    html:not(.embedded) .keybar { padding-right: 84px; gap: 10px; }
+    html:not(.embedded) .bigkey { width: 112px; }
+  }
+  /* (Wider than 600 px the nav also shows its two links, about 260 px.) */
+  @media (min-width: 601px) {
+    @container page (max-width: 639px), (max-aspect-ratio: 1/1) {
+      html:not(.embedded) .keybar { padding-right: 280px; }
+    }
+  }
+  /* The hint says what this device can do: type (inside the home page's frame, after a tap on the
+     map), or tap the key. */
+  .hint .tap { display: none; }
+  html:not(.embedded) .hint .first { display: none; }
+  @media (hover: none) {
+    .hint .kb { display: none; }
+    .hint .tap { display: inline; }
   }
   /* Phones, with motion: the map gets the room; the ticket drops over the map's first row
      (idle by then) at the end of the lap, and a visitor's measured key shows by the key. */
@@ -485,6 +511,14 @@
     html.motion .admit { display: none; }
     html.motion.visitor .keybar .hint { display: none; }
     html.motion.visitor .hint-yours { display: block; }
+  }
+  /* Less motion on a short phone stage (358×396): with a row of its own the record card would
+     squeeze the map into a strip of piled-up signs, so it lies over the map's first row, as it
+     does at the end of the animated lap. */
+  @container page ((max-width: 639px) or (max-aspect-ratio: 1/1)) and (max-height: 470px) {
+    html:not(.motion) .park { grid-template: "sky" auto "map" minmax(0, 1fr) "keybar" auto / minmax(0, 1fr); }
+    html:not(.motion) .tickets { grid-area: map; align-self: start; z-index: 3; margin: 2px 10px 0; }
+    html:not(.motion) .admit { display: none; }
   }
   @container page (max-height: 560px) and (max-width: 639px) {
     .sky { padding-top: 15px; padding-bottom: 9px; }
@@ -514,9 +548,11 @@
   </header>
 
   <div class="map">
-    <svg class="art" aria-hidden="true"></svg>
-    <div class="overlay signs"></div>
-    <div class="overlay benchlayer"></div>
+    <div class="camclip"><div class="cam">
+      <svg class="art" aria-hidden="true"></svg>
+      <div class="overlay signs"></div>
+      <div class="overlay benchlayer"></div>
+    </div></div>
   </div>
 
   <div class="tickets">
@@ -548,8 +584,8 @@
         <div class="stack" aria-hidden="true"></div>
         <p class="blink">
           <svg viewBox="0 0 22 14" aria-hidden="true"><path class="eye-lid" d="M1 7 Q11 -2 21 7 Q11 16 1 7 Z" fill="#fff" stroke="#2b2d42" stroke-width="1.6"/><circle class="eye-ball" cx="11" cy="7" r="3.2" fill="#2b2d42"/></svg>
-          <span data-lang="en">Three or four laps in the blink of an eye.</span>
-          <span data-lang="ko">눈 한 번 깜빡이는 사이 서너 바퀴</span>
+          <span data-lang="en">Over three laps in the blink of an eye.</span>
+          <span data-lang="ko">눈 한 번 깜빡이는 사이 세 바퀴 넘게</span>
         </p>
         <p class="fine">
           <span data-lang="en">Typical values. Every machine differs.</span>
@@ -568,8 +604,8 @@
           <span data-lang="ko">기록 보유 · 1983년 Apple IIe · <span class="mono">30ms</span> (Dan Luu, 2017년 측정)</span>
         </p>
         <p class="hof2 hof">
-          <span data-lang="en">Unbroken for over 40 years. Plenty of today's machines are slower.</span>
-          <span data-lang="ko">40년 넘게 깨지지 않는 기록. 요즘 기기 상당수는 더 느려요.</span>
+          <span data-lang="en">It ran at 1 MHz. Plenty of today's machines are slower.</span>
+          <span data-lang="ko">클럭은 1MHz. 요즘 기기 상당수는 더 느려요.</span>
         </p>
       </div>
     </section>
@@ -578,8 +614,8 @@
   <div class="keybar">
     <button class="bigkey" type="button"><span class="cap-legend" aria-hidden="true"></span><span class="cap-label"><span data-lang="en">Press</span><span data-lang="ko">누르기</span></span></button>
     <p class="hint">
-      <span data-lang="en">Type on your keyboard (tap the map first)</span>
-      <span data-lang="ko">키보드로 쳐 보세요(먼저 지도를 한 번 누르기)</span>
+      <span data-lang="en"><span class="kb">Type on your keyboard<span class="first"> (tap the map first)</span></span><span class="tap">Tap the key to send in a rider</span></span>
+      <span data-lang="ko"><span class="kb">키보드로 쳐 보세요<span class="first">(먼저 지도를 한 번 누르기)</span></span><span class="tap">키를 누르면 손님이 입장해요</span></span>
     </p>
     <p class="hint-yours" aria-live="polite"></p>
   </div>
@@ -603,11 +639,12 @@
   const QUEUE0 = 0.32;                   // leaves the park at about 17 s
   const WALK = 0.18;                     // between two rides (wire time, not counted)
   const LOOP = 24;
-  const IDLE = 12000;
+  const IDLE = 12000;                    // a visitor's park starts over 12 s after the last key,
+  const HOLD = 6000;                     // and never before their word has had 6 s on the screen
   const ORDER = ['pad', 'bridge', 'wheel', 'door', 'rapids', 'carousel', 'hall', 'glyphs', 'queue', 'exit'];
   const C = { red: '#ff6b6b', yellow: '#ffd166', teal: '#4ecdc4', indigo: '#6c7ae0', ink: '#2b2d42' };
   const RIDE = {
-    pad: { n: 0, c: C.indigo, dwell: 0.36 },
+    pad: { n: 0, c: C.indigo, dwell: 0.66 },   // the finger presses, the rider is flung out
     bridge: { n: 1, c: C.red, ms: 5, dwell: 1.5 },
     wheel: { n: 2, c: C.yellow, ms: 1, dwell: 0.3 },
     door: { n: 3, c: C.teal, ms: 4, dwell: 0.25 },
@@ -652,8 +689,9 @@
     ko: { bridge: '흔들다리', wheel: '관람차', door: '회전문(평균)', rapids: '커널 급류', carousel: '회전목마', hall: '조합 공방', glyphs: '거울의 방', queue: '대기줄(평균)', exit: '화면 출구' },
   });
   const TXT = TTY.t({
-    en: { goblin: 'Dokkaebi fire!', yours: (ms) => `Your key: <span class="stamp">${ms} ms</span> inside the browser (it can't see the parts before and after)`, next: (c) => `Press: the next rider is ${c}` },
-    ko: { goblin: '도깨비불!', yours: (ms) => `방금 당신의 키: 브라우저 안에서 <span class="stamp">${ms}ms</span> (앞뒤 구간은 브라우저가 볼 수 없어요)`, next: (c) => `누르기: 다음 손님 ${c}` },
+    // yours: on the record card; mine: the one line by the key on phones.
+    en: { goblin: 'Dokkaebi fire!', yours: (ms) => `Your key: <span class="stamp">${ms} ms</span> inside the browser (it can't see the parts before and after)`, mine: (ms) => `Your key: <span class="stamp">${ms} ms</span>, the browser's part only`, next: (c) => `Press: the next rider is ${c}` },
+    ko: { goblin: '도깨비불!', yours: (ms) => `방금 당신의 키: 브라우저 안에서 <span class="stamp">${ms}ms</span> (앞뒤 구간은 브라우저가 볼 수 없어요)`, mine: (ms) => `방금 당신의 키: <span class="stamp">${ms}ms</span>, 브라우저 안 구간만`, next: (c) => `누르기: 다음 손님 ${c}` },
   });
 
   // ---- 두벌식 automaton ----
@@ -954,6 +992,21 @@
     },
   };
 
+  // The pointing glove, tip at 0,0 and the hand above it (rotated in place by buildScene).
+  const GLOVE = '#fffdf8';
+  const FINGER = `
+      <rect class="o" x="-19" y="-82" width="15" height="25" rx="7.5" fill="${GLOVE}" transform="rotate(18 -11 -70)"/>
+      <rect class="o" x="-12" y="-116" width="47" height="17" rx="5" fill="${GLOVE}"/>
+      <path d="M-10 -106 H33" stroke="${C.ink}" stroke-width="1.5" opacity=".5"/>
+      <rect class="o" x="-9" y="-102" width="41" height="54" rx="12" fill="${GLOVE}"/>
+      <rect class="o" x="7" y="-58" width="9" height="15" rx="4.5" fill="${GLOVE}"/>
+      <rect class="o" x="15.5" y="-58" width="9" height="13" rx="4.5" fill="${GLOVE}"/>
+      <rect class="o" x="24" y="-58" width="8.5" height="10.5" rx="4.2" fill="${GLOVE}"/>
+      <path d="M-7 -62 V-7 A7 7 0 0 0 7 -7 V-62 Z" fill="${GLOVE}"/>
+      <path class="o" d="M-7 -49 V-7 A7 7 0 0 0 7 -7 V-49" fill="none"/>
+      <path d="M-3.5 -30 q3.5 1.8 7 0 M-3.5 -35 q3.5 1.8 7 0" fill="none" stroke="${C.ink}" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>
+      <path d="M5 -93 V-79 M13 -93 V-79 M21 -93 V-79" stroke="${C.ink}" stroke-width="1.5" stroke-linecap="round" opacity=".55"/>`;
+
   // Trees, bushes and flower beds wherever nothing else is.
   function decorate(Lay, obstacles, pathPts) {
     const { W, H, u } = Lay;
@@ -1044,10 +1097,13 @@
       html += `<g class="ride ride-${id}" transform="translate(${s.x.toFixed(1)} ${s.y.toFixed(1)})${rot} scale(${(k * (RS[id] || 1)).toFixed(4)})${flip}">${svgOf[id]()}</g>`;
     });
     html += '<g class="riders"></g><g class="fx"></g>';
+    // The visitor's finger: a white cartoon glove (the old pointing-hand cursor) that comes in
+    // from off the left edge and presses the keycap once per rider.
+    html += `<g class="finger" opacity="0"><g class="finger-k" transform="scale(${k.toFixed(4)}) rotate(-62)">${FINGER}</g></g>`;
     art.insertAdjacentHTML('beforeend', html);
     const q = (s) => art.querySelector(s);
     Object.assign(refs, {
-      riders: q('.riders'), fx: q('.fx'), deco: q('.deco'),
+      riders: q('.riders'), fx: q('.fx'), deco: q('.deco'), finger: q('.finger'),
       capTop: q('.cap-top'), deck: q('.deck'), deckOl: q('.deck-ol'), rope: q('.rope'),
       wheelRot: q('.wheel-rot'), wings: q('.wings'), lamp: q('.lamp'), timer: q('.timer'), horses: q('.horses'),
       hallDoor: q('.hall-door'), mirrors: [...art.querySelectorAll('.mt')], qRed: q('.q-red'), qGreen: q('.q-green'),
@@ -1067,20 +1123,56 @@
       const s = stops[id], b = BOX[id].map((v) => v * (RS[id] || 1));
       return [Math.min(s.x + b[0] * k, s.x - b[2] * k), s.y + b[1] * k, Math.max(s.x + b[2] * k, s.x - b[0] * k), s.y + b[3] * k];
     });
-    const mapBox = mapEl.getBoundingClientRect();
+    // (layout boxes, not screen boxes: the camera may be holding the map close)
     signsEl.querySelectorAll('.sign').forEach((el) => {
-      const r = el.getBoundingClientRect();
-      obstacles.push([r.left - mapBox.left - 6, r.top - mapBox.top - 6, r.right - mapBox.left + 6, r.bottom - mapBox.top + 4]);
+      const x = el.offsetLeft, y = el.offsetTop;
+      obstacles.push([x - 6, y - 6, x + el.offsetWidth + 6, y + el.offsetHeight + 4]);
     });
     const pathPts = [];
     for (let l = 0; l <= L.total; l += 7) pathPts.push(path.probe.getPointAtLength(l));
     refs.deco.innerHTML = decorate(L, obstacles, pathPts);
     buildBunting();
+    L.cam = camFor();
     return true;
+  }
+
+  /* ---- The camera: the opening close-up ----
+     For the first seconds of each lap the map is held close on the press pad and the bridge, so
+     the finger, the rider flung out of the keycap and its three bounces are big even on a phone
+     (and the glove, which reaches in from up and to the left, is on screen); then it pulls back
+     to the whole park. Small maps get up to 2.2x, big ones a little (1.15x) and the shift. */
+  function camFor() {
+    const { W, H, u, stops } = L;
+    const pad = stops.pad, br = stops.bridge;
+    const x0 = pad.x - 1.15 * u, x1 = br.x + .6 * u;
+    const y1 = Math.max(pad.y, br.y) + L.labelH;
+    const s = Math.max(1.15, Math.min(2.2, 130 / u, W / (x1 - x0), H / y1));
+    // Far enough right that the whole glove shows; down a little, for the rider's high arc.
+    const tx = Math.max(W - s * W, s * (1.15 * u - pad.x));
+    const ty = clamp(H / 2 - s * y1 / 2, H - s * H, .3 * u * s);
+    return { s, tx, ty };
+  }
+  const camEl = $('.cam');
+  let camA = 0;
+  let camOn = false;
+  function camera(dt) {
+    // 0-0.6 s in, held until 3.6 s (the first rider's bounces end at about 3.5 s), out by 4.6 s.
+    if (mode === 'auto') camA = T < .6 ? ease(T / .6) : T < 3.6 ? 1 : T < 4.6 ? 1 - ease(T - 3.6) : 0;
+    else camA = Math.max(0, camA - dt / .4);   // someone typed: back to the whole park
+    const c = L && L.cam;
+    if (!c || camA <= 0) {
+      if (camOn) { camEl.style.transform = ''; mapEl.classList.remove('close'); camOn = false; }
+      return;
+    }
+    camOn = true;
+    mapEl.classList.add('close');
+    camEl.style.transform = `translate(${(c.tx * camA).toFixed(1)}px, ${(c.ty * camA).toFixed(1)}px) scale(${(1 + (c.s - 1) * camA).toFixed(4)})`;
   }
 
   function span(id) {
     const s = L.stops[id];
+    // A rider flung off the pad lands a little way down the path.
+    if (id === 'pad') return [s.len, s.len + .36 * L.u];
     const h = id === 'bridge' ? .4 * L.u : id === 'rapids' ? .46 * L.u : 0;
     return [s.len - h, s.len + h];
   }
@@ -1196,7 +1288,9 @@
 
   function flyJamo(jamo, fromEl, toEl, fs) {
     const base = benchLayer.getBoundingClientRect();
-    const a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+    const z = base.width / (benchLayer.offsetWidth || base.width || 1);   // the camera's scale
+    const lay = (r) => ({ left: (r.left - base.left) / z + base.left, top: (r.top - base.top) / z + base.top, width: r.width / z, height: r.height / z });
+    const a = lay(fromEl.getBoundingClientRect()), b = lay(toEl.getBoundingClientRect());
     const spark = document.createElement('div');
     spark.className = 'spark';
     spark.append(kku(jamo, fs * .85));
@@ -1327,7 +1421,9 @@
   let boardSeq = 0;
   let riderCount = 0;
   let lastInput = 0;
-  const BODY = ['#ffb3b3', '#ffe29a', '#a8ece7', '#c3c9f7'];
+  let lastExit = 0;        // when the visitor's last rider left the park (performance.now())
+  let fingerIn = 0;        // 0 = the finger is off-screen, 1 = hovering over the keycap
+  const BODY =['#ffb3b3', '#ffe29a', '#a8ece7', '#c3c9f7'];
   const SLOTS = [[22, -12], [0, -12], [-22, -12], [-22, -36], [0, -36], [22, -36]];
   const ease = (p) => (p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
   const nextTick = (t, t0, period) => (t <= t0 ? t0 : t0 + Math.ceil((t - t0) / period - 1e-9) * period);
@@ -1361,11 +1457,13 @@
         <ellipse cx="${(-R * .42).toFixed(1)}" cy="${(R * .93).toFixed(1)}" rx="${(R * .3).toFixed(1)}" ry="${(R * .18).toFixed(1)}" fill="${C.ink}"/>
         <ellipse cx="${(R * .42).toFixed(1)}" cy="${(R * .93).toFixed(1)}" rx="${(R * .3).toFixed(1)}" ry="${(R * .18).toFixed(1)}" fill="${C.ink}"/>
         <rect x="${(R * .45).toFixed(1)}" y="${(-R * .02).toFixed(1)}" width="${(R * .78).toFixed(1)}" height="${(R * .52).toFixed(1)}" rx="1.5" fill="#ffd1dc" stroke="${C.ink}" stroke-width="1.2" transform="rotate(-22 ${(R * .8).toFixed(1)} ${(R * .25).toFixed(1)})"/>
+        <g class="r-arms" opacity="0"><path d="M${(-R * .72).toFixed(1)} ${(-R * .35).toFixed(1)} L${(-R * 1.28).toFixed(1)} ${(-R * 1.2).toFixed(1)} M${(R * .72).toFixed(1)} ${(-R * .35).toFixed(1)} L${(R * 1.28).toFixed(1)} ${(-R * 1.2).toFixed(1)}" stroke="${C.ink}" stroke-width="${(+sw * 1.25).toFixed(2)}" stroke-linecap="round"/><circle cx="${(-R * 1.32).toFixed(1)}" cy="${(-R * 1.27).toFixed(1)}" r="${(R * .2).toFixed(1)}" fill="#fff" stroke="${C.ink}" stroke-width="${(sw * .8).toFixed(2)}"/><circle cx="${(R * 1.32).toFixed(1)}" cy="${(-R * 1.27).toFixed(1)}" r="${(R * .2).toFixed(1)}" fill="#fff" stroke="${C.ink}" stroke-width="${(sw * .8).toFixed(2)}"/></g>
         <circle r="${R.toFixed(1)}" fill="${r.color}" stroke="${C.ink}" stroke-width="${sw}"/>
         <text text-anchor="middle" dominant-baseline="central" y="${(R * .05).toFixed(1)}" font-size="${(R * (r.cmd ? .95 : 1.18)).toFixed(1)}" fill="${C.ink}" style="font-family:${ko ? "'Gowun Dodum'" : "'Fredoka'"},sans-serif;font-weight:${ko ? 400 : 600}">${esc(r.ch)}</text>
       </g>`;
     r.body = r.el.querySelector('.r-body');
     r.log = r.el.querySelector('.r-log');
+    r.arms = r.el.querySelector('.r-arms');
   }
 
   function makeRider(item, enter) {
@@ -1411,18 +1509,25 @@
         const p = (T - g.s) / (g.e - g.s);
         const o = { len: s.len, free: false, state: id, p };
         if (id === 'pad') {
-          const capY = s.y - .42 * u - R * .9;
-          if (p < .5) { const q = p / .5; return Object.assign(o, { x: s.x, y: capY - (1 - q * q) * .9 * u, op: Math.min(1, q * 3), hop: true }); }
-          const q = (p - .5) / .5;
-          return Object.assign(o, { x: s.x + q * .06 * u, y: capY + (s.y - lift - capY) * q - Math.sin(q * Math.PI) * .22 * u, hop: true });
+          // The finger holds the key down; the rider shoots out of the keycap, arms up, in a
+          // high arc, and lands on the path a little way along.
+          const capY = s.y - .42 * u - R * .5;
+          const land = pt(span('pad')[1]);
+          if (p < .14) return Object.assign(o, { x: s.x + .08 * u, y: capY, op: 0, sc: .5, hop: true });
+          const q = (p - .14) / .86;
+          const x0 = s.x + .08 * u, y1 = land.y - lift;
+          const hi = Math.min(.78 * u, capY + .15 * u);   // high, but not far into the sky band
+          const y = capY + (y1 - capY) * q - 4 * hi * q * (1 - q);
+          return Object.assign(o, { x: x0 + (land.x - x0) * q, y, op: Math.min(1, q * 7), sc: q > .93 ? .88 : 1, hop: true, arms: q < .95, tilt: -30 + 75 * q });
         }
         if (id === 'bridge' || id === 'rapids') {
           const [a, b] = span(id);
           const q = id === 'rapids' ? Math.pow(p, 1.5) : p;
           const base = onPath(a + (b - a) * q, id);
-          base.dy = id === 'bridge' ? -Math.abs(Math.sin(3 * Math.PI * p)) * .1 * u : Math.sin(p * Math.PI * 7) * .025 * u;
+          // The contacts bounce: the bridge bounces the rider like a trampoline, three times.
+          base.dy = id === 'bridge' ? -Math.abs(Math.sin(3 * Math.PI * p)) * .2 * u : Math.sin(p * Math.PI * 7) * .025 * u;
           base.y += base.dy;
-          return Object.assign(base, { p });
+          return Object.assign(base, { p, arms: id === 'rapids' || base.dy < -.04 * u });
         }
         if (id === 'wheel') {
           const th = Math.PI / 2 + 2 * Math.PI * ease(p);
@@ -1491,6 +1596,7 @@
       if (r.done || T < r.end) continue;
       r.done = true;
       r.el.remove();
+      if (mode === 'visitor') lastExit = performance.now();
       if (r.snapSeq > boardSeq) { boardSeq = r.snapSeq; renderBoard(r.snap); }
     }
     riders = riders.filter((r) => !r.done);
@@ -1520,8 +1626,24 @@
       if (T >= lg.wheel.s) wheel += 360 * ease(prog('wheel'));
       if (T >= lg.carousel.s) horses += 2 * Math.PI * ease(prog('carousel'));
       if (T >= lg.bridge.s && T < lg.bridge.e) sag = Math.max(sag, Math.abs(Math.sin(3 * Math.PI * prog('bridge'))));
-      if (T >= lg.pad.s && T < lg.pad.e) { const p = prog('pad'); if (p > .45 && p < .8) press = 1; }
       if (T >= lg.glyphs.s && T < lg.glyphs.e) mirror = { r, p: prog('glyphs') };
+    }
+    // The finger: in while presses are due, down for each rider as it enters.
+    let dip = 0, due = false;
+    for (const r of riders) {
+      const x = T - r.enter;
+      if (x > -1 && x < .45) due = true;
+      dip = Math.max(dip, x < -.16 || x > .3 ? 0 : x < 0 ? ease((x + .16) / .16) : x < .1 ? 1 : 1 - ease((x - .1) / .2));
+    }
+    fingerIn += ((due ? 1 : 0) - fingerIn) * (1 - Math.exp(-dt / .12));
+    if (fingerIn < .002) fingerIn = 0;
+    press = dip;
+    if (refs.finger) {
+      const s = stops.pad;
+      const off = (1.8 - 1.64 * fingerIn - .22 * dip) * u;   // along the finger, up and to the left
+      const tx = s.x + .02 * u - .883 * off, ty = s.y - .42 * u - .469 * off;
+      refs.finger.setAttribute('transform', `translate(${tx.toFixed(1)} ${ty.toFixed(1)})`);
+      refs.finger.setAttribute('opacity', fingerIn > 0 ? 1 : 0);
     }
     refs.wheelRot.setAttribute('transform', `translate(0 -46) rotate(${(wheel % 360).toFixed(1)})`);
     refs.horseEls.forEach((h, i) => {
@@ -1572,9 +1694,10 @@
       r.el.setAttribute('transform', `translate(${r.x.toFixed(1)} ${r.y.toFixed(1)})`);
       r.el.setAttribute('opacity', (p.op ?? 1).toFixed(2));
       const walking = p.state === 'walk';
-      const tilt = walking ? Math.sin(T * 17 + r.idx) * 7 : p.state === 'rapids' ? Math.sin(T * 20) * 9 : 0;
+      const tilt = p.tilt ?? (walking ? Math.sin(T * 17 + r.idx) * 7 : p.state === 'rapids' ? Math.sin(T * 20) * 9 : 0);
       r.body.setAttribute('transform', `rotate(${tilt.toFixed(1)}) scale(${(p.sc ?? 1).toFixed(3)})`);
       r.log.setAttribute('opacity', p.state === 'rapids' ? 1 : 0);
+      r.arms.setAttribute('opacity', p.arms ? 1 : 0);
       if (p.state === 'exit' && p.p > .08 && p.p < .7 && (!r.lastPix || T - r.lastPix > .09)) { r.lastPix = T; spawnPixels(r, stops.exit); }
     }
     particles = particles.filter((q) => {
@@ -1628,7 +1751,9 @@
     renderBoard('', false);
     hideTicket();
     popSigns();
-    ridersOf(WORDS[0]).forEach((c, i) => makeRider(ko ? { jamo: c, ch: c } : { char: c, ch: c }, 1.5 + 1.2 * i));
+    // The finger comes in at about 0.3 s and presses the first key at 1.2 s; every rider then
+    // lands on the path at 1.86 + 1.2·i s, as the door and frame-queue phases expect.
+    ridersOf(WORDS[0]).forEach((c, i) => makeRider(ko ? { jamo: c, ch: c } : { char: c, ch: c }, 1.2 + 1.2 * i));
   }
 
   // The final scene, without motion: the word on the bench and the screen, the ticket, the record.
@@ -1672,11 +1797,17 @@
     } else if (riders.length < 40) {
       const enter = Math.max(T, lastEnter + .42);
       lastEnter = enter;
-      makeRider(item, enter);
+      const r = makeRider(item, enter);
+      // On the home stage, stay up until this rider is out and its word has been on the screen.
+      TTY.hold(Math.ceil((r.end - T) * 1000) + HOLD);
     }
     record.classList.add('visitor');
     // What this browser can see of it: from the key event to the frame that shows the change.
-    requestAnimationFrame(() => { yours.innerHTML = hintYours.innerHTML = TXT.yours((performance.now() - t0).toFixed(1)); });
+    requestAnimationFrame(() => {
+      const ms = (performance.now() - t0).toFixed(1);
+      yours.innerHTML = TXT.yours(ms);
+      hintYours.innerHTML = TXT.mine(ms);
+    });
     if (reduce) { clearTimeout(idleTimer); idleTimer = setTimeout(resetReduced, IDLE); }
   }
   function resetReduced() { document.documentElement.classList.remove('visitor'); hideTicket(); finalScene(); demoWord = demoPos = 0; demoLapped = false; updateKey(); }
@@ -1716,8 +1847,9 @@
       if (T >= 18) showRecord();
       if (T >= 20) showHof();
       if (T >= LOOP) restart();
-    } else if (performance.now() - lastInput > IDLE) restart();
+    } else if (!riders.length && now - lastInput > IDLE && now - lastExit > HOLD) restart();
     if (L) step(dt);
+    camera(dt);
     requestAnimationFrame(frame);
   }
 

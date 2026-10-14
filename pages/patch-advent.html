@@ -29,6 +29,7 @@
     --warm-2: #ff8a8a;
     --warm-3: #8fd3ff;
     --text: #e9eef8;
+    --hint: calc(clamp(11px, 1.8cqmin, 14px) * 1.6 + .8cqh); /* the hint line and its margin, taken from the rack */
   }
   * { box-sizing: border-box; margin: 0; }
   html, body { height: 100%; }
@@ -52,7 +53,7 @@
     position: absolute;
     inset: 0;
     display: grid;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto minmax(0, 1fr); /* the printer gets what is left, and no more */
     justify-items: center;
     align-content: start;
     gap: 2.2cqh;
@@ -62,17 +63,25 @@
   .title h1 { font-family: 'Lilita One', 'Lexend', sans-serif; font-weight: 400; font-size: clamp(26px, 6.8cqmin, 58px); line-height: 1; color: #fff3cf; letter-spacing: .01em; text-shadow: 0 3px 0 rgba(0,0,0,.25); }
   .title p { margin-top: .9cqh; font-size: clamp(12px, 2.2cqmin, 17px); color: #b8c4dc; }
   .lang-ko .title p { margin-top: 1.4cqh; }
+  /* The one-line hint under the subtitle: a door can be opened any time. It fades in once the
+     first doors have opened, and stays. */
+  .title .hint { margin-top: .5cqh; font-size: clamp(11px, 1.8cqmin, 14px); color: #8e9cc0; opacity: 0; transition: opacity .6s; }
+  .lang-ko .title .hint { margin-top: .7cqh; }
+  .title .hint.on { opacity: 1; }
 
   /* ---- The rack ---- */
   .rack {
     position: relative;
     container-type: inline-size;
-    width: min(88cqw, 700px, calc((100cqh - 230px) * 1.62));
+    width: min(88cqw, 700px, calc((100cqh - 230px - var(--hint)) * 1.62));
     padding: 6cqi 7cqi 5cqi;
     border-radius: 3cqi;
     background: linear-gradient(var(--rack-edge), var(--rack));
     box-shadow: inset 0 0 0 .6cqi rgba(255,255,255,.05), 0 2.4cqi 6cqi rgba(0,0,0,.45);
   }
+  /* A 4 × 6 rack is about as tall as it is wide; keep it short enough for the printer and the
+     closing band below it on tall stages (the home stage in a 1000 × 800 window is 648 × 732). */
+  .rack.tall { width: min(88cqw, 700px, calc((100cqh - 104px - var(--hint)) * .69)); }
   .ear { position: absolute; top: 4cqi; bottom: 4cqi; width: 3.6cqi; display: flex; flex-direction: column; justify-content: space-between; }
   .ear.l { left: 1.6cqi; } .ear.r { right: 1.6cqi; }
   .ear i { width: 2.2cqi; height: 2.2cqi; border-radius: 50%; background: #11151d; box-shadow: inset 0 .4cqi 0 rgba(255,255,255,.15); }
@@ -110,7 +119,7 @@
     cursor: pointer;
     backface-visibility: hidden;
   }
-  .door b { font-family: 'Lexend', sans-serif; font-size: 4.2cqi; font-weight: 700; line-height: 1; text-align: left; }
+  .door b { font-family: 'Lexend', sans-serif; font-size: max(11px, 4.2cqi); font-weight: 700; line-height: 1; text-align: left; }
   .door .led { width: 1.5cqi; height: 1.5cqi; border-radius: 50%; background: var(--amber); box-shadow: 0 0 1.2cqi var(--amber); animation: blink 1.3s steps(2, end) infinite; animation-delay: var(--d); }
   @keyframes blink { 50% { opacity: .25; } }
   .waiting .snow i, .waiting .lights i, .waiting .door .led, .waiting .restart .now { animation-play-state: paused; }
@@ -126,10 +135,13 @@
   @keyframes nag { 50% { opacity: .3; } }
 
   .rack.dark .bay { filter: brightness(.45); transition: filter .4s; }
+  /* The printer goes quiet during the restart too; its old slips are cleared after it anyway, and
+     on short stages the progress line under the ring would sit on them. */
+  .printer.dark .receipt { opacity: 0; transition: opacity .3s; }
   .rack.dark .door .led { animation: none; opacity: .15; }
 
   /* ---- Receipt printer ---- */
-  .printer { position: relative; container-type: inline-size; width: min(88cqw, 640px); display: grid; justify-items: center; align-content: start; }
+  .printer { position: relative; container-type: inline-size; width: min(88cqw, 640px); min-height: 0; display: grid; justify-items: center; align-content: start; }
   .slot { width: 72%; height: clamp(10px, 1.6cqh, 16px); border-radius: 999px; background: #0a0d15; box-shadow: 0 1px 0 rgba(255,255,255,.1); }
   .receipt {
     width: 64%;
@@ -172,7 +184,7 @@
   .restart.on { opacity: 1; pointer-events: auto; }
   .restart h2 { font-family: 'Lilita One', 'Lexend', sans-serif; font-weight: 400; font-size: 9cqi; line-height: 1.05; }
   .restart h2 > font-kku { color: var(--ink); }
-  .restart p { margin-top: 2cqi; font-size: 4.2cqi; color: #5a6274; }
+  .restart p { margin-top: 2cqi; font-size: max(11px, 4.2cqi); color: #5a6274; }
   .restart .now {
     display: grid;
     place-items: center;
@@ -190,9 +202,18 @@
     animation: breathe 2.2s ease-in-out infinite;
   }
   @keyframes breathe { 50% { box-shadow: 0 1.4cqi 0 #157a56, 0 0 0 3.4cqi rgba(56, 217, 150, .1); } }
-  .restart .later { border: 0; background: none; color: #6a7286; font-size: 3.8cqi; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
-  .restart .total { margin-top: 1.4cqi; font-size: 3.3cqi; color: #9a7b3c; }
+  .restart .later { border: 0; background: none; color: #6a7286; font-size: max(11.5px, 3.8cqi); text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
+  /* The snooze total is one of the jokes: never below 11 px, in a darker tan than before (#9a7b3c). */
+  .restart .total { margin-top: 1.4cqi; font-size: max(11px, 3.3cqi); color: #7a5f2a; }
   .restart .total:empty { display: none; }
+  /* Five snoozes in, the policy takes over: a final countdown that can't be snoozed. */
+  .restart.forced .why { color: var(--ink); font-weight: 600; }
+  .restart .later:disabled { opacity: .32; text-decoration-style: dotted; cursor: not-allowed; }
+  .restart .deadline { display: none; align-items: center; gap: 2.6cqi; margin-top: 3.4cqi; }
+  .restart.forced .deadline { display: flex; }
+  .deadline .track { flex: 1; height: 2cqi; border-radius: 99px; background: #f3dcd8; overflow: hidden; }
+  .deadline .track i { display: block; width: 100%; height: 100%; border-radius: inherit; background: #e0453f; }
+  .deadline b { font-family: 'Red Hat Mono', monospace; font-size: max(11px, 4.2cqi); font-weight: 700; color: #c2302b; font-variant-numeric: tabular-nums; }
 
   .done {
     position: absolute;
@@ -208,7 +229,12 @@
     translate: -50% 0;
     opacity: 0;
   }
-  .done > font-kku { color: var(--ink); }
+  .done-line > font-kku { color: var(--ink); }
+  /* Opened on its own on a narrow screen, the band takes two lines and keeps clear of the corner nav. */
+  @media (max-width: 450px) {
+    html:not(.embedded) .done { white-space: normal; text-align: center; line-height: 1.3; padding: .55em 1.3em; }
+    html:not(.embedded) .done-line { display: block; white-space: nowrap; }
+  }
   .ring { position: absolute; left: 50%; top: 50%; width: clamp(60px, 14cqmin, 110px); translate: -50% -50%; opacity: 0; pointer-events: none; }
   .ring circle { fill: none; stroke-width: 6; }
   .progress { position: absolute; left: 50%; top: calc(50% + clamp(60px, 14cqmin, 110px) / 2 + 1.6cqmin); translate: -50% 0; text-align: center; white-space: nowrap; color: var(--text); font-size: clamp(12px, 2.2cqmin, 17px); opacity: 0; pointer-events: none; }
@@ -216,6 +242,18 @@
   .progress span { display: block; margin-top: .3em; font-size: .85em; color: #b8c4dc; }
 
   .title h1 > font-kku { color: #fff3cf; }
+
+  /* Short stages (the home page's small phone stages, about 358 × 396 and 328 × 408): the rack
+     takes the room the receipt does not need. The receipt keeps only the lines that fit (the
+     newest, bold one always), so the reserve under the rack can be smaller: 150 px instead of
+     230 for the 6 × 4 rack (doors about 41 × 28 instead of 28 × 20), 80 instead of 104 for the
+     4 × 6 one. Only the home stage gets this small, so the kit's corner nav is not in the way. */
+  @container (max-height: 460px) {
+    .scene { gap: 1.4cqh; padding-top: 2.2cqh; padding-bottom: 2cqh; }
+    .rack { width: min(88cqw, 700px, calc((100cqh - 150px - var(--hint)) * 1.62)); }
+    .rack.tall { width: min(88cqw, 700px, calc((100cqh - 80px - var(--hint)) * .69)); }
+    .receipt { width: 80%; } /* wider paper, fewer wrapped lines: more slips fit, and #25 is one line */
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .snow i, .lights i, .door .led, .restart .now, .bay.again .inside svg { animation: none; }
@@ -235,6 +273,10 @@
       <span data-lang="en">One door a day. One fix behind each.</span>
       <span data-lang="ko">하루에 문 하나, 문마다 패치 하나.</span>
     </p>
+    <p class="hint" id="door-hint">
+      <span data-lang="en">Tap a door to open it. Save 24 for last.</span>
+      <span data-lang="ko">문을 누르면 열려요. 24번은 아껴 두세요.</span>
+    </p>
   </header>
 
   <div class="rack">
@@ -243,7 +285,7 @@
     </div>
     <div class="ear l"><i></i><i></i><i></i></div>
     <div class="ear r"><i></i><i></i><i></i></div>
-    <div class="bays"></div>
+    <div class="bays" role="group" aria-describedby="door-hint"></div>
   </div>
 
   <div class="printer">
@@ -255,6 +297,7 @@
 <section class="restart" role="dialog" aria-modal="false">
   <h2></h2>
   <p class="why"></p>
+  <div class="deadline"><span class="track"><i></i></span><b></b></div>
   <button class="now" type="button"></button>
   <button class="later" type="button"></button>
   <p class="total"></p>
@@ -326,10 +369,11 @@
       later: 'Remind me in 10 minutes',
       snoozed: ['It has been 10 minutes.', 'It has been 10 more minutes.'],
       total: (t) => 'Snoozed so far: ' + t,
+      forced: 'Your organization will restart this device in 5 minutes.',
       units: { d: 'd', h: 'h', m: 'min' },
       working: 'Working on updates',
       unplug: "Don't unplug the rack.",
-      done: 'All 24 patches applied. Uptime: 0 days.',
+      done: ['All 24 patches applied.', 'Uptime: 0 days.'],
     },
     ko: {
       pool: [
@@ -376,10 +420,11 @@
       later: '10분 뒤에 다시 알림',
       snoozed: ['10분 지났습니다.', '또 10분 지났습니다.'],
       total: (t) => '지금까지 미룬 시간: ' + t,
+      forced: '관리자 정책에 따라 5분 뒤 재시작됩니다.',
       units: { d: '일', h: '시간', m: '분' },
       working: '업데이트 작업 중',
       unplug: '랙 전원을 뽑지 마세요.',
-      done: '패치 24개 적용 완료. 가동 시간 0일.',
+      done: ['패치 24개 적용 완료.', '가동 시간 0일.'],
     },
   });
 
@@ -431,20 +476,33 @@
     return bay;
   });
   // Tall screens get a 4 × 6 rack.
-  const fit = () => { bays.style.gridTemplateColumns = innerWidth < innerHeight * .9 ? 'repeat(4, 1fr)' : 'repeat(6, 1fr)'; };
+  const fit = () => {
+    const tall = innerWidth < innerHeight * .9;
+    bays.style.gridTemplateColumns = tall ? 'repeat(4, 1fr)' : 'repeat(6, 1fr)';
+    rack.classList.toggle('tall', tall);
+  };
   fit();
   addEventListener('resize', fit);
 
   /* ---- Receipt ---- */
   const printed = [];
+  const printer = $('.printer');
+  // The last three slips, newest (bold) at the bottom. Where the printer's room ends above that
+  // (short stages, a 360 x 520 phone with the 4 x 6 rack), the oldest lines give way, so the
+  // newest one is always on screen. Layout boxes only: the print animation moves the paper.
+  function renderReceipt() {
+    const last = printed.slice(-3);
+    receipt.innerHTML = last.map((n) => `<p class="row"><span class="no">#${String(n + 1).padStart(2, '0')}</span><span></span></p>`).join('');
+    receipt.classList.toggle('again', last[last.length - 1] === 24);
+    receipt.querySelectorAll('.row').forEach((row, k) => { row.lastChild.textContent = notes[last[k]]; });
+    while (receipt.children.length > 1 && receipt.offsetTop + receipt.offsetHeight > printer.clientHeight + 1) receipt.firstElementChild.remove();
+  }
   function print(i, quick) {
     printed.push(i);
-    const rows = printed.slice(-3).map((n) => `<p class="row"><span class="no">#${String(n + 1).padStart(2, '0')}</span><span></span></p>`).join('');
-    receipt.innerHTML = rows;
-    receipt.classList.toggle('again', i === 24);
-    receipt.querySelectorAll('.row').forEach((row, k) => { row.lastChild.textContent = notes[printed.slice(-3)[k]]; });
+    renderReceipt();
     if (!TTY.reduce && !quick) receipt.animate([{ transform: 'translateY(-14%)', clipPath: 'inset(0 0 40% 0)' }, { transform: 'none', clipPath: 'inset(0)' }], { duration: 380, easing: 'steps(6, end)' });
   }
+  addEventListener('resize', () => { if (receipt.children.length) renderReceipt(); });
   function open(i, quick) {
     const bay = all[i];
     if (bay.classList.contains('open')) return false;
@@ -480,7 +538,12 @@
         restart.querySelector('h2').textContent = title;
       }
     }
-    restart.querySelector('.why').textContent = T.restartWhy;
+    // After the fifth snooze the policy decides: no more snoozing, five minutes on the clock.
+    const forced = snoozes >= FORCE_AFTER;
+    restart.classList.toggle('forced', forced);
+    laterBtn.disabled = forced;
+    if (forced) startDeadline();
+    restart.querySelector('.why').textContent = forced ? T.forced : T.restartWhy;
     restart.querySelector('.total').textContent = snoozes ? T.total(snoozedFor()) : '';
     nowBtn.textContent = T.now;
     laterBtn.textContent = T.later;
@@ -492,13 +555,41 @@
     if (!TTY.reduce) await restart.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(30%) scale(.9)' }], { duration: 260, easing: 'ease-in' }).finished;
     restart.classList.remove('on');
   }
+  // A real five minutes: wait it out and the rack restarts on its own.
+  const FORCE_AFTER = 5;
+  const FORCE_MS = 5 * 60 * 1000;
+  const deadlineBar = $('.deadline .track i');
+  const deadlineLeft = $('.deadline b');
+  let deadlineAt = 0;
+  let deadlineTimer = null;
+  function showLeft() {
+    const left = Math.max(0, deadlineAt - Date.now());
+    const sec = Math.ceil(left / 1000);
+    deadlineLeft.textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+    deadlineBar.style.width = (left / FORCE_MS * 100).toFixed(2) + '%';
+    if (!left) { stopDeadline(); run++; doRestart(); }
+  }
+  function startDeadline() {
+    if (deadlineAt) return;
+    deadlineAt = Date.now() + FORCE_MS;
+    showLeft();
+    deadlineTimer = setInterval(showLeft, 250);
+  }
+  function stopDeadline() {
+    clearInterval(deadlineTimer);
+    deadlineAt = 0;
+    restart.classList.remove('forced');
+    laterBtn.disabled = false;
+  }
   let restarting = false;
   async function doRestart() {
     if (restarting) return;
     restarting = true;
+    stopDeadline();
     restart.classList.remove('on');
     all.forEach((b, i) => { if (!b.classList.contains('open')) { b.classList.add('open'); if (i < 23) printed.push(i); } });
     rack.classList.add('dark');
+    printer.classList.add('dark');
     ring.style.opacity = 1;
     const arc = ring.querySelector('.arc');
     if (!TTY.reduce) {
@@ -516,15 +607,23 @@
     rack.classList.remove('dark');
     for (const b of all) { b.classList.add('green'); if (!TTY.reduce) await wait(35); }
     receipt.innerHTML = '';
-    if (ko) {
-      const el = document.createElement('font-kku');
-      el.setAttribute('font', 'dunggeun');
-      el.setAttribute('size', 'clamp(13px, 2.6cqmin, 21px)');
-      el.textContent = T.done;
-      done.replaceChildren(el);
-    } else {
-      done.textContent = T.done;
-    }
+    printer.classList.remove('dark');
+    // Two sentences, each in its own span: on narrow screens opened on their own they go on two
+    // lines, so the band stays clear of the kit's "?" and ":)" in the corner.
+    done.replaceChildren(...T.done.map((text, k) => {
+      const line = document.createElement('span');
+      line.className = 'done-line';
+      if (ko) {
+        const el = document.createElement('font-kku');
+        el.setAttribute('font', 'dunggeun');
+        el.setAttribute('size', 'clamp(13px, 2.6cqmin, 21px)');
+        el.textContent = text;
+        line.append(el);
+      } else {
+        line.textContent = text;
+      }
+      return k ? [document.createTextNode(' '), line] : [line];
+    }).flat());
     done.style.opacity = 1;
     if (!TTY.reduce) done.animate([{ opacity: 0, transform: 'translateY(30%)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.1)' });
     // And then, on a fresh slip: one more.
@@ -540,12 +639,14 @@
   function resetAll() {
     restarting = false;
     snoozes = 0;
+    stopDeadline();
     all.forEach((b) => b.classList.remove('open', 'green', 'again'));
     printed.length = 0;
     receipt.innerHTML = '';
     restart.classList.remove('on');
     done.style.opacity = 0;
     rack.classList.remove('dark');
+    printer.classList.remove('dark');
     ring.style.opacity = 0;
   }
   async function play() {
@@ -594,12 +695,19 @@
   nowBtn.addEventListener('click', (e) => { if (!e.isTrusted) return; run++; doRestart(); });
 
   /* ---- Start ---- */
+  const hint = $('.title .hint');
   if (TTY.reduce) {
+    hint.classList.add('on');
     for (let i = 0; i < 24; i++) all[i].classList.add('open');
     printed.push(21, 22, 23);
     doRestart();
   }
-  TTY.onShow(() => { document.documentElement.classList.remove('waiting'); if (!TTY.reduce) play(); });
+  TTY.onShow(() => {
+    document.documentElement.classList.remove('waiting');
+    if (TTY.reduce) return;
+    play();
+    setTimeout(() => hint.classList.add('on'), 2500); // after the first doors have shown how they open
+  });
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
 })();

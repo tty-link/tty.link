@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- Opened on its own, the tty.link nav sits top right, in the sky over the survey flags: the
+     bottom corners belong to the 2011 layer (the long spine reaches the right edge on a phone). -->
+<html lang="en" data-tty-nav="top">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -33,7 +35,8 @@
   body { overflow: hidden; background: var(--sky); color: var(--ink); font-family: 'Spectral', Georgia, serif; }
   .lang-ko body { font-family: 'Gowun Batang', serif; word-break: keep-all; }
 
-  .site { container-type: size; position: relative; width: 100vw; height: 100vh; height: 100svh; }
+  /* clip: the stamp lands from 2.2× and the brush sweeps to the edge; neither may widen a phone's layout */
+  .site { container-type: size; position: relative; width: 100vw; height: 100vh; height: 100svh; overflow: clip; }
 
   /* ---- above ground ---- */
   .sky { position: absolute; inset: 0 0 auto; height: 21%; padding: clamp(14px, 3.4cqmin, 34px) clamp(16px, 4cqw, 40px) 0; }
@@ -41,11 +44,15 @@
   .sky h1 > font-kku { color: var(--ink); }
   .sky .sub { margin-top: .5em; font-size: clamp(13px, 2cqmin, 17px); font-style: italic; color: var(--soft); }
   .lang-ko .sky .sub { font-style: normal; }
+  .sky .sub .nb { white-space: nowrap; } /* when it wraps, the hint stays one line */
   .flags { position: absolute; right: 5cqw; bottom: 0; width: 26cqw; height: 70%; }
   .flags svg { width: 100%; height: 100%; overflow: visible; }
 
   /* ---- the ground ---- */
-  .ground { position: absolute; inset: 21% 0 0; }
+  /* Brushing with the button held must not select the layer names, and a finger dragged
+     across the ground brushes instead of panning (with touch-action auto the browser took the
+     drag as a pan and cancelled the pointer after two moves, so a swipe cleared one spot). */
+  .ground { position: absolute; inset: 21% 0 0; -webkit-user-select: none; user-select: none; touch-action: none; }
   .ground > svg.strata { position: absolute; inset: 0; width: 100%; height: 100%; }
   .era {
     position: absolute;
@@ -78,6 +85,31 @@
   .bones .stone { padding: .4em .6em; border-radius: 999px; }
   .spine .stone { padding: .5em 1em; border-radius: 999px; background: repeating-linear-gradient(90deg, #efe3cc 0 14px, #d9c8aa 14px 17px); }
   .trilobite .stone { border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%; background: repeating-linear-gradient(0deg, #e2d2b5 0 7px, #cdb894 7px 9px); }
+  /* The first find is not quite a fossil: when the dust comes off it grows legs and feelers,
+     scuttles, startles the brush, then tucks them in and plays dead. Now and then a leg twitches. */
+  .bug { position: absolute; inset: 0; pointer-events: none; font-size: clamp(10px, 1.9cqmin, 16px); }
+  /* legs along both long edges, like a trilobite (or a millipede) seen from above */
+  .bug::before, .bug::after {
+    content: '';
+    position: absolute;
+    left: 14%;
+    right: 12%;
+    height: .75em;
+    background: repeating-linear-gradient(to right, #5a4632 0 .16em, transparent .16em .72em);
+    scale: 1 0;
+    transition: scale .16s ease-out;
+  }
+  .bug::before { bottom: calc(100% - .2em); transform-origin: 50% 100%; }
+  .bug::after { top: calc(100% - .2em); transform-origin: 50% 0; }
+  /* two feelers off the front (the left end) */
+  .bug i { position: absolute; top: -.85em; right: calc(100% - .55em); width: 1em; height: 1em; border: 0 solid #5a4632; border-width: .15em .15em 0 0; border-radius: 0 100% 0 0; transform-origin: 100% 100%; scale: 0; transition: scale .16s ease-out; }
+  .bug i + i { top: auto; bottom: -.85em; border-width: 0 .15em .15em 0; border-radius: 0 0 100% 0; transform-origin: 100% 0; }
+  .alive .bug::before, .alive .bug::after { scale: 1 1; }
+  .alive .bug i { scale: 1; }
+  .scuttle .bug::before, .scuttle .bug::after { animation: scuttle .1s steps(2, jump-none) infinite alternate; }
+  .scuttle .bug i { animation: feel .16s ease-in-out infinite alternate; }
+  @keyframes scuttle { from { transform: skewX(-26deg); } to { transform: skewX(26deg); } }
+  @keyframes feel { from { rotate: -12deg; } to { rotate: 10deg; } }
 
   /* Dust sits on a canvas over the ground and is brushed away. */
   .dust { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
@@ -102,10 +134,11 @@
     pointer-events: none;
   }
 
-  /* Museum labels. */
+  /* Museum labels. They lie above the brush (z 5): the label being read is never covered by
+     the brush working on the next find, which slides under it instead. */
   .tag {
     position: absolute;
-    z-index: 4;
+    z-index: 6;
     width: clamp(170px, 30cqmin, 270px);
     padding: .7em .85em .75em;
     border: 1.5px solid var(--ink);
@@ -132,6 +165,12 @@
   .stamp .field { display: block; max-width: 15em; padding: .4em .6em; background: #fff6d6; color: #3b3329; font-size: clamp(13px, 2cqmin, 17px); line-height: 1.3; rotate: 3deg; box-shadow: 0 3px 0 rgba(0, 0, 0, .12); }
   .stamp .field > font-kku { color: #3b3329; }
 
+  /* On a mid-width stage (the home's 648×732 portrait stage) the English seal folds into two lines,
+     so seal and note stay right of the "2023 AI-generated topsoil" chip. */
+  @media (max-width: 800px) {
+    .lang-en .stamp .seal { white-space: normal; max-width: 6.6em; line-height: 1.05; text-align: center; }
+  }
+
   /* On narrow stages the label shows in one card at the bottom instead of next to the fossil. */
   .card { display: none; }
   @media (max-width: 560px) {
@@ -139,7 +178,7 @@
     .card {
       display: block;
       position: absolute;
-      z-index: 4;
+      z-index: 6;
       left: 64px;
       right: 10px;
       top: 4px;
@@ -162,6 +201,9 @@
     .lang-en .stamp .seal { white-space: normal; max-width: 6.6em; }
     .stamp .field { min-width: 0; max-width: 13em; font-size: 12px; text-align: left; }
     .flags { width: 34cqw; }
+    /* The hint line ("Please brush gently.") wraps short of the flags, which start at 61cqw;
+       on a short phone stage (358×396) the flags reach up beside it. */
+    .sky .sub { max-width: calc(61cqw - 22px); line-height: 1.25; }
   }
 </style>
 </head>
@@ -170,8 +212,8 @@
   <header class="sky">
     <h1 data-lang="en">Code Archaeology</h1>
     <h1 data-lang="ko"><font-kku font="sebul" size="5.4cqmin">코드 발굴 현장</font-kku></h1>
-    <p class="sub" data-lang="en">Excavation site: main branch. Please brush gently.</p>
-    <p class="sub" data-lang="ko">발굴지: main 브랜치. 살살 털어 주세요.</p>
+    <p class="sub" data-lang="en">Excavation site: main branch. <span class="nb">Please brush gently.</span></p>
+    <p class="sub" data-lang="ko">발굴지: main 브랜치. <span class="nb">살살 털어 주세요.</span></p>
     <div class="flags" aria-hidden="true">
       <svg viewBox="0 0 260 120" preserveAspectRatio="xMidYMax meet">
         <path d="M40 120 V30" stroke="#5a4632" stroke-width="4" stroke-linecap="round"/>
@@ -330,6 +372,9 @@
     const label = find[TTY.lang];
     return { spec: label.spec, name: label.name, note: label.note, blame: `git blame: ${label.blame}` };
   });
+  // The trilobite slot holds a live one: legs on both sides and two feelers, tucked in until it is dug up.
+  const bug = fossils[0];
+  bug.append(Object.assign(document.createElement('span'), { className: 'bug', innerHTML: '<i></i><i></i>' }));
 
   // Place fossils from data-at (data-at-narrow on phone-sized stages) and build their tags.
   const narrow = () => innerWidth <= 560;
@@ -355,6 +400,7 @@
     pin.textContent = i + 1;
     f.append(pin);
     f._tag = tag;
+    f._tagRight = x <= 55; // the label opens on this fossil's right
     f._pin = pin;
     f._done = false;
   });
@@ -452,25 +498,71 @@
     if (!TTY.reduce) tag.animate([{ opacity: 0, transform: 'rotate(-4deg) scale(.9)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2, .9, .3, 1.2)' });
     card.replaceChildren(...[...tag.children].map((c) => c.cloneNode(true)));
     if (!TTY.reduce) f.animate([{ transform: 'none' }, { transform: 'translateY(-4px) scale(1.04)' }, { transform: 'none' }], { duration: 500 });
+    if (f === bug) wakeUp();
     if (found === fossils.length) setTimeout(finish, TTY.reduce ? 0 : 2200);
+  }
+  // The 2014 find is alive. It scuttles left and right, the brush jumps back, and then it
+  // freezes and tucks its legs in as if nothing happened.
+  function wakeUp() {
+    if (TTY.reduce) { bug.classList.add('alive'); return; }
+    setTimeout(() => {
+      bug.classList.add('alive', 'scuttle');
+      const step = Math.max(6, bug.offsetHeight * .45);
+      bug.animate([
+        { transform: 'none' },
+        { transform: `translateX(${-step}px)`, offset: .25 },
+        { transform: `translateX(${step * .8}px)`, offset: .55 },
+        { transform: `translateX(${-step * .4}px)`, offset: .8 },
+        { transform: 'none' },
+      ], { duration: 900, easing: 'ease-in-out' });
+      // (on the transform list, so the turn is about the brush where it is, not where it started)
+      // It leaps away from the side its label opens on, so it never lands on the text.
+      const at = brush.style.transform || 'none', bw = brush.getBoundingClientRect().width; // (an <svg> has no offsetWidth)
+      const away = bug._tagRight ? -1 : 1;
+      brush.animate([
+        { transform: at },
+        { transform: `${at} translate(${away * bw * .45}px, ${-bw * .7}px) rotate(-28deg)`, offset: .18 },
+        { transform: `${at} translate(${away * bw * .4}px, ${-bw * .62}px) rotate(-22deg)`, offset: .7 },
+        { transform: at },
+      ], { duration: 1050, easing: 'ease-out' });
+      setTimeout(() => bug.classList.remove('scuttle'), 950);
+      setTimeout(() => bug.classList.remove('alive'), 1150);
+      twitchLater();
+    }, 180);
+  }
+  // Every so often, long after it was catalogued, one leg moves.
+  let twitching = 0;
+  function twitchLater() {
+    clearTimeout(twitching);
+    twitching = setTimeout(() => {
+      bug.classList.add('alive', 'scuttle');
+      setTimeout(() => bug.classList.remove('scuttle'), 260);
+      setTimeout(() => { bug.classList.remove('alive'); twitchLater(); }, 420);
+    }, 6500 + Math.random() * 3000);
   }
   function finish() {
     if (active) pinUp(active);
     active = null;
     card.style.opacity = 0;
     stamp.style.opacity = 1;
+    // The brush is put down so it does not lie over the last find; a visitor's hand brings it back.
+    brush.style.opacity = 0;
     if (TTY.reduce) return;
     stamp.animate([{ opacity: 0, transform: 'scale(2.2)' }, { opacity: 1, transform: 'scale(.95)', offset: .7 }, { opacity: 1, transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.5, 0, .9, .4)' });
   }
 
   /* ---- the brush ---- */
   let auto = null;
-  let lastHand = 0;
+  // When a hand last held the brush. Not 0: rAF time starts at the page's own start, so 0 kept
+  // the brush waiting until 2.5 s after load, and a page opened on its own revealed its first
+  // find at about 4.2 s instead of 1.7 s (on the home stage the page is loaded early, so it hid).
+  let lastHand = -Infinity;
   const moveBrush = (x, y) => { brush.style.transform = `translate(${x}px, ${y}px)`; };
   function handSweep(x, y, byHand = true) {
     moveBrush(x, y);
     sweep(x, y);
     if (!byHand) return;
+    if (!TTY.reduce) brush.style.opacity = '';
     const f = fossils.find((g) => !g._done && (() => { const r = rectOf(g); return x > r.x - 20 && x < r.x + r.w + 20 && y > r.y - 20 && y < r.y + r.h + 20; })());
     if (f && dustLeft(f) < .3) reveal(f);
   }
@@ -504,7 +596,10 @@
       const r = rectOf(target);
       const p = ((now - t0) % 1200) / 1200;
       const strokes = (now - t0) / 1200;
-      const x = r.x + r.w * (.5 + .5 * Math.sin(p * Math.PI * 2));
+      // The stroke is phased so that at the reveal (1.4 strokes) the brush sits at the end of the
+      // fossil away from its label, and rests there, clear of the text.
+      const phase = target._tagRight ? .35 : -.15;
+      const x = r.x + r.w * (.5 + .5 * Math.sin((p + phase) * Math.PI * 2));
       const y = r.cy + r.h * .55 * Math.cos(p * Math.PI * 4);
       handSweep(x, y, false);
       if (strokes > 1.4) { reveal(target); t0 = 0; restUntil = now + 1300; }

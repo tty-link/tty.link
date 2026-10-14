@@ -260,6 +260,7 @@
   .lang-ko .stk { min-width: 0; padding: .36em .5em .04em; border-radius: .55em; }
   .stk { --kku-stk: max(14px, 1.32em); }
   .stk > font-kku { color: var(--tone-ink); }
+  .stk-plain { display: none; }
   .stk [part~="jamo"] { color: var(--tone-ink); }
   .row:nth-child(odd) .stk { rotate: 2deg; }
   .tone-ok { --tone: var(--ok); --tone-ink: #0f4a28; }
@@ -417,13 +418,53 @@
     .hand { grid-column: 1 / -1; grid-row: 2; min-height: 0; font-size: 1.1em; line-height: 1.25; }
     .sig { grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: .3em; min-width: 0; padding: 0; }
     .sig svg { width: 3.6em; height: 1.1em; }
-    .sig .who { width: auto; padding: 0; border: 0; font-size: .95em; }
+    .sig .who { width: auto; padding: 0; border: 0; font-size: max(11px, .95em); }
     .seal { position: static; width: 1.6em; height: 1.6em; }
+  }
+
+  /* Korean findings on a narrow report: font-kku sticker ink under 14 px reads as thin outlines,
+     so a small report (phones) gets plain bold badges like the English ones, and a roomier one
+     (the 648×732 home stage) gets bigger sticker ink. */
+  @container report (max-width: 479.98px) {
+    .lang-ko .stk > font-kku { display: none; }
+    .lang-ko .stk .stk-plain { display: inline; }
+    .lang-ko .stk { padding: .12em .5em .14em; border-radius: 999px; color: var(--tone-text, #fff); font-family: 'IBM Plex Sans KR', sans-serif; font-weight: 700; letter-spacing: 0; }
+  }
+  /* (only in the phone/portrait layout, whose table has three columns: the wide layout keeps
+     its four, Reference included, and its own sticker size) */
+  @container page (max-width: 699px) or (max-aspect-ratio: 11/10) {
+    @container report (min-width: 480px) and (max-aspect-ratio: 6/5) {
+      .lang-ko .stk { --kku-stk: 17px; }
+      /* room for the small word before the sticker too: 보호자 상담, 생활 습관 개선 */
+      .lang-ko .results { --cols: minmax(0, 1.1fr) minmax(0, 1.3fr) 9em; }
+      .lang-ko .c-find .pre { display: inline; }
+      .lang-ko .c-find { justify-self: end; }
+    }
+  }
+  /* A short report: rows and the summary tighten a little first (360×520 opened on its own)... */
+  @container report (max-height: 440px) and (max-aspect-ratio: 6/5) {
+    .thead { padding-block: .12em; }
+    .row { padding-block: .1em; }
+    .summary { padding-block: .2em .3em; }
+    .hand { line-height: 1.16; }
+  }
+  /* ...and on the shortest (the 358×396 and 328×408 phone stages) all eight rows come first:
+     the X-ray and chart step out, and so do the patient line and the hospital's name over the
+     title. A row's note then opens beside the row, as on wide screens (placeNote). */
+  @container report (max-height: 400px) and (max-aspect-ratio: 6/5) {
+    .panels, .pbox, .hosp { display: none; }
+    .logo { grid-row: auto; width: 1.7em; height: 1.7em; }
   }
 
   /* tablets opened on their own get the kit's two full links too */
   @container page (min-width: 601px) and ((max-width: 699px) or (max-aspect-ratio: 11/10)) {
     html:not(.embedded) .layout { padding-bottom: 48px; }
+  }
+
+  /* Opened on its own on a phone, the kit's "?" and ":)" (about 84×50 px) sit in the bottom
+     right corner, over the end of the summary's lines: the handwriting stops short of them. */
+  @media (max-width: 600px) {
+    html:not(.embedded) .hand { padding-right: 60px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -715,11 +756,11 @@
       { test: 'Cold response', result: '31% at −5 °C → shut down', ref: '—', finding: 'Caution', tone: 'warn',
         note: "Lithium-ion's internal resistance rises in the cold and the voltage drops suddenly. Keep it in an inside pocket." },
       { test: 'Temperature while charging', result: '41 °C', aside: ' (gaming while charging)', ref: '35 °C or lower', finding: 'Caution', tone: 'warn',
-        note: 'Heat is the biggest cause of battery aging. Let it rest while it charges.' },
+        note: "Heat can shrink a battery's capacity for good. Let it rest while it charges." },
       { test: 'Swelling', result: 'none', ref: 'none', finding: 'Normal A', tone: 'ok',
         note: "If it swells, come in at once. Known online as a 'spicy pillow'. Do not press." },
       { test: 'Overnight charging', result: '100% every night', ref: 'wait at 80%', finding: 'Lifestyle', tone: 'warn',
-        note: 'With optimized charging on, it waits at 80% and finishes just before your alarm.' },
+        note: 'With optimized charging on, it waits at 80% and finishes just before you usually unplug.' },
       { test: "Owner's battery anxiety", result: 'uneasy at 20%', ref: '—', finding: 'Counseling', tone: 'bad',
         note: "20% is still a whole fifth. You're fine." },
     ],
@@ -733,13 +774,13 @@
       { test: '추위 반응', result: '영하 5도에서 31% → 꺼짐', ref: '—', finding: '주의', tone: 'warn',
         note: '리튬 이온은 추우면 내부 저항이 커져 전압이 뚝 떨어집니다. 안주머니에 넣어 주세요.' },
       { test: '충전 중 체온', result: '41°C', aside: ' (충전하며 게임)', ref: '35°C 이하', finding: '주의', tone: 'warn',
-        note: '열은 배터리 노화의 가장 큰 원인입니다. 충전 중에는 쉬게 해 주세요.' },
+        note: '열을 받으면 배터리 용량이 되돌릴 수 없게 줄 수 있습니다. 충전 중에는 쉬게 해 주세요.' },
       { test: '배 부풂', result: '없음', ref: '없음', finding: '정상A', tone: 'ok',
         note: "부풀었다면 즉시 내원. 영어권 별명 '매운 베개'. 누르지 마세요." },
       { test: '밤샘 충전 습관', result: '매일 100%', ref: '80%에서 대기', finding: '개선', pre: '생활 습관', tone: 'warn',
-        note: "'최적화된 충전'을 켜면 80%에서 기다렸다가 알람 전에 마저 채웁니다." },
+        note: "'최적화된 충전'을 켜면 80%에서 기다렸다가 평소 뽑는 시각 전에 마저 채웁니다." },
       { test: '주인 배터리 불안', result: '20%에서 초조함', ref: '—', finding: '상담', pre: '보호자', tone: 'bad',
-        note: '20%는 아직 다섯 번째 칸입니다. 괜찮아요.' },
+        note: '20%면 아직 5분의 1이나 남았습니다. 괜찮아요.' },
     ],
   });
   const L = TTY.t({
@@ -757,7 +798,7 @@
       doctor: '리튬 박사',
       doctorRole: '담당의',
       rest: '80%에서 잠깐 쉴게요. 7시 알람 전에 마저 채울게요.',
-      low: '괜찮아요, 아직 다섯 번째 칸이에요.',
+      low: '괜찮아요, 아직 5분의 1이나 남았어요.',
       ref: '참고치', finding: '판정',
       plugIn: '진찰대 위 휴대폰: 충전기 꽂기',
       plugOut: '진찰대 위 휴대폰: 충전기 뽑기',
@@ -816,7 +857,11 @@
       kku.setAttribute('font', 'sticker');
       kku.setAttribute('size', 'var(--kku-stk, 14px)');
       kku.textContent = r.finding;
-      stk.append(kku);
+      // where the sticker ink would come out small (a narrow report), a plain bold badge instead
+      const plain = document.createElement('span');
+      plain.className = 'stk-plain';
+      plain.textContent = r.finding;
+      stk.append(kku, plain);
     } else {
       stk.textContent = r.finding;
     }
@@ -1063,11 +1108,13 @@
     const test = $('.c-test', rows[noteFor].b).getBoundingClientRect();
     note.classList.remove('up');
     note.style.top = note.style.bottom = '';
-    if (wideMQ.matches) {
-      // beside the row: just under it, or just over it for the last rows
-      const left = test.left - pr.left + 10;
+    const pn = panels.getBoundingClientRect();
+    if (wideMQ.matches || !pn.height) {
+      // beside the row: just under it, or just over it for the last rows (also on a short phone
+      // report, where the X-ray and chart are not shown: then across the whole table)
+      const left = wideMQ.matches ? test.left - pr.left + 10 : rr.left - pr.left;
       note.style.left = left + 'px';
-      note.style.width = '';
+      note.style.width = wideMQ.matches ? '' : rr.width + 'px';
       const tip = Math.min(test.width / 2, 60);
       note.style.setProperty('--tip', tip + 'px');
       if (noteFor >= 5) {
@@ -1078,7 +1125,6 @@
       }
     } else {
       // phones: over the X-ray and chart, pointing up at the row's test name
-      const pn = panels.getBoundingClientRect();
       note.style.left = (pn.left - pr.left) + 'px';
       note.style.width = pn.width + 'px';
       note.style.top = (pn.top - pr.top + 2) + 'px';

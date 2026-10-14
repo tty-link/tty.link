@@ -1,0 +1,138 @@
+{
+  "id": "robot-captcha",
+  "title": {
+    "en": "Prove You Are a Robot",
+    "ko": "로봇임을 증명하세요"
+  },
+  "updated": "2026-10-14",
+  "ko": {
+    "line": "웹사이트가 \"로봇이 아님을 증명하세요\"라며 내는 캡차를 거꾸로 뒤집어, 기계에겐 쉽고 사람에겐 어려운 문제만 내는 '로봇 전용 출입문'을 만들었다.",
+    "points": [
+      "골판지 상자 로봇 탈을 쓴 커서가 91을 소수로 골랐다가 틀리자 탈이 벗겨져 떨어짐 → 로봇만 들어갈 수 있는 문에 사람이 로봇 분장을 하고 들어가려다 첫 문제에서 들통난다. 91은 7 × 13이다. 소수처럼 생겨서 사람은 '느낌'으로 고르고, 컴퓨터는 그냥 나눠 본다.",
+      "\"hello\"의 SHA-256 값이나 지금 유닉스 시간을 밀리초로 2초 안에 입력 → 사람은 64자 중 4자를 치는 동안 시간이 끝나고, 밀리초 시계는 1초에 1,000번 바뀐다. 로봇은 계산해서 붙여 넣으면 끝이다.",
+      "'로봇입니다' 체크박스를 눌렀더니 \"커서가 너무 사람처럼 움직였어요\" → 실제 체크박스 캡차도 누르기 전·누르는 동안·누른 뒤의 행동 전체를 보고 사람인지 가린다. 그 판정을 거꾸로 썼다.",
+      "로봇 팔이 5초 만에 다 풀고 \"어서 오세요, 친구.\" → 요즘은 기계가 캡차를 사람보다 잘 푼다. 구글은 2014년에 AI가 가장 어려운 일그러진 글자도 99.8% 정확도로 읽는다고 밝혔고, 2023년 연구에서는 여러 종류의 캡차에서 봇이 사람보다 빠르고 정확했다. 그러니 차라리 로봇 전용 문을 만든 셈이다."
+    ],
+    "terms": [
+      {
+        "term": "캡차(CAPTCHA)",
+        "plain": "사람인지 프로그램인지 가리려고 내는 짧은 시험. 컴퓨터가 사람을 시험한다고 해서 '역 튜링 테스트'라고도 부른다."
+      },
+      {
+        "term": "소수",
+        "plain": "1과 자기 자신으로만 나누어떨어지는, 1보다 큰 자연수. 1은 소수가 아니다."
+      },
+      {
+        "term": "SHA-256",
+        "plain": "어떤 글이든 64글자(0~9와 a~f로 쓰는 16진수)짜리 '지문'으로 바꾸는 계산. 같은 글이면 늘 같은 값이 나온다."
+      },
+      {
+        "term": "유닉스 시간",
+        "plain": "1970년 1월 1일 0시(UTC)부터 흐른 시간. 밀리초로 세면 지금은 13자리 숫자다."
+      }
+    ],
+    "links": [
+      {
+        "title": "CAPTCHA - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/CAPTCHA",
+        "note": "캡차가 무엇이고 왜 '역 튜링 테스트'라고도 부르는지",
+        "lang": "ko"
+      },
+      {
+        "title": "Are you a robot? Introducing “No CAPTCHA reCAPTCHA”",
+        "url": "https://security.googleblog.com/2014/12/are-you-robot-introducing-no-captcha.html",
+        "note": "체크박스 하나로 바뀐 캡차, 행동 전체를 보는 위험 분석, AI가 일그러진 글자를 99.8% 읽는다는 구글 발표",
+        "lang": "en"
+      },
+      {
+        "title": "New Findings on CAPTCHAs Attract Worldwide Attention",
+        "url": "https://ics.uci.edu/2023/09/14/new-findings-on-captchas-attract-worldwide-attention/",
+        "note": "1,400명이 캡차 14,000개를 푼 2023년 연구. 봇이 사람보다 빠르고 정확했다",
+        "lang": "en"
+      },
+      {
+        "title": "소수 (수론) - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/소수_(수론)",
+        "note": "소수의 정의와 1이 소수가 아닌 이유",
+        "lang": "ko"
+      },
+      {
+        "title": "유닉스 시간 - 위키백과",
+        "url": "https://ko.wikipedia.org/wiki/유닉스_시간",
+        "note": "1970년부터 세는 컴퓨터의 시계",
+        "lang": "ko"
+      }
+    ],
+    "deep": [
+      "해시 칸의 64자 → \"hello\"의 진짜 SHA-256 값(2cf24dba…938b9824)이다. 사람은 앞 네 글자 \"2cf2\"에서 시간이 끝난다.",
+      "동그라미 친 픽셀의 답 #4dabf7 → 그림을 그리는 공식에서 (37, 29) 칸이 실제로 그 색이다. 아무 색이나 고른 정답이 아니다.",
+      "픽셀 세기의 답 4,096 → 그림은 정말 가로세로 64칸짜리 그림을 크게 키운 것이라 64 × 64 = 4,096칸이 맞다.",
+      "숫자판의 함정 → 16칸 중 진짜 소수는 2, 7, 89, 97, 113, 127 여섯 개뿐이다. 나머지는 91(7×13), 51(3×17), 57(3×19), 87(3×29), 119(7×17), 133(7×19), 221(13×17)처럼 소수처럼 생긴 합성수와 9, 39, 그리고 소수가 아닌 1이다.",
+      "유닉스 시간 문제에서 사람이 치는 네 자리 → 그 순간 실제 시계의 앞 네 자리이고, 로봇은 그 순간의 13자리를 그대로 친다."
+    ]
+  },
+  "en": {
+    "line": "This page turns the usual \"prove you're not a robot\" check inside out: it is a gate for robots, with questions that are easy for machines and hopeless for people.",
+    "points": [
+      "A cursor in a cardboard-box robot costume picks 91 as a prime, and the wrong answer shakes the costume off → a human trying to sneak through a robots-only gate in disguise, caught on the first question. 91 is 7 × 13. It looks prime, so people pick it on feel; a computer just divides.",
+      "Type the SHA-256 of \"hello\", or the current Unix time in milliseconds, in 2 seconds → a person gets 4 characters in, and a millisecond clock changes 1,000 times a second. The robot computes it and pastes.",
+      "Ticking \"I'm a robot\" gets \"Your cursor moved like a human.\" → real checkbox CAPTCHAs judge you by everything you do before, during and after the click. The page runs that test backwards.",
+      "A robot arm clears all four checks in about 5 seconds and is welcomed as a friend → machines now beat people at CAPTCHAs. Google said in 2014 that AI could read even the hardest distorted text with 99.8% accuracy, and a 2023 study found bots faster and more accurate than humans on many kinds of CAPTCHA. So why not a door just for them?"
+    ],
+    "terms": [
+      {
+        "term": "CAPTCHA",
+        "plain": "a short test meant to tell humans from programs. Because a computer tests a human, it is sometimes called a reverse Turing test."
+      },
+      {
+        "term": "Prime number",
+        "plain": "a whole number above 1 that only 1 and itself divide. 1 is not prime."
+      },
+      {
+        "term": "SHA-256",
+        "plain": "a calculation that turns any text into a 64-character \"fingerprint\" written with 0–9 and a–f (hexadecimal). The same text always gives the same value."
+      },
+      {
+        "term": "Unix time",
+        "plain": "time counted from midnight UTC on 1 January 1970. In milliseconds it is a 13-digit number today."
+      }
+    ],
+    "links": [
+      {
+        "title": "CAPTCHA – Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/CAPTCHA",
+        "note": "what CAPTCHAs are and why they are called reverse Turing tests",
+        "lang": "en"
+      },
+      {
+        "title": "Are you a robot? Introducing “No CAPTCHA reCAPTCHA”",
+        "url": "https://security.googleblog.com/2014/12/are-you-robot-introducing-no-captcha.html",
+        "note": "Google's 2014 post on the one-click checkbox, risk analysis of the whole interaction, and AI reading distorted text at 99.8%"
+      },
+      {
+        "title": "New Findings on CAPTCHAs Attract Worldwide Attention",
+        "url": "https://ics.uci.edu/2023/09/14/new-findings-on-captchas-attract-worldwide-attention/",
+        "note": "a 2023 study in which 1,400 people solved 14,000 CAPTCHAs, and bots beat them on speed and accuracy"
+      },
+      {
+        "title": "Prime number – Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Prime_number",
+        "note": "what makes a number prime",
+        "lang": "en"
+      },
+      {
+        "title": "Unix time – Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Unix_time",
+        "note": "the computer clock that counts from 1970",
+        "lang": "en"
+      }
+    ],
+    "deep": [
+      "The 64 characters in the hash box → the real SHA-256 of \"hello\" (2cf24dba…938b9824). The human runs out of time after \"2cf2\".",
+      "The circled pixel's answer, #4dabf7 → the formula that draws the picture really puts that colour at (37, 29). It is not a made-up answer.",
+      "The pixel count, 4,096 → the picture really is a 64 × 64 grid blown up, so 4,096 is exact.",
+      "The traps on the grid → of the 16 numbers, only 2, 7, 89, 97, 113 and 127 are prime. The rest are prime-looking composites, 91 (7×13), 51 (3×17), 57 (3×19), 87 (3×29), 119 (7×17), 133 (7×19) and 221 (13×17), plus 9, 39, and 1, which is not prime.",
+      "The four digits the human types for Unix time → the first four digits of the real clock at that moment; the robot types all 13."
+    ]
+  }
+}

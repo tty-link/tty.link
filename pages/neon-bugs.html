@@ -95,8 +95,10 @@
     -webkit-text-stroke-color: var(--cyan);
   }
 
-  /* The broken tube: the x of "fixed", and in Korean the final ㄱ of 즉. */
-  .broken,
+  /* The broken tube: the x of "fixed", and in Korean the final ㄱ of 즉. The x starts its cycle
+     1.75 s in, so its long outage (37–46%) comes about 0.2 s after the switch-on sputter ends
+     (or after a knock wears off); the ㄱ starts with the lights and reaches it at about 2.4 s. */
+  .broken { animation: broken 5.2s steps(1, end) -1.75s infinite; }
   .kk [part="glyph"][data-source="즉"] [part~="jongseong"] { animation: broken 5.2s steps(1, end) infinite; }
   @keyframes broken {
     0% { opacity: 1; }
@@ -212,6 +214,12 @@
   .is-igniting .small-ko { --lag: 500ms; }
   .is-igniting .open { animation: ignite .9s steps(1, end) 1.2s backwards; }
   @keyframes ignite { 0% { opacity: .08; } 30% { opacity: .8; } 40% { opacity: .15; } 55% { opacity: 1; } 65% { opacity: .4; } 75% { opacity: 1; } }
+  /* The broken x does not catch with the others: it stays dark through most of the switch-on,
+     with a few weak tries, so "Bugs fi ed" is the first thing anyone sees. It catches at the end
+     and goes on flickering. Only while it is still broken (not knocked steady, not fixed). In
+     Korean the broken ㄱ keeps its own flicker from the start, which goes dark at about 2.4 s. */
+  .is-igniting:not(.regressed) .sign:not(.kicked) .tube .broken { animation: dud 2.6s steps(1, end) both; }
+  @keyframes dud { 0% { opacity: .08; } 22% { opacity: .55; } 25% { opacity: .08; } 47% { opacity: .35; } 49% { opacity: .08; } 66% { opacity: .7; } 70% { opacity: .08; } 90% { opacity: 1; } }
 
   @container (max-width: 520px) {
     .lower { grid-template-columns: auto 1fr; gap: 3.4cqi; }

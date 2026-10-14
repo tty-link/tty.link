@@ -131,7 +131,7 @@
   .seal-ko { display: grid; justify-items: center; line-height: 1; }
   .seal-ko > font-kku { color: var(--seal); }
   /* The dojang face carries its own red ink, so the Korean seal is the outlined kind. */
-  .lang-ko .seal { background: rgba(243, 238, 226, .4); border: .6cqi solid var(--seal); box-shadow: none; mix-blend-mode: multiply; }
+  .lang-ko .seal { bottom: 5cqi; padding: .4cqi 0; background: rgba(243, 238, 226, .4); border: .6cqi solid var(--seal); box-shadow: none; mix-blend-mode: multiply; }
   .seal:focus-visible { outline: .5cqi solid var(--seal); outline-offset: 1cqi; }
   .lead-seal {
     position: absolute;
@@ -169,10 +169,32 @@
     translate: 0 1cqi;
   }
   .foot.show { opacity: 1; translate: 0 0; }
-  /* Once written, tapping the scroll writes it again. */
+  /* The dojang seal stands taller than the English one (three stacked characters), so in
+     Korean it sits a little lower and the footnote a little higher. */
+  .lang-ko .foot { bottom: 27.5cqi; }
+  /* Once written, tapping the scroll writes the next verse. */
   .roll.done .sheet { cursor: pointer; }
+  .sheet:focus-visible { outline: .6cqi solid #e9d9a8; outline-offset: .6cqi; }
+
+  .hint {
+    position: fixed;
+    left: 50%;
+    bottom: max(6px, 1.6vh);
+    translate: -50% 0;
+    color: rgba(243, 238, 226, .74);
+    font: 400 clamp(12px, 1.8vmin, 15px)/1.3 'Gowun Batang', serif;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity .6s;
+    pointer-events: none;
+  }
+  .hint.on { opacity: 1; }
 
   html:not(.embedded) body { padding-bottom: 40px; }
+  /* ...so the scroll is sized against what is left, keeping its hanging cord inside the window. */
+  html:not(.embedded) .scroll { width: min(88vw, calc((100vh - 40px) * .648)); width: min(88vw, calc((100svh - 40px) * .648)); }
+  /* Standalone, the tty.link nav takes the bottom-right corner; the hint keeps to the left. */
+  html:not(.embedded) .hint { left: 14px; bottom: 18px; translate: none; }
 </style>
 </head>
 <body>
@@ -208,6 +230,10 @@
     <div class="rod bottom"></div>
   </div>
 </main>
+<p class="hint" id="verse-hint">
+  <span data-lang="en">Tap the scroll for the next verse.</span>
+  <span data-lang="ko">족자를 누르면 다음 수를 써요.</span>
+</p>
 
 <script>
 (() => {
@@ -284,7 +310,7 @@
 
   // A long English line gets a slightly smaller brush rather than running off the paper.
   // (The letters are laid out while hidden, so the width is known before the brush starts.)
-  function fit() {
+  function fitLines() {
     if (TTY.lang !== 'en') return;
     h1.style.removeProperty('--fit');
     const room = paper.clientWidth * .9;
@@ -338,7 +364,7 @@
   const ctx = canvas.getContext('2d');
   let petals = [];
   let raf = 0;
-  function fit() {
+  function sizeCanvas() {
     const dpr = Math.min(2, devicePixelRatio || 1);
     canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -356,7 +382,7 @@
     };
   }
   function petalsOn() {
-    fit();
+    sizeCanvas();
     petals = Array.from({ length: Math.round(Math.min(9, innerWidth / 110)) }, () => spawn(true));
     if (!raf) raf = requestAnimationFrame(tick);
   }
@@ -379,7 +405,7 @@
     });
     raf = requestAnimationFrame(tick);
   }
-  addEventListener('resize', fit);
+  addEventListener('resize', () => { sizeCanvas(); fitLines(); });
 
   /* ---- Seal and its footnote ---- */
   let footTimer;
@@ -393,12 +419,54 @@
   seal.addEventListener('click', (e) => { e.stopPropagation(); if (!TTY.reduce) showFoot(2600); });
 
   /* ---- The whole piece ---- */
+  const STAMP = [
+    { transform: 'scale(1.9) rotate(-8deg)', opacity: 0 },
+    { transform: 'scale(.95)', opacity: 1, offset: .7 },
+    { transform: 'scale(1)', opacity: 1 },
+  ];
+  const THUD = [{ transform: 'none' }, { transform: 'translateY(.4%)' }, { transform: 'none' }];
+  const hint = document.querySelector('.hint');
+  function finished() {
+    roll.classList.add('done');
+    sheet.tabIndex = 0;
+    sheet.setAttribute('aria-describedby', 'verse-hint');
+    hint.classList.add('on');
+  }
+
+  // The 3-second gag: the conclusion turns up first. The seal stamps itself on the blank paper
+  // as soon as it unrolls, then shakes its head and is flicked away while the first line of
+  // denial is written. It comes back for good once the third line admits it.
+  let run = 0;
+  async function hastySeal(mine) {
+    await wait(1000);
+    if (mine !== run) return;
+    seal.style.opacity = 1;
+    seal.animate(STAMP, { duration: 380, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+    roll.animate(THUD, { duration: 240, delay: 290 });
+    await wait(1150);
+    if (mine !== run) return;
+    // Set first so nothing flashes back when the flick ends.
+    seal.style.opacity = 0;
+    seal.animate([
+      { transform: 'none', opacity: 1 },
+      { transform: 'rotate(-10deg)', opacity: 1, offset: .12 },
+      { transform: 'rotate(8deg)', opacity: 1, offset: .24 },
+      { transform: 'rotate(-6deg)', opacity: 1, offset: .36 },
+      { transform: 'translateY(-5%) scale(1.08)', opacity: 1, offset: .46, easing: 'cubic-bezier(.5, 0, .8, .6)' },
+      { transform: 'translate(85%, -55%) rotate(26deg) scale(.95)', opacity: 1, offset: .8 },
+      { transform: 'translate(125%, -80%) rotate(44deg) scale(.85)', opacity: 0 },
+    ], { duration: 1000 });
+  }
+
   let playing = false;
   async function play() {
-    if (TTY.reduce) { full(); document.fonts.ready.then(fit); showFoot(0); roll.classList.add('done'); return; }
+    if (TTY.reduce) { full(); document.fonts.ready.then(fitLines); showFoot(0); finished(); return; }
     if (playing) return;
     playing = true;
+    const mine = ++run;
     roll.classList.remove('done');
+    // Taps wait until this verse is written, so the hint goes quiet until then (finished() brings it back).
+    hint.classList.remove('on');
     foot.classList.remove('show');
     [sheet, bottomRod, seal, leadSeal, sign].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
     seal.style.opacity = 0;
@@ -411,8 +479,9 @@
     const ease = 'cubic-bezier(.45, .05, .2, 1)';
     sheet.animate([{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 1300, easing: ease, fill: 'both' });
     bottomRod.animate([{ transform: `translateY(${-h}px)` }, { transform: 'none' }], { duration: 1300, easing: ease, fill: 'both' });
+    hastySeal(mine);
     await Promise.all([wait(1500), document.fonts.ready]);
-    fit();
+    fitLines();
     petalsOn();
     for (const line of lines) {
       for (const p of line._parts) await (p.kind === 'lat' ? brushLatin(p) : brushHangul(p));
@@ -421,38 +490,36 @@
     sign.style.opacity = 1;
     sign.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
     await wait(500);
-    // Two stamps: the small oval where the writing begins, then the seal.
-    const stamp = [
-      { transform: 'scale(1.9) rotate(-8deg)', opacity: 0 },
-      { transform: 'scale(.95)', opacity: 1, offset: .7 },
-      { transform: 'scale(1)', opacity: 1 },
-    ];
+    // Two stamps: the small oval where the writing begins, then the seal, back for good.
     leadSeal.style.opacity = .92;
-    leadSeal.animate(stamp, { duration: 320, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+    leadSeal.animate(STAMP, { duration: 320, easing: 'cubic-bezier(.5, 0, .9, .4)' });
     await wait(520);
+    seal.getAnimations().forEach((a) => a.cancel());
     seal.style.opacity = 1;
-    seal.animate([
-      { transform: 'scale(1.9) rotate(-8deg)', opacity: 0 },
-      { transform: 'scale(.95)', opacity: 1, offset: .7 },
-      { transform: 'scale(1)', opacity: 1 },
-    ], { duration: 380, easing: 'cubic-bezier(.5, 0, .9, .4)' });
-    roll.animate([{ transform: 'none' }, { transform: 'translateY(.4%)' }, { transform: 'none' }], { duration: 240, delay: 290 });
+    seal.animate(STAMP, { duration: 380, easing: 'cubic-bezier(.5, 0, .9, .4)' });
+    roll.animate(THUD, { duration: 240, delay: 290 });
     await wait(1600);
     showFoot(3000);
-    roll.classList.add('done');
+    finished();
     playing = false;
   }
-  // Tapping the finished scroll writes the next one in the series.
-  sheet.addEventListener('click', () => {
+  // Tapping the finished scroll (or Enter/Space on it) writes the next one in the series.
+  function next() {
     if (!roll.classList.contains('done')) return;
     verse = (verse + 1) % VERSES.length;
     if (TTY.reduce) build(verse);
     play();
+  }
+  sheet.addEventListener('click', next);
+  sheet.addEventListener('keydown', (e) => {
+    if (e.target !== sheet || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    next();
   });
 
   build(verse);
-  if (TTY.reduce) { full(); leadSeal.style.opacity = .92; } else blank();
-  TTY.onShow(() => { play(); if (TTY.reduce) { fit(); } });
+  if (TTY.reduce) { full(); leadSeal.style.opacity = .92; document.fonts.ready.then(fitLines); } else blank();
+  TTY.onShow(play);
   const loaded = new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })));
   Promise.all([loaded, document.fonts.ready]).then(TTY.ready);
 })();
