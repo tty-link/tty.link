@@ -8,8 +8,8 @@
  *   TTYExplain.close()
  *   TTYExplain.isOpen()
  *
- * The data, /pages/explain/<id>.json, is made by docs-internal/pages/build_explain.py from each
- * page doc's "## 쉬운 해설" section and fetched only when someone asks. Strings may carry **bold**
+ * The data, /pages/explain/<id>.json, is generated from each page's planning notes and fetched
+ * only when someone asks. Strings may carry **bold**
  * and `code`: everything is HTML-escaped first, then only those two are turned into tags.
  *
  * The dialog is modal: focus stays inside, Esc and a click on the backdrop close it, and focus goes
