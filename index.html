@@ -15,6 +15,8 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffd84a'/%3E%3Ctext x='32' y='44' font-family='ui-monospace,Menlo,monospace' font-size='34' font-weight='700' text-anchor='middle' fill='%231b2b7a'%3E:)%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://lol.tty.link">
+<link rel="stylesheet" href="/assets/lol-embed.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap">
 <script>document.documentElement.classList.add('js');</script>
 <style>
@@ -164,12 +166,6 @@
   .langs button { min-height: 33px; padding: 0 12px; border: 0; background: transparent; font-size: 14px; font-weight: 600; cursor: pointer; }
   .langs button[aria-pressed="true"] { background: var(--ink); color: var(--sun); }
 
-  .slot { position: absolute; inset: 0; visibility: hidden; }
-  /* A page is told it is on screen (TTY.onShow) as its wipe starts, so the wipe uncovers it fast
-     (a third in 50 ms, nine tenths in 250 ms): its first second plays in view, not behind the wipe. */
-  .slot.on { visibility: visible; animation: wipe .6s cubic-bezier(.2, .8, .2, 1) both; }
-  .slot iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
-  @keyframes wipe { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0); } }
 
   @media (max-width: 760px) {
     .staged .frame {
@@ -195,7 +191,7 @@
     .pause-label, .ask-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .staged .stage, .slot.on { animation: none; }
+    .staged .stage { animation: none; }
     .staged .now, .staged .tools { transition: none; }
   }
 
@@ -204,6 +200,7 @@
 </style>
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="sebul" data-addons="motion fx"></script>
 <script src="/assets/tty-glyphs.js"></script>
+<script src="/assets/lol-embed.js"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "838288248cb7432382fa48f87d722c3f", "spa": false}'></script><!-- End Cloudflare Web Analytics -->
 </head>
 <body>
@@ -226,16 +223,23 @@
           <button class="btn ask" type="button" aria-haspopup="dialog" aria-expanded="false"><span class="ask-q" aria-hidden="true">?</span><span class="ask-label">Why is this funny?</span></button>
         </div>
         <div class="tools-group">
-          <a class="btn all" href="/all/">All pages</a>
+          <a class="btn all" href="https://lol.tty.link/all/">All pages</a>
           <div class="langs" role="group" aria-label="Language">
             <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
             <button type="button" data-lang="ko" aria-pressed="false" lang="ko">한국어</button>
           </div>
         </div>
       </div>
+      <p class="lol-notice" role="status" hidden></p>
     </div>
   </header>
-  <main class="stage" aria-label="tty.link pages"></main>
+  <main class="stage" aria-label="tty.link pages">
+    <div class="lol-fallback" hidden role="status">
+      <p class="lol-fallback-text"></p>
+      <a class="lol-fallback-link" href="https://lol.tty.link/">Open LOL</a>
+      <button class="lol-retry" type="button">Try again</button>
+    </div>
+  </main>
 </div>
 <script>
 (() => {
@@ -254,7 +258,6 @@
   const askButton = document.querySelector('.ask');
   const askLabel = document.querySelector('.ask-label');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const DEFAULT_SECONDS = 16;
   const KO_LINE = '재미로 세상을 한 뼘 더 행복하게';
 
   const read = (storage, key) => { try { return window[storage].getItem(key); } catch (e) { return null; } };
@@ -308,6 +311,7 @@
   let koScatter = null;
   let userPaused = false;
   let explaining = false;
+  let host = null;
   function showKo() {
     if (lang !== 'ko' || !body.classList.contains('settled') || lineKo.firstChild) return;
     const kku = document.createElement('font-kku');
@@ -326,10 +330,10 @@
     nextButton.textContent = UI[lang].next;
     pauseLabel.textContent = userPaused ? UI[lang].play : UI[lang].pause;
     allLink.textContent = UI[lang].all;
-    allLink.href = '/all/?lang=' + lang;
+    allLink.href = (host ? host.origin : 'https://lol.tty.link') + '/all/?lang=' + lang;
     askLabel.textContent = UI[lang].ask;
     askButton.title = UI[lang].ask;
-    if (explaining) showExplain();
+    if (host) host.configure({ lang });
     stage.setAttribute('aria-label', UI[lang].stage);
     document.querySelector('.langs').setAttribute('aria-label', UI[lang].langs);
     document.querySelectorAll('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
@@ -356,191 +360,75 @@
     setTimeout(settle, 950 + glyphs.length * 28);
   }
 
-  /* ---- Pages ---- */
-  let pages = [];
-  let bag = [];
-  let current = null;
-  let upcoming = null;
+  /* ---- Remote player ---- */
   let clock = null;
-  let hovering = false;
-
-  const shuffle = (list) => {
-    const a = list.slice();
-    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-    return a;
-  };
-  // A shuffled bag: every page once before any repeats, never the same page twice in a row, and
-  // never two pages of one "family" (pages/index.json: pages that share a motif) back to back
-  // while the bag still holds something else.
-  const kin = (a, b) => !!(a && b && a.family && b.family && a.family.some((f) => b.family.includes(f)));
-  function pick() {
-    if (!bag.length) bag = shuffle(rotation().filter((p) => !current || p.id !== current.page.id));
-    const last = current && current.page;
-    for (let i = bag.length - 1; i >= 0; i--) if (!kin(last, bag[i])) return bag.splice(i, 1)[0];
-    return bag.pop() || pages[0];
-  }
-  // A page can ask to open the visit at certain times ("when" in pages/index.json), in the
-  // visitor's local time: days of the week (0 = Sunday), nth (the nth such weekday of the month,
-  // e.g. the second Tuesday), hours [from, to) and dates ["MM-DD", "MM-DD"] (inclusive). Ranges
-  // may wrap around midnight or the new year. Every condition given must fit.
-  const inRange = (x, from, to, inclusive) =>
-    from <= to ? x >= from && (inclusive ? x <= to : x < to) : x >= from || (inclusive ? x <= to : x < to);
-  function fits(when, now) {
-    if (!when) return false;
-    if (when.days && !when.days.includes(now.getDay())) return false;
-    if (when.nth && Math.ceil(now.getDate() / 7) !== when.nth) return false;
-    if (when.hours && !inRange(now.getHours(), when.hours[0], when.hours[1], false)) return false;
-    if (when.dates) {
-      const day = (s) => { const [m, d] = s.split('-').map(Number); return m * 100 + d; };
-      if (!inRange((now.getMonth() + 1) * 100 + now.getDate(), day(when.dates[0]), day(when.dates[1]), true)) return false;
-    }
-    return true;
-  }
-  // The first page of a visit is random, like every other pick. Now and then (about one visit in
-  // four) a page whose "when" fits the moment goes first instead (Friday afternoon, late at night …),
-  // and "opener" pages, whose joke lands in the first seconds, are twice as likely in the draw.
-  const TIMELY_CHANCE = 0.25;
-  // "skip" uses the same conditions as "when": while it fits, the page stays out of the rotation and
-  // the first-page draw (a day its joke would be out of place). A shared #link still opens it.
-  const rotation = () => {
-    const now = new Date();
-    const kept = pages.filter((p) => !fits(p.skip, now));
-    return kept.length ? kept : pages;
-  };
-  const any = (list) => list[Math.floor(Math.random() * list.length)];
-  function first() {
-    const timely = rotation().filter((p) => fits(p.when, new Date()));
-    if (timely.length && Math.random() < TIMELY_CHANCE) return any(timely);
-    return any(rotation().flatMap((p) => (p.opener ? [p, p] : [p])));
-  }
-  const titleOf = (page) => (page.title && (page.title[lang] || page.title.en)) || page.id;
-  const secondsOf = (page) => (page.seconds || DEFAULT_SECONDS) * 1000;
-
-  function load(page) {
-    const slot = document.createElement('div');
-    slot.className = 'slot';
-    const frame = document.createElement('iframe');
-    frame.title = titleOf(page);
-    frame.src = `/pages/${page.file}?lang=${lang}`;
-    slot.append(frame);
-    stage.append(slot);
-    const entry = { page, slot, frame };
-    entry.ready = new Promise((resolve) => {
-      entry.resolve = resolve;
-      frame.addEventListener('load', () => setTimeout(resolve, 1200), { once: true });
-      setTimeout(resolve, 9000);
-    });
-    return entry;
-  }
-  const drop = (entry) => { if (entry) entry.slot.remove(); };
-
-  function show(entry) {
-    const previous = current;
-    current = entry;
-    entry.slot.style.zIndex = '2';
-    entry.slot.classList.add('on');
-    if (previous) previous.slot.style.zIndex = '1';
-    entry.frame.contentWindow.postMessage({ source: 'tty-home', type: 'show' }, location.origin);
-    setTimeout(() => {
-      if (previous && previous !== current) drop(previous);
-      entry.slot.style.zIndex = '';
-    }, reduce ? 0 : 800);
-
-    nowTitle.textContent = titleOf(entry.page);
-    history.replaceState(null, '', '#' + entry.page.id);
-    // An explanation that is open follows the stage.
-    if (explaining) showExplain();
-
-    if (clock) clock.cancel();
-    clock = bar.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: secondsOf(entry.page), fill: 'forwards' });
-    syncClock();
-    const mine = clock;
-    clock.finished.then(() => { if (clock === mine) advance(); }, () => {});
-  }
-
-  async function advance() {
-    if (!upcoming) upcoming = load(pick());
-    const entry = upcoming;
-    await entry.ready;
-    if (upcoming !== entry) return;
-    upcoming = null;
-    show(entry);
-  }
-
-  // Load the next page while this one plays, a few seconds before it is needed.
-  setInterval(() => {
-    if (!current || upcoming || !clock || pages.length < 2) return;
-    if (secondsOf(current.page) - clock.currentTime < 4500) upcoming = load(pick());
-  }, 500);
-
-  addEventListener('message', (event) => {
-    if (event.origin !== location.origin || !event.data || event.data.source !== 'tty-page') return;
-    const entry = [current, upcoming].find((e) => e && e.frame.contentWindow === event.source);
-    if (!entry) return;
-    if (event.data.type === 'ready') entry.resolve();
-    if (event.data.type === 'hold' && entry === current && clock) {
-      // Keep at least this much time left; the bar steps back to show it.
-      clock.currentTime = Math.min(clock.currentTime, Math.max(0, secondsOf(entry.page) - (event.data.ms || 12000)));
-    }
-    // "?" pressed inside the page on stage (pages/_kit.js passes it on). Focus goes back to the
-    // stage on close, so the visitor carries on where they were.
-    if (event.data.type === 'ask' && entry === current && body.classList.contains('staged')) openExplain(entry.frame);
+  const fallback = document.querySelector('.lol-fallback');
+  const notice = document.querySelector('.lol-notice');
+  const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+  const fresh = !nav || (nav.type !== 'reload' && nav.type !== 'back_forward');
+  host = new window.LOLHost(stage, {
+    lang, page: fresh ? location.hash.slice(1) : '',
+    onState(state) {
+      if (!state.id) return;
+      fallback.hidden = true;
+      host.frame.hidden = false;
+      nowTitle.textContent = state.title;
+      history.replaceState(null, '', '#' + state.id);
+      if (!clock || clock.effect.getTiming().duration !== state.duration) {
+        if (clock) clock.cancel();
+        clock = bar.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: state.duration, fill: 'forwards' });
+      }
+      clock.currentTime = Math.max(0, Math.min(state.duration, state.elapsed));
+      if (state.running && !userPaused) clock.play(); else clock.pause();
+    },
+    onExplain(on) {
+      explaining = on;
+      body.classList.toggle('explaining', on);
+      askButton.setAttribute('aria-expanded', String(on));
+    },
+    onError(kind) {
+      if (kind === 'explain') {
+        notice.hidden = false;
+        notice.textContent = lang === 'ko' ? '해설을 불러오지 못했어요. ' : 'The explanation could not load. ';
+        const link = document.createElement('a');
+        link.href = host.origin + '/pages/' + host.page + '.html?lang=' + lang;
+        link.textContent = lang === 'ko' ? 'LOL에서 보기' : 'Open in LOL';
+        notice.append(link);
+        return;
+      }
+      if (clock) clock.pause();
+      host.frame.hidden = true;
+      fallback.hidden = false;
+      document.querySelector('.lol-fallback-text').textContent = lang === 'ko' ? 'LOL을 불러오지 못했어요.' : 'LOL could not load.';
+      document.querySelector('.lol-fallback-link').textContent = lang === 'ko' ? 'LOL에서 보기' : 'Open LOL';
+      document.querySelector('.lol-fallback-link').href = host.origin + '/?lang=' + lang;
+      document.querySelector('.lol-retry').textContent = lang === 'ko' ? '다시 시도' : 'Try again';
+    },
   });
-
-  // The clock runs only when nobody has paused it, the pointer is not on the stage, no
-  // explanation is open and the tab is visible. The visitor's pause wins over everything else.
-  function syncClock() {
-    if (!clock) return;
-    if (userPaused || hovering || explaining || document.hidden) clock.pause();
-    else clock.play();
-  }
-
-  /* ---- "Why is this funny?" ---- */
-  // Explains the page on stage with /assets/tty-explain.js, loaded the first time someone asks.
-  // While it is open the clock stops through its own flag, so closing it never undoes the
-  // visitor's own pause.
-  let explainScript = null;
-  const loadExplain = () => explainScript || (explainScript = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = '/assets/tty-explain.js';
-    script.onload = () => (window.TTYExplain ? resolve() : reject(new Error('tty-explain')));
-    script.onerror = () => { explainScript = null; reject(new Error('tty-explain')); };
-    document.head.append(script);
-  }));
-  function setExplaining(on) {
-    explaining = on;
-    body.classList.toggle('explaining', on);
-    askButton.setAttribute('aria-expanded', String(on));
-    syncClock();
-    // Closed after the page that opened it left the stage: focus lands on the button instead.
-    if (!on && (!document.activeElement || document.activeElement === body)) askButton.focus({ preventScroll: true });
-  }
-  // Opens it, or (already open) switches it to the page on stage and the current language.
-  function showExplain(returnFocus) {
-    if (!current || !window.TTYExplain) return;
-    window.TTYExplain.open({ id: current.page.id, lang, title: titleOf(current.page), returnFocus, onClose: () => setExplaining(false) });
-  }
-  function openExplain(returnFocus) {
-    if (!current || explaining) return;
-    setExplaining(true);
-    loadExplain().then(() => { if (explaining) showExplain(returnFocus); }, () => setExplaining(false));
-  }
+  allLink.href = host.origin + '/all/?lang=' + lang;
+  document.querySelector('.lol-retry').addEventListener('click', () => {
+    fallback.hidden = true;
+    host.reload();
+  });
+  const openExplain = (returnFocus) => {
+    notice.hidden = true;
+    host.openExplanation(returnFocus);
+  };
   askButton.addEventListener('click', () => openExplain(askButton));
-  stage.addEventListener('mouseenter', () => { hovering = true; syncClock(); });
-  stage.addEventListener('mouseleave', () => { hovering = false; syncClock(); });
-  document.addEventListener('visibilitychange', syncClock);
+  stage.addEventListener('mouseenter', () => host.configure({ hovering: true }));
+  stage.addEventListener('mouseleave', () => host.configure({ hovering: false }));
   pauseButton.addEventListener('click', () => {
     userPaused = !userPaused;
     pauseButton.setAttribute('aria-pressed', String(userPaused));
     pauseLabel.textContent = userPaused ? UI[lang].play : UI[lang].pause;
     body.classList.toggle('paused', userPaused);
-    syncClock();
+    if (userPaused && clock) clock.pause();
+    host.configure({ paused: userPaused });
   });
-  nextButton.addEventListener('click', () => { if (current) advance(); });
-  // Right arrow: next page. "?": explain the page on stage. Not while typing or explaining.
+  nextButton.addEventListener('click', () => host.next());
   addEventListener('keydown', (event) => {
     if (explaining || !body.classList.contains('staged') || event.target.closest('input, textarea, select, [contenteditable]')) return;
-    if (event.key === 'ArrowRight') advance();
+    if (event.key === 'ArrowRight') host.next();
     else if (event.key === '?' && !event.ctrlKey && !event.metaKey && !event.altKey) {
       event.preventDefault();
       const at = document.activeElement;
@@ -552,34 +440,13 @@
     lang = b.dataset.lang;
     write('localStorage', 'tty.lang', lang);
     applyLang();
-    // Reload the page on stage in the new language.
-    drop(upcoming);
-    upcoming = current ? load(current.page) : null;
-    if (upcoming) advance();
   }));
 
-  /* ---- Start ---- */
-  const manifest = fetch('/pages/index.json', { cache: 'no-cache' })
-    .then((r) => r.json())
-    .then((data) => {
-      pages = data.pages || [];
-      // The address keeps #<id> of the page on stage so it can be shared. A link opened with it
-      // starts on that page; a reload or a Back/Forward visit draws a fresh random page instead
-      // (otherwise every reload would start where the last visit stopped).
-      const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
-      const fresh = !nav || (nav.type !== 'reload' && nav.type !== 'back_forward');
-      const wanted = fresh && pages.find((p) => '#' + p.id === location.hash);
-      if (pages.length) upcoming = load(wanted || first());
-    })
-    .catch(() => {});
-
-  // Every visit opens with the sentence being built; with reduced motion it is shown whole.
+  // Preload during the original intro; the first joke starts when the stage is uncovered.
   const intro = reduce ? new Promise((r) => setTimeout(r, 1600)) : assemble();
-  Promise.all([intro, manifest]).then(() => {
+  intro.then(() => {
     toStage(!reduce);
-    // The first page comes up once the stage has mostly opened (three quarters, 1 s in), so
-    // its opening is not played behind the stage's own reveal.
-    if (upcoming) setTimeout(advance, reduce ? 0 : 1000);
+    setTimeout(() => host.start(), reduce ? 0 : 1000);
   });
 })();
 </script>
