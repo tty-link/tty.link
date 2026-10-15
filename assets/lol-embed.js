@@ -2,12 +2,18 @@
 (() => {
   const VERSION = 1;
   const local = (host) => ['localhost', '127.0.0.1', '[::1]'].includes(host);
+  const tailnet = (host) => {
+    const parts = host.split('.').map(Number);
+    return parts.length === 4 && parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127
+      && parts.every((n) => Number.isInteger(n) && n >= 0 && n <= 255);
+  };
   function serviceOrigin() {
     const override = new URLSearchParams(location.search).get('lolOrigin');
-    if (override && local(location.hostname)) {
+    if (override && location.protocol === 'http:') {
       try {
         const url = new URL(override);
-        if (url.origin === override && url.protocol === 'http:' && local(url.hostname)) return url.origin;
+        const preview = (local(location.hostname) && local(url.hostname)) || (tailnet(location.hostname) && url.hostname === location.hostname);
+        if (url.origin === override && url.protocol === 'http:' && preview) return url.origin;
       } catch (error) { /* use the public service */ }
     }
     return 'https://lol.tty.link';
