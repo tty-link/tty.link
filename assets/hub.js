@@ -89,10 +89,13 @@
     }
   }
 
-  // In the rail, as a book's contents: chapter numbers, names, dotted leaders and how many things
-  // each holds. A chapter opens to its tools, one section each.
+  // In the rail, as a book's contents: a head (the word and how much there is), chapter numbers,
+  // names, dotted leaders and how many things each holds. A chapter opens to its tools, one section each.
   function tocList() {
+    const head = el('div', 'toc-head');
     const label = el('p', 'toc-label');
+    const sum = el('p', 'toc-sum');
+    head.append(label, sum);
     const list = el('ol', 'toc');
     const all = el('a', 'toc-all');
     const rows = C.cats().map((cat, i) => {
@@ -108,10 +111,11 @@
       list.append(li);
       return { cat, row, name, secs, n: i + 1 };
     });
-    hub.append(label, list, all);
+    hub.append(head, list, all);
     H.onLang((lang) => {
       const ui = C.UI[lang];
       label.textContent = lang === 'ko' ? '차례' : 'CONTENTS';
+      sum.textContent = lang === 'ko' ? `${rows.length}장 · ${ui.items(C.ITEMS.length)}` : `${rows.length} chapters · ${ui.items(C.ITEMS.length)}`;
       all.textContent = `${ui.all} →`;
       all.href = allHref(lang);
       rows.forEach(({ cat, name, secs, n }) => {

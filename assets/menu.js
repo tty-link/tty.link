@@ -2,7 +2,8 @@
  *   1. The contents in the rail, every piece drawn; a chapter opens its poster in the stage's place
  *      and LOL steps into a mini player at the top of the rail, still playing.
  *   2. When to tempt the visitor to ask "Why is this funny?" (TTYNudge).
- *   3. The remote under the stage: ◁ ⏸ ▷ ? and all pages, the "?" alive, its speech bubble.
+ *   3. The remote under the stage (◁ ⏸ ▷, all pages), and "Why is this funny?": a "?" that follows
+ *      the joke's title and seems alive, with a speech bubble.
  *   4. The Han/Eng key at the rail's foot. */
 
 /* ---- 1. The contents and the poster ---- */
@@ -13,7 +14,7 @@
   const drawn = (node) => node.childNodes.length === 1 && node.firstChild.classList && node.firstChild.classList.contains('lt');
 
   // Sizes go through CSS variables so a tall screen can set the contents larger (see menu.css).
-  const SIZES = [['.toc-label', 'var(--toc-s, 14px)'], ['.toc-no', 'var(--toc-s, 14px)'], ['.toc-nm', 'var(--toc-nm, 20px)'], ['.toc-pg', 'var(--toc-s, 14px)'],
+  const SIZES = [['.toc-label', 'var(--toc-s, 14px)'], ['.toc-sum', 'var(--toc-xs, 12px)'], ['.toc-no', 'var(--toc-s, 14px)'], ['.toc-nm', 'var(--toc-nm, 20px)'], ['.toc-pg', 'var(--toc-s, 14px)'],
     ['.toc-sno', 'var(--toc-xs, 12px)'], ['.toc-snm', 'var(--toc-sn, 15px)'], ['.toc-spg', 'var(--toc-xs, 13px)'], ['.toc-all', 'var(--toc-s, 14px)']];
   // Drawing is lazy, for speed: every font-kku word re-lays the page, so nothing is drawn before the
   // rail has settled (the intro stays light), each word is drawn once with its motion (no drawing
@@ -35,7 +36,7 @@
     // A section name that does not fit fades at its end (only then).
     requestAnimationFrame(() => root.querySelectorAll('.toc-snm').forEach((node) => node.classList.toggle('cut', node.scrollWidth > node.clientWidth + 1)));
     // Pointing at a row shakes its letters loose for a moment, like the home's sentence (nothing opens).
-    hub.querySelectorAll('.toc-row, .toc-sec, .toc-all, .toc-label').forEach((node) => { node.dataset.ltShake = 'kku'; });
+    hub.querySelectorAll('.toc-row, .toc-sec, .toc-all, .toc-head').forEach((node) => { node.dataset.ltShake = 'kku'; });
   };
   // The right column counts the tools in each chapter (page numbers read as counts and confused).
   const triggers = tocList();
@@ -298,10 +299,10 @@ window.TTYNudge = (() => {
   };
 })();
 
-/* ---- 3. The remote under the stage ---- */
+/* ---- 3. The remote under the stage, and "Why is this funny?" ---- */
 (() => {
   const L = window.TTYLetter;
-  const { H } = window.TTYHub;
+  const { H, phone } = window.TTYHub;
   const host = H.host;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // The rail's foot, level with the remote: the language key lives there on a large screen.
@@ -314,28 +315,41 @@ window.TTYNudge = (() => {
   const next = document.querySelector('.next');
   const all = document.querySelector('.btn.all');
   const row = document.querySelector('.tools-row');
+  const now = document.querySelector('.now');
+  // The question is about the joke on stage, so its "?" follows the joke's title. Its bubble opens
+  // into the room after the title: it never covers a control or the joke.
+  const line = document.createElement('div');
+  line.className = 'now-line';
+  const title = document.querySelector('.now-title');
+  title.before(line);
   const wrap = document.createElement('span');
   wrap.className = 'ask-wrap';
   wrap.append(ask);
+  line.append(title, wrap);
+  // A title too long for its line (the mini player) fades at its end; one that fits stays whole.
+  const fit = () => title.classList.toggle('cut', title.scrollWidth > title.clientWidth + 1);
+  new MutationObserver(() => requestAnimationFrame(fit)).observe(title, { childList: true, subtree: true });
+  new ResizeObserver(fit).observe(line);
   const shine = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   shine.setAttribute('class', 'ask-shine');
   shine.setAttribute('viewBox', '0 0 22 22');
   shine.setAttribute('aria-hidden', 'true');
   shine.innerHTML = '<path d="M11 2v5"/><path d="M2.5 8.5l4.2 2.6"/><path d="M4 18l4.4-2.2"/>';
   wrap.append(shine);
-  // All pages and the bubble share one place to the right of the "?".
-  const slot = document.createElement('span');
-  slot.className = 'ask-slot';
   // The bubble repeats the button's question for the eye; the button stays the accessible one.
+  const pop = document.createElement('span');
+  pop.className = 'ask-pop';
+  pop.dataset.side = 'right';
   const bubble = Object.assign(document.createElement('button'), { type: 'button', className: 'ask-bubble', tabIndex: -1 });
   bubble.setAttribute('aria-hidden', 'true');
   bubble.addEventListener('click', () => ask.click());
-  slot.append(all, bubble);
+  pop.append(bubble);
+  wrap.append(pop);
   const prev = Object.assign(document.createElement('button'), { type: 'button', className: 'btn prev' });
-  // ◁ ⏸ ▷ ? [all pages | bubble]; the last group keeps the home's (hidden) language buttons.
+  // ◁ ⏸ ▷ and all pages, side by side; the last group keeps the home's (hidden) language buttons.
   const langGroup = row.querySelector('.tools-group:last-child');
+  row.prepend(prev, pause, next, all);
   row.querySelectorAll('.tools-group').forEach((g) => { if (g !== langGroup && !g.children.length) g.remove(); });
-  row.prepend(prev, pause, next, wrap, slot);
   H.onLang((lang) => {
     L.set(bubble, lang === 'ko' ? '이게 왜 웃겨요?' : 'Why is this funny?', { size: '16px' });
     prev.setAttribute('aria-label', lang === 'ko' ? '이전' : 'Previous');
@@ -370,15 +384,32 @@ window.TTYNudge = (() => {
     back();
   });
 
-  // The bubble.
+  // The bubble. It opens after the "?" when the line has room for it, else under it (a phone, or a
+  // page with room below). With no room at all it waits, unless the visitor points at the "?": then
+  // it opens back over the title, which they are not reading just then.
+  const side = (pointing) => {
+    const need = bubble.offsetWidth + 12;
+    const at = wrap.getBoundingClientRect();
+    // The room runs to the end of the title's block, or up to the remote when it is on the same line.
+    let end = now.getBoundingClientRect().right;
+    const r = row.getBoundingClientRect();
+    if (r.left > at.right && r.top < at.bottom && r.bottom > at.top) end = r.left - 8;
+    if (end - at.right >= need) return 'right';
+    if (phone() || at.bottom + bubble.offsetHeight + 14 <= innerHeight) return 'below';
+    return pointing ? 'left' : null;
+  };
   let shownAt = 0;
   let hideTimer = 0;
   const sparkle = () => { if (reduce) return; shine.classList.remove('on'); void shine.getBoundingClientRect(); shine.classList.add('on'); };
   const show = (how, stay) => {
+    if (!bubble.classList.contains('show')) {
+      const where = side(how === 'hover');
+      if (!where) return;
+      pop.dataset.side = where;
+    }
     clearTimeout(hideTimer);
     shownAt = Date.now();
     bubble.classList.remove('hide');
-    slot.classList.add('talking');
     const fresh = !bubble.classList.contains('show');
     bubble.classList.add('show');
     bubble.classList.toggle('big', how === 'punch');
@@ -396,7 +427,6 @@ window.TTYNudge = (() => {
       if (bubble.matches(':hover') || ask.matches(':hover')) return hide(1200);
       bubble.classList.remove('show', 'big');
       bubble.classList.add('hide');
-      slot.classList.remove('talking');
       ask.classList.remove('lit');
     }, after);
   };
@@ -407,11 +437,12 @@ window.TTYNudge = (() => {
 
   /* On its own: soon after the first joke is on stage, once more a little later, at each punchline,
      and every so often after that. Pointing at the stage (which holds the joke) does not silence it;
-     only an open explanation, a hidden tab, or a visitor who has clearly found the button (this joke
-     already explained, or three explanations opened) does. */
+     only an open explanation, a hidden tab, an open chapter (the visitor is reading the menu), or a
+     visitor who has clearly found the button (this joke already explained, or three explanations
+     opened) does. */
   let id = null;
   let periodic = 0;
-  const quiet = () => host.modal || document.hidden || TTYNudge.opened >= 3 || (id && TTYNudge.asked(id));
+  const quiet = () => host.modal || document.hidden || document.body.classList.contains('docked') || TTYNudge.opened >= 3 || (id && TTYNudge.asked(id));
   const plan = () => {
     clearTimeout(periodic);
     periodic = setTimeout(() => {

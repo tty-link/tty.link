@@ -14,6 +14,9 @@
 .hub a { color: inherit; text-decoration: none; }
 .hub button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: inherit; cursor: pointer; }
 .lang-ko .hub { font-family: var(--ko-ui); }
+/* The room under the wordmark before the contents (or the mini player), the same open or closed. */
+:root { --hub-gap: clamp(30px, 5.5vh, 60px); }
+@media (min-width: 761px) and (max-height: 820px) { :root { --hub-gap: clamp(24px, 4.2vh, 34px); } }
 @media (min-width: 761px) {
   .staged .frame {
     grid-template-columns: minmax(250px, 22vw) minmax(0, 1fr) auto;
@@ -25,7 +28,7 @@
     grid-template-rows: auto minmax(0, 1fr) 0 0 auto;
     grid-template-areas: "mark stage stage" "hub stage stage" "line stage stage" "ko stage stage" "meta stage stage";
   }
-  .staged .hub { margin-top: clamp(16px, 3vh, 30px); }
+  .staged .hub { margin-top: var(--hub-gap); }
 }
 
 /* ---- Moving LOL: the stage shrinks into a box and keeps playing; clicking it brings it back ---- */
@@ -47,8 +50,12 @@
 
 /* ---- The contents: the kinds as a book's chapters, with numbers, dotted leaders and how many
    things each holds. A chapter opens only when clicked; its sections pick a tool on the poster. ---- */
+/* The head reads like a book's: the word on the left, how much there is on the right, over a heavy
+   rule; a hairline closes the list. */
+.toc-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 22px; }
 .toc-label { font-size: 12px; font-weight: 800; letter-spacing: .32em; }
-.toc { margin-top: 8px; padding-top: 4px; border-top: 2px solid var(--ink); }
+.toc-sum { font-size: 11.5px; font-weight: 600; opacity: .62; white-space: nowrap; }
+.toc { margin-top: 10px; padding: 6px 0 8px; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink-soft); }
 .toc li { transition: opacity .2s ease; }
 .hub .toc-row { display: flex; align-items: baseline; gap: 10px; width: 100%; padding: 6px 2px; font-size: 17px; font-weight: 700; }
 .toc-no { min-width: 1.5em; font: 700 13px var(--ui); }
@@ -65,7 +72,7 @@
 .toc-sec.soon { opacity: .72; }
 .toc-sec:hover, .toc-sec.on { background: var(--ink); color: var(--sun); opacity: 1; }
 .toc-sec:hover .toc-lead, .toc-sec.on .toc-lead { border-color: rgba(255, 216, 74, .5); }
-.toc-all { display: inline-block; margin-top: 10px; border-bottom: 1.5px solid; font-size: 13px; font-weight: 700; }
+.toc-all { display: inline-block; margin-top: 12px; border-bottom: 1.5px solid; font-size: 13px; font-weight: 700; }
 /* The room in the stage's place, while LOL sits elsewhere. */
 .corner-room { display: grid; grid-template-columns: minmax(0, 1fr) 30%; gap: 28px; }
 @media (max-width: 760px) {
@@ -112,7 +119,7 @@
    a chapter is open (docked); the sentence steps aside. ---- */
 .mini { display: none; }
 @media (min-width: 761px) {
-  .docked.staged .hub { min-height: 0; margin-top: 18px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .docked.staged .hub { min-height: 0; margin-top: var(--hub-gap); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
   .docked.staged .hub::-webkit-scrollbar { display: none; }
   .docked.staged .line, .docked.staged .line-ko { display: none !important; }
   .docked .mini {
@@ -129,7 +136,9 @@
   .mini .ask-q { display: inline; }
   .mini .pause-label, .mini .ask-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .mini .now { grid-area: now; margin: 12px 0 0; }
-  .mini .now-title { min-height: 0; overflow: hidden; -webkit-mask: linear-gradient(to right, #000 calc(100% - 24px), transparent); mask: linear-gradient(to right, #000 calc(100% - 24px), transparent); }
+  .mini .now-title { min-height: 0; overflow: hidden; }
+  /* Only a title that does not fit fades at its end (the "?" after it stays whole). */
+  .mini .now-title.cut { -webkit-mask: linear-gradient(to right, #000 calc(100% - 24px), transparent); mask: linear-gradient(to right, #000 calc(100% - 24px), transparent); }
   .mini .now-title .lt-art { flex-wrap: nowrap; }
   .mini .progress { margin-top: 6px; }
   .hub .mini-back { grid-area: cap; justify-self: start; margin-top: 8px; white-space: nowrap; }
@@ -213,7 +222,6 @@
 @media (min-width: 761px) and (max-height: 820px) {
   .hub .toc-row { padding: 3px 2px; }
   .hub .toc-sec { padding-top: 1px; padding-bottom: 1px; }
-  .staged .hub { margin-top: 12px; }
   .tools-row { gap: 6px; }
   .tools { margin-top: 10px; }
 }
@@ -240,7 +248,8 @@
   .settled .rail-foot { opacity: 1; }
   .frame > .now, .rail > .now { align-self: end; margin: 14px 0 0; }
   .rail > .now .now-title { min-height: 0; }
-  .rail > .tools { align-self: end; margin: 14px 0 0; }
+  /* Level with the title's line, above the progress bar under it (its 10px gap and 3px). */
+  .rail > .tools { align-self: end; margin: 14px 0 13px; }
   .rail > .tools .tools-row { flex-direction: row; align-items: center; gap: 8px; }
   .rail > .tools .tools-group { display: contents; }
 }
@@ -249,15 +258,18 @@
 }
 @media (max-width: 760px) { .rail-foot { display: none !important; } }
 
-/* "Why is this funny?" as a "?" that seems alive (now and then it hops, tilts, bounces its dot or
-   rings) and a speech bubble that pops out of it: at the punchline, then every so often while the
-   joke plays, and whenever the "?" is pointed at. */
-.ask-wrap { position: relative; display: inline-flex; }
+/* "Why is this funny?" is about the joke on stage, so its "?" follows the joke's title. It seems alive
+   (now and then it hops, tilts, bounces its dot or rings), and a speech bubble pops out of it into
+   the room after the title: at the punchline, then every so often while the joke plays, and whenever
+   the "?" is pointed at. It never covers a control or the joke. */
+.now-line { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.now-line .now-title { flex: 0 1 auto; min-width: 0; }
+.ask-wrap { position: relative; display: inline-flex; flex: none; }
 /* The "?" stands out from the outlined pills: a filled ink circle that floats a little all the time. */
-.ask-wrap .ask { min-width: 40px; min-height: 40px; padding: 0; border-radius: 50%; background: var(--ink); color: var(--sun); }
+.ask-wrap .ask { min-width: 38px; min-height: 38px; padding: 0; border-radius: 50%; background: var(--ink); color: var(--sun); }
 .ask-wrap .ask:hover { background: var(--sun); color: var(--ink); }
 .ask-wrap .ask-q svg { animation: ask-float 2.6s ease-in-out infinite; }
-.ask-wrap .ask-q .lt { --lt: 21px !important; }
+.ask-wrap .ask-q .lt { --lt: 20px !important; }
 .mini .ask-wrap .ask-q .lt { --lt: 18px !important; }
 @keyframes ask-float { 50% { transform: translateY(-1.6px) rotate(-6deg); } }
 .ask-wrap .ask-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -286,44 +298,37 @@
 .tools .btn.prev[aria-disabled="true"]:hover { background: transparent; color: inherit; }
 .mini .tools .btn.prev, .mini .tools .btn.pause, .mini .tools .btn.next { width: 32px; min-width: 32px; min-height: 32px; padding: 0; }
 
-/* All pages and the bubble share one place to the right of the "?": all pages keeps to the stage's
-   right edge, the bubble opens sideways from the "?" (never over the joke), and all pages steps
-   aside while it speaks. */
-.ask-slot { display: inline-grid; align-items: center; }
-.ask-slot > * { grid-area: 1 / 1; }
-.ask-slot .btn.all { justify-self: end; }
-.ask-slot .ask-bubble { justify-self: start; }
-.mini .ask-slot .btn.all { justify-self: start; }
-.ask-slot .btn.all { transition: opacity .25s ease, transform .25s ease; }
-.ask-slot.talking .btn.all { opacity: 0; transform: translateX(14px); pointer-events: none; }
-.ask-slot .ask-bubble {
-  position: relative; z-index: 30; width: max-content; margin-left: 12px;
-  padding: 7px 14px 8px; border: 2px solid var(--ink); border-radius: 14px; background: var(--sun); color: var(--ink);
-  box-shadow: 0 3px 0 -1px var(--ink); cursor: pointer; opacity: 0; pointer-events: none; transform-origin: -12px 50%;
+/* The bubble: after the "?" when the line has room, under it otherwise, back over the title only
+   when the visitor points at the "?" with no room either way (menu.js picks the side). */
+.ask-pop { position: absolute; z-index: 30; display: flex; align-items: center; pointer-events: none; }
+.ask-pop[data-side="right"] { left: calc(100% + 12px); top: -20px; bottom: -20px; --from: translateX(-16px); --origin: -12px 50%; }
+.ask-pop[data-side="left"] { right: calc(100% + 12px); top: -20px; bottom: -20px; --from: translateX(16px); --origin: calc(100% + 12px) 50%; }
+.ask-pop[data-side="below"] { right: -6px; top: calc(100% + 10px); --from: translateY(-10px); --origin: calc(100% - 20px) -10px; }
+.ask-bubble {
+  position: relative; width: max-content; padding: 7px 14px 8px; border: 2px solid var(--ink); border-radius: 14px;
+  background: var(--sun); color: var(--ink); box-shadow: 0 3px 0 -1px var(--ink); cursor: pointer;
+  opacity: 0; pointer-events: none; transform-origin: var(--origin);
 }
 .ask-bubble .lt-art { flex-wrap: nowrap; }
-.ask-slot .ask-bubble::after { content: ''; position: absolute; left: -9px; top: calc(50% - 7px); width: 13px; height: 13px; border-left: 2px solid var(--ink); border-bottom: 2px solid var(--ink); background: inherit; transform: rotate(45deg) skew(8deg, 8deg); }
-.ask-slot .ask-bubble.show { opacity: 1; pointer-events: auto; animation: ask-say .55s cubic-bezier(.3, 1.4, .5, 1) both; }
-.ask-slot .ask-bubble.show.big { animation: ask-say .55s cubic-bezier(.3, 1.4, .5, 1) both, nudge-wobble .9s ease-in-out .55s 1; }
-.ask-slot .ask-bubble.hide { animation: ask-unsay .28s ease both; }
-@keyframes ask-say { 0% { opacity: 0; transform: translateX(-16px) scale(.25); } 60% { opacity: 1; transform: translateX(4px) scale(1.06); } 100% { opacity: 1; transform: none; } }
-@keyframes ask-unsay { to { opacity: 0; transform: translateX(-14px) scale(.4); } }
-.ask-slot .ask-bubble:hover { background: var(--ink); color: var(--sun); }
+.ask-bubble::after { content: ''; position: absolute; width: 13px; height: 13px; border-left: 2px solid var(--ink); border-bottom: 2px solid var(--ink); background: inherit; }
+[data-side="right"] > .ask-bubble::after { left: -9px; top: calc(50% - 7px); transform: rotate(45deg) skew(8deg, 8deg); }
+[data-side="left"] > .ask-bubble::after { right: -9px; top: calc(50% - 7px); transform: rotate(225deg) skew(8deg, 8deg); }
+[data-side="below"] > .ask-bubble::after { right: 14px; top: -9px; transform: rotate(135deg) skew(8deg, 8deg); }
+.ask-bubble.show { opacity: 1; pointer-events: auto; animation: ask-say .55s cubic-bezier(.3, 1.4, .5, 1) both; }
+.ask-bubble.show.big { animation: ask-say .55s cubic-bezier(.3, 1.4, .5, 1) both, nudge-wobble .9s ease-in-out .55s 1; }
+.ask-bubble.hide { animation: ask-unsay .28s ease both; }
+@keyframes ask-say { 0% { opacity: 0; transform: var(--from) scale(.25); } 60% { opacity: 1; transform: scale(1.06); } 100% { opacity: 1; transform: none; } }
+@keyframes ask-unsay { to { opacity: 0; transform: var(--from) scale(.4); } }
+.ask-bubble:hover { background: var(--ink); color: var(--sun); }
 .ask-wrap .ask.lit { background: var(--sun); color: var(--ink); box-shadow: 0 0 0 3px var(--ink); }
-.mini .ask-wrap .ask { min-width: 34px; min-height: 34px; }
-.mini .ask-slot .ask-bubble { padding: 5px 11px 6px; }
+.mini .ask-wrap .ask { min-width: 32px; min-height: 32px; }
+.mini .ask-bubble { padding: 5px 11px 6px; }
 @media (max-width: 760px) {
-  /* On a phone the bubble sits on the line under the "?", so its tail points up at it. */
-  .ask-slot .ask-bubble { margin: 8px 0 0; transform-origin: calc(100% - 20px) -10px; }
-  .ask-slot .ask-bubble::after { left: auto; right: 14px; top: -9px; transform: rotate(135deg) skew(8deg, 8deg); }
-  .ask-slot { justify-items: end; }
-  .ask-slot .ask-bubble { justify-self: end; }
   .ask-wrap .ask { min-width: 32px; min-height: 32px; }
   .tools .btn.prev, .tools .btn.pause, .tools .btn.next { width: 32px; min-width: 32px; min-height: 32px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ask-slot .ask-bubble.show, .ask-slot .ask-bubble.hide, .ask-wrap.ring::after, .ask-wrap.ring::before, .ask-shine.on, .ask-wrap .ask-q svg { animation: none; }
-  .ask-slot .btn.all { transition: none; }
+  .ask-bubble.show, .ask-bubble.hide, .ask-wrap.ring::after, .ask-wrap.ring::before, .ask-shine.on, .ask-wrap .ask-q svg { animation: none; }
 }
 
 /* ---- The language: the Han/Eng key every Korean keyboard has, at the rail's foot. It stays there
