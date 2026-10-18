@@ -198,9 +198,10 @@
   /* Without the script the letters cannot be built; the sentence is shown as text. */
   html:not(.js) .line { font: 750 clamp(30px, 8vw, 110px)/1.05 var(--ui); white-space: normal; }
 </style>
+<link rel="stylesheet" href="/assets/menu.css">
 <script src="https://font.tty.link/lib/font-kku.js" data-fonts="sebul" data-addons="motion fx"></script>
-<script src="/assets/tty-glyphs.js"></script>
-<script src="/assets/lol-embed.js"></script>
+<script src="/assets/tty-glyphs.js?v=2"></script>
+<script src="/assets/lol-embed.js?v=2"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "838288248cb7432382fa48f87d722c3f", "spa": false}'></script><!-- End Cloudflare Web Analytics -->
 </head>
 <body>
@@ -233,6 +234,7 @@
       <p class="lol-notice" role="status" hidden></p>
     </div>
   </header>
+  <div class="work">
   <main class="stage" aria-label="tty.link pages">
     <div class="lol-fallback" hidden role="status">
       <p class="lol-fallback-text"></p>
@@ -240,6 +242,8 @@
       <button class="lol-retry" type="button">Try again</button>
     </div>
   </main>
+  <nav class="hub" aria-label="Made at tty.link"></nav>
+  </div>
 </div>
 <script>
 (() => {
@@ -309,6 +313,7 @@
     ko: { next: '다음', all: '전체 보기', pause: '일시정지', play: '재생', ask: '이게 왜 웃겨요?', stage: 'tty.link 페이지', langs: '언어' },
   };
   let koScatter = null;
+  const langWatchers = [];
   let userPaused = false;
   let explaining = false;
   let host = null;
@@ -339,15 +344,18 @@
     document.querySelectorAll('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
     if (lang === 'ko') showKo();
     else { if (koScatter) koScatter.stop(); koScatter = null; lineKo.replaceChildren(); }
+    langWatchers.forEach((fn) => fn(lang));
   }
   applyLang();
 
   // FLIP each letter on its own: measure it big, switch the layout, then let the letters
   // follow one another from the big sentence to their seats in the rail.
+  let settledResolve;
+  const settled = new Promise((resolve) => { settledResolve = resolve; });
   function toStage(animate) {
     const first = animate ? glyphs.map((g) => g.getBoundingClientRect()) : null;
     body.classList.add('staged');
-    const settle = () => { body.classList.add('settled'); showKo(); };
+    const settle = () => { body.classList.add('settled'); showKo(); settledResolve(); };
     if (!animate) return settle();
     glyphs.forEach((g, i) => {
       const a = first[i];
@@ -368,6 +376,8 @@
   const fresh = !nav || (nav.type !== 'reload' && nav.type !== 'back_forward');
   host = new window.LOLHost(stage, {
     lang, page: fresh ? location.hash.slice(1) : '',
+    // Loading the first joke while the letters fly in makes them stutter; it is still ready before the stage opens.
+    delay: reduce ? 0 : 2300,
     onState(state) {
       if (!state.id) return;
       fallback.hidden = true;
@@ -406,6 +416,13 @@
     },
   });
   allLink.href = host.origin + '/all/?lang=' + lang;
+
+  // For the menu (assets/menu.js): the stage, LOL, the language and when the rail has settled.
+  window.TTYHome = {
+    stage, host, body, settled,
+    get lang() { return lang; },
+    onLang(fn) { langWatchers.push(fn); fn(lang); },
+  };
   document.querySelector('.lol-retry').addEventListener('click', () => {
     fallback.hidden = true;
     host.reload();
@@ -450,5 +467,9 @@
   });
 })();
 </script>
+<script src="/assets/lettering.js"></script>
+<script src="/assets/catalog.js"></script>
+<script src="/assets/hub.js"></script>
+<script src="/assets/menu.js"></script>
 </body>
 </html>

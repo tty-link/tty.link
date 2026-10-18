@@ -1,0 +1,357 @@
+/* The home's menu of everything made at tty.link, and the controls around LOL.
+   Desktop rail, top down: the wordmark, the contents, the sentence, then the Han/Eng key at the
+   foot, level with the remote under the stage (settings for the site bottom left, controls for LOL
+   bottom right). Clicking a chapter opens its poster in the stage's place; LOL steps into a small
+   place at the top of the rail, still playing. Nothing in the menu or the poster is set in a font:
+   Hangul is drawn by font-kku, Latin, figures and marks by the stroke alphabet of "tty.link :)". */
+
+/* ---- The rail's grid ---- */
+.work { display: contents; }
+.hub { display: none; grid-area: hub; min-width: 0; min-height: 0; }
+.staged .hub { display: block; opacity: 0; transition: opacity .5s ease .12s; }
+.settled .hub { opacity: 1; }
+.hub ul, .hub ol { list-style: none; padding: 0; }
+.hub a { color: inherit; text-decoration: none; }
+.hub button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: inherit; cursor: pointer; }
+.lang-ko .hub { font-family: var(--ko-ui); }
+@media (min-width: 761px) {
+  .staged .frame {
+    grid-template-columns: minmax(250px, 22vw) minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, auto) 1fr auto auto;
+    grid-template-areas: "mark stage stage" "hub stage stage" "line stage stage" "ko stage stage" "meta now tools";
+  }
+  /* Opening a chapter leaves the contents where they are; the sentence steps aside. */
+  .docked.staged .frame {
+    grid-template-rows: auto minmax(0, 1fr) 0 0 auto;
+    grid-template-areas: "mark stage stage" "hub stage stage" "line stage stage" "ko stage stage" "meta stage stage";
+  }
+  .staged .hub { margin-top: clamp(16px, 3vh, 30px); }
+}
+
+/* ---- Moving LOL: the stage shrinks into a box and keeps playing; clicking it brings it back ---- */
+.staged .stage { transition: transform .6s var(--ease), border-radius .6s var(--ease), box-shadow .6s var(--ease); }
+.stage.fitted { cursor: zoom-in; border-radius: 40px; }
+.stage.fitted iframe { pointer-events: none; }
+
+/* The room: what shows in the stage's cell while LOL is elsewhere. */
+.room { grid-area: stage; position: relative; z-index: 0; min-width: 0; min-height: 0; overflow: auto; visibility: hidden; opacity: 0; transition: opacity .3s ease, visibility 0s .3s; }
+.room.open { visibility: visible; opacity: 1; transition: opacity .35s ease .12s; }
+.room a { color: inherit; text-decoration: none; }
+.room ul, .room ol { list-style: none; padding: 0; }
+.lang-ko .room { font-family: var(--ko-ui); }
+
+@media (prefers-reduced-motion: reduce) {
+  .staged .stage, .room { transition: none; }
+  .staged .hub { transition: none; }
+}
+
+/* ---- The contents: the kinds as a book's chapters, with numbers, dotted leaders and how many
+   things each holds. A chapter opens only when clicked; its sections pick a tool on the poster. ---- */
+.toc-label { font-size: 12px; font-weight: 800; letter-spacing: .32em; }
+.toc { margin-top: 8px; padding-top: 4px; border-top: 2px solid var(--ink); }
+.toc li { transition: opacity .2s ease; }
+.hub .toc-row { display: flex; align-items: baseline; gap: 10px; width: 100%; padding: 6px 2px; font-size: 17px; font-weight: 700; }
+.toc-no { min-width: 1.5em; font: 700 13px var(--ui); }
+.toc-nm { white-space: nowrap; }
+.toc-lead { flex: 1; min-width: 14px; border-bottom: 2px dotted rgba(27, 43, 122, .45); transform: translateY(-4px); }
+.toc-pg { font: 700 13px var(--ui); }
+.hub .toc-row:hover .toc-nm, .toc-row[aria-expanded="true"] .toc-nm { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.toc:has([aria-expanded="true"]) li.toc-ch:not([aria-expanded="true"]):not(:has(> [aria-expanded="true"])) { opacity: .32; }
+.toc-secs { max-height: 0; overflow: hidden; transition: max-height .35s var(--ease); }
+.toc-sec { display: flex; align-items: baseline; gap: 8px; padding: 3px 2px 3px 1.9em; border-radius: 5px; font-size: 13.5px; }
+.toc-sno { min-width: 2.2em; font: 600 11.5px var(--ui); }
+.toc-snm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toc-spg { font-size: 11.5px; font-weight: 600; }
+.toc-sec.soon { opacity: .72; }
+.toc-sec:hover, .toc-sec.on { background: var(--ink); color: var(--sun); opacity: 1; }
+.toc-sec:hover .toc-lead, .toc-sec.on .toc-lead { border-color: rgba(255, 216, 74, .5); }
+.toc-all { display: inline-block; margin-top: 10px; border-bottom: 1.5px solid; font-size: 13px; font-weight: 700; }
+/* The room in the stage's place, while LOL sits elsewhere. */
+.corner-room { display: grid; grid-template-columns: minmax(0, 1fr) 30%; gap: 28px; }
+@media (max-width: 760px) {
+  .corner-room { display: block; padding-top: calc(62svh * .36 + 10px); }
+}
+
+@media (max-width: 760px) {
+  /* Phones: stage, then the menu under it; the page scrolls. */
+  html, body { height: auto; }
+  .staged .frame {
+    height: auto;
+    min-height: 100svh;
+    padding-bottom: 48px;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto 62svh auto auto;
+    grid-template-areas: "mark tools" "line tools" "stage stage" "now now" "hub hub";
+  }
+  .staged .hub { margin-top: 22px; }
+}
+
+.toc-ch.open .toc-secs { max-height: 24em; }
+.hub .toc-row { cursor: pointer; }
+.hub .toc-row:hover .toc-nm { text-decoration: none; }
+.hub .toc-row[aria-expanded="true"] .toc-nm { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.hub .toc-sec { display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 3px 2px 3px 1.9em; border-radius: 5px; font-size: 13.5px; }
+.hub .toc-sec:hover { background: rgba(27, 43, 122, .1); color: inherit; }
+.hub .toc-sec:hover .toc-lead { border-color: rgba(27, 43, 122, .45); }
+.hub .toc-sec.on { background: var(--ink); color: var(--sun); opacity: 1; }
+.hub .toc-sec.on .toc-lead { border-color: rgba(255, 216, 74, .5); }
+
+/* The contents, drawn: the '+' is a stroke letter too; the leaders stay as dotted rules. */
+.toc-x { margin-left: 2px; transition: transform .25s var(--ease); }
+.toc-row[aria-expanded="true"] .toc-x { transform: rotate(45deg); }
+.hub .toc-row { align-items: center; padding: 7px 2px; }
+.hub .toc-sec { align-items: center; }
+.toc-label .lt { margin-bottom: 2px; }
+/* A closed chapter's sections take no part in layout (they are drawn when first opened). */
+.toc-ch:not(.open) .toc-secs { display: none; }
+/* Rows keep one height whether their words are still plain text or already drawn. */
+.hub .toc-row { min-height: 36px; }
+.toc-label { min-height: 22px; }
+
+/* ---- The mini player: LOL's small place, its controls beside it, what is on under it. Only while
+   a chapter is open (docked); the sentence steps aside. ---- */
+.mini { display: none; }
+@media (min-width: 761px) {
+  .docked.staged .hub { min-height: 0; margin-top: 18px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .docked.staged .hub::-webkit-scrollbar { display: none; }
+  .docked.staged .line, .docked.staged .line-ko { display: none !important; }
+  .docked .mini {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "dock tools" "now now" "cap cap";
+    column-gap: 12px; margin-bottom: 20px;
+  }
+  .docked .mini-dock { grid-area: dock; position: relative; display: block; height: clamp(84px, 12vh, 128px); border: 2px dashed var(--ink-soft); border-radius: 14px; }
+  .mini .tools { grid-area: tools; align-self: center; margin: 0; }
+  .mini .tools-row { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .mini .tools-group { display: contents; }
+  /* Moved into the menu, the controls must undo the menu's own button reset. */
+  .mini .btn { min-height: 30px; padding: 0 10px; border: 1.5px solid var(--ink); border-radius: 999px; font-size: 13px; }
+  .mini .ask { min-width: 30px; }
+  .mini .ask-q { display: inline; }
+  .mini .pause-label, .mini .ask-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .mini .now { grid-area: now; margin: 12px 0 0; }
+  .mini .now-title { min-height: 0; overflow: hidden; -webkit-mask: linear-gradient(to right, #000 calc(100% - 24px), transparent); mask: linear-gradient(to right, #000 calc(100% - 24px), transparent); }
+  .mini .now-title .lt-art { flex-wrap: nowrap; }
+  .mini .progress { margin-top: 6px; }
+  .hub .mini-back { grid-area: cap; justify-self: start; margin-top: 8px; white-space: nowrap; }
+  .hub .mini-back .lt-art { flex-wrap: nowrap; }
+}
+/* The '×' of an open chapter is the '+' turned; it keeps clear of the rail's edge. */
+.hub .toc-x { margin-right: 3px; }
+.toc-snm { min-width: 0; overflow: hidden; }
+.toc-snm .lt-art, .toc-nm .lt-art { flex-wrap: nowrap; }
+.toc-snm.cut { -webkit-mask: linear-gradient(to right, #000 calc(100% - 12px), transparent); mask: linear-gradient(to right, #000 calc(100% - 12px), transparent); }
+.hub .toc-sec { padding-left: 1.25em; }
+.hub .toc-sec .toc-lead { min-width: 8px; }
+.toc-sno, .toc-spg, .toc-no, .toc-pg { flex: none; }
+/* Tall screens: the contents grow with the room they have. */
+@media (min-width: 761px) and (min-height: 1000px) {
+  .hub { --toc-nm: 24px; --toc-sn: 17px; --toc-s: 15px; --toc-xs: 13px; }
+  .hub .toc-row { min-height: 42px; }
+}
+.corner-room.poster-room { grid-template-columns: minmax(0, 1fr); }
+
+/* ---- The poster: standing title | number, a line about it, a heavy bar and a ruled table; it
+   turns in like a page, with the chapter's number pale and huge behind. ---- */
+.poster { position: relative; display: grid; grid-template-columns: var(--tw, 120px) minmax(0, 1fr); min-height: 100%; overflow: hidden; border: 2px solid var(--ink); border-radius: 18px; transform-origin: 0 50%; animation: poster-turn .7s cubic-bezier(.3, .7, .2, 1) both; }
+@keyframes poster-turn { from { opacity: 0; transform: perspective(1400px) rotateY(-75deg); } }
+.poster-big { position: absolute; right: 10px; bottom: -6%; z-index: 0; color: rgba(27, 43, 122, .06); pointer-events: none; }
+.poster > :not(.poster-big) { position: relative; z-index: 1; }
+.poster-side { position: relative; border-right: 4px solid var(--ink); }
+.poster-stack { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 22px 0; }
+/* Reads bottom to top, centred on the column like the Hangul stack. */
+.poster-rot { position: absolute; top: 50%; left: 14px; transform: rotate(-90deg) translateX(-50%); transform-origin: 0 0; white-space: nowrap; }
+/* Its box must be as long as the word (not the column), or centring measures the wrong width. */
+.poster-rot.lt { width: max-content; max-width: none; }
+.poster-rot .lt-art { flex-wrap: nowrap; }
+.poster-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 22px 24px 18px; }
+/* The poster never runs past the screen: a long chapter scrolls its table, the foot stays put. */
+@media (min-width: 761px) {
+  /* The room takes the stage's place exactly; what is inside never pushes the page taller. */
+  .corner-room.poster-room { contain: size; }
+  .poster-room .room-body { height: 100%; min-height: 0; }
+  .poster { height: 100%; }
+  .poster-rows { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+}
+.poster-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; }
+.poster-bar { height: 10px; margin: 16px 0 4px; background: var(--ink); }
+.poster-t { display: grid; grid-template-columns: 4.6em minmax(0, 1.1fr) minmax(0, 1.5fr) 6.6em; align-items: center; column-gap: 14px; }
+.poster-th { padding: 9px 6px; border-bottom: 2px solid var(--ink); }
+.poster-tr { min-height: var(--row, 58px); padding: 10px 6px; border-bottom: 1px solid rgba(27, 43, 122, .35); scroll-margin: 24px; transition: background .2s ease, color .2s ease; }
+.poster-tr.blank { min-height: var(--row, 58px); border-bottom-color: rgba(27, 43, 122, .16); color: rgba(27, 43, 122, .32); animation: poster-blank .5s ease both; animation-delay: calc(700ms + var(--k) * 60ms); }
+.poster-tr.blank > .lt:nth-child(2) { grid-column: 2 / 4; }
+@keyframes poster-blank { from { opacity: 0; } }
+.poster-tr.soon .poster-nm { opacity: .62; }
+.poster-tr.on { background: var(--ink); color: var(--sun); }
+.poster-tr.on .poster-nm { opacity: 1; }
+.poster-st { justify-self: end; }
+.poster-st a { display: inline-flex; padding: 3px 8px; border: 1.5px solid currentColor; border-radius: 999px; }
+.poster-st a:hover { background: var(--ink); color: var(--sun); }
+.poster-tr.on .poster-st a:hover { background: var(--sun); color: var(--ink); }
+.poster-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: auto; padding-top: 18px; }
+.poster-foot a { border-bottom: 1.5px solid; padding-bottom: 2px; }
+@media (prefers-reduced-motion: reduce) { .poster, .poster-tr.blank { animation: none; } }
+@media (max-width: 760px) {
+  /* The stage keeps its own height; its row grows to hold a whole poster, which then scrolls with
+     the page instead of being cut inside the stage's box. */
+  .staged .frame { grid-template-rows: auto auto auto auto auto; }
+  .staged .stage { height: 62svh; align-self: start; }
+  .poster-room { overflow: visible; }
+  .poster-room:not(.open) { display: none; }
+  .poster { grid-template-columns: minmax(0, 1fr); }
+  .poster-side.poster-flat { padding: 16px 14px 12px; border-right: 0; border-bottom: 4px solid var(--ink); }
+  .poster-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .poster-head > .lt:last-child { max-width: none !important; }
+  .poster-t { grid-template-columns: 4em minmax(0, 1fr) auto; }
+  /* What it does sits under the name on a phone. */
+  .poster-th .poster-ds { display: none; }
+  .poster-tr > .poster-ds { grid-column: 2; grid-row: 2; margin-top: 4px; }
+  .poster-tr > .poster-st { grid-column: 3; grid-row: 1 / 3; }
+  .poster-main { padding: 16px 14px; }
+}
+
+/* Short screens: the rail keeps every row in view by tightening the contents. */
+@media (min-width: 761px) and (max-height: 820px) {
+  .hub .toc-row { padding: 3px 2px; }
+  .hub .toc-sec { padding-top: 1px; padding-bottom: 1px; }
+  .staged .hub { margin-top: 12px; }
+  .tools-row { gap: 6px; }
+  .tools { margin-top: 10px; }
+}
+/* When the contents scroll, the edge fades to say there is more. */
+.docked .hub.more { -webkit-mask: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); mask: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); }
+
+/* The home's own controls, drawn too. */
+.now-title .lt { min-height: 0; }
+.btn .lt { pointer-events: none; }
+
+@keyframes nudge-wobble {
+  0%, 100% { transform: none; }
+  12% { transform: rotate(-7deg) scale(1.06); }
+  26% { transform: rotate(6deg) scale(1.08); }
+  40% { transform: rotate(-5deg) scale(1.05); }
+  54% { transform: rotate(3deg) scale(1.03); }
+  70% { transform: rotate(-1.5deg); }
+}
+
+/* ---- The remote under the stage: the playing controls in a strip right under it ---- */
+.rail-foot { display: none; }
+@media (min-width: 761px) {
+  .staged .rail-foot { grid-area: meta; display: block; justify-self: start; align-self: end; position: relative; z-index: 6; margin-top: 14px; opacity: 0; transition: opacity .5s ease .2s; }
+  .settled .rail-foot { opacity: 1; }
+  .frame > .now, .rail > .now { align-self: end; margin: 14px 0 0; }
+  .rail > .now .now-title { min-height: 0; }
+  .rail > .tools { align-self: end; margin: 14px 0 0; }
+  .rail > .tools .tools-row { flex-direction: row; align-items: center; gap: 8px; }
+  .rail > .tools .tools-group { display: contents; }
+}
+@media (min-width: 761px) and (max-width: 1240px) {
+  .rail > .tools .pause-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+}
+@media (max-width: 760px) { .rail-foot { display: none !important; } }
+
+/* "Why is this funny?" as a "?" that seems alive (now and then it hops, tilts, bounces its dot or
+   rings) and a speech bubble that pops out of it: at the punchline, then every so often while the
+   joke plays, and whenever the "?" is pointed at. */
+.ask-wrap { position: relative; display: inline-flex; }
+/* The "?" stands out from the outlined pills: a filled ink circle that floats a little all the time. */
+.ask-wrap .ask { min-width: 40px; min-height: 40px; padding: 0; border-radius: 50%; background: var(--ink); color: var(--sun); }
+.ask-wrap .ask:hover { background: var(--sun); color: var(--ink); }
+.ask-wrap .ask-q svg { animation: ask-float 2.6s ease-in-out infinite; }
+.ask-wrap .ask-q .lt { --lt: 21px !important; }
+.mini .ask-wrap .ask-q .lt { --lt: 18px !important; }
+@keyframes ask-float { 50% { transform: translateY(-1.6px) rotate(-6deg); } }
+.ask-wrap .ask-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ask-wrap .ask-q { display: inline; }
+.ask-wrap .ask .tty-glyphs, .ask-wrap .ask .lt { transform-origin: 50% 80%; }
+/* A ring that spreads from the "?" now and then. */
+.ask-wrap::after { content: ''; position: absolute; inset: 0; border: 2px solid var(--ink); border-radius: 50%; opacity: 0; pointer-events: none; }
+.ask-wrap::before { content: ''; position: absolute; inset: 0; border: 3px solid var(--ink); border-radius: 50%; opacity: 0; pointer-events: none; }
+.ask-wrap.ring::after { animation: ask-ring 1s ease-out; }
+.ask-wrap.ring::before { animation: ask-ring 1s ease-out .22s; }
+@keyframes ask-ring { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(2.4); } }
+/* Shine strokes beside the "?" when the bubble pops. */
+.ask-shine { position: absolute; left: -18px; top: -16px; width: 26px; height: 26px; overflow: visible; pointer-events: none; opacity: 0; }
+.ask-shine path { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; }
+.ask-shine.on { animation: ask-shine .7s ease-out; }
+@keyframes ask-shine { 0% { opacity: 0; transform: scale(.4); } 30% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(1.25); } }
+
+/* Symbols, not words: ◁ ⏸ ▷ as round marks (their names stay for screen readers). */
+.tools .btn.prev, .tools .btn.pause, .tools .btn.next { display: inline-flex; align-items: center; justify-content: center; width: 36px; min-width: 36px; min-height: 36px; padding: 0; border-radius: 50%; }
+.tools .pause-label, .tools .btn.next > .lt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.tools .btn.pause .ico { width: 15px; height: 15px; }
+.tools .btn.prev::before, .tools .btn.next::before { content: ''; width: 15px; height: 15px; background: currentColor; -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
+.tools .btn.next { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 3.2v9.6l7-4.8z'/%3E%3Cpath d='M13 3.2v9.6'/%3E%3C/svg%3E"); }
+.tools .btn.prev { --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12.5 3.2v9.6l-7-4.8z'/%3E%3Cpath d='M3 3.2v9.6'/%3E%3C/svg%3E"); }
+.tools .btn.prev[aria-disabled="true"] { opacity: .3; cursor: default; }
+.tools .btn.prev[aria-disabled="true"]:hover { background: transparent; color: inherit; }
+.mini .tools .btn.prev, .mini .tools .btn.pause, .mini .tools .btn.next { width: 32px; min-width: 32px; min-height: 32px; padding: 0; }
+
+/* All pages and the bubble share one place to the right of the "?": all pages keeps to the stage's
+   right edge, the bubble opens sideways from the "?" (never over the joke), and all pages steps
+   aside while it speaks. */
+.ask-slot { display: inline-grid; align-items: center; }
+.ask-slot > * { grid-area: 1 / 1; }
+.ask-slot .btn.all { justify-self: end; }
+.ask-slot .ask-bubble { justify-self: start; }
+.mini .ask-slot .btn.all { justify-self: start; }
+.ask-slot .btn.all { transition: opacity .25s ease, transform .25s ease; }
+.ask-slot.talking .btn.all { opacity: 0; transform: translateX(14px); pointer-events: none; }
+.ask-slot .ask-bubble {
+  position: relative; z-index: 30; width: max-content; margin-left: 12px;
+  padding: 7px 14px 8px; border: 2px solid var(--ink); border-radius: 14px; background: var(--sun); color: var(--ink);
+  box-shadow: 0 3px 0 -1px var(--ink); cursor: pointer; opacity: 0; pointer-events: none; transform-origin: -12px 50%;
+}
+.ask-bubble .lt-art { flex-wrap: nowrap; }
+.ask-slot .ask-bubble::after { content: ''; position: absolute; left: -9px; top: calc(50% - 7px); width: 13px; height: 13px; border-left: 2px solid var(--ink); border-bottom: 2px solid var(--ink); background: inherit; transform: rotate(45deg) skew(8deg, 8deg); }
+.ask-slot .ask-bubble.show { opacity: 1; pointer-events: auto; animation: ask-say .55s cubic-bezier(.3, 1.4, .5, 1) both; }
+.ask-slot .ask-bubble.show.big { animation: ask-say .55s cubic-bezier(.3, 1.4, .5, 1) both, nudge-wobble .9s ease-in-out .55s 1; }
+.ask-slot .ask-bubble.hide { animation: ask-unsay .28s ease both; }
+@keyframes ask-say { 0% { opacity: 0; transform: translateX(-16px) scale(.25); } 60% { opacity: 1; transform: translateX(4px) scale(1.06); } 100% { opacity: 1; transform: none; } }
+@keyframes ask-unsay { to { opacity: 0; transform: translateX(-14px) scale(.4); } }
+.ask-slot .ask-bubble:hover { background: var(--ink); color: var(--sun); }
+.ask-wrap .ask.lit { background: var(--sun); color: var(--ink); box-shadow: 0 0 0 3px var(--ink); }
+.mini .ask-wrap .ask { min-width: 34px; min-height: 34px; }
+.mini .ask-slot .ask-bubble { padding: 5px 11px 6px; }
+@media (max-width: 760px) {
+  /* On a phone the bubble sits on the line under the "?", so its tail points up at it. */
+  .ask-slot .ask-bubble { margin: 8px 0 0; transform-origin: calc(100% - 20px) -10px; }
+  .ask-slot .ask-bubble::after { left: auto; right: 14px; top: -9px; transform: rotate(135deg) skew(8deg, 8deg); }
+  .ask-slot { justify-items: end; }
+  .ask-slot .ask-bubble { justify-self: end; }
+  .ask-wrap .ask { min-width: 32px; min-height: 32px; }
+  .tools .btn.prev, .tools .btn.pause, .tools .btn.next { width: 32px; min-width: 32px; min-height: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ask-slot .ask-bubble.show, .ask-slot .ask-bubble.hide, .ask-wrap.ring::after, .ask-wrap.ring::before, .ask-shine.on, .ask-wrap .ask-q svg { animation: none; }
+  .ask-slot .btn.all { transition: none; }
+}
+
+/* ---- The language: the Han/Eng key every Korean keyboard has, at the rail's foot. It stays there
+   when a chapter opens; on phones it joins the controls at the top. The home's own language buttons
+   stay in the page, hidden, and the key presses them. ---- */
+.langs { display: none !important; }
+/* A cap whose legend is the mode it is in and the one it goes to, as an input indicator shows it:
+   한/A in Korean, A/한 in English. The current mode is solid; pointing turns the emphasis over (what
+   pressing will do); pressing swaps the two. A small light shows Hangul mode. */
+.hankey { display: inline-flex; align-items: center; padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; }
+.hankey-key {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 64px; height: 38px; padding: 0 17px 0 13px;
+  border: 1.5px solid var(--ink); border-radius: 8px; background: var(--sun); box-shadow: 0 3px 0 var(--ink); transition: transform .08s, box-shadow .08s, background .15s;
+}
+.hankey:hover .hankey-key { background: rgba(27, 43, 122, .08); }
+.hankey.down .hankey-key, .hankey:active .hankey-key { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+.hankey-cur, .hankey-alt { display: inline-flex; transition: opacity .2s ease; }
+.hankey-alt { opacity: .38; }
+.hankey-sep { opacity: .5; }
+.hankey:hover .hankey-cur { opacity: .38; }
+.hankey:hover .hankey-alt { opacity: 1; }
+.hankey-led { position: absolute; top: 4px; right: 5px; width: 6px; height: 6px; border: 1.5px solid var(--ink); border-radius: 50%; transition: background .2s; }
+.lang-ko .hankey-led { background: var(--ink); box-shadow: 0 0 6px rgba(27, 43, 122, .6); }
+@media (prefers-reduced-motion: reduce) { .hankey-cur, .hankey-alt { transition: none; } }
+
+/* The rail's own scroll, when the contents are taller than the room they have. */
+@media (min-width: 761px) {
+  .staged .hub { min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .staged .hub::-webkit-scrollbar { display: none; }
+  .staged .line { margin-top: 18px; }
+}

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Made at tty.link</title>
+<meta name="theme-color" content="#ffd84a">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffd84a'/%3E%3Ctext x='32' y='44' font-family='ui-monospace,Menlo,monospace' font-size='34' font-weight='700' text-anchor='middle' fill='%231b2b7a'%3E:)%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap">
+<style>
+  /* Every service and tool, by kind. The home shows a few; this page shows them all. */
+  :root {
+    --sun: #ffd84a;
+    --ink: #1b2b7a;
+    --ink-soft: rgba(27, 43, 122, .22);
+    --pad: clamp(16px, 3.4vw, 48px);
+    --ui: 'Recursive', ui-monospace, Menlo, Consolas, monospace;
+    --ko-ui: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  font-kku * { margin: revert-layer; padding: revert-layer; box-sizing: revert-layer; }
+  body { min-height: 100vh; padding: var(--pad); background: var(--sun); color: var(--ink); font-family: var(--ui); font-variation-settings: 'MONO' 1, 'CASL' 0; -webkit-font-smoothing: antialiased; }
+  .lang-ko body { font-family: var(--ko-ui); }
+  a { color: inherit; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+  ul { list-style: none; padding: 0; }
+
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+  .mark { font-size: 15px; color: inherit; text-decoration: none; }
+  .langs { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; }
+  .langs button { min-height: 33px; padding: 0 12px; border: 0; background: transparent; font: 600 14px var(--ui); cursor: pointer; }
+  .langs button[lang="ko"] { font-family: var(--ko-ui); }
+  .langs button[aria-pressed="true"] { background: var(--ink); color: var(--sun); }
+
+  h1 { margin: clamp(28px, 7vh, 72px) 0 10px; font: 800 clamp(40px, 7vw, 96px)/1 var(--ui); font-variation-settings: 'MONO' 0, 'CASL' .5; letter-spacing: -.02em; }
+  .lang-ko h1 { font-family: var(--ko-ui); font-weight: 800; letter-spacing: -.04em; }
+  .lede { font-size: 16px; max-width: 40em; }
+
+  .bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 28px calc(-1 * var(--pad)) 0; padding: 12px var(--pad); background: var(--sun); border-bottom: 1.5px solid var(--ink); }
+  .find { flex: 1 1 220px; min-width: 0; max-width: 360px; padding: 8px 2px; border: 0; border-bottom: 1.5px solid var(--ink); background: transparent; font-size: 16px; }
+  .find::placeholder { color: rgba(27, 43, 122, .6); }
+  .find:focus-visible { outline: 0; border-bottom-width: 3px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; gap: 6px; align-items: center; min-height: 34px; padding: 0 12px; border: 1.5px solid var(--ink); border-radius: 999px; font-size: 14px; font-weight: 600; text-decoration: none; }
+  .chip:hover, .chip[aria-current="true"] { background: var(--ink); color: var(--sun); }
+  .chip small { font: 600 11px var(--ui); opacity: .8; }
+
+  section { padding-top: clamp(28px, 5vh, 52px); scroll-margin-top: 70px; }
+  section[hidden] { display: none; }
+  .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding-bottom: 12px; border-bottom: 1.5px solid var(--ink); }
+  .sec-head h2 { font: 800 clamp(26px, 3.4vw, 44px)/1.1 var(--ui); font-variation-settings: 'MONO' 0, 'CASL' .5; }
+  .lang-ko .sec-head h2 { font-family: var(--ko-ui); letter-spacing: -.03em; }
+  .sec-head p { font-size: 14px; }
+  .sec-head .n { margin-left: auto; font: 600 12px var(--ui); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 0 var(--pad); }
+  .item { display: grid; grid-template-columns: 34px minmax(0, 1fr); column-gap: 10px; padding: 14px 0 16px; border-bottom: 1px solid var(--ink-soft); text-decoration: none; }
+  a.item:hover .name { text-decoration: underline; text-underline-offset: 3px; }
+  .sym { grid-row: span 3; font: 800 15px/1.35 var(--ui); }
+  .name { font-size: 16px; font-weight: 700; }
+  .desc { font-size: 13.5px; line-height: 1.45; word-break: keep-all; }
+  .meta { margin-top: 4px; font: 600 11.5px var(--ui); opacity: .78; }
+  .item.soon { color: rgba(27, 43, 122, .72); }
+  .item.soon .meta::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border: 1.5px solid; border-radius: 50%; }
+  .item.hit { animation: hit 1.2s ease; }
+  @keyframes hit { from { background: rgba(27, 43, 122, .12); } }
+  .none { padding: 40px 0; font-size: 15px; }
+  footer { margin-top: 64px; font-size: 13px; }
+</style>
+<script src="https://font.tty.link/lib/font-kku.js" data-fonts="sebul"></script>
+<script src="/assets/tty-glyphs.js"></script>
+<script src="/assets/catalog.js"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "838288248cb7432382fa48f87d722c3f", "spa": false}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+<header class="top">
+  <a class="mark" href="/" aria-label="tty.link">tty.link :)</a>
+  <div class="langs" role="group" aria-label="Language">
+    <button type="button" data-lang="en" lang="en">EN</button>
+    <button type="button" data-lang="ko" lang="ko">한국어</button>
+  </div>
+</header>
+<h1></h1>
+<p class="lede"></p>
+<div class="bar">
+  <input class="find" type="search" autocomplete="off">
+  <nav class="chips"></nav>
+</div>
+<main></main>
+<p class="none" hidden></p>
+<footer><a href="/"></a></footer>
+<script>
+(() => {
+  const C = window.TTYCatalog;
+  const root = document.documentElement;
+  const read = (key) => { try { return localStorage.getItem(key); } catch (e) { return null; } };
+  let lang = new URLSearchParams(location.search).get('lang') || read('tty.lang');
+  if (lang !== 'en' && lang !== 'ko') lang = (navigator.languages || [navigator.language || '']).some((l) => /^ko\b/i.test(l)) ? 'ko' : 'en';
+  window.TTYGlyphs.wordmark(document.querySelector('.mark'), 15);
+  const TEXT = {
+    en: { title: 'Made at tty.link', lede: 'Services and tools, by kind. Some are open now; the rest are on the way.', find: 'Find by name or what it does', none: 'Nothing by that name yet.', home: '← Back to the home page' },
+    ko: { title: 'tty.link에서 만든 것', lede: '서비스와 도구를 종류별로 모았어요. 몇 개는 지금 열려 있고, 나머지는 만드는 중이에요.', find: '이름이나 하는 일로 찾기', none: '아직 그런 이름은 없어요.', home: '← 첫 화면으로' },
+  };
+  const find = document.querySelector('.find');
+  const main = document.querySelector('main');
+  const chips = document.querySelector('.chips');
+  const none = document.querySelector('.none');
+
+  function render() {
+    const T = TEXT[lang];
+    const ui = C.UI[lang];
+    root.lang = lang;
+    root.classList.toggle('lang-ko', lang === 'ko');
+    document.title = T.title;
+    document.querySelector('h1').textContent = T.title;
+    document.querySelector('.lede').textContent = T.lede;
+    document.querySelector('footer a').textContent = T.home;
+    document.querySelector('footer a').href = '/?lang=' + lang;
+    find.placeholder = T.find;
+    find.setAttribute('aria-label', T.find);
+    none.textContent = T.none;
+    document.querySelectorAll('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+    chips.replaceChildren(...C.cats().map((cat) => {
+      const a = Object.assign(document.createElement('a'), { className: 'chip', href: '#' + cat.id });
+      a.append(C.t(cat, lang), Object.assign(document.createElement('small'), { textContent: cat.items.length }));
+      return a;
+    }));
+    main.replaceChildren(...C.cats().map((cat) => {
+      const sec = Object.assign(document.createElement('section'), { id: cat.id });
+      const head = document.createElement('div');
+      head.className = 'sec-head';
+      head.innerHTML = '<h2></h2><p></p><span class="n"></span>';
+      head.querySelector('h2').textContent = C.t(cat, lang);
+      head.querySelector('p').textContent = C.t(cat.blurb, lang);
+      head.querySelector('.n').textContent = ui.items(cat.items.length) + (cat.live ? ` · ${ui.live} ${cat.live}` : '');
+      const grid = document.createElement('ul');
+      grid.className = 'grid';
+      [...cat.items].sort((a, b) => (a.soon - b.soon) || (b.star - a.star)).forEach((item) => {
+        const li = document.createElement('li');
+        const node = item.soon ? document.createElement('div') : Object.assign(document.createElement('a'), { href: item.url });
+        node.className = 'item' + (item.soon ? ' soon' : '');
+        node.id = 'i-' + item.id;
+        node.dataset.text = [item.en, item.ko, item.d.en, item.d.ko, cat.en, cat.ko].join(' ').toLowerCase();
+        node.innerHTML = '<span class="sym"></span><span class="name"></span><span class="desc"></span><span class="meta"></span>';
+        node.querySelector('.sym').textContent = item.sym;
+        node.querySelector('.name').textContent = C.t(item, lang);
+        node.querySelector('.desc').textContent = C.t(item.d, lang);
+        node.querySelector('.meta').textContent = item.soon ? ui.soon : item.host;
+        li.append(node);
+        grid.append(li);
+      });
+      sec.append(head, grid);
+      return sec;
+    }));
+    filter();
+  }
+
+  function filter() {
+    const q = find.value.trim().toLowerCase();
+    let shown = 0;
+    main.querySelectorAll('section').forEach((sec) => {
+      let n = 0;
+      sec.querySelectorAll('li').forEach((li) => {
+        const hit = !q || li.firstChild.dataset.text.includes(q);
+        li.hidden = !hit;
+        n += hit;
+      });
+      sec.hidden = !n;
+      shown += n;
+    });
+    none.hidden = shown > 0;
+  }
+
+  function mark() {
+    const id = location.hash.slice(1);
+    chips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-current', String(c.getAttribute('href') === '#' + id)));
+    const target = id && document.getElementById(id);
+    if (target) target.scrollIntoView({ block: 'start' });
+  }
+
+  find.addEventListener('input', filter);
+  addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement !== find) { e.preventDefault(); find.focus(); } });
+  addEventListener('hashchange', mark);
+  document.querySelectorAll('.langs button').forEach((b) => b.addEventListener('click', () => {
+    lang = b.dataset.lang;
+    try { localStorage.setItem('tty.lang', lang); } catch (e) { /* storage blocked */ }
+    render();
+  }));
+  render();
+  mark();
+})();
+</script>
+</body>
+</html>

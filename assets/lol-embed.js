@@ -20,7 +20,7 @@
   }
 
   class LOLHost {
-    constructor(stage, { lang, page = '', onState, onExplain, onError }) {
+    constructor(stage, { lang, page = '', delay = 0, onState, onExplain, onError }) {
       this.stage = stage;
       this.origin = serviceOrigin();
       this.values = { lang, paused: false, visible: !document.hidden, hovering: false, explaining: false };
@@ -39,7 +39,9 @@
         const r = stage.getBoundingClientRect();
         this.configure({ visible: !document.hidden && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth });
       });
-      this.reload();
+      // delay holds the first load back (the stage stays empty until then).
+      if (delay > 0) this.timer = setTimeout(() => this.reload(), delay);
+      else this.reload();
     }
 
     url(path, params = {}) {
@@ -75,6 +77,8 @@
 
     start() { this.started = true; if (this.ready) this.send('show'); }
     next() { if (this.ready && !this.failed) this.send('next'); }
+    // Shows a given joke next (the home's previous button); a service without it ignores the message.
+    goto(id) { if (this.ready && !this.failed) this.send('goto', { id }); }
 
     receive(event) {
       const data = event.data;
@@ -84,7 +88,7 @@
         if (data.type === 'close') this.closeExplanation();
         return;
       }
-      if (event.source !== this.frame.contentWindow || this.failed) return;
+      if (!this.frame || event.source !== this.frame.contentWindow || this.failed) return;
       if (data.type === 'ready') {
         clearTimeout(this.timer);
         this.ready = true;
