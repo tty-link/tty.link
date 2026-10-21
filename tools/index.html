@@ -99,8 +99,8 @@
   if (lang !== 'en' && lang !== 'ko') lang = (navigator.languages || [navigator.language || '']).some((l) => /^ko\b/i.test(l)) ? 'ko' : 'en';
   window.TTYGlyphs.wordmark(document.querySelector('.mark'), 15);
   const TEXT = {
-    en: { title: 'Made at tty.link', lede: 'Services and tools, by kind. Some are open now; the rest are on the way.', find: 'Find by name or what it does', none: 'Nothing by that name yet.', home: '← Back to the home page' },
-    ko: { title: 'tty.link에서 만든 것', lede: '서비스와 도구를 종류별로 모았어요. 몇 개는 지금 열려 있고, 나머지는 만드는 중이에요.', find: '이름이나 하는 일로 찾기', none: '아직 그런 이름은 없어요.', home: '← 첫 화면으로' },
+    en: { title: 'Made at tty.link', lede: 'Services and tools, kept by when you’d drop in: bored, curious, worried. Some are open now; the rest are on the way.', find: 'Find by name or what it does', none: 'Nothing by that name yet.', home: '← Back to the home page' },
+    ko: { title: 'tty.link에서 만든 것', lede: '서비스와 도구를 심심할 때, 궁금할 때, 불안할 때처럼 들를 때에 따라 나눴어요. 몇 개는 지금 열려 있고, 나머지는 만드는 중이에요.', find: '이름이나 하는 일로 찾기', none: '아직 그런 이름은 없어요.', home: '← 첫 화면으로' },
   };
   const find = document.querySelector('.find');
   const main = document.querySelector('main');
@@ -141,7 +141,7 @@
         const node = item.soon ? document.createElement('div') : Object.assign(document.createElement('a'), { href: item.url });
         node.className = 'item' + (item.soon ? ' soon' : '');
         node.id = 'i-' + item.id;
-        node.dataset.text = [item.en, item.ko, item.d.en, item.d.ko, cat.en, cat.ko].join(' ').toLowerCase();
+        node.dataset.text = [item.en, item.ko, item.d.en, item.d.ko, cat.en, cat.ko, ...C.tagWords(item)].join(' ').toLowerCase();
         node.innerHTML = '<span class="sym"></span><span class="name"></span><span class="desc"></span><span class="meta"></span>';
         node.querySelector('.sym').textContent = item.sym;
         node.querySelector('.name').textContent = C.t(item, lang);

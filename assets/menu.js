@@ -459,11 +459,15 @@ window.TTYNudge = (() => {
     state(s) { id = s.id; },
     // The punchline pops it, unless a bubble has just gone (then the "?" only lights up and rings).
     nudge() {
+      if (quiet()) return;
       if (Date.now() - shownAt > 8000) show('punch', 5000);
       else { ask.classList.add('lit'); MOVES[3](); setTimeout(() => ask.classList.remove('lit'), 2400); }
     },
   });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) plan(); });
+  // Opening a chapter puts away a bubble that is out: the controls move beside the small LOL.
+  new MutationObserver(() => { if (document.body.classList.contains('docked') && bubble.classList.contains('show')) hide(0); })
+    .observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
   // The "?" seems alive: now and then one small move, never the same twice in a row. Big enough to
   // catch the eye from across the page, short enough not to annoy.
