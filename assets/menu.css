@@ -62,6 +62,7 @@
 .toc-nm { white-space: nowrap; }
 .toc-lead { flex: 1; min-width: 14px; border-bottom: 2px dotted rgba(27, 43, 122, .45); transform: translateY(-4px); }
 .toc-pg { font: 700 13px var(--ui); }
+.toc-ch.empty .toc-pg { opacity: .72; }
 .hub .toc-row:hover .toc-nm, .toc-row[aria-expanded="true"] .toc-nm { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
 .toc.dim li.toc-ch:not(.open) { opacity: .32; }
 .toc-secs { max-height: 0; overflow: hidden; transition: max-height .35s var(--ease); }

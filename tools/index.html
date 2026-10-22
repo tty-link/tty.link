@@ -73,6 +73,8 @@
   .tr { min-height: 66px; padding: 12px 6px; border-bottom: 1px solid rgba(27, 43, 122, .35); transition: background .2s ease, color .2s ease; }
   a.tr:hover { background: var(--ink); color: var(--sun); }
   .tr.soon .nm { opacity: .62; }
+  .tr.blank { border-bottom-color: rgba(27, 43, 122, .16); color: rgba(27, 43, 122, .32); }
+  .tr.blank > .lt:nth-child(2) { grid-column: 2 / 4; }
   .what { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
   .meta { opacity: .62; }
   .st { justify-self: end; }
@@ -139,11 +141,11 @@
   if (lang !== 'en' && lang !== 'ko') lang = (navigator.languages || [navigator.language || '']).some((l) => /^ko\b/i.test(l)) ? 'ko' : 'en';
   window.TTYGlyphs.wordmark($('.mark'), 15);
   const TEXT = {
-    en: { title: 'Made at tty.link', lede: 'Services and tools, kept by when you’d drop in: bored, curious, worried. Some are open now; the rest are on the way.',
+    en: { title: 'Made at tty.link', lede: 'Services and tools, kept by when you’d drop in: bored, curious, worried. A few are open now; the empty places fill up one at a time.',
       find: 'Find', hint: 'a name, what it does, Hangul…', label: 'Find by name, what it does or what it’s built with', none: 'Nothing by that name yet.',
       places: 'Places', home: '← Back to the home page', head: ['No.', 'Name', 'What it does', 'Status'] },
-    ko: { title: 'tty.link에서 만든 것', lede: '서비스와 도구를 심심할 때, 궁금할 때, 불안할 때처럼 들를 때에 따라 나눴어요. 몇 개는 지금 열려 있고, 나머지는 만드는 중이에요.',
-      find: '찾기', hint: '이름, 하는 일, 한글·보안…', label: '이름, 하는 일, 만든 재료로 찾기', none: '아직 그런 이름은 없어요.',
+    ko: { title: 'tty.link에서 만든 것', lede: '서비스와 도구를 심심할 때, 궁금할 때, 불안할 때처럼 들를 때에 따라 나눴어요. 몇 개는 지금 열려 있고, 빈 장소는 하나씩 채워 가는 중이에요.',
+      find: '찾기', hint: '이름, 하는 일, 한글…', label: '이름, 하는 일, 만든 재료로 찾기', none: '아직 그런 이름은 없어요.',
       places: '장소', home: '← 첫 화면으로', head: ['번호', '이름', '하는 일', '상태'] },
   };
   const find = $('.find');
@@ -187,7 +189,7 @@
     const blurb = L.render(C.t(cat.blurb, lang), { size: '16px', wait: 1 });
     const title = el('div', 'ch-title');
     title.append(name, blurb);
-    const sum = L.render(ui.items(items.length) + (cat.live ? ` · ${ui.live} ${cat.live}` : ''), { size: '13px', wait: 1 });
+    const sum = L.render(items.length ? ui.items(items.length) + (cat.live ? ` · ${ui.live} ${cat.live}` : '') : ui.soon, { size: '13px', wait: 1 });
     sum.classList.add('ch-sum');
     head.append(no, title, sum);
     const th = el('div', 't th');
@@ -224,6 +226,15 @@
       li.append(row);
       rows.append(li);
     });
+    // A place with nothing in it yet keeps a ruled row free for its first thing, as the poster does.
+    if (!items.length) {
+      const li = el('li', 'blank');
+      const row = el('div', 't tr blank');
+      row.setAttribute('aria-hidden', 'true');
+      row.append(L.render(`${num}.1`, { size: '16px' }), L.render(ui.first, { size: '15px', wait: 1 }));
+      li.append(row);
+      rows.append(li);
+    }
     sec.append(head, el('div', 'ch-bar'), th, rows);
     return sec;
   }
@@ -244,9 +255,13 @@
       const chip = Object.assign(el('a', 'chip'), { href: `#${cat.id}` });
       chip.dataset.cat = cat.id;
       chip.dataset.ltShake = 'kku';
-      const n = L.render(String(cat.items.length), { size: '12px' });
-      n.classList.add('chip-n');
-      chip.append(L.render(C.t(cat, lang), { size: '15px', animate: 'random', delay: 420 + i * 50 }), n);
+      chip.append(L.render(C.t(cat, lang), { size: '15px', animate: 'random', delay: 420 + i * 50 }));
+      // How many things a place holds (a place with nothing yet has no number).
+      if (cat.items.length) {
+        const n = L.render(String(cat.items.length), { size: '12px' });
+        n.classList.add('chip-n');
+        chip.append(n);
+      }
       return chip;
     }));
     L.set(none, T.none, { size: '18px', wait: 600 });
@@ -270,17 +285,18 @@
     let shown = 0;
     main.querySelectorAll('.ch').forEach((sec) => {
       let n = 0;
-      sec.querySelectorAll('.rows li').forEach((li) => {
+      sec.querySelectorAll('.rows li:not(.blank)').forEach((li) => {
         const hit = !q || li.firstChild.dataset.text.includes(q);
         li.hidden = !hit;
         n += hit;
       });
-      sec.hidden = !n;
+      // A place with nothing in it yet stands until something is searched for.
+      sec.hidden = Boolean(q) && !n;
       const chip = chips.querySelector(`[data-cat="${sec.id}"]`);
-      if (chip) chip.classList.toggle('off', !n);
+      if (chip) chip.classList.toggle('off', Boolean(q) && !n);
       shown += n;
     });
-    none.hidden = shown > 0;
+    none.hidden = !q || shown > 0;
   }
 
   // The tab of the place under the bar is lit while scrolling (none above the first place, while the

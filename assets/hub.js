@@ -104,12 +104,14 @@
       const row = Object.assign(el('button', 'toc-row'), { type: 'button' });
       row.dataset.cat = cat.id;
       const name = el('span', 'toc-nm');
-      row.append(el('span', 'toc-no', chapterNo(i)), name, el('span', 'toc-lead'), el('span', 'toc-pg', String(cat.items.length)));
+      const pg = el('span', 'toc-pg');
+      row.append(el('span', 'toc-no', chapterNo(i)), name, el('span', 'toc-lead'), pg);
+      li.classList.toggle('empty', !cat.items.length);
       li.append(row);
       const secs = el('ol', 'toc-secs');
       li.append(secs);
       list.append(li);
-      return { cat, row, name, secs, n: i + 1 };
+      return { cat, row, name, pg, secs, n: i + 1 };
     });
     hub.append(head, list, all);
     H.onLang((lang) => {
@@ -118,8 +120,10 @@
       sum.textContent = lang === 'ko' ? `${rows.length}장 · ${ui.items(C.ITEMS.length)}` : `${rows.length} chapters · ${ui.items(C.ITEMS.length)}`;
       all.textContent = `${ui.all} →`;
       all.href = allHref(lang);
-      rows.forEach(({ cat, name, secs, n }) => {
+      rows.forEach(({ cat, name, pg, secs, n }) => {
         name.textContent = C.t(cat, lang);
+        // A chapter with nothing in it yet says so where its count would be.
+        pg.textContent = cat.items.length ? String(cat.items.length) : ui.soon;
         secs.replaceChildren(...sorted(cat).map((item, j) => {
           const li = el('li');
           // A section picks its tool on the poster; the poster carries the link.

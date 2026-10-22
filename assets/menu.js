@@ -126,7 +126,7 @@
     head.dataset.ltShake = 'kku';
     // The count keeps to the blurb's last word, so it never drops onto a line of its own.
     const blurb = C.t(cat.blurb, lang).replace(/ (\S+)$/, ' $1');
-    const kick = L.render(`${blurb} · ${ui.items(items.length).replace(/ /g, ' ')}`, { size: px(16), animate: 'random', delay: 320 });
+    const kick = L.render(`${blurb} · ${(items.length ? ui.items(items.length) : ui.soon).replace(/ /g, ' ')}`, { size: px(16), animate: 'random', delay: 320 });
     kick.style.maxWidth = '60%';
     head.append(L.render(num, { size: phone() ? '64px' : px(120), animate: 'random', delay: 160, step: 120 }), kick);
     const th = el('div', 'poster-t poster-th');
@@ -141,7 +141,7 @@
     // A narrow poster (a small window) takes a size down so names keep to one line where they can.
     const narrow = room.w < 820;
     const nameSize = phone() ? (n <= 2 ? 30 : 22) : ((n <= 1 ? 44 : n <= 2 ? 36 : n <= 4 ? 28 : 24) - (narrow ? 4 : 0)) * k;
-    poster.style.setProperty('--row', `${n <= 2 ? 92 : n <= 4 ? 70 : 58}px`);
+    poster.style.setProperty('--row', `${n && n <= 2 ? 92 : n <= 4 ? 70 : 58}px`);
     const rows = items.map((item, i) => {
       const tr = el('div', `poster-t poster-tr${item.soon ? ' soon' : ''}`);
       tr.dataset.id = item.id;
@@ -193,17 +193,19 @@
   }
 
   // The table keeps its rules down to the foot: blank rows numbered on from the last tool, the first
-  // one saying it is kept free for what comes next. A short chapter reads as a page with room.
+  // one saying it is kept free for what comes next (for the first thing, in an empty chapter). A
+  // short chapter reads as a page with room.
   // Only the difference is added or taken away, so blank rows already showing do not fade in again.
   function fillBlanks(poster) {
     if (!poster.isConnected) return;
-    const lang = H.lang;
+    const ui = C.UI[H.lang];
     const table = poster.querySelector('.poster-rows');
     const foot = poster.querySelector('.poster-foot');
     const rows = [...table.querySelectorAll('.poster-tr:not(.blank)')];
     const blanks = [...table.querySelectorAll('.blank')];
     // Layout boxes, not screen boxes: the poster may still be turning in (rotated) when this runs.
-    const pitch = Math.max(48, rows.length ? rows[0].offsetHeight : 58);
+    // With no tools, a blank row is as tall as the poster set rows to be.
+    const pitch = Math.max(48, rows.length ? rows[0].offsetHeight : parseFloat(poster.style.getPropertyValue('--row')) || 58);
     const used = rows.reduce((sum, row) => sum + row.offsetHeight, 0);
     const free = foot.offsetTop - (table.offsetTop + used) - 22;
     const count = Math.max(0, Math.min(10, Math.floor(free / pitch)));
@@ -215,7 +217,7 @@
       row.style.setProperty('--k', k);
       row.append(L.render(`${poster.dataset.num}.${n + k + 1}`, { size: '16px' }));
       // Its words are drawn through the drawing queue (they fade in late anyway), not in this callback.
-      if (k === 0) row.append(L.render(lang === 'ko' ? '다음 것을 위해 비워 둔 줄' : 'Kept free for what comes next', { size: '15px', wait: 200 }));
+      if (k === 0) row.append(L.render(n ? ui.free : ui.first, { size: '15px', wait: 200 }));
       table.append(row);
     }
   }
