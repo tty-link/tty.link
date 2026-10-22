@@ -335,24 +335,7 @@
    when a chapter opens; on phones it joins the controls at the top. The home's own language buttons
    stay in the page, hidden, and the key presses them. ---- */
 .langs { display: none !important; }
-/* A cap whose legend is the mode it is in and the one it goes to, as an input indicator shows it:
-   한/A in Korean, A/한 in English. The current mode is solid; pointing turns the emphasis over (what
-   pressing will do); pressing swaps the two. A small light shows Hangul mode. */
-.hankey { display: inline-flex; align-items: center; padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; }
-.hankey-key {
-  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 64px; height: 38px; padding: 0 17px 0 13px;
-  border: 1.5px solid var(--ink); border-radius: 8px; background: var(--sun); box-shadow: 0 3px 0 var(--ink); transition: transform .08s, box-shadow .08s, background .15s;
-}
-.hankey:hover .hankey-key { background: rgba(27, 43, 122, .08); }
-.hankey.down .hankey-key, .hankey:active .hankey-key { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
-.hankey-cur, .hankey-alt { display: inline-flex; transition: opacity .2s ease; }
-.hankey-alt { opacity: .38; }
-.hankey-sep { opacity: .5; }
-.hankey:hover .hankey-cur { opacity: .38; }
-.hankey:hover .hankey-alt { opacity: 1; }
-.hankey-led { position: absolute; top: 4px; right: 5px; width: 6px; height: 6px; border: 1.5px solid var(--ink); border-radius: 50%; transition: background .2s; }
-.lang-ko .hankey-led { background: var(--ink); box-shadow: 0 0 6px rgba(27, 43, 122, .6); }
-@media (prefers-reduced-motion: reduce) { .hankey-cur, .hankey-alt { transition: none; } }
+/* The key itself (its cap, legends and light) is drawn and styled by hankey.js. */
 
 /* The rail's own scroll, when the contents are taller than the room they have. */
 @media (min-width: 761px) {

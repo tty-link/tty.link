@@ -85,7 +85,8 @@
           later(() => { if (slot.isConnected) slot.replaceWith(kku); }, at);
         } else box.append(kku);
       } else {
-        const strokes = el('span', 'lt-s');
+        // tty-glyphs: the alphabet's own styles (letter boxes, strokes), so a page needs none of its own.
+        const strokes = el('span', 'lt-s tty-glyphs');
         [...run].forEach((ch) => {
           if (!GLYPHS[ch]) missing.add(ch);
           strokes.append(glyph(ch));

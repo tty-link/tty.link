@@ -22,9 +22,20 @@
     jokes: d('Jokes', '개그'), hangul: d('Hangul', '한글'), security: d('Security', '보안'),
     network: d('Network', '네트워크'), dev: d('Dev', '개발'), hardware: d('Hardware', '하드웨어'),
   };
+  // How many jokes LOL has, as LOL's own list counts them: fetched once, when first asked (count()).
+  // Until it is known, or if it cannot be had, LOL's line goes without the number.
+  let jokes = 0;
+  let counting = null;
+  const count = (origin = 'https://lol.tty.link') => counting || (counting = fetch(`${origin}/pages/index.json`)
+    .then((response) => response.json())
+    .then((data) => { jokes = (data.pages || []).length; return jokes; })
+    .catch(() => 0));
   const ITEMS = [
     { id: 'lol', cat: 'playground', tags: ['jokes'], sym: 'Lo', star: true, en: 'LOL', ko: 'LOL', url: 'https://lol.tty.link/', host: 'lol.tty.link',
-      d: d('Computer jokes, one at a time. 48 so far.', '컴퓨터 개그를 한 편씩. 지금까지 48편.') },
+      d: {
+        get en() { return `Computer jokes, one at a time.${jokes ? ` ${jokes} so far.` : ''}`; },
+        get ko() { return `컴퓨터 개그를 한 편씩.${jokes ? ` 지금까지 ${jokes}편.` : ''}`; },
+      } },
 
     { id: 'font-kku', cat: 'studio', tags: ['hangul'], sym: 'Fk', star: true, en: 'font-kku', ko: '폰꾸', url: 'https://font.tty.link/', host: 'font.tty.link',
       d: d('Draw 8 cells, get all 11,172 Hangul syllables.', '8칸을 그리면 한글 11,172자가 됩니다.') },
@@ -91,5 +102,5 @@
   // A thing's tags as words in both languages, for search.
   const tagWords = (item) => (item.tags || []).flatMap((tag) => [TAGS[tag].en, TAGS[tag].ko]);
 
-  window.TTYCatalog = { CATS, TAGS, ITEMS, UI, cats, find, t, tagWords };
+  window.TTYCatalog = { CATS, TAGS, ITEMS, UI, cats, find, t, tagWords, count };
 })();

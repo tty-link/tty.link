@@ -249,6 +249,8 @@
     ready = true;
     draw();
     drawCap();
+    // LOL's line on its poster says how many jokes there are; LOL's list is asked now, after the stage.
+    C.count(H.host.origin);
     let k = 0;
     [['.now-title', '16px'], ['.next', '14px'], ['.pause-label', '14px'], ['.ask-label', '14px'], ['.btn.all', '14px'], ['.ask-q', '15px']]
       .forEach(([sel, size]) => document.querySelectorAll(sel).forEach((node) => { L.watch(node, { size, animate: 'random', delay: 260 + k * 40 }); k += 1; }));
@@ -515,69 +517,20 @@ window.TTYNudge = (() => {
   alive();
 })();
 
-/* ---- 4. The Han/Eng key ----
+/* ---- 4. The Han/Eng key (hankey.js) ----
    It presses the home's own (hidden) language buttons, so storage and every label follow as before.
    On a large screen it sits at the rail's foot; on a phone it joins the controls at the top. */
 (() => {
-  const L = window.TTYLetter;
   const { H } = window.TTYHub;
   const buttons = [...document.querySelectorAll('.langs button')];
-  const NAME = { en: 'English', ko: '한국어' };
-  const MARK = { ko: '한', en: 'A' };
-  const other = () => (H.lang === 'ko' ? 'en' : 'ko');
-  const go = (lang) => { const b = buttons.find((x) => x.dataset.lang === lang); if (b) b.click(); };
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const button = Object.assign(document.createElement('button'), { type: 'button', className: 'hankey' });
-  const key = document.createElement('span');
-  key.className = 'hankey-key';
-  key.setAttribute('aria-hidden', 'true');
-  const cur = document.createElement('span');
-  cur.className = 'hankey-cur';
-  const sep = document.createElement('span');
-  sep.className = 'hankey-sep';
-  const alt = document.createElement('span');
-  alt.className = 'hankey-alt';
-  const led = document.createElement('span');
-  led.className = 'hankey-led';
-  key.append(cur, sep, alt, led);
-  button.append(key);
-  button.dataset.ltShake = 'kku';
+  const key = TTYHanKey.make((lang) => { const b = buttons.find((x) => x.dataset.lang === lang); if (b) b.click(); });
   const foot = document.querySelector('.rail-foot');
   const row = document.querySelector('.tools-row');
   const place = () => {
     const target = matchMedia('(max-width: 760px)').matches ? row : foot;
-    if (button.parentNode !== target) target.append(button);
+    if (key.button.parentNode !== target) target.append(key.button);
   };
   place();
   addEventListener('resize', place);
-  L.set(sep, '/', { size: '15px' });
-
-  let busy = false;
-  const press = () => { button.classList.add('down'); setTimeout(() => button.classList.remove('down'), 160); };
-  // The two legends trade places, then the site turns (the new legend already reads that way).
-  const swap = () => {
-    if (busy) return;
-    busy = true;
-    press();
-    const target = other();
-    const done = () => { go(target); busy = false; };
-    if (reduce) { done(); return; }
-    const dx = alt.offsetLeft - cur.offsetLeft;
-    const opts = { duration: 240, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' };
-    const a = cur.animate([{ transform: 'none', opacity: 1 }, { transform: `translateX(${dx}px)`, opacity: .38 }], opts);
-    alt.animate([{ transform: 'none', opacity: .38 }, { transform: `translateX(${-dx}px)`, opacity: 1 }], opts);
-    a.finished.then(() => { cur.getAnimations().forEach((x) => x.cancel()); alt.getAnimations().forEach((x) => x.cancel()); done(); });
-  };
-  button.addEventListener('click', swap);
-  // The real key too, where the browser is told about it (Windows Korean keyboards: HangulMode / Lang1).
-  addEventListener('keydown', (event) => { if (event.key === 'HangulMode' || event.code === 'Lang1') swap(); });
-
-  H.onLang((lang) => {
-    const target = other();
-    L.set(cur, MARK[lang], { size: '19px' });
-    L.set(alt, MARK[target], { size: '19px' });
-    button.setAttribute('aria-label', NAME[target]);
-    button.setAttribute('lang', target);
-    button.title = lang === 'ko' ? 'English로 보기 (한/영 키)' : '한국어로 보기 · View in Korean (Han/Eng key)';
-  });
+  H.onLang(key.update);
 })();

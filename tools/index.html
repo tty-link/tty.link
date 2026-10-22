@@ -9,7 +9,9 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffd84a'/%3E%3Ctext x='32' y='44' font-family='ui-monospace,Menlo,monospace' font-size='34' font-weight='700' text-anchor='middle' fill='%231b2b7a'%3E:)%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap">
 <style>
-  /* Every service and tool, by kind. The home shows a few; this page shows them all. */
+  /* Every service and tool, by the place it is kept in: the home's posters, all on one page. As on
+     the home's menu, nothing here is set in a font: Hangul is drawn by font-kku, Latin, figures and
+     marks by the stroke alphabet of "tty.link :)". Only what the visitor types in the find field is. */
   :root {
     --sun: #ffd84a;
     --ink: #1b2b7a;
@@ -17,178 +19,300 @@
     --pad: clamp(16px, 3.4vw, 48px);
     --ui: 'Recursive', ui-monospace, Menlo, Consolas, monospace;
     --ko-ui: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+    --title: clamp(40px, 6.6vw, 96px);
+    --ch-no: clamp(52px, 6.4vw, 92px);
+    --ch-name: clamp(28px, 3.2vw, 44px);
+    --bar-h: 76px;
   }
   * { box-sizing: border-box; margin: 0; }
   font-kku * { margin: revert-layer; padding: revert-layer; box-sizing: revert-layer; }
   body { min-height: 100vh; padding: var(--pad); background: var(--sun); color: var(--ink); font-family: var(--ui); font-variation-settings: 'MONO' 1, 'CASL' 0; -webkit-font-smoothing: antialiased; }
   .lang-ko body { font-family: var(--ko-ui); }
-  a { color: inherit; }
+  a { color: inherit; text-decoration: none; }
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
   ul { list-style: none; padding: 0; }
 
-  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-  .mark { font-size: 15px; color: inherit; text-decoration: none; }
-  .langs { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; }
-  .langs button { min-height: 33px; padding: 0 12px; border: 0; background: transparent; font: 600 14px var(--ui); cursor: pointer; }
-  .langs button[lang="ko"] { font-family: var(--ko-ui); }
-  .langs button[aria-pressed="true"] { background: var(--ink); color: var(--sun); }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .mark { font-size: 15px; }
 
-  h1 { margin: clamp(28px, 7vh, 72px) 0 10px; font: 800 clamp(40px, 7vw, 96px)/1 var(--ui); font-variation-settings: 'MONO' 0, 'CASL' .5; letter-spacing: -.02em; }
-  .lang-ko h1 { font-family: var(--ko-ui); font-weight: 800; letter-spacing: -.04em; }
-  .lede { font-size: 16px; max-width: 40em; }
+  .title { margin: clamp(32px, 8vh, 84px) 0 0; font-weight: 400; }
+  /* At this size Hangul set beside the stroke letters would float above their baseline; it sits down on it. */
+  .title .lt-w > font-kku { top: calc(var(--lt) * .2); }
+  .lede { max-width: 640px; margin-top: clamp(16px, 2.6vh, 26px); }
 
-  .bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 28px calc(-1 * var(--pad)) 0; padding: 12px var(--pad); background: var(--sun); border-bottom: 1.5px solid var(--ink); }
-  .find { flex: 1 1 220px; min-width: 0; max-width: 360px; padding: 8px 2px; border: 0; border-bottom: 1.5px solid var(--ink); background: transparent; font-size: 16px; }
-  .find::placeholder { color: rgba(27, 43, 122, .6); }
+  /* The bar stays at the top: find on the left, the places as tabs on the right. */
+  .bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; min-height: var(--bar-h);
+    margin: clamp(28px, 5vh, 48px) calc(-1 * var(--pad)) 0; padding: 10px var(--pad); background: var(--sun); border-bottom: 2px solid var(--ink); }
+  .find-wrap { display: flex; align-items: center; gap: 12px; flex: 1 1 260px; max-width: 380px; min-width: 0; }
+  .find-box { position: relative; flex: 1; min-width: 0; }
+  .find { width: 100%; padding: 8px 2px; border: 0; border-bottom: 1.5px solid var(--ink); border-radius: 0; background: transparent; font-size: 16px; -webkit-appearance: none; appearance: none; }
   .find:focus-visible { outline: 0; border-bottom-width: 3px; }
+  .find::-webkit-search-cancel-button { display: none; }
+  .find-hint { position: absolute; left: 2px; top: 50%; transform: translateY(-50%); opacity: .55; pointer-events: none; white-space: nowrap; }
+  .find-hint .lt-art { flex-wrap: nowrap; }
+  .typed .find-hint { display: none; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { display: inline-flex; gap: 6px; align-items: center; min-height: 34px; padding: 0 12px; border: 1.5px solid var(--ink); border-radius: 999px; font-size: 14px; font-weight: 600; text-decoration: none; }
-  .chip:hover, .chip[aria-current="true"] { background: var(--ink); color: var(--sun); }
-  .chip small { font: 600 11px var(--ui); opacity: .8; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 13px 0 11px; border: 1.5px solid var(--ink); border-radius: 999px; transition: background .15s, color .15s, opacity .2s; }
+  .chip:hover { background: rgba(27, 43, 122, .1); }
+  .chip[aria-current="true"] { background: var(--ink); color: var(--sun); }
+  .chip.off { opacity: .32; }
+  .chip-n { opacity: .7; }
 
-  section { padding-top: clamp(28px, 5vh, 52px); scroll-margin-top: 70px; }
-  section[hidden] { display: none; }
-  .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding-bottom: 12px; border-bottom: 1.5px solid var(--ink); }
-  .sec-head h2 { font: 800 clamp(26px, 3.4vw, 44px)/1.1 var(--ui); font-variation-settings: 'MONO' 0, 'CASL' .5; }
-  .lang-ko .sec-head h2 { font-family: var(--ko-ui); letter-spacing: -.03em; }
-  .sec-head p { font-size: 14px; }
-  .sec-head .n { margin-left: auto; font: 600 12px var(--ui); }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 0 var(--pad); }
-  .item { display: grid; grid-template-columns: 34px minmax(0, 1fr); column-gap: 10px; padding: 14px 0 16px; border-bottom: 1px solid var(--ink-soft); text-decoration: none; }
-  a.item:hover .name { text-decoration: underline; text-underline-offset: 3px; }
-  .sym { grid-row: span 3; font: 800 15px/1.35 var(--ui); }
-  .name { font-size: 16px; font-weight: 700; }
-  .desc { font-size: 13.5px; line-height: 1.45; word-break: keep-all; }
-  .meta { margin-top: 4px; font: 600 11.5px var(--ui); opacity: .78; }
-  .item.soon { color: rgba(27, 43, 122, .72); }
-  .item.soon .meta::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border: 1.5px solid; border-radius: 50%; }
-  .item.hit { animation: hit 1.2s ease; }
-  @keyframes hit { from { background: rgba(27, 43, 122, .12); } }
-  .none { padding: 40px 0; font-size: 15px; }
-  footer { margin-top: 64px; font-size: 13px; }
+  /* A place: its number, name and when you'd drop in, a heavy bar, and a ruled table (the poster's). */
+  .ch { padding-top: clamp(40px, 7vh, 76px); scroll-margin-top: calc(var(--bar-h) - 12px); }
+  .ch[hidden] { display: none; }
+  .ch-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 22px; }
+  .ch-no { flex: none; }
+  .ch-title { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding-bottom: 4px; }
+  .ch-name { font-weight: 400; }
+  .ch-sum { margin-left: auto; padding-bottom: 6px; opacity: .8; }
+  .ch-bar { height: 10px; margin: 16px 0 4px; background: var(--ink); }
+  .t { display: grid; grid-template-columns: 4.6em minmax(0, 1fr) minmax(0, 1.5fr) 7em; align-items: center; column-gap: 18px; }
+  .th { padding: 9px 6px; border-bottom: 2px solid var(--ink); }
+  .tr { min-height: 66px; padding: 12px 6px; border-bottom: 1px solid rgba(27, 43, 122, .35); transition: background .2s ease, color .2s ease; }
+  a.tr:hover { background: var(--ink); color: var(--sun); }
+  .tr.soon .nm { opacity: .62; }
+  .what { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+  .meta { opacity: .62; }
+  .st { justify-self: end; }
+  .pill { padding: 3px 8px; border: 1.5px solid currentColor; border-radius: 999px; }
+  .rows li[hidden] { display: none; }
+  /* Out of sight until scrolled to; then the place puts itself together, row by row. */
+  .js .ch:not(.shown) { visibility: hidden; }
+
+  .none { padding: 48px 0; }
+  .none[hidden] { display: none; }
+  footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 72px; padding-top: 18px; border-top: 1px solid var(--ink-soft); }
+  footer a { border-bottom: 1.5px solid; padding-bottom: 2px; }
+
+  @media (max-width: 760px) {
+    :root { --bar-h: 112px; }
+    .bar { gap: 10px; }
+    .find-wrap { flex-basis: 100%; max-width: none; }
+    /* The places scroll sideways in one line, so the bar keeps one height. */
+    .chips { flex-wrap: nowrap; overflow-x: auto; margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad) 2px; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip { flex: none; }
+    .ch-sum { flex-basis: 100%; margin-left: 0; padding-bottom: 0; }
+    .t { grid-template-columns: 3.8em minmax(0, 1fr) auto; column-gap: 12px; }
+    /* What it does sits under the name. */
+    .th > :nth-child(3) { display: none; }
+    .tr > .what { grid-column: 2; grid-row: 2; margin-top: 6px; }
+    .tr > .st { grid-column: 3; grid-row: 1 / 3; }
+  }
+  @media (prefers-reduced-motion: reduce) { .js .ch:not(.shown) { visibility: visible; } .chip, .tr { transition: none; } }
 </style>
-<script src="https://font.tty.link/lib/font-kku.js" data-fonts="sebul"></script>
-<script src="/assets/tty-glyphs.js"></script>
+<script>document.documentElement.classList.add('js');</script>
+<script src="https://font.tty.link/lib/font-kku.js" data-fonts="sebul" data-addons="motion fx"></script>
+<script src="/assets/tty-glyphs.js?v=2"></script>
+<script src="/assets/lettering.js"></script>
+<script src="/assets/hankey.js"></script>
 <script src="/assets/catalog.js"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "838288248cb7432382fa48f87d722c3f", "spa": false}'></script><!-- End Cloudflare Web Analytics -->
 </head>
 <body>
 <header class="top">
-  <a class="mark" href="/" aria-label="tty.link">tty.link :)</a>
-  <div class="langs" role="group" aria-label="Language">
-    <button type="button" data-lang="en" lang="en">EN</button>
-    <button type="button" data-lang="ko" lang="ko">한국어</button>
-  </div>
+  <a class="mark" href="/" aria-label="tty.link"></a>
 </header>
-<h1></h1>
+<h1 class="title"></h1>
 <p class="lede"></p>
 <div class="bar">
-  <input class="find" type="search" autocomplete="off">
+  <label class="find-wrap">
+    <span class="find-label"></span>
+    <span class="find-box"><input class="find" type="search" autocomplete="off" spellcheck="false"><span class="find-hint" aria-hidden="true"></span></span>
+  </label>
   <nav class="chips"></nav>
 </div>
 <main></main>
 <p class="none" hidden></p>
-<footer><a href="/"></a></footer>
+<footer><a class="home"></a><span class="foot-mark" aria-hidden="true"></span></footer>
 <script>
 (() => {
   const C = window.TTYCatalog;
+  const L = window.TTYLetter;
   const root = document.documentElement;
+  const $ = (sel) => document.querySelector(sel);
+  const el = (tag, cls) => Object.assign(document.createElement(tag), cls ? { className: cls } : {});
   const read = (key) => { try { return localStorage.getItem(key); } catch (e) { return null; } };
   let lang = new URLSearchParams(location.search).get('lang') || read('tty.lang');
   if (lang !== 'en' && lang !== 'ko') lang = (navigator.languages || [navigator.language || '']).some((l) => /^ko\b/i.test(l)) ? 'ko' : 'en';
-  window.TTYGlyphs.wordmark(document.querySelector('.mark'), 15);
+  window.TTYGlyphs.wordmark($('.mark'), 15);
   const TEXT = {
-    en: { title: 'Made at tty.link', lede: 'Services and tools, kept by when you’d drop in: bored, curious, worried. Some are open now; the rest are on the way.', find: 'Find by name or what it does', none: 'Nothing by that name yet.', home: '← Back to the home page' },
-    ko: { title: 'tty.link에서 만든 것', lede: '서비스와 도구를 심심할 때, 궁금할 때, 불안할 때처럼 들를 때에 따라 나눴어요. 몇 개는 지금 열려 있고, 나머지는 만드는 중이에요.', find: '이름이나 하는 일로 찾기', none: '아직 그런 이름은 없어요.', home: '← 첫 화면으로' },
+    en: { title: 'Made at tty.link', lede: 'Services and tools, kept by when you’d drop in: bored, curious, worried. Some are open now; the rest are on the way.',
+      find: 'Find', hint: 'a name, what it does, Hangul…', label: 'Find by name, what it does or what it’s built with', none: 'Nothing by that name yet.',
+      places: 'Places', home: '← Back to the home page', head: ['No.', 'Name', 'What it does', 'Status'] },
+    ko: { title: 'tty.link에서 만든 것', lede: '서비스와 도구를 심심할 때, 궁금할 때, 불안할 때처럼 들를 때에 따라 나눴어요. 몇 개는 지금 열려 있고, 나머지는 만드는 중이에요.',
+      find: '찾기', hint: '이름, 하는 일, 한글·보안…', label: '이름, 하는 일, 만든 재료로 찾기', none: '아직 그런 이름은 없어요.',
+      places: '장소', home: '← 첫 화면으로', head: ['번호', '이름', '하는 일', '상태'] },
   };
-  const find = document.querySelector('.find');
-  const main = document.querySelector('main');
-  const chips = document.querySelector('.chips');
-  const none = document.querySelector('.none');
+  const find = $('.find');
+  const main = $('main');
+  const chips = $('.chips');
+  const none = $('.none');
+  const sorted = (cat) => [...cat.items].sort((a, b) => (a.soon - b.soon) || (b.star - a.star));
+  const numOf = (i) => String(i + 1).padStart(2, '0');
+
+  const key = TTYHanKey.make((next) => {
+    lang = next;
+    try { localStorage.setItem('tty.lang', lang); } catch (e) { /* storage blocked */ }
+    history.replaceState(null, '', `?lang=${lang}${location.hash}`);
+    render();
+  });
+  $('.top').append(key.button);
+
+  // A place is drawn whole at once, still (its Hangul goes in through the drawing queue, a few words
+  // a frame), and kept out of sight; when it scrolls into view it puts itself together, row by row.
+  // The first view waits a moment, so the queue has put its Hangul in and that plays too.
+  let ready = Promise.resolve();
+  const reveal = new IntersectionObserver((entries) => entries.forEach((entry) => {
+    if (!entry.isIntersecting) return;
+    reveal.unobserve(entry.target);
+    ready.then(() => { entry.target.classList.add('shown'); L.assemble(entry.target, { rowStep: 30 }); });
+  }), { rootMargin: '0px 0px -6% 0px' });
+
+  function place(cat, i) {
+    const T = TEXT[lang];
+    const ui = C.UI[lang];
+    const num = numOf(i);
+    const items = sorted(cat);
+    const sec = el('section', 'ch');
+    sec.id = cat.id;
+    const head = el('header', 'ch-head');
+    head.dataset.ltShake = 'kku';
+    const no = L.render(num, { size: 'var(--ch-no)' });
+    no.classList.add('ch-no');
+    const name = el('h2', 'ch-name');
+    L.set(name, C.t(cat, lang), { size: 'var(--ch-name)', wait: 1 });
+    const blurb = L.render(C.t(cat.blurb, lang), { size: '16px', wait: 1 });
+    const title = el('div', 'ch-title');
+    title.append(name, blurb);
+    const sum = L.render(ui.items(items.length) + (cat.live ? ` · ${ui.live} ${cat.live}` : ''), { size: '13px', wait: 1 });
+    sum.classList.add('ch-sum');
+    head.append(no, title, sum);
+    const th = el('div', 't th');
+    T.head.forEach((word, k) => {
+      const cell = L.render(word, { size: '13px', wait: 1 });
+      if (k === 3) cell.classList.add('st');
+      th.append(cell);
+    });
+    // Fewer things, larger names (as on the poster).
+    const nameSize = `${items.length <= 2 ? 30 : items.length <= 4 ? 26 : 22}px`;
+    const rows = el('ul', 'rows');
+    items.forEach((item, k) => {
+      const row = item.soon ? el('div', 't tr soon') : Object.assign(el('a', 't tr'), { href: item.url });
+      row.dataset.ltShake = 'kku';
+      row.dataset.id = item.id;
+      row.dataset.text = [item.en, item.ko, item.d.en, item.d.ko, cat.en, cat.ko, item.host || '', ...C.tagWords(item)].join(' ').toLowerCase();
+      const nm = L.render(C.t(item, lang), { size: nameSize, wait: 1 });
+      nm.classList.add('nm');
+      const what = el('span', 'what');
+      what.append(L.render(C.t(item.d, lang), { size: '15px', wait: 1 }));
+      // Where it lives (when it is open) and what it is built with.
+      const meta = [item.soon ? '' : item.host, ...(item.tags || []).map((tag) => C.TAGS[tag][lang])].filter(Boolean).join(' · ');
+      if (meta) {
+        const line = L.render(meta, { size: '12px', wait: 1 });
+        line.classList.add('meta');
+        what.append(line);
+      }
+      const st = el('span', 'st');
+      const word = L.render(item.soon ? ui.soon : `${ui.open} →`, { size: '13px', wait: 1 });
+      if (!item.soon) word.classList.add('pill');
+      st.append(word);
+      row.append(L.render(`${num}.${k + 1}`, { size: '16px' }), nm, what, st);
+      const li = el('li');
+      li.append(row);
+      rows.append(li);
+    });
+    sec.append(head, el('div', 'ch-bar'), th, rows);
+    return sec;
+  }
 
   function render() {
     const T = TEXT[lang];
-    const ui = C.UI[lang];
     root.lang = lang;
     root.classList.toggle('lang-ko', lang === 'ko');
     document.title = T.title;
-    document.querySelector('h1').textContent = T.title;
-    document.querySelector('.lede').textContent = T.lede;
-    document.querySelector('footer a').textContent = T.home;
-    document.querySelector('footer a').href = '/?lang=' + lang;
-    find.placeholder = T.find;
-    find.setAttribute('aria-label', T.find);
-    none.textContent = T.none;
-    document.querySelectorAll('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
-    chips.replaceChildren(...C.cats().map((cat) => {
-      const a = Object.assign(document.createElement('a'), { className: 'chip', href: '#' + cat.id });
-      a.append(C.t(cat, lang), Object.assign(document.createElement('small'), { textContent: cat.items.length }));
-      return a;
+    key.update(lang);
+    L.set($('.title'), T.title, { size: 'var(--title)', animate: 'random', delay: 60, step: 70 });
+    L.set($('.lede'), T.lede, { size: '17px', animate: 'random', delay: 240, step: 12 });
+    L.set($('.find-label'), T.find, { size: '16px', animate: 'random', delay: 380 });
+    L.set($('.find-hint'), T.hint, { size: '15px', wait: 420 });
+    find.setAttribute('aria-label', T.label);
+    chips.setAttribute('aria-label', T.places);
+    chips.replaceChildren(...C.cats().map((cat, i) => {
+      const chip = Object.assign(el('a', 'chip'), { href: `#${cat.id}` });
+      chip.dataset.cat = cat.id;
+      chip.dataset.ltShake = 'kku';
+      const n = L.render(String(cat.items.length), { size: '12px' });
+      n.classList.add('chip-n');
+      chip.append(L.render(C.t(cat, lang), { size: '15px', animate: 'random', delay: 420 + i * 50 }), n);
+      return chip;
     }));
-    main.replaceChildren(...C.cats().map((cat) => {
-      const sec = Object.assign(document.createElement('section'), { id: cat.id });
-      const head = document.createElement('div');
-      head.className = 'sec-head';
-      head.innerHTML = '<h2></h2><p></p><span class="n"></span>';
-      head.querySelector('h2').textContent = C.t(cat, lang);
-      head.querySelector('p').textContent = C.t(cat.blurb, lang);
-      head.querySelector('.n').textContent = ui.items(cat.items.length) + (cat.live ? ` · ${ui.live} ${cat.live}` : '');
-      const grid = document.createElement('ul');
-      grid.className = 'grid';
-      [...cat.items].sort((a, b) => (a.soon - b.soon) || (b.star - a.star)).forEach((item) => {
-        const li = document.createElement('li');
-        const node = item.soon ? document.createElement('div') : Object.assign(document.createElement('a'), { href: item.url });
-        node.className = 'item' + (item.soon ? ' soon' : '');
-        node.id = 'i-' + item.id;
-        node.dataset.text = [item.en, item.ko, item.d.en, item.d.ko, cat.en, cat.ko, ...C.tagWords(item)].join(' ').toLowerCase();
-        node.innerHTML = '<span class="sym"></span><span class="name"></span><span class="desc"></span><span class="meta"></span>';
-        node.querySelector('.sym').textContent = item.sym;
-        node.querySelector('.name').textContent = C.t(item, lang);
-        node.querySelector('.desc').textContent = C.t(item.d, lang);
-        node.querySelector('.meta').textContent = item.soon ? ui.soon : item.host;
-        li.append(node);
-        grid.append(li);
-      });
-      sec.append(head, grid);
-      return sec;
-    }));
+    L.set(none, T.none, { size: '18px', wait: 600 });
+    const home = $('footer .home');
+    home.href = `/?lang=${lang}`;
+    L.set(home, T.home, { size: '15px', wait: 600 });
+    L.set($('.foot-mark'), 'tty.link :)', { size: '15px' });
+
+    reveal.disconnect();
+    ready = new Promise((resolve) => setTimeout(resolve, 360));
+    const places = C.cats().map(place);
+    main.replaceChildren(...places);
+    places.forEach((sec) => reveal.observe(sec));
     filter();
+    spy();
   }
 
   function filter() {
     const q = find.value.trim().toLowerCase();
+    $('.find-wrap').classList.toggle('typed', Boolean(find.value));
     let shown = 0;
-    main.querySelectorAll('section').forEach((sec) => {
+    main.querySelectorAll('.ch').forEach((sec) => {
       let n = 0;
-      sec.querySelectorAll('li').forEach((li) => {
+      sec.querySelectorAll('.rows li').forEach((li) => {
         const hit = !q || li.firstChild.dataset.text.includes(q);
         li.hidden = !hit;
         n += hit;
       });
       sec.hidden = !n;
+      const chip = chips.querySelector(`[data-cat="${sec.id}"]`);
+      if (chip) chip.classList.toggle('off', !n);
       shown += n;
     });
     none.hidden = shown > 0;
   }
 
-  function mark() {
-    const id = location.hash.slice(1);
-    chips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-current', String(c.getAttribute('href') === '#' + id)));
-    const target = id && document.getElementById(id);
+  // The tab of the place under the bar is lit while scrolling (none above the first place, while the
+  // bar has not yet reached the top).
+  let spying = 0;
+  function spy() {
+    spying = 0;
+    const bar = $('.bar').getBoundingClientRect();
+    let current = null;
+    if (bar.top <= 1) main.querySelectorAll('.ch:not([hidden])').forEach((sec) => { if (sec.getBoundingClientRect().top <= bar.bottom + 24) current = sec.id; });
+    chips.querySelectorAll('.chip').forEach((chip) => chip.setAttribute('aria-current', String(chip.dataset.cat === current)));
+  }
+  addEventListener('scroll', () => { if (!spying) spying = requestAnimationFrame(spy); }, { passive: true });
+
+  function jump() {
+    const target = location.hash.length > 1 && document.getElementById(location.hash.slice(1));
     if (target) target.scrollIntoView({ block: 'start' });
   }
 
-  find.addEventListener('input', filter);
-  addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement !== find) { e.preventDefault(); find.focus(); } });
-  addEventListener('hashchange', mark);
-  document.querySelectorAll('.langs button').forEach((b) => b.addEventListener('click', () => {
-    lang = b.dataset.lang;
-    try { localStorage.setItem('tty.lang', lang); } catch (e) { /* storage blocked */ }
-    render();
-  }));
+  find.addEventListener('input', () => { filter(); spy(); });
+  addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== find && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); find.focus(); }
+    if (e.key === 'Escape' && document.activeElement === find && find.value) { find.value = ''; filter(); spy(); }
+  });
+  addEventListener('hashchange', jump);
   render();
-  mark();
+  jump();
+  // LOL's line says how many jokes there are once LOL's list answers; it is drawn again in place then.
+  C.count().then((n) => {
+    const row = n && main.querySelector('[data-id="lol"]');
+    if (row) row.querySelector('.what').firstChild.replaceWith(L.render(C.t(C.find('lol').d, lang), { size: '15px', wait: 1 }));
+  });
 })();
 </script>
 </body>
