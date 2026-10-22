@@ -73,9 +73,15 @@
           kku.setAttribute('animate', name);
           kku.dataset.ltLast = name;
         }
-        if (delay && animate && !reduce) later(() => { kku.textContent = run; }, delay);
-        else kku.textContent = run;
-        box.append(kku);
+        kku.textContent = run;
+        // A word that waits is put in only when its turn comes. font-kku draws a word as it is put in,
+        // so the drawing falls inside the queue's few milliseconds; an empty word put in now and filled
+        // later would be drawn twice, the second time outside them.
+        if (delay && animate && !reduce) {
+          const slot = document.createComment('');
+          box.append(slot);
+          later(() => { if (slot.isConnected) slot.replaceWith(kku); }, delay);
+        } else box.append(kku);
       } else {
         const strokes = el('span', 'lt-s');
         [...run].forEach((ch) => {

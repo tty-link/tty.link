@@ -169,8 +169,9 @@
     poster.dataset.num = num;
     poster.dataset.n = n;
     requestAnimationFrame(() => requestAnimationFrame(() => { fitTitle(poster); fillBlanks(poster); }));
-    // Again once font-kku has drawn the names (rows can grow a line).
-    setTimeout(() => fillBlanks(poster), 1200);
+    // Again whenever a row changes height: font-kku drawing a name or a line can take it to two lines.
+    const grow = new ResizeObserver(() => fillBlanks(poster));
+    rows.forEach((tr) => grow.observe(tr));
     return poster;
   };
   // A Latin title standing on its side is measured once drawn and fitted to the column's height
@@ -188,19 +189,22 @@
 
   // The table keeps its rules down to the foot: blank rows numbered on from the last tool, the first
   // one saying it is kept free for what comes next. A short chapter reads as a page with room.
+  // Only the difference is added or taken away, so blank rows already showing do not fade in again.
   function fillBlanks(poster) {
     if (!poster.isConnected) return;
     const lang = H.lang;
     const table = poster.querySelector('.poster-rows');
     const foot = poster.querySelector('.poster-foot');
-    table.querySelectorAll('.blank').forEach((row) => row.remove());
+    const rows = [...table.querySelectorAll('.poster-tr:not(.blank)')];
+    const blanks = [...table.querySelectorAll('.blank')];
     // Layout boxes, not screen boxes: the poster may still be turning in (rotated) when this runs.
-    const first = table.querySelector('.poster-tr');
-    const pitch = Math.max(48, first ? first.offsetHeight : 58);
-    const free = foot.offsetTop - (table.offsetTop + table.offsetHeight) - 22;
-    const count = Math.min(10, Math.floor(free / pitch));
+    const pitch = Math.max(48, rows.length ? rows[0].offsetHeight : 58);
+    const used = rows.reduce((sum, row) => sum + row.offsetHeight, 0);
+    const free = foot.offsetTop - (table.offsetTop + used) - 22;
+    const count = Math.max(0, Math.min(10, Math.floor(free / pitch)));
+    blanks.slice(count).forEach((row) => row.remove());
     const n = Number(poster.dataset.n);
-    for (let k = 0; k < count; k += 1) {
+    for (let k = blanks.length; k < count; k += 1) {
       const row = el('div', 'poster-t poster-tr blank');
       row.setAttribute('aria-hidden', 'true');
       row.style.setProperty('--k', k);
