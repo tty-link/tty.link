@@ -147,12 +147,18 @@
       if (phone()) fitStage(region(.64, 0, .36, .36), { align: [1, 0] });
       else fitStage(region(.7, .7, .3, .3), { align: [1, 1] });
     };
-    const mark = () => triggers.forEach((t) => {
-      const on = t.dataset.cat === current;
-      t.setAttribute('aria-expanded', String(on));
-      const li = t.closest('li');
-      if (li) li.classList.toggle('open', on);
-    });
+    const mark = () => {
+      triggers.forEach((t) => {
+        const on = t.dataset.cat === current;
+        t.setAttribute('aria-expanded', String(on));
+        const li = t.closest('li');
+        if (li) li.classList.toggle('open', on);
+      });
+      // The other chapters dim while one is open. A class, not :has(): with :has() every word drawn
+      // into the contents made the browser restyle all of the contents' letters again.
+      const toc = triggers[0] && triggers[0].closest('.toc');
+      if (toc) toc.classList.toggle('dim', Boolean(current));
+    };
     const select = (id) => {
       selected = id;
       document.querySelectorAll('.toc-sec').forEach((s) => s.classList.toggle('on', s.dataset.id === id));

@@ -63,7 +63,7 @@
 .toc-lead { flex: 1; min-width: 14px; border-bottom: 2px dotted rgba(27, 43, 122, .45); transform: translateY(-4px); }
 .toc-pg { font: 700 13px var(--ui); }
 .hub .toc-row:hover .toc-nm, .toc-row[aria-expanded="true"] .toc-nm { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
-.toc:has([aria-expanded="true"]) li.toc-ch:not([aria-expanded="true"]):not(:has(> [aria-expanded="true"])) { opacity: .32; }
+.toc.dim li.toc-ch:not(.open) { opacity: .32; }
 .toc-secs { max-height: 0; overflow: hidden; transition: max-height .35s var(--ease); }
 .toc-sec { display: flex; align-items: baseline; gap: 8px; padding: 3px 2px 3px 1.9em; border-radius: 5px; font-size: 13.5px; }
 .toc-sno { min-width: 2.2em; font: 600 11.5px var(--ui); }

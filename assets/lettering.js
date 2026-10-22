@@ -5,6 +5,7 @@
  * and lock together, the smile winks once it is whole, and pointing at them shakes the parts loose
  * for a moment. Hangul in the same places plays one of font-kku's own motions, picked at random.
  *   TTYLetter.render(text, { size, animate, delay })  a new element (animate: put together as it appears)
+ *                                                       wait: ms before a still drawing's Hangul goes in
  *   TTYLetter.set(el, text, opts)                       draw text inside an existing element
  *   TTYLetter.watch(el, opts)                           keep redrawing el when a script rewrites its text
  *   TTYLetter.assemble(root, { delay, step, skip })     fly in the stroke letters already in root
@@ -58,7 +59,7 @@
     if (ROUND[name]) setTimeout(() => { if (kku.getAttribute('animate') === name) kku.removeAttribute('animate'); }, ROUND[name]);
   }
 
-  function word(w, { animate, delay }) {
+  function word(w, { animate, delay, wait }) {
     const box = el('span', 'lt-w');
     if (w === ':)') box.dataset.smile = '';
     (w.match(RUNS) || []).forEach((run) => {
@@ -76,11 +77,12 @@
         kku.textContent = run;
         // A word that waits is put in only when its turn comes. font-kku draws a word as it is put in,
         // so the drawing falls inside the queue's few milliseconds; an empty word put in now and filled
-        // later would be drawn twice, the second time outside them.
-        if (delay && animate && !reduce) {
+        // later would be drawn twice, the second time outside them. A still word can wait too (wait).
+        const at = animate ? delay : wait;
+        if (at && !reduce) {
           const slot = document.createComment('');
           box.append(slot);
-          later(() => { if (slot.isConnected) slot.replaceWith(kku); }, delay);
+          later(() => { if (slot.isConnected) slot.replaceWith(kku); }, at);
         } else box.append(kku);
       } else {
         const strokes = el('span', 'lt-s');

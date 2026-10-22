@@ -78,17 +78,23 @@
 
   // The poster: standing title | number, a line, a bar and a ruled table; it turns in.
   let api = null;
+  // The room's size, measured once and again only after it changes (a ResizeObserver below says
+  // so). Measuring makes the browser lay the page out first, and on a change of language, when the
+  // poster is drawn again, that is every element of it.
+  let size = null;
+  const measure = () => size || (api ? (size = { w: api.room.body.clientWidth, h: api.room.node.clientHeight }) : { w: 900, h: 640 });
   const render = (id) => {
     const lang = H.lang;
     const ui = C.UI[lang];
     const cat = catOf(id);
     const items = sorted(cat);
+    const room = measure();
     // On a large screen the poster is wider than the 980px it was set for: its type grows with it (up to 1.3x).
-    const k = Math.min(1.3, Math.max(1, (api ? api.room.body.clientWidth : 980) / 980));
+    const k = Math.min(1.3, Math.max(1, room.w / 980));
     const px = (v) => `${Math.round(v * k)}px`;
     const num = String(C.CATS.findIndex((c) => c.id === id) + 1).padStart(2, '0');
     const name = C.t(cat, lang);
-    const roomH = api ? api.room.node.clientHeight : 640;
+    const roomH = room.h;
     const poster = el('div', 'poster');
     const big = L.render(num, { size: `${Math.round(roomH * 1.05)}px`, animate: 'random', step: 160 });
     big.classList.add('poster-big');
@@ -103,8 +109,7 @@
       tw = 0;
     } else if (/[가-힣]/.test(name)) {
       const chars = [...name.replace(/\s+/g, '')];
-      const roomW = api ? api.room.body.clientWidth : 900;
-      const px = Math.round(Math.min(roomW * (roomW < 820 ? .12 : .15), 170, (roomH - 70) / (chars.length * 1.3)));
+      const px = Math.round(Math.min(room.w * (room.w < 820 ? .12 : .15), 170, (roomH - 70) / (chars.length * 1.3)));
       side.classList.add('poster-stack');
       chars.forEach((ch, i) => side.append(L.render(ch, { size: `${px}px`, animate: 'random', delay: 120 + i * 140 })));
       tw = px * 1.32 + 26;
@@ -134,7 +139,7 @@
     // Fewer things, larger rows and names; the rest of the table stays ruled (see fillBlanks).
     const n = items.length;
     // A narrow poster (a small window) takes a size down so names keep to one line where they can.
-    const narrow = (api ? api.room.body.clientWidth : 900) < 820;
+    const narrow = room.w < 820;
     const nameSize = phone() ? (n <= 2 ? 30 : 22) : ((n <= 1 ? 44 : n <= 2 ? 36 : n <= 4 ? 28 : 24) - (narrow ? 4 : 0)) * k;
     poster.style.setProperty('--row', `${n <= 2 ? 92 : n <= 4 ? 70 : 58}px`);
     const rows = items.map((item, i) => {
@@ -209,7 +214,8 @@
       row.setAttribute('aria-hidden', 'true');
       row.style.setProperty('--k', k);
       row.append(L.render(`${poster.dataset.num}.${n + k + 1}`, { size: '16px' }));
-      if (k === 0) row.append(L.render(lang === 'ko' ? '다음 것을 위해 비워 둔 줄' : 'Kept free for what comes next', { size: '15px' }));
+      // Its words are drawn through the drawing queue (they fade in late anyway), not in this callback.
+      if (k === 0) row.append(L.render(lang === 'ko' ? '다음 것을 위해 비워 둔 줄' : 'Kept free for what comes next', { size: '15px', wait: 200 }));
       table.append(row);
     }
   }
@@ -228,6 +234,7 @@
       if (secs.querySelector('.lt')) L.assemble(secs, { delay: 120 }); else draw(secs, 120);
     },
   });
+  new ResizeObserver(() => { size = null; }).observe(api.room.node);
   cap.dataset.ltShake = 'kku';
   cap.addEventListener('click', (event) => { event.stopPropagation(); api.close(); });
 
