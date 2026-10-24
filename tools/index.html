@@ -52,7 +52,9 @@
   .find-hint { position: absolute; left: 2px; top: 50%; transform: translateY(-50%); opacity: .55; pointer-events: none; white-space: nowrap; }
   .find-hint .lt-art { flex-wrap: nowrap; }
   .typed .find-hint { display: none; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  /* Positioned, so the hidden words for screen readers (absolute) are clipped with the tabs when they scroll
+     sideways on a phone; otherwise they hung past the right edge and widened the page. */
+  .chips { position: relative; display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 13px 0 11px; border: 1.5px solid var(--ink); border-radius: 999px; transition: background .15s, color .15s, opacity .2s; }
   .chip:hover { background: rgba(27, 43, 122, .1); }
   .chip[aria-current="true"] { background: var(--ink); color: var(--sun); }
@@ -276,6 +278,7 @@
     main.replaceChildren(...places);
     places.forEach((sec) => reveal.observe(sec));
     filter();
+    shownTab = null; // the tabs were drawn anew, scrolled back to the start
     spy();
   }
 
@@ -300,21 +303,56 @@
   }
 
   // The tab of the place under the bar is lit while scrolling (none above the first place, while the
-  // bar has not yet reached the top).
+  // bar has not yet reached the top). The last places cannot come up to the bar, as the page ends first;
+  // so over the last stretch of scrolling the line slides down to where the last place stops, and each
+  // is lit in turn, the last one at the very end. A tab that was followed lights its own place until
+  // the page is scrolled again.
   let spying = 0;
+  let followed = null;
+  let shownTab = null;
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
   function spy() {
     spying = 0;
     const bar = $('.bar').getBoundingClientRect();
+    const places = [...main.querySelectorAll('.ch:not([hidden])')];
+    const kept = followed && document.getElementById(followed.id);
     let current = null;
-    if (bar.top <= 1) main.querySelectorAll('.ch:not([hidden])').forEach((sec) => { if (sec.getBoundingClientRect().top <= bar.bottom + 24) current = sec.id; });
+    if (kept && !kept.hidden && Math.abs(scrollY - followed.y) < 2) current = followed.id;
+    else {
+      followed = null;
+      if (bar.top <= 1 && places.length) {
+        const doc = document.documentElement;
+        const left = Math.max(0, doc.scrollHeight - doc.clientHeight - scrollY);
+        const line = bar.bottom + 24;
+        const reach = Math.max(0, places[places.length - 1].getBoundingClientRect().top - left - line);
+        const at = reach ? line + reach * Math.min(1, Math.max(0, 1 - left / reach)) : line;
+        places.forEach((sec) => { if (sec.getBoundingClientRect().top <= at + 1) current = sec.id; });
+      }
+    }
     chips.querySelectorAll('.chip').forEach((chip) => chip.setAttribute('aria-current', String(chip.dataset.cat === current)));
+    // On a phone the tabs scroll sideways in one line: a newly lit tab out of sight is brought into it.
+    if (current !== shownTab) {
+      shownTab = current;
+      const chip = current && chips.querySelector(`[data-cat="${current}"]`);
+      if (chip && (chip.offsetLeft < chips.scrollLeft || chip.offsetLeft + chip.offsetWidth > chips.scrollLeft + chips.clientWidth)) {
+        chips.scrollTo({ left: chip.offsetLeft - (chips.clientWidth - chip.offsetWidth) / 2, behavior: still.matches ? 'auto' : 'smooth' });
+      }
+    }
   }
   addEventListener('scroll', () => { if (!spying) spying = requestAnimationFrame(spy); }, { passive: true });
 
   function jump() {
     const target = location.hash.length > 1 && document.getElementById(location.hash.slice(1));
-    if (target) target.scrollIntoView({ block: 'start' });
+    if (!target) return;
+    target.scrollIntoView({ block: 'start' });
+    if (target.matches('.ch')) followed = { id: target.id, y: scrollY };
+    spy();
   }
+  // The tab of the place already in the address takes you back there too (the address does not change then).
+  chips.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (chip && chip.hash === location.hash) { e.preventDefault(); jump(); }
+  });
 
   find.addEventListener('input', () => { filter(); spy(); });
   addEventListener('keydown', (e) => {

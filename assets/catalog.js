@@ -41,12 +41,12 @@
 
     { id: 'font-kku', cat: 'studio', tags: ['hangul'], sym: 'Fk', star: true, en: 'font-kku', ko: '폰꾸', url: 'https://font.tty.link/', host: 'font.tty.link',
       d: d('Draw 8 cells, get all 11,172 Hangul syllables.', '8칸을 그리면 한글 11,172자가 됩니다.') },
-    { id: 'font-studio', hidden: true, cat: 'studio', tags: ['hangul'], sym: 'Fs', en: 'Font studio', ko: '글꼴 작업실', url: 'https://font.tty.link/font-studio.html', host: 'font.tty.link',
+    { id: 'font-studio', cat: 'studio', tags: ['hangul'], sym: 'Fs', en: 'Font studio', ko: '글꼴 작업실', url: 'https://font.tty.link/font-studio.html', host: 'font.tty.link',
       d: d('Draw and tune a Hangul font of your own.', '내 한글 글꼴을 그리고 다듬어요.') },
-    { id: 'sign', hidden: true, cat: 'studio', tags: ['hangul'], sym: 'Sb', en: 'Sign board', ko: '전광판', url: 'https://font.tty.link/sign.html', host: 'font.tty.link',
+    { id: 'sign', cat: 'studio', tags: ['hangul'], sym: 'Sb', en: 'Sign board', ko: '전광판', url: 'https://font.tty.link/sign.html', host: 'font.tty.link',
       d: d('Type Hangul on any keyboard; it lights up in dots.', '영문 자판으로 친 한글을 도트 전광판에.') },
 
-    { id: 'memo', hidden: true, cat: 'store', tags: ['hangul'], sym: 'Me', en: 'Memo', ko: '메모장', url: 'https://font.tty.link/memo.html', host: 'font.tty.link',
+    { id: 'memo', cat: 'store', tags: ['hangul'], sym: 'Me', en: 'Memo', ko: '메모장', url: 'https://font.tty.link/memo.html', host: 'font.tty.link',
       d: d('Hangul notes on a device with no Hangul at all.', '한글 입력기도 글꼴도 없는 기기의 한글 메모.') },
     { id: 'json', hidden: true, cat: 'store', tags: ['dev'], sym: 'Js', star: true, soon: true, en: 'JSON tidy', ko: 'JSON 정리',
       d: d('Paste messy JSON, get it tidy and checked.', '엉킨 JSON을 붙이면 정리하고 검사해요.') },
