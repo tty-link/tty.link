@@ -11,13 +11,18 @@
 <meta property="og:url" content="https://tty.link/">
 <meta property="og:title" content="tty.link :)">
 <meta property="og:description" content="Making fun to make happy :)">
+<meta property="og:site_name" content="tty.link :)">
+<meta property="og:image" content="https://tty.link/cards/home.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://tty.link/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffd84a'/%3E%3Ctext x='32' y='44' font-family='ui-monospace,Menlo,monospace' font-size='34' font-weight='700' text-anchor='middle' fill='%231b2b7a'%3E:)%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://lol.tty.link">
 <link rel="stylesheet" href="/assets/lol-embed.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Recursive:wght,CASL,MONO@300..1000,0..1,0..1&display=swap">
 <script>document.documentElement.classList.add('js');</script>
 <style>
   /* The sentence is built the way font-kku builds Hangul: every Latin letter here is a few
@@ -133,6 +138,7 @@
   .settled .now, .settled .tools { opacity: 1; }
 
   .now { margin-top: clamp(20px, 3vh, 36px); }
+  .sr-now { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .now-title { min-height: 2.6em; font-size: 15px; font-weight: 600; line-height: 1.3; }
   .progress { height: 3px; margin-top: 10px; background: var(--ink-soft); border-radius: 2px; overflow: hidden; }
   .progress span { display: block; height: 100%; background: var(--ink); transform-origin: 0 50%; transform: scaleX(0); }
@@ -151,7 +157,7 @@
     cursor: pointer;
   }
   a.btn { display: inline-flex; align-items: center; color: inherit; text-decoration: none; }
-  .btn:hover, .btn[aria-pressed="true"] { background: var(--ink); color: var(--sun); }
+  .btn:hover, .btn[aria-pressed="true"], .paused .btn.pause { background: var(--ink); color: var(--sun); }
   .paused .progress span, .explaining .progress span { opacity: .45; }
   .pause { display: inline-flex; align-items: center; gap: 7px; }
   .ask { display: inline-flex; align-items: center; justify-content: center; }
@@ -199,9 +205,9 @@
   html:not(.js) .line { font: 750 clamp(30px, 8vw, 110px)/1.05 var(--ui); white-space: normal; }
 </style>
 <link rel="stylesheet" href="/assets/menu.css">
-<script src="https://font.tty.link/lib/font-kku.js" data-fonts="sebul" data-addons="motion fx"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tty.link/font-kku@0.1.4-rc.4/font-kku.js" data-fonts="sebul" data-addons="motion fx"></script>
 <script src="/assets/tty-glyphs.js?v=2"></script>
-<script src="/assets/lol-embed.js?v=2"></script>
+<script src="/assets/lol-embed.js?v=3"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "838288248cb7432382fa48f87d722c3f", "spa": false}'></script><!-- End Cloudflare Web Analytics -->
 </head>
 <body>
@@ -211,13 +217,14 @@
     <h1 class="line" lang="en" aria-label="Making fun to make happy :)">Making fun to make happy :)</h1>
     <p class="line-ko" lang="ko"></p>
     <div class="now">
-      <p class="now-title" aria-live="polite"></p>
+      <p class="now-title"></p>
+      <p class="sr-now" aria-live="polite"></p>
       <div class="progress" aria-hidden="true"><span></span></div>
     </div>
     <div class="tools">
       <div class="tools-row">
         <div class="tools-group">
-          <button class="btn pause" type="button" aria-pressed="false"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="ico-pause" d="M5 3.5v9M11 3.5v9"/><path class="ico-play" d="M5 3v10l8-5z"/></svg><span class="pause-label">Pause</span></button>
+          <button class="btn pause" type="button"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path class="ico-pause" d="M5 3.5v9M11 3.5v9"/><path class="ico-play" d="M5 3v10l8-5z"/></svg><span class="pause-label">Pause</span></button>
           <button class="btn next" type="button">Next</button>
         </div>
         <div class="tools-group">
@@ -279,6 +286,17 @@
 
   function assemble() {
     line.classList.add('pre');
+    // A click, a key or a scroll during the sentence skips the rest of it (the stage opens at once).
+    let skip;
+    const skipped = new Promise((resolve) => { skip = resolve; });
+    const events = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+    const onSkip = (event) => {
+      if (event.type === 'keydown' && ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(event.key)) return;
+      events.forEach((type) => removeEventListener(type, onSkip, true));
+      line.getAnimations({ subtree: true }).forEach((a) => a.finish());
+      skip('skipped');
+    };
+    events.forEach((type) => addEventListener(type, onSkip, { capture: true, passive: true }));
     let t = 0;
     glyphs.forEach((g, i) => {
       g.querySelectorAll('.part').forEach((part, j) => {
@@ -292,7 +310,11 @@
     // The smile winks once it is whole.
     const eye = line.querySelector('.w:last-child .dot');
     if (eye) eye.animate([{ transform: 'none' }, { transform: 'scaleY(.12)' }, { transform: 'none' }], { duration: 260, delay: t + 260, easing: 'ease-in-out' });
-    return new Promise((done) => setTimeout(done, t + 1300));
+    const played = new Promise((done) => setTimeout(done, t + 1300));
+    return Promise.race([played, skipped]).then((how) => {
+      events.forEach((type) => removeEventListener(type, onSkip, true));
+      return how;
+    });
   }
 
   // Pointing at the sentence in the rail shakes the parts loose for a moment.
@@ -370,6 +392,9 @@
 
   /* ---- Remote player ---- */
   let clock = null;
+  let shownId = '';
+  let announce = false;
+  const spoken = document.querySelector('.sr-now');
   const fallback = document.querySelector('.lol-fallback');
   const notice = document.querySelector('.lol-notice');
   const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
@@ -383,7 +408,12 @@
       fallback.hidden = true;
       host.frame.hidden = false;
       nowTitle.textContent = state.title;
-      history.replaceState(null, '', '#' + state.id);
+      if (state.id !== shownId) {
+        shownId = state.id;
+        history.replaceState(null, '', '#' + state.id);
+        // Read out only a joke the visitor asked for, not every autoplay turn.
+        if (announce) { spoken.textContent = state.title; announce = false; }
+      }
       if (!clock || clock.effect.getTiming().duration !== state.duration) {
         if (clock) clock.cancel();
         clock = bar.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: state.duration, fill: 'forwards' });
@@ -419,7 +449,8 @@
 
   // For the menu (assets/menu.js): the stage, LOL, the language and when the rail has settled.
   window.TTYHome = {
-    stage, host, body, settled,
+    stage, host, body, settled, resume,
+    get paused() { return userPaused; },
     get lang() { return lang; },
     onLang(fn) { langWatchers.push(fn); fn(lang); },
   };
@@ -434,18 +465,19 @@
   askButton.addEventListener('click', () => openExplain(askButton));
   stage.addEventListener('mouseenter', () => host.configure({ hovering: true }));
   stage.addEventListener('mouseleave', () => host.configure({ hovering: false }));
+  // Asking for another joke (next, previous, the other language) plays it: a paused stage starts again.
+  function resume() { if (userPaused) pauseButton.click(); announce = true; }
   pauseButton.addEventListener('click', () => {
     userPaused = !userPaused;
-    pauseButton.setAttribute('aria-pressed', String(userPaused));
     pauseLabel.textContent = userPaused ? UI[lang].play : UI[lang].pause;
     body.classList.toggle('paused', userPaused);
     if (userPaused && clock) clock.pause();
     host.configure({ paused: userPaused });
   });
-  nextButton.addEventListener('click', () => host.next());
+  nextButton.addEventListener('click', () => { resume(); host.next(); });
   addEventListener('keydown', (event) => {
     if (explaining || !body.classList.contains('staged') || event.target.closest('input, textarea, select, [contenteditable]')) return;
-    if (event.key === 'ArrowRight') host.next();
+    if (event.key === 'ArrowRight') { resume(); host.next(); }
     else if (event.key === '?' && !event.ctrlKey && !event.metaKey && !event.altKey) {
       event.preventDefault();
       const at = document.activeElement;
@@ -454,6 +486,7 @@
   });
   document.querySelectorAll('.langs button').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.lang === lang) return;
+    if (userPaused) pauseButton.click();
     lang = b.dataset.lang;
     write('localStorage', 'tty.lang', lang);
     applyLang();
@@ -461,9 +494,11 @@
 
   // Preload during the original intro; the first joke starts when the stage is uncovered.
   const intro = reduce ? new Promise((r) => setTimeout(r, 1600)) : assemble();
-  intro.then(() => {
-    toStage(!reduce);
-    setTimeout(() => host.start(), reduce ? 0 : 1000);
+  intro.then((how) => {
+    const quick = reduce || how === 'skipped';
+    if (quick) host.loadNow();
+    toStage(!quick);
+    setTimeout(() => host.start(), quick ? 0 : 1000);
   });
 })();
 </script>
@@ -471,6 +506,6 @@
 <script src="/assets/hankey.js"></script>
 <script src="/assets/catalog.js"></script>
 <script src="/assets/hub.js"></script>
-<script src="/assets/menu.js"></script>
+<script src="/assets/menu.js?v=2"></script>
 </body>
 </html>

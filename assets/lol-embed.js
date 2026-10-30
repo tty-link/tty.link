@@ -66,8 +66,13 @@
       this.frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
       this.frame.src = this.url('/embed/', { page: this.page });
       this.stage.append(this.frame);
+      // Until the player says hello its page has not even loaded; after that it may still try a
+      // few jokes (a slow one is skipped), so it gets longer.
       this.timer = setTimeout(() => this.fail(), 15000);
     }
+
+    // Loads the player now if a delay was still holding it back (the intro was skipped).
+    loadNow() { if (!this.frame) this.reload(); }
 
     configure(values) {
       Object.assign(this.values, values);
@@ -89,6 +94,10 @@
         return;
       }
       if (!this.frame || event.source !== this.frame.contentWindow || this.failed) return;
+      if (data.type === 'hello' && !this.ready) {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => this.fail(), 45000);
+      }
       if (data.type === 'ready') {
         clearTimeout(this.timer);
         this.ready = true;

@@ -388,6 +388,7 @@ window.TTYNudge = (() => {
   });
   const back = () => {
     if (at <= 0 || !host.ready) return;
+    H.resume();
     at -= 1;
     jumping = seen[at];
     host.goto(jumping);
@@ -457,7 +458,7 @@ window.TTYNudge = (() => {
      opened) does. */
   let id = null;
   let periodic = 0;
-  const quiet = () => host.modal || document.hidden || document.body.classList.contains('docked') || TTYNudge.opened >= 3 || (id && TTYNudge.asked(id));
+  const quiet = () => host.modal || document.hidden || H.paused || document.body.classList.contains('docked') || TTYNudge.opened >= 3 || (id && TTYNudge.asked(id));
   const plan = () => {
     clearTimeout(periodic);
     periodic = setTimeout(() => {
@@ -507,7 +508,7 @@ window.TTYNudge = (() => {
   let last = -1;
   const alive = () => {
     setTimeout(() => {
-      if (!reduce && !document.hidden && !host.modal && !bubble.classList.contains('show') && document.body.classList.contains('settled')) {
+      if (!reduce && !document.hidden && !host.modal && !H.paused && !bubble.classList.contains('show') && document.body.classList.contains('settled')) {
         let k = Math.floor(Math.random() * MOVES.length);
         if (k === last) k = (k + 1) % MOVES.length;
         last = k;
